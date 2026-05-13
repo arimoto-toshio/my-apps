@@ -290,20 +290,18 @@ function loadApp() {
     if (s) {
       app = JSON.parse(s);
       curIdx = app.curIdx || 0;
-      // 古いデータの結果(b.result)と手動上書きフラグを全ラウンドで初期化
-      // これによりロード時に全ルールが再適用される
-      app.rounds.forEach(rd => {
-        rd.bids.forEach(b => { b.result = ''; b.manualResult = false; });
-        // 自動で立った落ち済みフラグも全解除
-        rd.attendance.forEach(a => { a.ochi = false; });
-        // 精算の手動上書き値も全解除（自動計算を優先）
-        if (rd.calc) {
-          delete rd.calc.normalCount;
-          delete rd.calc.ketsuCount;
-          delete rd.calc.taihouCount;
-          delete rd.calc.taihouUnit;
+      // 現在のラウンドのみ結果を再計算用にリセット（過去ラウンドは保持）
+      const ci = app.curIdx || 0;
+      if (app.rounds[ci]) {
+        app.rounds[ci].bids.forEach(b => { b.result = ''; b.manualResult = false; });
+        app.rounds[ci].attendance.forEach(a => { a.ochi = false; });
+        if (app.rounds[ci].calc) {
+          delete app.rounds[ci].calc.normalCount;
+          delete app.rounds[ci].calc.ketsuCount;
+          delete app.rounds[ci].calc.taihouCount;
+          delete app.rounds[ci].calc.taihouUnit;
         }
-      });
+      }
       return;
     }
   } catch(e) {}
