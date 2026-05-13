@@ -1,0 +1,1033 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<title>楽晴会｜スマホ版</title>
+<meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+<meta http-equiv="Pragma" content="no-cache">
+<meta http-equiv="Expires" content="0">
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+  body { font-family: -apple-system, 'Hiragino Sans', 'Meiryo', sans-serif; background: #eef2f7; color: #1a1a2e; font-size: 15px; padding-bottom: 100px; }
+
+  /* ========== Header ========== */
+  .hdr {
+    background: linear-gradient(135deg, #0d1b3e, #1a3a6e);
+    color: white; padding: 12px 14px;
+    position: sticky; top: 0; z-index: 100;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.25);
+  }
+  .hdr-top { display:flex; justify-content:space-between; align-items:center; gap:8px; margin-bottom:8px; }
+  .hdr-title { font-size: 16px; font-weight: 700; }
+  .hdr-btns { display:flex; gap:6px; }
+  .hdr-btn {
+    background: rgba(255,255,255,0.18); color: white;
+    border: 1px solid rgba(255,255,255,0.35); padding: 6px 10px;
+    border-radius: 6px; font-size: 12px; cursor: pointer;
+  }
+  .hdr-btn.gold { background: #f0c040; color: #1a1a2e; border: none; font-weight: 700; }
+  .round-nav { display:flex; align-items:center; justify-content:space-between; gap:6px; }
+  .round-nav button {
+    background: rgba(255,255,255,0.15); border: none; color: white;
+    width: 38px; height: 38px; border-radius: 8px; font-size: 18px; cursor: pointer;
+  }
+  .round-meta { display:flex; gap:4px; align-items:center; flex:1; justify-content:center; font-size: 14px; }
+  .round-meta input {
+    width: 50px; padding: 4px 6px; border: none; border-radius: 4px;
+    background: rgba(255,255,255,0.2); color: white; text-align: center; font-size: 14px;
+  }
+  .round-meta input::-webkit-outer-spin-button,
+  .round-meta input::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
+
+  /* ========== Tabs ========== */
+  .tabs {
+    display:flex; background: white; box-shadow: 0 1px 3px rgba(0,0,0,0.08);
+    position: sticky; top: 90px; z-index: 99;
+  }
+  .tab {
+    flex: 1; padding: 14px 4px; text-align: center; font-size: 13px;
+    font-weight: 600; cursor: pointer; color: #666;
+    border-bottom: 3px solid transparent; transition: all 0.15s;
+  }
+  .tab.active { color: #0d1b3e; border-bottom-color: #f0c040; background: #f7f9fc; }
+
+  /* ========== Page ========== */
+  .page { padding: 12px; display: none; }
+  .page.active { display: block; }
+  .card {
+    background: white; border-radius: 10px; padding: 12px;
+    margin-bottom: 12px; box-shadow: 0 1px 4px rgba(0,0,0,0.06);
+  }
+  .card-h { font-size: 13px; font-weight: 700; color: #0d1b3e; margin-bottom: 10px; }
+
+  /* ========== Member List (出席ページ) ========== */
+  .mem-row {
+    display:flex; align-items:center; gap:10px;
+    padding: 12px 8px; border-bottom: 1px solid #eee;
+  }
+  .mem-row:last-child { border-bottom: none; }
+  .mem-name { flex:1; font-size:16px; font-weight:600; }
+  .toggle-btn {
+    border: 2px solid #ccc; background: white; color: #999;
+    padding: 6px 14px; border-radius: 20px; font-size: 13px;
+    font-weight: 600; cursor: pointer; min-width: 60px;
+  }
+  .toggle-btn.on-paid { background: #f0c040; border-color: #d4a017; color: #1a1a2e; }
+  .toggle-btn.on-absent { background: #c0392b; border-color: #c0392b; color: white; }
+  .toggle-btn.on-ochi { background: #6c5ce7; border-color: #6c5ce7; color: white; }
+
+  /* ========== Bid Cards (入札ページ) ========== */
+  .bid-card {
+    background: white; border-radius: 10px; padding: 14px;
+    margin-bottom: 12px; box-shadow: 0 1px 4px rgba(0,0,0,0.06);
+    border-left: 4px solid #ccc;
+  }
+  .bid-card.has-result-taihou { border-left-color: #bf360c; background: #fffae0; }
+  .bid-card.has-result-ketsu { border-left-color: #1565c0; background: #f0f7ff; }
+  .bid-card.has-result-ochi { border-left-color: #e65100; background: #fff8f0; }
+
+  .bid-no { font-size: 11px; color: #999; font-weight: 700; margin-bottom: 6px; }
+  .bid-grid {
+    display: grid; grid-template-columns: 80px 1fr; gap: 8px 10px;
+    align-items: center;
+  }
+  .bid-label { font-size: 13px; color: #555; font-weight: 600; }
+  .bid-input, .bid-select {
+    width: 100%; padding: 10px 8px; font-size: 16px;
+    border: 1px solid #ddd; border-radius: 6px; background: white;
+    font-family: inherit; -webkit-appearance: none; appearance: none;
+  }
+  .bid-select {
+    background: white url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath fill='%23666' d='M6 8L0 0h12z'/%3E%3C/svg%3E") no-repeat right 10px center;
+    padding-right: 28px;
+  }
+  .bid-result-row { grid-column: 1 / -1; }
+  .result-btns { display: flex; gap: 6px; margin-top: 4px; }
+  .result-btn {
+    flex: 1; padding: 10px; border-radius: 6px; border: 2px solid #ddd;
+    background: white; font-size: 13px; font-weight: 600; cursor: pointer;
+  }
+  .result-btn.active.taihou { background: #bf360c; color: white; border-color: #bf360c; }
+  .result-btn.active.ketsu { background: #1565c0; color: white; border-color: #1565c0; }
+  .result-btn.active.ochi { background: #e65100; color: white; border-color: #e65100; }
+
+  .bid-sum { grid-column: 1 / -1; text-align: right; padding-top: 6px; border-top: 1px dashed #ddd; }
+  .bid-sum-val { font-size: 17px; font-weight: 700; color: #0d1b3e; }
+
+  /* ========== Calc page ========== */
+  .calc-row {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 10px 4px; border-bottom: 1px solid #eee;
+  }
+  .calc-row:last-child { border-bottom: none; }
+  .calc-label { font-size: 14px; font-weight: 600; color: #333; }
+  .calc-input {
+    width: 100px; padding: 8px; font-size: 16px; text-align: right;
+    border: 1px solid #ddd; border-radius: 6px;
+  }
+  .calc-mini { width: 50px; padding: 6px; font-size: 14px; text-align: center; border: 1px solid #ddd; border-radius: 4px; }
+  .calc-line { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; padding: 8px 4px; border-bottom: 1px solid #eee; font-size: 14px; }
+  .calc-val { font-weight: 700; color: #0d1b3e; min-width: 70px; text-align: right; }
+
+  .final-card {
+    background: linear-gradient(135deg, #fff8e1, #ffe0b2);
+    padding: 18px; border-radius: 14px; text-align: center;
+    margin-top: 16px; box-shadow: 0 2px 10px rgba(240,192,64,0.3);
+  }
+  .final-formula { font-size: 14px; color: #555; margin-bottom: 8px; }
+  .final-payout { font-size: 38px; font-weight: 900; color: #c0392b; letter-spacing: 1px; }
+
+  /* ========== Members page ========== */
+  .mem-list { display:flex; flex-wrap:wrap; gap:8px; }
+  .mem-tag {
+    background: #f0f4ff; padding: 8px 12px; border-radius: 20px;
+    font-size: 14px; display: flex; align-items: center; gap: 6px;
+  }
+  .mem-tag .del { color: #c0392b; cursor: pointer; font-weight: 700; padding: 0 4px; }
+  .add-row { display:flex; gap:6px; margin-top: 12px; }
+  .add-row input { flex:1; padding: 10px; border: 1px solid #ddd; border-radius: 6px; font-size: 15px; }
+  .add-row button { padding: 10px 16px; background: #f0c040; border: none; border-radius: 6px; font-weight: 700; cursor: pointer; font-size: 14px; }
+
+  /* ========== Toast ========== */
+  #toast {
+    position: fixed; top: 50%; left: 50%; transform: translate(-50%,-50%);
+    background: rgba(0,0,0,0.85); color: white; padding: 12px 20px;
+    border-radius: 10px; font-size: 14px; opacity: 0;
+    pointer-events: none; transition: opacity 0.2s; z-index: 1000;
+  }
+  #toast.show { opacity: 1; }
+
+  /* ========== Bottom Bar ========== */
+  .bottom-bar {
+    position: fixed; bottom: 0; left: 0; right: 0;
+    background: white; border-top: 1px solid #ddd;
+    padding: 10px 14px; display: flex; gap: 8px; z-index: 90;
+    box-shadow: 0 -2px 8px rgba(0,0,0,0.08);
+    padding-bottom: calc(10px + env(safe-area-inset-bottom));
+  }
+  .bottom-bar button {
+    flex: 1; padding: 12px; border-radius: 8px; border: none;
+    font-size: 14px; font-weight: 700; cursor: pointer;
+  }
+  .bb-save { background: #f0c040; color: #1a1a2e; }
+  .bb-add { background: #0d1b3e; color: white; }
+</style>
+</head>
+<body>
+
+<div class="hdr">
+  <div class="hdr-top">
+    <div class="hdr-title">🎴 楽晴会</div>
+    <div class="hdr-btns">
+      <button class="hdr-btn" onclick="syncUpload()" style="background:rgba(46,204,113,0.3);font-size:11px;">☁↑</button>
+      <button class="hdr-btn" onclick="syncDownload()" style="background:rgba(52,152,219,0.3);font-size:11px;">☁↓</button>
+    </div>
+  </div>
+  <div class="round-nav">
+    <button onclick="navRound(-1)">◀</button>
+    <div class="round-meta">
+      <input id="editYear" type="number" onchange="updateRoundMeta()">年
+      <input id="editMonth" type="number" onchange="updateRoundMeta()">月
+      <input id="editNum" type="number" min="1" max="12" onchange="updateRoundMeta()">回
+    </div>
+    <button onclick="navRound(1)">▶</button>
+  </div>
+</div>
+
+<div class="tabs">
+  <div class="tab active" data-page="att" onclick="showPage('att')">📋 出席</div>
+  <div class="tab" data-page="bid" onclick="showPage('bid')">🃏 入札</div>
+  <div class="tab" data-page="calc" onclick="showPage('calc')">💰 精算</div>
+  <div class="tab" data-page="mem" onclick="showPage('mem')">👥 メンバー</div>
+</div>
+
+<!-- 出席ページ -->
+<div id="page-att" class="page active">
+  <div class="card">
+    <div class="card-h">出席・会費（タップで切替）</div>
+    <div id="memList"></div>
+  </div>
+</div>
+
+<!-- 入札ページ -->
+<div id="page-bid" class="page">
+  <div id="bidList"></div>
+</div>
+
+<!-- 精算ページ -->
+<div id="page-calc" class="page">
+  <div class="card">
+    <div class="card-h">💰 精算</div>
+    <div id="calcBody"></div>
+  </div>
+  <div id="finalBox"></div>
+</div>
+
+<!-- メンバーページ -->
+<div id="page-mem" class="page">
+  <div class="card">
+    <div class="card-h">👥 メンバー管理</div>
+    <div class="mem-list" id="memberList"></div>
+    <div class="add-row">
+      <input type="text" id="newMemberInput" placeholder="新メンバー名">
+      <button onclick="addMember()">追加</button>
+    </div>
+    <div style="margin-top:16px; display:flex; gap:8px; align-items:center;">
+      <label style="font-size:14px; font-weight:600;">会費:</label>
+      <input type="number" class="calc-input" id="kaihiInput" onchange="onKaihiChange()">
+      <span>円</span>
+    </div>
+  </div>
+  <div class="card">
+    <div class="card-h">⚙️ 操作</div>
+    <button class="hdr-btn" style="background:#0d1b3e; color:white; padding:10px 16px; margin-right:8px;" onclick="addNewRound()">＋ 新規回を追加</button>
+    <button class="hdr-btn" style="background:#c0392b; color:white; padding:10px 16px;" onclick="deleteRound()">この回を削除</button>
+  </div>
+</div>
+
+<!-- ボトムバー -->
+<div class="bottom-bar">
+  <button class="bb-save" onclick="saveAll()">💾 保存</button>
+  <button class="bb-add" onclick="addNewRound()">＋ 新規回</button>
+</div>
+
+<div id="toast"></div>
+
+<script>
+// ============================================================
+// データ：既存PC版と互換のキーを使う（同じレシピで読み書き）
+// ============================================================
+const STORAGE_KEY = 'rakuseikai_data';
+const DEFAULT_MEMBERS = ['山本','渡部','宮瀬','米田','石岡','有本','白石','宮田','酒井','森岡','TKT','木工'];
+const RESULT_OPTIONS = ['','大砲','ケツ','落ち'];
+const CARD_OPTIONS = ['','A','2','3','4','5','6','7','8','9','10','J','Q','K'];
+const CALL_OPTIONS = ['',0,50,100,150,200,250,300,350,400,450,500,550,600,650,700,750,800,850,900,950,1000];
+
+let app, curIdx, curPage = 'att';
+
+function createEmptyRound(members) {
+  return {
+    year: new Date().getFullYear(),
+    month: new Date().getMonth() + 1,
+    num: 1,
+    attendance: members.map(m => ({ name: m, paid: false, present: false, ochi: false })),
+    bids: members.map(() => ({
+      card:'', caller:'', call1:'', call2:'',
+      opener:'', prevKetsu:'', open:'', openResult:'', card2:'', result:''
+    })),
+    calc: {
+      haitouUnit: 1000, ketsuUnit: 1000,
+      taihou: 5000, amida: 2000, ryouridai: 72000, tsumitatekin: 24000
+    }
+  };
+}
+
+function loadApp() {
+  try {
+    const s = localStorage.getItem(STORAGE_KEY);
+    if (s) {
+      app = JSON.parse(s);
+      curIdx = app.curIdx || 0;
+      // 古いデータの結果(b.result)と手動上書きフラグを全ラウンドで初期化
+      // これによりロード時に全ルールが再適用される
+      app.rounds.forEach(rd => {
+        rd.bids.forEach(b => { b.result = ''; b.manualResult = false; });
+        // 自動で立った落ち済みフラグも全解除
+        rd.attendance.forEach(a => { a.ochi = false; });
+        // 精算の手動上書き値も全解除（自動計算を優先）
+        if (rd.calc) {
+          delete rd.calc.normalCount;
+          delete rd.calc.ketsuCount;
+          delete rd.calc.taihouCount;
+          delete rd.calc.taihouUnit;
+        }
+      });
+      return;
+    }
+  } catch(e) {}
+  app = {
+    members: [...DEFAULT_MEMBERS],
+    kaihi: 18000,
+    rounds: [createEmptyRound(DEFAULT_MEMBERS)]
+  };
+  const r = app.rounds[0];
+  r.year = new Date().getFullYear(); r.month = new Date().getMonth()+1; r.num = 1;
+  curIdx = 0;
+}
+
+function saveAll() {
+  app.curIdx = curIdx;
+  localStorage.setItem(STORAGE_KEY, JSON.stringify(app));
+  toast('保存しました');
+}
+
+function round() { return app.rounds[curIdx]; }
+
+async function exportData() {
+  const json = JSON.stringify(app, null, 2);
+  const fileName = '楽晴会データ_' + new Date().toISOString().slice(0,10) + '.json';
+  if (navigator.share && navigator.canShare) {
+    try {
+      const file = new File([json], fileName, { type: 'application/json' });
+      if (navigator.canShare({ files: [file] })) {
+        await navigator.share({ files: [file], title: '楽晴会データ' });
+        return;
+      }
+    } catch(e) {}
+  }
+  const blob = new Blob([json], { type: 'application/octet-stream' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url; a.download = fileName;
+  document.body.appendChild(a); a.click();
+  setTimeout(() => { document.body.removeChild(a); URL.revokeObjectURL(url); }, 100);
+  toast('データを書き出しました');
+}
+
+function importData(event) {
+  const file = event.target.files[0];
+  if (!file) return;
+  const r = new FileReader();
+  r.onload = e => {
+    try {
+      app = JSON.parse(e.target.result);
+      curIdx = app.curIdx || 0;
+      saveAll(); render();
+      toast('読み込みました');
+    } catch(err) { toast('読み込み失敗'); }
+  };
+  r.readAsText(file);
+  event.target.value = '';
+}
+
+// ============================================================
+// PAGE切替
+// ============================================================
+function showPage(name) {
+  curPage = name;
+  document.querySelectorAll('.tab').forEach(t => t.classList.toggle('active', t.dataset.page === name));
+  document.querySelectorAll('.page').forEach(p => p.classList.toggle('active', p.id === 'page-'+name));
+  window.scrollTo({top: 0, behavior: 'instant'});
+}
+
+// ============================================================
+// RENDER
+// ============================================================
+function render() {
+  const r = round();
+  document.getElementById('editYear').value  = r.year;
+  document.getElementById('editMonth').value = r.month;
+  document.getElementById('editNum').value   = r.num;
+  document.getElementById('kaihiInput').value = app.kaihi;
+
+  // 表示前に毎回ルールを適用して結果を最新化
+  recalcOpenResults();
+  applyResultRules();
+  syncOchiFromResults();
+
+  renderAttendance();
+  renderBids();
+  renderCalc();
+  renderMembers();
+}
+
+function renderAttendance() {
+  const r = round();
+  const ochiCount = r.attendance.filter(a => a.ochi).length;
+  const activeCount = r.attendance.length - ochiCount;
+  const expectedSlots = Math.max(1, app.members.length - ochiCount);
+  const info = `<div style="background:#f7f9fc;padding:10px;border-radius:6px;margin-bottom:10px;font-size:13px;color:#333;">
+    <strong>第 ${r.num} 回 / 全12回</strong><br>
+    入札枠: <strong style="color:#0d1b3e;">${expectedSlots}人</strong>　落ち済み: <strong style="color:#bf360c;">${ochiCount}人</strong>
+  </div>`;
+  const html = r.attendance.map((a, i) => `
+    <div class="mem-row" style="${a.ochi ? 'opacity:0.55;' : ''}">
+      <div class="mem-name">${a.name}${a.ochi ? ' <span style="font-size:11px;color:#bf360c;">（落ち済み）</span>' : ''}</div>
+      <button class="toggle-btn ${a.present ? '' : 'on-paid'}" onclick="toggleAtt(${i},'present')">
+        ${a.present ? '欠席' : '出席'}
+      </button>
+      <button class="toggle-btn ${a.ochi ? 'on-ochi' : ''}" onclick="toggleAtt(${i},'ochi')">
+        ${a.ochi ? '落●' : '落'}
+      </button>
+    </div>
+  `).join('');
+  document.getElementById('memList').innerHTML = info + html;
+}
+
+function renderBids() {
+  const r = round();
+  const ochiCount = r.attendance.filter(a => a.ochi).length;
+  const expectedSlots = Math.max(1, app.members.length - ochiCount);
+  // bids 配列を slots に合わせて拡張
+  while (r.bids.length < expectedSlots) {
+    r.bids.push({ card:'', caller:'', call1:'', call2:'', opener:'', prevKetsu:'', open:'', openResult:'', card2:'', result:'' });
+  }
+  const slots = Math.min(expectedSlots, r.bids.length);
+
+  // 落ち済みを除いた選択肢
+  const activeMembers = app.members.filter(m => {
+    const att = r.attendance.find(a => a.name === m);
+    return !(att && att.ochi);
+  });
+  const memOpts = ['<option value=""></option>', ...activeMembers.map(m => `<option value="${m}">${m}</option>`)].join('');
+
+  // 結果マップ（開き側で確定した結果を、その人物の名前に紐付ける）
+  const resultByName = {};
+  r.bids.slice(0, slots).forEach(b => {
+    if (b.opener && b.result) resultByName[b.opener] = b.result;
+  });
+  const taihouNames = Object.keys(resultByName).filter(n => resultByName[n] === '大砲');
+  const ketsuNames  = Object.keys(resultByName).filter(n => resultByName[n] === 'ケツ');
+  const ochiNames   = Object.keys(resultByName).filter(n => resultByName[n] === '落ち');
+
+  const badgeOf = (name, side) => {
+    const res = resultByName[name];
+    if (!res) return '';
+    const col = res === '大砲' ? '#bf360c' : res === 'ケツ' ? '#1565c0' : '#e65100';
+    // 叫び側で、すでに大砲済みの人にはハッキリと「大砲済(再発なし)」を表示
+    const label = (side === 'caller' && res === '大砲') ? '🚫大砲済(再発なし)' : res;
+    return ` <span style="background:${col};color:white;padding:2px 8px;border-radius:10px;font-size:11px;font-weight:700;margin-left:6px;white-space:nowrap;">${label}</span>`;
+  };
+  const bgOfName = (name) => {
+    const res = resultByName[name];
+    return res === '大砲' ? '#fffae0' : res === 'ケツ' ? '#f0f7ff' : res === '落ち' ? '#fff8f0' : '';
+  };
+
+  // ===== サマリー =====
+  const sumPill = (label, names, color) => `
+    <div style="background:${color};color:white;padding:8px 12px;border-radius:20px;font-size:13px;font-weight:700;display:inline-flex;align-items:center;gap:6px;margin:4px;">
+      <span>${label}</span>
+      <span style="background:white;color:${color};padding:2px 8px;border-radius:10px;">
+        ${names.length ? names.join('・') : '—'}
+      </span>
+    </div>`;
+  const summaryHtml = `<div class="card" style="text-align:center;">
+    <div class="card-h">🎯 結果サマリー</div>
+    ${sumPill('大砲', taihouNames, '#bf360c')}
+    ${sumPill('ケツ', ketsuNames, '#1565c0')}
+    ${sumPill('落ち', ochiNames, '#e65100')}
+    <div style="margin-top:10px;">
+      <div style="font-size:11px; color:#0d1b3e; background:#e8f4f8; padding:6px 10px; border-radius:6px; display:inline-block; font-weight:700;">
+        ✨ 入力のたびに自動判定中
+      </div>
+      <div style="font-size:11px; color:#666; margin-top:6px;">
+        落ち=開結果が最大（同点なら先開き）<br>
+        大砲=2番目に高い人（同点なら先開き）<br>
+        ケツ=開結果が最少（同じ数字なら全員）<br>
+        ※落ち・大砲は完全除外／ケツは配当対象外だが人数1回分としてカウント
+      </div>
+      <div style="margin-top:10px;">
+        <button onclick="autoDetectResults()" style="background:#bf360c; color:white; border:none; padding:8px 14px; border-radius:8px; font-size:12px; font-weight:700; cursor:pointer;">
+          ✅ 確定（落ち者を次回除外）
+        </button>
+      </div>
+    </div>
+  </div>`;
+
+  // ===== 叫び側 (じゃんけん順) =====
+  let callerHtml = `<div class="card" style="border-left:5px solid #bf360c;">
+    <div class="card-h" style="color:#bf360c; font-size:14px;">📢 叫び側（じゃんけん順／一人2回まで）</div>`;
+  for (let i = 0; i < slots; i++) {
+    const b = r.bids[i];
+    const cBg = bgOfName(b.caller);
+    callerHtml += `
+    <div style="padding:10px 8px; border-bottom:1px solid #eee; ${cBg ? 'background:'+cBg+';' : ''}">
+      <div style="display:flex; align-items:center; gap:8px; margin-bottom:8px;">
+        <span style="background:#bf360c; color:white; padding:4px 10px; border-radius:6px; font-size:13px; font-weight:700; min-width:64px; text-align:center;">叫 No.${i+1}</span>
+        <select class="bid-select" data-bid="${i}" data-f="caller" onchange="onBidChange(this)" style="flex:1; border-color:#bf360c;">
+          ${memOpts.replace(`value="${esc(b.caller||'')}"`, `value="${esc(b.caller||'')}" selected`)}
+        </select>
+        ${b.caller ? badgeOf(b.caller, 'caller') : ''}
+      </div>
+      <div style="display:grid; grid-template-columns:1fr 1fr 1fr; gap:8px;">
+        <div>
+          <div style="font-size:11px; color:#666; margin-bottom:2px;">カード</div>
+          <select class="bid-select" data-bid="${i}" data-f="card" onchange="onBidChange(this)">
+            ${CARD_OPTIONS.map(c=>`<option value="${c}"${b.card==c?' selected':''}>${c||'—'}</option>`).join('')}
+          </select>
+        </div>
+        <div>
+          <div style="font-size:11px; color:#666; margin-bottom:2px;">叫1</div>
+          <select class="bid-select" data-bid="${i}" data-f="call1" onchange="onBidChange(this)">
+            ${CALL_OPTIONS.map(c=>`<option value="${c}"${String(b.call1)===String(c)?' selected':''}>${c===''?'—':c}</option>`).join('')}
+          </select>
+        </div>
+        <div>
+          <div style="font-size:11px; color:#666; margin-bottom:2px;">叫2</div>
+          <select class="bid-select" data-bid="${i}" data-f="call2" onchange="onBidChange(this)">
+            ${CALL_OPTIONS.map(c=>`<option value="${c}"${String(b.call2)===String(c)?' selected':''}>${c===''?'—':c}</option>`).join('')}
+          </select>
+        </div>
+      </div>
+    </div>`;
+  }
+  callerHtml += '</div>';
+
+  // 叫び側を名前で索引（開き側で叫合計を表示するため）
+  const callerByName = {};
+  r.bids.forEach(cb => {
+    if (cb.caller) {
+      callerByName[cb.caller] = { call1: +cb.call1 || 0, call2: +cb.call2 || 0 };
+    }
+  });
+  const prevTaihouName = getPrevTaihouName();
+
+  // ===== 開き側 (札を開く順) =====
+  let openerHtml = `<div class="card" style="border-left:5px solid #1b5e20;">
+    <div class="card-h" style="color:#1b5e20; font-size:14px;">🃏 開き側（代表が札を1枚ずつ開く順）</div>`;
+  if (prevTaihouName) {
+    openerHtml += `<div style="background:#fff3e0; color:#e65100; padding:8px 12px; border-radius:6px; margin-bottom:10px; font-size:12px; font-weight:700;">🎯 前月の大砲: <strong>${esc(prevTaihouName)}</strong> さん（今月の開結果に +¥3,000 自動加算）</div>`;
+  }
+  for (let i = 0; i < slots; i++) {
+    const b = r.bids[i];
+    const sum = (b.openResult !== '' && b.openResult !== undefined && b.openResult !== null)
+      ? (b.card2 ? (+b.openResult + +b.card2) : +b.openResult)
+      : '';
+    const bg = b.result === '大砲' ? '#fffae0' : b.result === 'ケツ' ? '#f0f7ff' : b.result === '落ち' ? '#fff8f0' : '';
+    const cInfo = b.opener ? (callerByName[b.opener] || { call1: 0, call2: 0 }) : { call1: 0, call2: 0 };
+    const callSum = cInfo.call1 + cInfo.call2;
+    const isPrevTaihou = prevTaihouName && b.opener === prevTaihouName;
+    openerHtml += `
+    <div style="padding:10px 8px; border-bottom:1px solid #eee; ${bg ? 'background:'+bg+';' : ''}">
+      <div style="display:flex; align-items:center; gap:8px; margin-bottom:8px;">
+        <span style="background:#1b5e20; color:white; padding:4px 10px; border-radius:6px; font-size:13px; font-weight:700; min-width:64px; text-align:center;">開 No.${i+1}</span>
+        <select class="bid-select" data-bid="${i}" data-f="opener" onchange="onBidChange(this)" style="flex:1; border-color:#1b5e20;">
+          ${memOpts.replace(`value="${esc(b.opener||'')}"`, `value="${esc(b.opener||'')}" selected`)}
+        </select>
+        ${b.opener ? badgeOf(b.opener, 'opener') : ''}
+      </div>
+      <div style="display:flex; gap:6px; margin-bottom:6px; flex-wrap:wrap; font-size:12px;">
+        <div style="background:#fff3e0; color:#bf360c; padding:4px 10px; border-radius:6px; font-weight:700;">
+          📢 叫1+叫2 = <strong>¥${callSum.toLocaleString()}</strong>
+        </div>
+        ${isPrevTaihou ? `<div style="background:#e65100; color:white; padding:4px 10px; border-radius:6px; font-weight:700;">🎯 前月大砲 +¥3,000</div>` : ''}
+      </div>
+      <div style="display:grid; grid-template-columns:1fr 1fr 1fr 1fr; gap:6px; margin-bottom:8px;">
+        <div>
+          <div style="font-size:11px; color:#666; margin-bottom:2px;">前ケツ</div>
+          <select class="bid-select" data-bid="${i}" data-f="prevKetsu" onchange="onBidChange(this)" style="padding:8px 4px;">
+            <option value="">—</option><option value="100"${b.prevKetsu==100?' selected':''}>100</option>
+          </select>
+        </div>
+        <div>
+          <div style="font-size:11px; color:#666; margin-bottom:2px;">開き</div>
+          <select class="bid-select" data-bid="${i}" data-f="open" onchange="onBidChange(this)" style="padding:8px 4px;">
+            ${CALL_OPTIONS.map(c=>`<option value="${c}"${String(b.open)===String(c)?' selected':''}>${c===''?'—':c}</option>`).join('')}
+          </select>
+        </div>
+        <div>
+          <div style="font-size:11px; color:#666; margin-bottom:2px;">開結果（自動）</div>
+          <div style="padding:8px 4px; background:#f7f9fc; border:1px solid #ddd; border-radius:6px; text-align:center; font-weight:700; color:#0d1b3e; font-size:15px; min-height:36px;">
+            ${(b.openResult !== '' && b.openResult !== undefined && b.openResult !== null) ? (+b.openResult).toLocaleString() : '—'}
+          </div>
+        </div>
+        <div>
+          <div style="font-size:11px; color:#666; margin-bottom:2px;">カード</div>
+          <select class="bid-select" data-bid="${i}" data-f="card2" onchange="onBidChange(this)" style="padding:8px 4px;">
+            <option value="">—</option>
+            <option value="50"${b.card2==50?' selected':''}>50</option>
+            <option value="100"${b.card2==100?' selected':''}>100</option>
+          </select>
+        </div>
+      </div>
+      <div class="result-btns">
+        <button class="result-btn taihou ${b.result==='大砲'?'active':''}" onclick="setResult(${i},'大砲')">大砲</button>
+        <button class="result-btn ketsu ${b.result==='ケツ'?'active':''}" onclick="setResult(${i},'ケツ')">ケツ</button>
+        <button class="result-btn ochi ${b.result==='落ち'?'active':''}" onclick="setResult(${i},'落ち')">落ち</button>
+        <button class="result-btn ${b.result===''?'active':''}" style="${b.result===''?'background:#999;color:white;border-color:#999;':''}" onclick="setResult(${i},'')">−</button>
+      </div>
+    </div>`;
+  }
+  openerHtml += '</div>';
+
+  document.getElementById('bidList').innerHTML = summaryHtml + callerHtml + openerHtml;
+}
+
+function renderCalc() {
+  const r = round();
+  const c = r.calc;
+  const paidCount = r.attendance.length;
+  const pool = app.kaihi * paidCount;
+
+  // 配当・ケツ・大砲 単価 = 開結果の最大値を自動反映
+  let maxOpenResult = 0;
+  r.bids.forEach(b => {
+    if (b.opener && b.openResult !== '' && +b.openResult > maxOpenResult) maxOpenResult = +b.openResult;
+  });
+  if (maxOpenResult > 0) {
+    c.haitouUnit = maxOpenResult;
+    c.ketsuUnit  = maxOpenResult;
+    c.taihouUnit = maxOpenResult;
+  }
+
+  // 落ち = 完全除外（配当にも人数にもカウントしない）
+  const ochiNames = new Set();
+  r.bids.forEach(b => {
+    if (b.result === '落ち' && b.opener) ochiNames.add(b.opener);
+  });
+  // 大砲 = 配当対象外、人数は1回分のみ（一人が2回叫んでも1人分）
+  const taihouNames = new Set();
+  r.bids.forEach(b => {
+    if (b.result === '大砲' && b.opener) taihouNames.add(b.opener);
+  });
+  // ケツ = 配当対象外、人数は1回分のみ
+  const ketsuNamesSet = new Set();
+  r.bids.forEach(b => {
+    if (b.result === 'ケツ' && b.opener) ketsuNamesSet.add(b.opener);
+  });
+
+  // 配当(normal): 落ち・大砲・ケツに該当しない叫びをカウント（同名2回は2人分）
+  let autoNormal = 0;
+  const autoKetsu = ketsuNamesSet.size;
+  const autoTaihou = taihouNames.size;
+  r.bids.forEach(b => {
+    if (!b.caller) return;
+    if (ochiNames.has(b.caller)) return;
+    if (taihouNames.has(b.caller)) return;
+    if (ketsuNamesSet.has(b.caller)) return;
+    autoNormal++;
+  });
+  // 大砲も配当計算上は同じ単価×人数なのでケツ枠に合算
+  const ketsuPlusCount = autoKetsu + autoTaihou;
+  const normalCount = c.normalCount !== undefined ? c.normalCount : autoNormal;
+  const ketsuCount  = c.ketsuCount  !== undefined ? c.ketsuCount  : ketsuPlusCount;
+
+  const haitouNormal = c.haitouUnit * normalCount;
+  const haitouKetsu = c.ketsuUnit * ketsuCount;
+  const totalExpense = haitouNormal + haitouKetsu + c.taihou + c.amida + c.ryouridai + c.tsumitatekin;
+  const payout = pool - totalExpense;
+
+  // 配当に含まれる叫び者リスト（重複あり）
+  const normalCallers = [];
+  r.bids.forEach(b => {
+    if (!b.caller) return;
+    if (ochiNames.has(b.caller)) return;
+    if (taihouNames.has(b.caller)) return;
+    if (ketsuNamesSet.has(b.caller)) return;
+    normalCallers.push(b.caller);
+  });
+
+  document.getElementById('calcBody').innerHTML = `
+    <div style="background:#f7f9fc; padding:10px; border-radius:6px; margin-bottom:10px; font-size:12px;">
+      <div style="font-weight:700; color:#0d1b3e; margin-bottom:6px;">📋 配当の内訳</div>
+      <div style="margin-bottom:4px;">
+        <span style="color:#0d1b3e;">配当対象 (${normalCallers.length}人):</span>
+        <strong>${normalCallers.length ? normalCallers.join('・') : '—'}</strong>
+      </div>
+      <div style="margin-bottom:4px;">
+        <span style="color:#e65100;">落ち (除外):</span>
+        <strong>${[...ochiNames].join('・') || '—'}</strong>
+      </div>
+      <div style="margin-bottom:4px;">
+        <span style="color:#bf360c;">大砲 (1人分):</span>
+        <strong>${[...taihouNames].join('・') || '—'}</strong>
+      </div>
+      <div>
+        <span style="color:#1565c0;">ケツ (1人分):</span>
+        <strong>${[...ketsuNamesSet].join('・') || '—'}</strong>
+      </div>
+    </div>
+    <div class="calc-line">
+      <span class="calc-label" style="min-width:60px;">配当</span>
+      <span class="calc-mini" style="background:#f7f9fc; border:1px solid #ddd; border-radius:4px; padding:6px; font-weight:700; color:#0d1b3e; text-align:center; min-width:50px;">${c.haitouUnit}</span>
+      <span style="font-size:10px; color:#888;">(自動)</span>
+      <span>×</span>
+      <input class="calc-mini" type="number" min="0" value="${normalCount}" onchange="round().calc.normalCount=+this.value; renderCalc();">
+      <span>人 =</span>
+      <span class="calc-val" style="flex:1;">${haitouNormal.toLocaleString()}</span>
+    </div>
+    <div class="calc-line">
+      <span class="calc-label" style="min-width:60px;">ケツ</span>
+      <span class="calc-mini" style="background:#f7f9fc; border:1px solid #ddd; border-radius:4px; padding:6px; font-weight:700; color:#0d1b3e; text-align:center; min-width:50px;">${c.ketsuUnit}</span>
+      <span style="font-size:10px; color:#888;">(自動)</span>
+      <span>×</span>
+      <input class="calc-mini" type="number" min="0" value="${ketsuCount}" onchange="round().calc.ketsuCount=+this.value; renderCalc();">
+      <span>人 =</span>
+      <span class="calc-val" style="flex:1;">${haitouKetsu.toLocaleString()}</span>
+    </div>
+    <div class="calc-row">
+      <span class="calc-label">大砲</span>
+      <input class="calc-input" type="number" value="${c.taihou}" onchange="round().calc.taihou=+this.value; renderCalc();">
+    </div>
+    <div class="calc-row">
+      <span class="calc-label">あみだ</span>
+      <input class="calc-input" type="number" value="${c.amida}" onchange="round().calc.amida=+this.value; renderCalc();">
+    </div>
+    <div class="calc-row">
+      <span class="calc-label">料理代</span>
+      <input class="calc-input" type="number" value="${c.ryouridai}" onchange="round().calc.ryouridai=+this.value; renderCalc();">
+    </div>
+    <div class="calc-row">
+      <span class="calc-label">積立金</span>
+      <input class="calc-input" type="number" value="${c.tsumitatekin}" onchange="round().calc.tsumitatekin=+this.value; renderCalc();">
+    </div>
+    <div class="calc-row" style="border-top:2px solid #0d1b3e; padding-top:12px; margin-top:6px;">
+      <span class="calc-label" style="font-weight:700;">合計</span>
+      <span class="calc-val" style="font-size:18px; color:#c0392b;">${totalExpense.toLocaleString()}</span>
+    </div>
+  `;
+
+  document.getElementById('finalBox').innerHTML = `
+    <div class="final-card">
+      <div class="final-formula">
+        ${pool.toLocaleString()} − ${totalExpense.toLocaleString()} =
+      </div>
+      <div class="final-payout">${payout.toLocaleString()} 円</div>
+    </div>
+  `;
+}
+
+function renderMembers() {
+  document.getElementById('memberList').innerHTML = app.members.map((m, i) => `
+    <span class="mem-tag">${m}<span class="del" onclick="removeMember(${i})">×</span></span>
+  `).join('');
+}
+
+// ============================================================
+// EVENT
+// ============================================================
+// 純粋にルールを適用するだけ（描画/保存/トーストなし）
+function applyResultRules() {
+  const r = round();
+  const ochiCount = r.attendance.filter(a => a.ochi).length;
+  const expectedSlots = Math.max(1, app.members.length - ochiCount);
+  const slots = Math.min(expectedSlots, r.bids.length);
+  const valid = r.bids.slice(0, slots);
+
+  // 必ずリセットして自動判定を優先
+  valid.forEach(b => { b.result = ''; b.manualResult = false; });
+
+  // 落ち: 開結果が最大の人（同点なら先開き＝No.若い方）
+  let ochiIdx = -1, maxRes = -Infinity;
+  valid.forEach((b, i) => {
+    if (b.opener && b.openResult !== '' && b.openResult !== null && b.openResult !== undefined && +b.openResult > maxRes) {
+      maxRes = +b.openResult; ochiIdx = i;
+    }
+  });
+
+  // ケツ: 開結果が最小の人（同点なら全員、落ちは除く）
+  let minRes = Infinity;
+  valid.forEach((b, i) => {
+    if (i === ochiIdx) return;
+    if (b.opener && b.openResult !== '' && b.openResult !== null && b.openResult !== undefined && +b.openResult < minRes) {
+      minRes = +b.openResult;
+    }
+  });
+  const ketsuIdxs = [];
+  valid.forEach((b, i) => {
+    if (i === ochiIdx) return;
+    if (b.opener && b.openResult !== '' && b.openResult !== null && b.openResult !== undefined && +b.openResult === minRes) {
+      ketsuIdxs.push(i);
+    }
+  });
+
+  // 大砲: 開結果が2番目に大きい人（同点なら先開き＝No.若い方、落ち・ケツ・欠席を除く）
+  let taihouIdx = -1, taihouRes = -Infinity;
+  valid.forEach((b, i) => {
+    if (i === ochiIdx || ketsuIdxs.includes(i)) return;
+    // 欠席者(出席タブで欠席状態の人)は大砲対象外
+    const att = r.attendance.find(a => a.name === b.opener);
+    if (att && att.present) return; // present===true は「欠席」表示
+    if (b.opener && b.openResult !== '' && b.openResult !== null && b.openResult !== undefined && +b.openResult > taihouRes) {
+      taihouRes = +b.openResult; taihouIdx = i;
+    }
+  });
+
+  // ラベル付け
+  if (ochiIdx >= 0) valid[ochiIdx].result = '落ち';
+  if (taihouIdx >= 0) valid[taihouIdx].result = '大砲';
+  ketsuIdxs.forEach(i => { valid[i].result = 'ケツ'; });
+}
+
+// ボタン用：ルール適用＋落ち者の ochi 伝播＋保存＋描画＋トースト
+function autoDetectResults() {
+  const r = round();
+  applyResultRules();
+  // 落ち判定者は以降の回の出席にも ochi=true で反映
+  r.bids.forEach(b => {
+    if (b.result === '落ち' && b.opener) {
+      const name = b.opener;
+      app.rounds.forEach(rd => {
+        const att = rd.attendance.find(a => a.name === name);
+        if (att) att.ochi = true;
+      });
+    }
+  });
+  saveAll();
+  render();
+  toast('結果を自動判定しました');
+}
+
+function getPrevTaihouName() {
+  if (curIdx <= 0) return null;
+  const prev = app.rounds[curIdx - 1];
+  if (!prev) return null;
+  const tb = prev.bids.find(b => b.result === '大砲');
+  return tb ? tb.opener : null;
+}
+
+function recalcOpenResults() {
+  const r = round();
+  const prevTaihouName = getPrevTaihouName();
+  // 叫び側の情報を名前ごとにマップ
+  const callerByName = {};
+  r.bids.forEach(cb => {
+    if (cb.caller) {
+      callerByName[cb.caller] = {
+        call1: +cb.call1 || 0,
+        call2: +cb.call2 || 0,
+      };
+    }
+  });
+  // 開き側の openResult = 叫1+叫2 + 前ケツ + 開き + カード + 前月大砲ボーナス(3000)
+  r.bids.forEach(b => {
+    if (b.opener) {
+      const c = callerByName[b.opener] || { call1: 0, call2: 0 };
+      const pk = +b.prevKetsu || 0;
+      const op = +b.open || 0;
+      const cd = +b.card2 || 0;
+      const taihouBonus = (prevTaihouName && b.opener === prevTaihouName) ? 3000 : 0;
+      b.openResult = c.call1 + c.call2 + pk + op + cd + taihouBonus;
+    }
+  });
+}
+
+function syncOchiFromResults() {
+  // 自動で「落ち済み」にしない（手動操作のみ）
+  return;
+}
+
+function onBidChange(el) {
+  const i = +el.dataset.bid;
+  const f = el.dataset.f;
+  const r = round();
+  if (el.type === 'number') {
+    r.bids[i][f] = el.value === '' ? '' : +el.value;
+  } else {
+    r.bids[i][f] = el.value;
+  }
+  recalcOpenResults();
+  applyResultRules(); // 入力のたびに自動判定
+  syncOchiFromResults(); // 落ち・大砲を出席タブのochiに自動反映
+  renderBids();
+  renderCalc();
+  renderAttendance();
+}
+
+function setResult(i, val) {
+  // 手動ボタンを押しても、自動判定が再走するので結局自動結果が優先される
+  round().bids[i].result = val;
+  applyResultRules(); // 即時自動再判定
+  syncOchiFromResults();
+  renderBids();
+  renderCalc();
+  renderAttendance();
+}
+
+function toggleAtt(i, field) {
+  const r = round();
+  r.attendance[i][field] = !r.attendance[i][field];
+  if (field === 'ochi') {
+    const newVal = r.attendance[i][field];
+    const name = r.attendance[i].name;
+    app.rounds.forEach(rd => {
+      const att = rd.attendance.find(a => a.name === name);
+      if (att) att.ochi = newVal;
+    });
+  }
+  saveAll();
+  render();
+}
+
+function updateRoundMeta() {
+  const r = round();
+  r.year  = +document.getElementById('editYear').value  || r.year;
+  r.month = +document.getElementById('editMonth').value || r.month;
+  r.num   = +document.getElementById('editNum').value   || r.num;
+}
+
+function navRound(dir) {
+  const len = app.rounds.length;
+  curIdx = (curIdx + dir + len) % len;
+  render();
+}
+
+function addNewRound() {
+  const prev = round();
+  const nr = createEmptyRound(app.members);
+  if (prev.num >= 12) {
+    nr.num = 1;
+    nr.month = prev.month >= 12 ? 1 : prev.month + 1;
+    nr.year = prev.month >= 12 ? prev.year + 1 : prev.year;
+  } else {
+    nr.num = prev.num + 1;
+    nr.month = prev.month >= 12 ? 1 : prev.month + 1;
+    nr.year = prev.month >= 12 ? prev.year + 1 : prev.year;
+  }
+  nr.calc = { ...prev.calc };
+  nr.attendance.forEach(a => {
+    const anyOchi = app.rounds.some(rd => rd.attendance.find(pa => pa.name === a.name && pa.ochi));
+    a.ochi = anyOchi;
+  });
+  app.rounds.push(nr);
+  curIdx = app.rounds.length - 1;
+  saveAll();
+  render();
+  toast('新規回を追加しました');
+}
+
+function deleteRound() {
+  if (app.rounds.length <= 1) { toast('最後の回は削除不可'); return; }
+  if (!confirm(round().year+'年'+round().month+'月 '+round().num+'回目を削除しますか？')) return;
+  app.rounds.splice(curIdx, 1);
+  if (curIdx >= app.rounds.length) curIdx = app.rounds.length - 1;
+  render();
+  saveAll();
+}
+
+function addMember() {
+  const input = document.getElementById('newMemberInput');
+  const name = input.value.trim();
+  if (!name) return;
+  if (app.members.includes(name)) { toast('既に登録されています'); return; }
+  app.members.push(name);
+  app.rounds.forEach(r => {
+    r.attendance.push({ name, paid: false, present: false, ochi: false });
+    r.bids.push({ card:'', caller:'', call1:'', call2:'', opener:'', prevKetsu:'', open:'', openResult:'', card2:'', result:'' });
+  });
+  input.value = '';
+  render();
+  toast(name + ' を追加しました');
+}
+
+function removeMember(idx) {
+  const name = app.members[idx];
+  if (!confirm(name + ' を削除しますか？')) return;
+  app.members.splice(idx, 1);
+  app.rounds.forEach(r => {
+    r.attendance = r.attendance.filter(a => a.name !== name);
+    if (r.bids.length > app.members.length) r.bids.pop();
+  });
+  render();
+}
+
+function onKaihiChange() {
+  app.kaihi = +document.getElementById('kaihiInput').value || 0;
+  renderCalc();
+}
+
+function esc(s) { return String(s||'').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'})[c]); }
+
+function toast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), 1500);
+}
+
+// ============================================================
+// INIT
+// ============================================================
+// ============================================================
+// クラウド同期
+// ============================================================
+const SYNC_URL = 'https://script.google.com/macros/s/AKfycbxwL19mAenATUMILRsQYrDL0ThjU2C583Cj729OfzNHEH3drMcZCExYULRp4VGOZ11J/exec';
+
+async function syncUpload() {
+  if (!SYNC_URL) { toast('同期URLが未設定です'); return; }
+  app.curIdx = curIdx;
+  toast('アップロード中...');
+  try {
+    const res = await fetch(SYNC_URL + '?action=save&key=rakuseikai_data', {
+      method: 'POST',
+      body: JSON.stringify(app)
+    });
+    const json = await res.json();
+    if (json.success) toast('クラウドに保存しました');
+    else toast('エラー: ' + json.message);
+  } catch(e) { toast('通信エラー: ' + e.message); }
+}
+
+async function syncDownload() {
+  if (!SYNC_URL) { toast('同期URLが未設定です'); return; }
+  toast('ダウンロード中...');
+  try {
+    const res = await fetch(SYNC_URL + '?action=load&key=rakuseikai_data');
+    const json = await res.json();
+    if (json.success && json.data) {
+      app = json.data;
+      curIdx = app.curIdx || 0;
+      saveAll();
+      render();
+      toast('クラウドから読み込みました');
+    } else toast('クラウドにデータがありません');
+  } catch(e) { toast('通信エラー: ' + e.message); }
+}
+
+loadApp();
+render();
+</script>
+</body>
+</html>
