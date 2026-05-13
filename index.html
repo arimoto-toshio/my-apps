@@ -535,8 +535,7 @@ function renderBids() {
   // ===== 開き側 (札を開く順) =====
   let openerHtml = `<div class="card" style="border-left:5px solid #1b5e20;">
     <div class="card-h" style="color:#1b5e20; font-size:14px;">🃏 開き側（代表が札を1枚ずつ開く順）</div>`;
-  if (prevTaihouName) {
-    openerHtml += `<div style="background:#fff3e0; color:#e65100; padding:8px 12px; border-radius:6px; margin-bottom:10px; font-size:12px; font-weight:700;">🎯 前月の大砲: <strong>${esc(prevTaihouName)}</strong> さん（今月の開結果に +¥3,000 自動加算）</div>`;
+  if (false) {
   }
   for (let i = 0; i < slots; i++) {
     const b = r.bids[i];
@@ -546,7 +545,7 @@ function renderBids() {
     const bg = b.result === '大砲' ? '#fffae0' : b.result === 'ケツ' ? '#f0f7ff' : b.result === '落ち' ? '#fff8f0' : '';
     const cInfo = b.opener ? (callerByName[b.opener] || { call1: 0, call2: 0 }) : { call1: 0, call2: 0 };
     const callSum = cInfo.call1 + cInfo.call2;
-    const isPrevTaihou = prevTaihouName && b.opener === prevTaihouName;
+    const isPrevTaihou = false;
     openerHtml += `
     <div style="padding:10px 8px; border-bottom:1px solid #eee; ${bg ? 'background:'+bg+';' : ''}">
       <div style="display:flex; align-items:center; gap:8px; margin-bottom:8px;">
@@ -846,8 +845,7 @@ function recalcOpenResults() {
       const pk = +b.prevKetsu || 0;
       const op = +b.open || 0;
       const cd = +b.card2 || 0;
-      const taihouBonus = (prevTaihouName && b.opener === prevTaihouName) ? 3000 : 0;
-      b.openResult = c.call1 + c.call2 + pk + op + cd + taihouBonus;
+      b.openResult = c.call1 + c.call2 + pk + op + cd;
     }
   });
 }
