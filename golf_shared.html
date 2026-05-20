@@ -121,6 +121,17 @@
     <input type="text" id="baseName" placeholder="あなたの名前" oninput="updateBaseName(this.value)" style="flex:1;">
     <button onclick="resetMembers()" style="background:rgba(255,255,255,0.25);border:1px solid rgba(255,255,255,0.5);color:white;padding:6px 10px;border-radius:6px;font-size:12px;font-weight:700;">初期化</button>
   </div>
+  <!-- 試合ナビ -->
+  <div style="display:flex;align-items:center;gap:8px;margin-top:10px;background:rgba(0,0,0,0.2);padding:8px;border-radius:8px;">
+    <button onclick="navGame(-1)" style="background:rgba(255,255,255,0.15);border:1px solid rgba(255,255,255,0.3);color:white;padding:8px 12px;border-radius:6px;cursor:pointer;font-size:14px;font-weight:700;">◀</button>
+    <div style="flex:1;display:flex;align-items:center;justify-content:center;gap:4px;font-size:13px;color:white;">
+      <input id="navYear" type="number" onchange="updateGameMeta()" style="width:60px;background:rgba(255,255,255,0.2);border:1px solid rgba(255,255,255,0.4);color:white;padding:5px;border-radius:5px;text-align:center;font-size:14px;font-weight:700;">年
+      <input id="navMonth" type="number" min="1" max="12" onchange="updateGameMeta()" style="width:42px;background:rgba(255,255,255,0.2);border:1px solid rgba(255,255,255,0.4);color:white;padding:5px;border-radius:5px;text-align:center;font-size:14px;font-weight:700;">月
+      <input id="navNum" type="number" min="1" onchange="updateGameMeta()" style="width:42px;background:rgba(255,255,255,0.2);border:1px solid rgba(255,255,255,0.4);color:white;padding:5px;border-radius:5px;text-align:center;font-size:14px;font-weight:700;">回
+    </div>
+    <button onclick="navGame(1)" style="background:rgba(255,255,255,0.15);border:1px solid rgba(255,255,255,0.3);color:white;padding:8px 12px;border-radius:6px;cursor:pointer;font-size:14px;font-weight:700;">▶</button>
+    <button onclick="deleteCurrentGame()" style="background:rgba(192,57,43,0.6);border:1px solid rgba(192,57,43,0.8);color:white;padding:8px 10px;border-radius:6px;cursor:pointer;font-size:12px;font-weight:700;" title="この試合を削除">🗑</button>
+  </div>
 </div>
 
 <div class="tabs">
@@ -239,21 +250,39 @@ function loadApp() {
       const d = JSON.parse(s);
       if (!d.members) d.members = defaultMembers();
       if (!d.baseName) d.baseName = '';
-      if (!d.current) d.current = newGameData();
-      if (!d.current.scores || typeof d.current.scores !== 'object') d.current.scores = {};
-      if (d.current.arimotoHandi == null) d.current.arimotoHandi = 18;
-      if (d.current.arimotoAm == null) d.current.arimotoAm = '';
-      if (d.current.arimotoPm == null) d.current.arimotoPm = '';
-      if (!d.current.date) d.current.date = new Date().toISOString().slice(0, 10);
-      if (d.current.memo == null) d.current.memo = '';
-      if (d.current.extraPrize == null) d.current.extraPrize = '';
-      if (d.current.extraUma == null) d.current.extraUma = '';
-      if (d.current.extraNigiri == null) d.current.extraNigiri = '';
+      if (!Array.isArray(d.games)) d.games = [];
+      if (d.current && d.games.length === 0) {
+        const today = new Date();
+        d.current.id = d.current.id || Date.now();
+        d.current.year = d.current.year || today.getFullYear();
+        d.current.month = d.current.month || (today.getMonth() + 1);
+        d.current.num = d.current.num || 1;
+        d.games.push(d.current);
+      }
+      if (d.games.length === 0) d.games.push(newGameData());
+      if (d.curIdx == null || d.curIdx < 0 || d.curIdx >= d.games.length) d.curIdx = 0;
+      d.games.forEach(g => {
+        if (g.id == null) g.id = Date.now() + Math.random();
+        if (!g.scores || typeof g.scores !== 'object') g.scores = {};
+        if (g.arimotoHandi == null) g.arimotoHandi = 18;
+        if (g.arimotoAm == null) g.arimotoAm = '';
+        if (g.arimotoPm == null) g.arimotoPm = '';
+        if (!g.date) g.date = new Date().toISOString().slice(0, 10);
+        if (g.memo == null) g.memo = '';
+        if (g.extraPrize == null) g.extraPrize = '';
+        if (g.extraUma == null) g.extraUma = '';
+        if (g.extraNigiri == null) g.extraNigiri = '';
+        if (g.year == null) g.year = new Date(g.date).getFullYear() || new Date().getFullYear();
+        if (g.month == null) g.month = (new Date(g.date).getMonth() + 1) || (new Date().getMonth() + 1);
+        if (g.num == null) g.num = 1;
+      });
       if (!d.history) d.history = [];
+      d.current = d.games[d.curIdx];
       return d;
     }
   } catch (e) {}
-  return { baseName: '', members: defaultMembers(), current: newGameData(), history: [] };
+  const ng = newGameData();
+  return { baseName: '', members: defaultMembers(), games: [ng], curIdx: 0, current: ng, history: [] };
 }
 
 function defaultMembers() {
@@ -261,14 +290,19 @@ function defaultMembers() {
   return [];
 }
 
-function newGameData() {
+function newGameData(year, month, num) {
+  const today = new Date();
   return {
-    date: new Date().toISOString().slice(0, 10),
+    id: Date.now() + Math.random(),
+    year: year != null ? year : today.getFullYear(),
+    month: month != null ? month : (today.getMonth() + 1),
+    num: num != null ? num : 1,
+    date: today.toISOString().slice(0, 10),
     memo: '',
     arimotoHandi: 18,
     arimotoAm: '',
     arimotoPm: '',
-    scores: {}, // { 名前: {am: '', pm: ''} }
+    scores: {},
     extraPrize: '',
     extraUma: '',
     extraNigiri: ''
@@ -293,6 +327,13 @@ function showPage(name) {
 // ========== RENDER ==========
 function render() {
   const c = app.current;
+  // ナビ欄
+  const ny = document.getElementById('navYear');
+  if (ny) {
+    ny.value = c.year;
+    document.getElementById('navMonth').value = c.month;
+    document.getElementById('navNum').value = c.num;
+  }
   document.getElementById('gameDate').value = c.date;
   document.getElementById('gameMemo').value = c.memo || '';
   document.getElementById('baseName').value = app.baseName || '';
@@ -510,15 +551,11 @@ function setVs(id, vs) {
 // 負け + 引分 → -500
 // 両方引分 → 0
 // 未入力含む → 0
+// ルール（午前・午後それぞれ500円独立）:
+// 勝ち → +500、負け → -500、引分/未入力 → 0
 function calcMoney(am, pm) {
-  if (!am || !pm) return 0;
-  const score = (v) => v === 'win' ? 1 : v === 'lose' ? -1 : 0;
-  const s = score(am) + score(pm);
-  if (s === 2) return 1000;
-  if (s === -2) return -1000;
-  if (s === 1) return 500;
-  if (s === -1) return -500;
-  return 0;
+  const score = (v) => v === 'win' ? 500 : v === 'lose' ? -500 : 0;
+  return score(am) + score(pm);
 }
 
 function setText(id, val) {
@@ -646,10 +683,50 @@ function deleteHistory(id) {
 }
 
 function newGame() {
-  if (!confirm('新規の試合を作成しますか？（現在の入力は保存されていれば履歴に残ります）')) return;
-  app.current = newGameData();
+  const cur = app.current;
+  const sameMonthCount = app.games.filter(g => g.year === cur.year && g.month === cur.month).length;
+  const ng = newGameData(cur.year, cur.month, sameMonthCount + 1);
+  app.games.push(ng);
+  app.curIdx = app.games.length - 1;
+  app.current = ng;
   save();
   render();
+  toast('新規試合を追加しました');
+}
+
+// ========== 試合ナビゲーション ==========
+function navGame(dir) {
+  if (!app.games.length) return;
+  app.curIdx = (app.curIdx + dir + app.games.length) % app.games.length;
+  app.current = app.games[app.curIdx];
+  save();
+  render();
+}
+
+function updateGameMeta() {
+  const y = parseInt(document.getElementById('navYear').value) || app.current.year;
+  const m = parseInt(document.getElementById('navMonth').value) || app.current.month;
+  const n = parseInt(document.getElementById('navNum').value) || app.current.num;
+  app.current.year = y;
+  app.current.month = m;
+  app.current.num = n;
+  const oldDate = app.current.date || new Date().toISOString().slice(0, 10);
+  const day = oldDate.split('-')[2] || '01';
+  app.current.date = `${y}-${String(m).padStart(2,'0')}-${day}`;
+  save();
+  render();
+}
+
+function deleteCurrentGame() {
+  if (app.games.length <= 1) { toast('最後の試合は削除できません'); return; }
+  const c = app.current;
+  if (!confirm(`${c.year}年${c.month}月 第${c.num}回 を削除しますか？`)) return;
+  app.games.splice(app.curIdx, 1);
+  if (app.curIdx >= app.games.length) app.curIdx = app.games.length - 1;
+  app.current = app.games[app.curIdx];
+  save();
+  render();
+  toast('試合を削除しました');
 }
 
 function toast(msg) {
