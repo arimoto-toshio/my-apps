@@ -132,7 +132,6 @@
 <div class="tabs">
   <div class="tab active" data-page="game" onclick="showPage('game')">⛳ スコア</div>
   <div class="tab" data-page="members" onclick="showPage('members')">👥 メンバー</div>
-  <div class="tab" data-page="history" onclick="showPage('history')">📋 履歴</div>
 </div>
 
 <!-- スコアページ -->
@@ -217,17 +216,8 @@
   </div>
 </div>
 
-<!-- 履歴ページ -->
-<div id="page-history" class="page hidden">
-  <div class="card">
-    <div class="card-h">📋 保存した試合</div>
-    <div id="historyList"></div>
-  </div>
-</div>
-
 <div class="footer">
-  <button class="btn btn-save" onclick="saveGame()">💾 保存</button>
-  <button class="btn btn-new" onclick="newGame()">＋ 新規試合</button>
+  <button class="btn btn-new" style="width:100%;" onclick="newGame()">＋ 新規試合</button>
 </div>
 
 <div class="toast" id="toast"></div>
@@ -288,14 +278,13 @@ function loadApp() {
         if (g.month == null) g.month = (new Date(g.date).getMonth() + 1) || (new Date().getMonth() + 1);
         if (g.num == null) g.num = 1;
       });
-      if (!d.history) d.history = [];
       // 互換のため current を curIdx と同期
       d.current = d.games[d.curIdx];
       return d;
     }
   } catch (e) {}
   const ng = newGameData();
-  return { members: defaultMembers(), games: [ng], curIdx: 0, current: ng, history: [] };
+  return { members: defaultMembers(), games: [ng], curIdx: 0, current: ng };
 }
 
 function defaultMembers() {
@@ -341,12 +330,11 @@ function save() {
 // ========== PAGE ==========
 function showPage(name) {
   document.querySelectorAll('.tab').forEach(t => t.classList.toggle('active', t.dataset.page === name));
-  ['game', 'members', 'history'].forEach(p => {
+  ['game', 'members'].forEach(p => {
     document.getElementById('page-' + p).classList.toggle('hidden', p !== name);
   });
   if (name === 'game') render();
   if (name === 'members') renderMembers();
-  if (name === 'history') renderHistory();
 }
 
 // ========== RENDER ==========
@@ -417,51 +405,6 @@ function renderMembers() {
       <button class="btn btn-del" onclick="removeMember(${i})">削除</button>
     </div>
   `).join('');
-}
-
-function renderHistory() {
-  const wrap = document.getElementById('historyList');
-  if (!app.history.length) {
-    wrap.innerHTML = '<div style="text-align:center;color:#aaa;padding:20px;">まだ保存されていません</div>';
-    return;
-  }
-  // 月毎にグループ化（新しい月が手前）
-  const sorted = app.history.slice().sort((a, b) => (b.date || '').localeCompare(a.date || ''));
-  const groups = {};
-  const order = [];
-  sorted.forEach(h => {
-    const key = (h.date || '').slice(0, 7) || '日付なし';
-    if (!groups[key]) { groups[key] = []; order.push(key); }
-    groups[key].push(h);
-  });
-  let html = '';
-  order.forEach(key => {
-    const items = groups[key];
-    const monthNet = items.reduce((s, x) => s + (x.totalNet || 0), 0);
-    const sign = monthNet >= 0 ? '+' : '-';
-    const color = monthNet > 0 ? '#1a7a3a' : monthNet < 0 ? '#c62828' : '#888';
-    const label = key === '日付なし' ? '日付なし' : key.replace('-', '年') + '月';
-    html += `<div class="month-header">
-      <span>${label}</span>
-      <span style="color:${color};">${sign}¥${Math.abs(monthNet).toLocaleString()}</span>
-    </div>`;
-    items.forEach(h => {
-      const net = h.totalNet || 0;
-      const s = net >= 0 ? '+' : '-';
-      const c = net > 0 ? '#1a7a3a' : net < 0 ? '#c62828' : '#888';
-      html += `<div class="history-item">
-        <div style="display:flex;justify-content:space-between;align-items:center;">
-          <div>
-            <div style="font-weight:700;">${esc(h.date)}</div>
-            ${h.memo ? `<div class="history-meta">${esc(h.memo)}</div>` : ''}
-          </div>
-          <div style="font-size:18px;font-weight:700;color:${c};">${s}¥${Math.abs(net).toLocaleString()}</div>
-          <button class="btn btn-del" style="margin-left:8px;" onclick="deleteHistory(${h.id})">削除</button>
-        </div>
-      </div>`;
-    });
-  });
-  wrap.innerHTML = html;
 }
 
 // ========== CALC ==========
@@ -637,47 +580,6 @@ function removeMember(i) {
   app.members.splice(i, 1);
   save();
   renderMembers();
-}
-
-function saveGame() {
-  const c = app.current;
-  recalc();
-  // 履歴用の合計を計算
-  let net = 0;
-  app.members.forEach(m => {
-    const sc = c.scores[m.name];
-    if (!sc) return;
-    const handi = +m.handi || 0;
-    const half = handi / 2;
-    const aHandi = +c.arimotoHandi || 0;
-    const aHalf = aHandi / 2;
-    if (c.arimotoAm === '' || c.arimotoPm === '' || sc.am === '' || sc.pm === '') return;
-    const amVs = compare(+c.arimotoAm - aHalf, +sc.am - half);
-    const pmVs = compare(+c.arimotoPm - aHalf, +sc.pm - half);
-    net += calcMoney(amVs, pmVs);
-  });
-  net += (+c.extraPrize || 0) + (+c.extraUma || 0) + (+c.extraNigiri || 0);
-
-  const snap = {
-    id: Date.now(),
-    date: c.date,
-    memo: c.memo,
-    totalNet: net,
-    savedAt: new Date().toISOString()
-  };
-  app.history.unshift(snap);
-  save();
-  toast('💾 保存しました');
-}
-
-function deleteHistory(id) {
-  const h = app.history.find(x => x.id === id);
-  if (!h) return;
-  if (!confirm(h.date + ' の履歴を削除しますか？')) return;
-  app.history = app.history.filter(x => x.id !== id);
-  save();
-  renderHistory();
-  toast('履歴を削除しました');
 }
 
 function newGame() {
