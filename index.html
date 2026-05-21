@@ -1077,8 +1077,16 @@ async function syncDownload() {
     if (typeof d === 'string') {
       try { d = JSON.parse(d); } catch(e) { toast('データ形式エラー'); return; }
     }
+    // ネスト形式に対応（d.data や d.value にラップされてる可能性）
+    if (d && !Array.isArray(d.rounds)) {
+      if (d.data && Array.isArray(d.data.rounds)) d = d.data;
+      else if (d.value && Array.isArray(d.value.rounds)) d = d.value;
+      else if (d.app && Array.isArray(d.app.rounds)) d = d.app;
+    }
     if (!d || typeof d !== 'object' || !Array.isArray(d.rounds) || d.rounds.length === 0) {
-      toast('クラウドデータが不正です');
+      // 不正なデータの構造をユーザーに見せる
+      const keys = d && typeof d === 'object' ? Object.keys(d).join(',') : typeof d;
+      toast('データ不正 keys=[' + keys + ']');
       return;
     }
     stage = 'normalize';
