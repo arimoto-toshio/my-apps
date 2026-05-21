@@ -840,9 +840,13 @@ function renderShare() {
   const paidCount = r.attendance.length;
   const pool = app.kaihi * paidCount;
 
-  const ochiList    = r.attendance.filter(a => a.ochi).map(a => a.name);
-  const presentList = r.attendance.filter(a => !a.ochi && a.present === false).map(a => a.name);
-  const absentList  = r.attendance.filter(a => !a.ochi && a.present === true).map(a => a.name);
+  // 入札で「落ち」になった人も除外（attendance.ochiが未同期でも対応）
+  const ochiInBids = new Set();
+  r.bids.forEach(b => { if (b.result === '落ち' && b.opener) ochiInBids.add(b.opener); });
+  const isOchi = (a) => a.ochi || ochiInBids.has(a.name);
+  const ochiList    = r.attendance.filter(a => isOchi(a)).map(a => a.name);
+  const presentList = r.attendance.filter(a => !isOchi(a) && a.present === false).map(a => a.name);
+  const absentList  = r.attendance.filter(a => !isOchi(a) && a.present === true).map(a => a.name);
 
   let maxOpenResult = 0;
   r.bids.forEach(b => {
