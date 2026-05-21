@@ -451,9 +451,19 @@ function renderBids() {
   const taihouNames = Object.keys(resultByName).filter(n => resultByName[n] === '大砲');
   const ketsuNames  = Object.keys(resultByName).filter(n => resultByName[n] === 'ケツ');
   const ochiNames   = Object.keys(resultByName).filter(n => resultByName[n] === '落ち');
-  // ケツから昇格した大砲は、ケツ表示にも含める
+  // 開結果が最小の人もケツ扱い（大砲昇格者も含めて）
+  let minOpenResForSummary = Infinity;
   r.bids.slice(0, slots).forEach(b => {
-    if (b.taihouFromKetsu && b.opener && !ketsuNames.includes(b.opener)) {
+    if (b.result === '落ち') return;
+    if (b.opener && b.openResult !== '' && b.openResult !== null && b.openResult !== undefined) {
+      if (+b.openResult < minOpenResForSummary) minOpenResForSummary = +b.openResult;
+    }
+  });
+  r.bids.slice(0, slots).forEach(b => {
+    if (b.result === '落ち') return;
+    if (!b.opener) return;
+    if (b.openResult === '' || b.openResult === null || b.openResult === undefined) return;
+    if (+b.openResult === minOpenResForSummary && !ketsuNames.includes(b.opener)) {
       ketsuNames.push(b.opener);
     }
   });
