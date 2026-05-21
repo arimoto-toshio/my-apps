@@ -201,6 +201,7 @@
   <div class="tab" data-page="bid" onclick="showPage('bid')">🃏 入札</div>
   <div class="tab" data-page="calc" onclick="showPage('calc')">💰 精算</div>
   <div class="tab" data-page="mem" onclick="showPage('mem')">👥 メンバー</div>
+  <div class="tab" data-page="share" onclick="showPage('share')">📤 共有</div>
 </div>
 
 <!-- 出席ページ -->
@@ -223,6 +224,15 @@
     <div id="calcBody"></div>
   </div>
   <div id="finalBox"></div>
+</div>
+
+<!-- 共有ページ -->
+<div id="page-share" class="page">
+  <div class="card">
+    <div class="card-h">📤 共有用サマリー（スクショ用）</div>
+    <div style="font-size:11px;color:#666;margin-bottom:8px;">下のカード部分をスクリーンショットして共有してください</div>
+    <div id="shareBody"></div>
+  </div>
 </div>
 
 <!-- メンバーページ -->
@@ -401,6 +411,7 @@ function render() {
   renderBids();
   renderCalc();
   renderMembers();
+  renderShare();
 }
 
 function renderAttendance() {
@@ -823,6 +834,161 @@ function renderMembers() {
   document.getElementById('memberList').innerHTML = app.members.map((m, i) => `
     <span class="mem-tag">${m}<span class="del" onclick="removeMember(${i})">×</span></span>
   `).join('');
+}
+
+function renderShare() {
+  const el = document.getElementById('shareBody');
+  if (!el) return;
+  const r = round();
+  const c = r.calc;
+  const paidCount = r.attendance.length;
+  const pool = app.kaihi * paidCount;
+
+  const ochiList    = r.attendance.filter(a => a.ochi).map(a => a.name);
+  const presentList = r.attendance.filter(a => !a.ochi && a.present === false).map(a => a.name);
+  const absentList  = r.attendance.filter(a => !a.ochi && a.present === true).map(a => a.name);
+
+  let maxOpenResult = 0;
+  r.bids.forEach(b => {
+    if (b.opener && b.openResult !== '' && +b.openResult > maxOpenResult) maxOpenResult = +b.openResult;
+  });
+  const haitouUnit = c.haitouUnit || maxOpenResult;
+  const ketsuUnit  = c.ketsuUnit  || maxOpenResult;
+
+  const ochiNames   = new Set();
+  const taihouNames = new Set();
+  const ketsuNamesSet = new Set();
+  r.bids.forEach(b => {
+    if (b.result === '落ち' && b.opener) ochiNames.add(b.opener);
+    if (b.result === '大砲' && b.opener) taihouNames.add(b.opener);
+    if (b.result === 'ケツ' && b.opener) ketsuNamesSet.add(b.opener);
+  });
+  let minOpenRes = Infinity;
+  r.bids.forEach(b => {
+    if (b.result === '落ち') return;
+    if (b.opener && b.openResult !== '' && b.openResult !== null && b.openResult !== undefined) {
+      if (+b.openResult < minOpenRes) minOpenRes = +b.openResult;
+    }
+  });
+  r.bids.forEach(b => {
+    if (b.result === '落ち') return;
+    if (!b.opener) return;
+    if (b.openResult === '' || b.openResult === null || b.openResult === undefined) return;
+    if (+b.openResult === minOpenRes) ketsuNamesSet.add(b.opener);
+  });
+
+  const callerOrOpenerNames = new Set();
+  r.bids.forEach(b => {
+    if (b.caller) callerOrOpenerNames.add(b.caller);
+    if (b.opener) callerOrOpenerNames.add(b.opener);
+  });
+  const absentForHaitou = new Set();
+  r.attendance.forEach(a => {
+    if (a.present && !a.ochi && !callerOrOpenerNames.has(a.name)) absentForHaitou.add(a.name);
+  });
+
+  let autoNormal = 0;
+  r.bids.forEach(b => {
+    if (!b.caller) return;
+    if (ochiNames.has(b.caller)) return;
+    if (ketsuNamesSet.has(b.caller)) return;
+    autoNormal++;
+  });
+  absentForHaitou.forEach(n => {
+    if (ochiNames.has(n)) return;
+    if (ketsuNamesSet.has(n)) return;
+    autoNormal++;
+  });
+  const normalCount = c.normalCount !== undefined ? c.normalCount : autoNormal;
+  const ketsuCount  = c.ketsuCount  !== undefined ? c.ketsuCount  : ketsuNamesSet.size;
+  const haitouNormal = haitouUnit * normalCount;
+  const haitouKetsu  = ketsuUnit  * ketsuCount;
+  const totalExpense = haitouNormal + haitouKetsu + (+c.taihou||0) + (+c.amida||0) + (+c.ryouridai||0) + (+c.tsumitatekin||0);
+  const payout = pool - totalExpense;
+
+  const normalCallers = [];
+  r.bids.forEach(b => {
+    if (!b.caller) return;
+    if (ochiNames.has(b.caller)) return;
+    if (ketsuNamesSet.has(b.caller)) return;
+    normalCallers.push(b.caller);
+  });
+  absentForHaitou.forEach(n => {
+    if (ochiNames.has(n)) return;
+    if (ketsuNamesSet.has(n)) return;
+    normalCallers.push(n + '(欠席)');
+  });
+
+  const ochiCount2 = r.attendance.filter(a => a.ochi).length;
+  const slots = Math.max(1, app.members.length - ochiCount2);
+  const bidRows = r.bids.slice(0, slots).map((b, i) => {
+    const calls = [b.call1, b.call2].filter(x => x !== '' && x != null).join('→') || '—';
+    const resColor = b.result === '大砲' ? '#bf360c' : b.result === 'ケツ' ? '#1565c0' : b.result === '落ち' ? '#e65100' : '#999';
+    const resBadge = b.result ? `<span style="background:${resColor};color:#fff;padding:1px 5px;border-radius:3px;font-size:10px;">${b.result}</span>` : '';
+    return `
+      <tr style="border-bottom:1px solid #eee;">
+        <td style="padding:3px 4px;font-size:11px;text-align:center;color:#666;">${i+1}</td>
+        <td style="padding:3px 4px;font-size:11px;">${b.caller || '—'}</td>
+        <td style="padding:3px 4px;font-size:11px;text-align:center;color:#555;">${calls}</td>
+        <td style="padding:3px 4px;font-size:11px;">${b.opener || '—'}</td>
+        <td style="padding:3px 4px;font-size:11px;text-align:right;font-weight:600;">${b.openResult !== '' && b.openResult != null ? b.openResult : '—'}</td>
+        <td style="padding:3px 4px;font-size:11px;text-align:center;">${resBadge}</td>
+      </tr>
+    `;
+  }).join('');
+
+  el.innerHTML = `
+    <div style="background:#fff;border:2px solid #0d1b3e;border-radius:8px;padding:12px;font-family:sans-serif;">
+      <div style="text-align:center;border-bottom:2px solid #0d1b3e;padding-bottom:6px;margin-bottom:8px;">
+        <div style="font-size:16px;font-weight:700;color:#0d1b3e;">楽晴会 第${r.num}回</div>
+        <div style="font-size:11px;color:#555;">${r.year}年 ${r.month}月 / 会費 ${app.kaihi.toLocaleString()}円</div>
+      </div>
+      <div style="margin-bottom:8px;">
+        <div style="font-size:11px;font-weight:700;color:#0d1b3e;margin-bottom:3px;">👥 出席状況（${r.attendance.length}名）</div>
+        <div style="font-size:11px;line-height:1.5;">
+          <div><span style="color:#2e7d32;">●出席(${presentList.length}):</span> ${presentList.join('・') || '—'}</div>
+          <div><span style="color:#c62828;">●欠席(${absentList.length}):</span> ${absentList.join('・') || '—'}</div>
+          ${ochiList.length ? `<div><span style="color:#bf360c;">●落ち済(${ochiList.length}):</span> ${ochiList.join('・')}</div>` : ''}
+        </div>
+      </div>
+      <div style="margin-bottom:8px;">
+        <div style="font-size:11px;font-weight:700;color:#0d1b3e;margin-bottom:3px;">📣 入札の経過</div>
+        <table style="width:100%;border-collapse:collapse;background:#fafbfd;">
+          <thead>
+            <tr style="background:#0d1b3e;color:#fff;">
+              <th style="padding:3px;font-size:10px;width:24px;">#</th>
+              <th style="padding:3px;font-size:10px;">叫び</th>
+              <th style="padding:3px;font-size:10px;">経過</th>
+              <th style="padding:3px;font-size:10px;">開き</th>
+              <th style="padding:3px;font-size:10px;">開結果</th>
+              <th style="padding:3px;font-size:10px;width:40px;">判定</th>
+            </tr>
+          </thead>
+          <tbody>${bidRows}</tbody>
+        </table>
+      </div>
+      <div style="margin-bottom:6px;background:#f7f9fc;padding:8px;border-radius:5px;">
+        <div style="font-size:11px;font-weight:700;color:#0d1b3e;margin-bottom:4px;">💰 精算・配当内訳</div>
+        <div style="font-size:11px;line-height:1.6;">
+          <div>● 集金: ${app.kaihi.toLocaleString()}円 × ${paidCount}名 = <strong>${pool.toLocaleString()}円</strong></div>
+          <div>● 配当 (${normalCallers.length}人分): ${haitouUnit.toLocaleString()} × ${normalCount} = <strong>${haitouNormal.toLocaleString()}円</strong></div>
+          <div style="padding-left:12px;font-size:10px;color:#555;">対象: ${normalCallers.join('・') || '—'}</div>
+          <div>● ケツ (${ketsuNamesSet.size}人分): ${ketsuUnit.toLocaleString()} × ${ketsuCount} = <strong>${haitouKetsu.toLocaleString()}円</strong></div>
+          <div style="padding-left:12px;font-size:10px;color:#1565c0;">対象: ${[...ketsuNamesSet].join('・') || '—'}</div>
+          ${taihouNames.size ? `<div>● 大砲: <strong style="color:#bf360c;">${[...taihouNames].join('・')}</strong></div>` : ''}
+          ${ochiNames.size  ? `<div>● 落ち(除外): <strong style="color:#e65100;">${[...ochiNames].join('・')}</strong></div>` : ''}
+          ${c.taihou       ? `<div>● 大砲費用: <strong>${(+c.taihou).toLocaleString()}円</strong></div>` : ''}
+          ${c.amida        ? `<div>● あみだ: <strong>${(+c.amida).toLocaleString()}円</strong></div>` : ''}
+          ${c.ryouridai    ? `<div>● 料理代: <strong>${(+c.ryouridai).toLocaleString()}円</strong></div>` : ''}
+          ${c.tsumitatekin ? `<div>● 積立金: <strong>${(+c.tsumitatekin).toLocaleString()}円</strong></div>` : ''}
+        </div>
+        <div style="margin-top:6px;padding-top:6px;border-top:1px dashed #0d1b3e;font-size:13px;font-weight:700;color:#0d1b3e;text-align:right;">
+          差引精算: ${payout.toLocaleString()}円
+        </div>
+      </div>
+      <div style="text-align:center;font-size:9px;color:#999;margin-top:4px;">― 楽晴会管理アプリ ―</div>
+    </div>
+  `;
 }
 
 // ============================================================
