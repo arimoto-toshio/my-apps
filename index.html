@@ -972,7 +972,7 @@ function renderShare() {
           <div>● 配当 (${normalCallers.length}人分): ${haitouUnit.toLocaleString()} × ${normalCount} = <strong>${haitouNormal.toLocaleString()}円</strong> <span style="font-size:10px;color:#555;">対象: ${normalCallers.join('・') || '—'}</span></div>
           <div>● ケツ (${ketsuNamesSet.size}人分): ${ketsuUnit.toLocaleString()} × ${ketsuCount} = <strong>${haitouKetsu.toLocaleString()}円</strong> <span style="font-size:10px;color:#1565c0;">対象: ${[...ketsuNamesSet].join('・') || '—'}</span></div>
           ${taihouNames.size ? `<div>● 大砲: <strong style="color:#bf360c;">${[...taihouNames].join('・')}</strong></div>` : ''}
-          ${ochiNames.size  ? `<div>● 落ち(除外): <strong style="color:#e65100;">${[...ochiNames].join('・')}</strong></div>` : ''}
+          ${ochiNames.size  ? `<div>● 落ち: <strong style="color:#e65100;">${[...ochiNames].join('・')}</strong></div>` : ''}
           ${c.taihou       ? `<div>● 大砲費用: <strong>${(+c.taihou).toLocaleString()}円</strong></div>` : ''}
           ${c.amida        ? `<div>● あみだ: <strong>${(+c.amida).toLocaleString()}円</strong></div>` : ''}
           ${c.ryouridai    ? `<div>● 料理代: <strong>${(+c.ryouridai).toLocaleString()}円</strong></div>` : ''}
