@@ -458,18 +458,29 @@ function renderBids() {
     }
   });
 
-  // ケツ昇格大砲の人を集める
-  const taihouFromKetsuNames = new Set();
+  // 開結果の最小値（落ち・空欄を除く）を求める
+  let minOpenRes = Infinity;
   r.bids.slice(0, slots).forEach(b => {
-    if (b.taihouFromKetsu && b.opener) taihouFromKetsuNames.add(b.opener);
+    if (b.result === '落ち') return;
+    if (b.opener && b.openResult !== '' && b.openResult !== null && b.openResult !== undefined) {
+      if (+b.openResult < minOpenRes) minOpenRes = +b.openResult;
+    }
   });
+  // 大砲だが開結果が最小（=ケツでもある）人を集める
+  const taihouAlsoKetsuNames = new Set();
+  r.bids.slice(0, slots).forEach(b => {
+    if (b.result === '大砲' && b.opener && b.openResult !== '' && b.openResult !== null && b.openResult !== undefined) {
+      if (+b.openResult === minOpenRes) taihouAlsoKetsuNames.add(b.opener);
+    }
+  });
+
   const pill = (text, color) => `<span style="background:${color};color:white;padding:2px 8px;border-radius:10px;font-size:11px;font-weight:700;white-space:nowrap;">${text}</span>`;
   const badgeOf = (name, side) => {
     const res = resultByName[name];
     if (!res) return '';
     const col = res === '大砲' ? '#bf360c' : res === 'ケツ' ? '#1565c0' : '#e65100';
-    // 大砲かつケツ昇格者の場合は、大砲の下にケツも縦並びで表示
-    if (res === '大砲' && taihouFromKetsuNames.has(name)) {
+    // 大砲かつケツ（開結果が最小）の場合は、大砲の下にケツも縦並びで表示
+    if (res === '大砲' && taihouAlsoKetsuNames.has(name)) {
       return ` <span style="display:inline-flex;flex-direction:column;gap:3px;margin-left:6px;vertical-align:middle;">
         ${pill('大砲', col)}
         ${pill('ケツ', '#1565c0')}
