@@ -1057,24 +1057,36 @@ async function syncDownload() {
   try {
     const res = await fetch(SYNC_URL + '?action=load&key=rakuseikai_data');
     const json = await res.json();
-    if (json.success && json.data) {
-      const d = json.data;
-      // データ構造を検証
-      if (!d.rounds || !Array.isArray(d.rounds) || d.rounds.length === 0) {
-        toast('クラウドデータが不正です');
-        return;
-      }
-      app = d;
-      if (!app.members) app.members = [...DEFAULT_MEMBERS];
-      if (app.kaihi == null) app.kaihi = 18000;
-      curIdx = app.curIdx || 0;
-      // curIdxが範囲外なら補正
-      if (curIdx < 0 || curIdx >= app.rounds.length) curIdx = 0;
-      app.curIdx = curIdx;
-      saveAll();
-      render();
-      toast('クラウドから読み込みました');
-    } else toast('クラウドにデータがありません');
+    if (!json.success || !json.data) {
+      toast('クラウドにデータがありません');
+      return;
+    }
+    // データが文字列で返る場合はパース
+    let d = json.data;
+    if (typeof d === 'string') {
+      try { d = JSON.parse(d); } catch(e) { toast('データ形式エラー'); return; }
+    }
+    // データ構造を検証
+    if (!d || typeof d !== 'object' || !Array.isArray(d.rounds) || d.rounds.length === 0) {
+      toast('クラウドデータが不正です');
+      return;
+    }
+    // 各ラウンドの必須フィールド補完
+    d.rounds.forEach(r => {
+      if (!Array.isArray(r.attendance)) r.attendance = [];
+      if (!Array.isArray(r.bids)) r.bids = [];
+      if (!r.calc) r.calc = {};
+    });
+    app = d;
+    if (!Array.isArray(app.members)) app.members = [...DEFAULT_MEMBERS];
+    if (app.kaihi == null) app.kaihi = 18000;
+    let ci = app.curIdx || 0;
+    if (ci < 0 || ci >= app.rounds.length) ci = 0;
+    curIdx = ci;
+    app.curIdx = ci;
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(app));
+    render();
+    toast('クラウドから読み込みました');
   } catch(e) { toast('通信エラー: ' + e.message); }
 }
 
