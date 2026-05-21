@@ -796,28 +796,17 @@ function applyResultRules() {
     }
   });
 
-  // 特例: 落ち以外が全員ケツ（＝価格が全員同じ）の場合、開きの早い人を大砲にする
+  // 特例: 通常ルールで大砲候補が0人かつ、ケツが2人以上いる場合
+  // → ケツの中で最も開きの早い人（欠席者は除く）を大砲に昇格
   if (taihouIdx < 0 && ketsuIdxs.length >= 2) {
-    // 落ち以外の有効な開き者の総数とケツ数が一致＝全員同価格
-    let nonOchiOpenerCount = 0;
-    valid.forEach((b, i) => {
-      if (i === ochiIdx) return;
-      if (b.opener && b.openResult !== '' && b.openResult !== null && b.openResult !== undefined) {
-        nonOchiOpenerCount++;
-      }
+    const promote = ketsuIdxs.find(i => {
+      const att = r.attendance.find(a => a.name === valid[i].opener);
+      return !(att && att.present); // 欠席者(present===true)は除外
     });
-    if (nonOchiOpenerCount === ketsuIdxs.length) {
-      // ケツの中で最も若いNo.（欠席者は除く）を大砲に昇格
-      const promote = ketsuIdxs.find(i => {
-        const att = r.attendance.find(a => a.name === valid[i].opener);
-        return !(att && att.present); // 欠席者(present===true)は除外
-      });
-      if (promote !== undefined) {
-        taihouIdx = promote;
-        // ケツリストから外す
-        const k = ketsuIdxs.indexOf(promote);
-        if (k >= 0) ketsuIdxs.splice(k, 1);
-      }
+    if (promote !== undefined) {
+      taihouIdx = promote;
+      const k = ketsuIdxs.indexOf(promote);
+      if (k >= 0) ketsuIdxs.splice(k, 1);
     }
   }
 
