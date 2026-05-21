@@ -242,8 +242,9 @@
   </div>
   <div class="card">
     <div class="card-h">⚙️ 操作</div>
-    <button class="hdr-btn" style="background:#0d1b3e; color:white; padding:10px 16px; margin-right:8px;" onclick="addNewRound()">＋ 新規回を追加</button>
-    <button class="hdr-btn" style="background:#c0392b; color:white; padding:10px 16px;" onclick="deleteRound()">この回を削除</button>
+    <button class="hdr-btn" style="background:#0d1b3e; color:white; padding:10px 16px; margin:0 8px 8px 0;" onclick="addNewRound()">＋ 新規回を追加</button>
+    <button class="hdr-btn" style="background:#c0392b; color:white; padding:10px 16px; margin:0 8px 8px 0;" onclick="deleteRound()">この回を削除</button>
+    <button class="hdr-btn" style="background:#e67e22; color:white; padding:10px 16px; margin:0 8px 8px 0;" onclick="deleteMonth()">📅 月ごと削除</button>
   </div>
 </div>
 
@@ -802,11 +803,12 @@ function applyResultRules() {
 function autoDetectResults() {
   const r = round();
   applyResultRules();
-  // 落ち判定者は以降の回の出席にも ochi=true で反映
+  // 落ち判定者は「以降の回」の出席にのみ ochi=true で反映（過去回は変更しない）
   r.bids.forEach(b => {
     if (b.result === '落ち' && b.opener) {
       const name = b.opener;
-      app.rounds.forEach(rd => {
+      app.rounds.forEach((rd, idx) => {
+        if (idx <= curIdx) return; // 現在および過去の回は変更しない
         const att = rd.attendance.find(a => a.name === name);
         if (att) att.ochi = true;
       });
@@ -943,6 +945,49 @@ function deleteRound() {
   saveAll();
 }
 
+function deleteMonth() {
+  // 月ごとに集計
+  const monthMap = {};
+  app.rounds.forEach((r, i) => {
+    const key = r.year + '-' + r.month;
+    if (!monthMap[key]) monthMap[key] = { year: r.year, month: r.month, count: 0, indices: [] };
+    monthMap[key].count++;
+    monthMap[key].indices.push(i);
+  });
+  const months = Object.values(monthMap).sort((a,b) => a.year !== b.year ? a.year - b.year : a.month - b.month);
+  if (months.length === 0) { toast('削除可能な月がありません'); return; }
+  if (months.length === app.rounds.length && app.rounds.length === 1) {
+    toast('最後の回は削除不可'); return;
+  }
+
+  // 選択肢を提示
+  let msg = '削除したい月の番号を入力してください:\n\n';
+  months.forEach((m, i) => {
+    msg += `${i+1}. ${m.year}年${m.month}月 (${m.count}回)\n`;
+  });
+  msg += '\n（キャンセルで中止）';
+  const input = prompt(msg);
+  if (!input) return;
+  const sel = parseInt(input) - 1;
+  if (isNaN(sel) || sel < 0 || sel >= months.length) { toast('無効な番号です'); return; }
+
+  const target = months[sel];
+  if (target.indices.length >= app.rounds.length) {
+    toast('全ての回を削除することはできません'); return;
+  }
+  if (!confirm(`${target.year}年${target.month}月 (${target.count}回) を全て削除しますか？`)) return;
+
+  // 後ろから削除（インデックスがずれないように）
+  target.indices.sort((a,b) => b - a).forEach(idx => {
+    app.rounds.splice(idx, 1);
+  });
+  if (curIdx >= app.rounds.length) curIdx = app.rounds.length - 1;
+  if (curIdx < 0) curIdx = 0;
+  render();
+  saveAll();
+  toast(`${target.year}年${target.month}月を削除しました`);
+}
+
 function addMember() {
   const input = document.getElementById('newMemberInput');
   const name = input.value.trim();
@@ -1013,8 +1058,19 @@ async function syncDownload() {
     const res = await fetch(SYNC_URL + '?action=load&key=rakuseikai_data');
     const json = await res.json();
     if (json.success && json.data) {
-      app = json.data;
+      const d = json.data;
+      // データ構造を検証
+      if (!d.rounds || !Array.isArray(d.rounds) || d.rounds.length === 0) {
+        toast('クラウドデータが不正です');
+        return;
+      }
+      app = d;
+      if (!app.members) app.members = [...DEFAULT_MEMBERS];
+      if (app.kaihi == null) app.kaihi = 18000;
       curIdx = app.curIdx || 0;
+      // curIdxが範囲外なら補正
+      if (curIdx < 0 || curIdx >= app.rounds.length) curIdx = 0;
+      app.curIdx = curIdx;
       saveAll();
       render();
       toast('クラウドから読み込みました');
