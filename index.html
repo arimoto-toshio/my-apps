@@ -453,8 +453,7 @@ function renderBids() {
     const res = resultByName[name];
     if (!res) return '';
     const col = res === '大砲' ? '#bf360c' : res === 'ケツ' ? '#1565c0' : '#e65100';
-    // 叫び側で、すでに大砲済みの人にはハッキリと「大砲済(再発なし)」を表示
-    const label = (side === 'caller' && res === '大砲') ? '🚫大砲済(再発なし)' : res;
+    const label = res;
     return ` <span style="background:${col};color:white;padding:2px 8px;border-radius:10px;font-size:11px;font-weight:700;margin-left:6px;white-space:nowrap;">${label}</span>`;
   };
   const bgOfName = (name) => {
@@ -644,33 +643,29 @@ function renderCalc() {
     if (b.result === 'ケツ' && b.opener) ketsuNamesSet.add(b.opener);
   });
 
-  // 配当(normal): 落ち・大砲・ケツに該当しない叫びをカウント（同名2回は2人分）
+  // 配当(normal): 落ち・ケツに該当しない叫びをカウント（大砲は配当対象に含める／同名2回は2人分）
   let autoNormal = 0;
   const autoKetsu = ketsuNamesSet.size;
   const autoTaihou = taihouNames.size;
   r.bids.forEach(b => {
     if (!b.caller) return;
     if (ochiNames.has(b.caller)) return;
-    if (taihouNames.has(b.caller)) return;
     if (ketsuNamesSet.has(b.caller)) return;
     autoNormal++;
   });
-  // 大砲も配当計算上は同じ単価×人数なのでケツ枠に合算
-  const ketsuPlusCount = autoKetsu + autoTaihou;
   const normalCount = c.normalCount !== undefined ? c.normalCount : autoNormal;
-  const ketsuCount  = c.ketsuCount  !== undefined ? c.ketsuCount  : ketsuPlusCount;
+  const ketsuCount  = c.ketsuCount  !== undefined ? c.ketsuCount  : autoKetsu;
 
   const haitouNormal = c.haitouUnit * normalCount;
   const haitouKetsu = c.ketsuUnit * ketsuCount;
   const totalExpense = haitouNormal + haitouKetsu + c.taihou + c.amida + c.ryouridai + c.tsumitatekin;
   const payout = pool - totalExpense;
 
-  // 配当に含まれる叫び者リスト（重複あり）
+  // 配当に含まれる叫び者リスト（重複あり）— 大砲は対象に含める
   const normalCallers = [];
   r.bids.forEach(b => {
     if (!b.caller) return;
     if (ochiNames.has(b.caller)) return;
-    if (taihouNames.has(b.caller)) return;
     if (ketsuNamesSet.has(b.caller)) return;
     normalCallers.push(b.caller);
   });
