@@ -938,11 +938,10 @@ function renderShare() {
         <div style="font-size:16px;font-weight:700;color:#0d1b3e;">楽晴会 第${r.num}回</div>
       </div>
       <div style="margin-bottom:8px;">
-        <div style="font-size:11px;font-weight:700;color:#0d1b3e;margin-bottom:3px;">👥 出席状況（${r.attendance.length}名）</div>
+        <div style="font-size:11px;font-weight:700;color:#0d1b3e;margin-bottom:3px;">👥 出席状況</div>
         <div style="font-size:11px;line-height:1.5;">
           <div><span style="color:#2e7d32;">●出席(${presentList.length}):</span> ${presentList.join('・') || '—'}</div>
           <div><span style="color:#c62828;">●欠席(${absentList.length}):</span> ${absentList.join('・') || '—'}</div>
-          ${ochiList.length ? `<div><span style="color:#bf360c;">●落ち済(${ochiList.length}):</span> ${ochiList.join('・')}</div>` : ''}
         </div>
       </div>
       <div style="margin-bottom:6px;">
