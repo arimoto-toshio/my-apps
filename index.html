@@ -684,11 +684,19 @@ function renderCalc() {
   r.bids.forEach(b => {
     if (b.result === 'ケツ' && b.opener) ketsuNamesSet.add(b.opener);
   });
-  // ケツから昇格した大砲は配当上はケツ扱い
+  // 開結果が最小の人（落ち除く）もケツ扱い（大砲昇格者を含めて）
+  let minOpenResCalc = Infinity;
   r.bids.forEach(b => {
-    if (b.result === '大砲' && b.taihouFromKetsu && b.opener) {
-      ketsuNamesSet.add(b.opener);
+    if (b.result === '落ち') return;
+    if (b.opener && b.openResult !== '' && b.openResult !== null && b.openResult !== undefined) {
+      if (+b.openResult < minOpenResCalc) minOpenResCalc = +b.openResult;
     }
+  });
+  r.bids.forEach(b => {
+    if (b.result === '落ち') return;
+    if (!b.opener) return;
+    if (b.openResult === '' || b.openResult === null || b.openResult === undefined) return;
+    if (+b.openResult === minOpenResCalc) ketsuNamesSet.add(b.opener);
   });
 
   // 欠席者（present===true, ochi===false）も配当対象に含める
