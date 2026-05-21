@@ -967,14 +967,17 @@ function onBidChange(el) {
 
 function setResult(i, val) {
   const b = round().bids[i];
-  // 同じ値を再度押したら手動解除（自動判定に戻す）
-  if (b.manualResult && b.result === val) {
+  if (val === '') {
+    // 「−」ボタン: 手動解除して自動判定に戻す
     b.manualResult = false;
     b.result = '';
-    // 自動判定に戻す（他のrowの自動結果は保持される）
     applyResultRules();
+  } else if (b.result === val) {
+    // 同じボタンを再度押した: 結果を空にする（手動でロック）
+    b.result = '';
+    b.manualResult = true;
   } else {
-    // クリックしたrowだけ変更。他のrowはそのまま（自動判定し直さない）
+    // 別の結果を選択: 手動上書き
     b.result = val;
     b.manualResult = true;
   }
