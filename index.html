@@ -303,8 +303,11 @@ function loadApp() {
           if (!r.calc) r.calc = {};
         });
         // 現在のラウンドのみ結果を再計算用にリセット（過去ラウンドは保持）
+        // ただし手動設定された結果(manualResult=true)は保持する
         const cur = app.rounds[curIdx];
-        cur.bids.forEach(b => { b.result = ''; b.manualResult = false; });
+        cur.bids.forEach(b => {
+          if (!b.manualResult) b.result = '';
+        });
         cur.attendance.forEach(a => { a.ochi = false; });
         delete cur.calc.normalCount;
         delete cur.calc.ketsuCount;
