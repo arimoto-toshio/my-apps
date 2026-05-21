@@ -448,6 +448,12 @@ function renderBids() {
   const taihouNames = Object.keys(resultByName).filter(n => resultByName[n] === '大砲');
   const ketsuNames  = Object.keys(resultByName).filter(n => resultByName[n] === 'ケツ');
   const ochiNames   = Object.keys(resultByName).filter(n => resultByName[n] === '落ち');
+  // ケツから昇格した大砲は、ケツ表示にも含める
+  r.bids.slice(0, slots).forEach(b => {
+    if (b.taihouFromKetsu && b.opener && !ketsuNames.includes(b.opener)) {
+      ketsuNames.push(b.opener);
+    }
+  });
 
   const badgeOf = (name, side) => {
     const res = resultByName[name];
