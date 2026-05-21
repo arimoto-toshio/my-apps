@@ -604,10 +604,10 @@ function renderBids() {
         </div>
       </div>
       <div class="result-btns">
-        <button class="result-btn taihou ${b.result==='大砲'?'active':''}" onclick="setResult(${i},'大砲')">大砲</button>
-        <button class="result-btn ketsu ${b.result==='ケツ'?'active':''}" onclick="setResult(${i},'ケツ')">ケツ</button>
-        <button class="result-btn ochi ${b.result==='落ち'?'active':''}" onclick="setResult(${i},'落ち')">落ち</button>
-        <button class="result-btn ${b.result===''?'active':''}" style="${b.result===''?'background:#999;color:white;border-color:#999;':''}" onclick="setResult(${i},'')">−</button>
+        <button class="result-btn taihou ${b.result==='大砲'?'active':''}" onclick="setResult(${i},'大砲')">大砲${b.manualResult && b.result==='大砲'?'🔒':''}</button>
+        <button class="result-btn ketsu ${b.result==='ケツ'?'active':''}" onclick="setResult(${i},'ケツ')">ケツ${b.manualResult && b.result==='ケツ'?'🔒':''}</button>
+        <button class="result-btn ochi ${b.result==='落ち'?'active':''}" onclick="setResult(${i},'落ち')">落ち${b.manualResult && b.result==='落ち'?'🔒':''}</button>
+        <button class="result-btn ${b.result===''?'active':''}" style="${b.result===''?'background:#999;color:white;border-color:#999;':''}" onclick="setResult(${i},'')">−${b.manualResult && b.result===''?'🔒':''}</button>
       </div>
     </div>`;
   }
@@ -769,21 +769,46 @@ function applyResultRules() {
   const slots = Math.min(expectedSlots, r.bids.length);
   const valid = r.bids.slice(0, slots);
 
-  // 必ずリセットして自動判定を優先
-  valid.forEach(b => { b.result = ''; b.manualResult = false; });
-
-  // 落ち: 開結果が最大の人（同点なら先開き＝No.若い方）
-  let ochiIdx = -1, maxRes = -Infinity;
+  // 手動設定されたものは保持。それ以外をリセットして自動判定
+  valid.forEach(b => {
+    if (!b.manualResult) b.result = '';
+  });
+  // 手動設定された結果を取り出し、自動判定対象から除外する
+  const lockedOchi = new Set();
+  const lockedTaihou = new Set();
+  const lockedKetsu = new Set();
+  const lockedNone = new Set();
   valid.forEach((b, i) => {
-    if (b.opener && b.openResult !== '' && b.openResult !== null && b.openResult !== undefined && +b.openResult > maxRes) {
-      maxRes = +b.openResult; ochiIdx = i;
+    if (b.manualResult) {
+      if (b.result === '落ち') lockedOchi.add(i);
+      else if (b.result === '大砲') lockedTaihou.add(i);
+      else if (b.result === 'ケツ') lockedKetsu.add(i);
+      else lockedNone.add(i);
     }
   });
 
-  // ケツ: 開結果が最小の人（同点なら全員、落ちは除く）
+  // 手動設定されたindexは自動判定から除外するヘルパ
+  const isLocked = (i) => lockedOchi.has(i) || lockedTaihou.has(i) || lockedKetsu.has(i) || lockedNone.has(i);
+
+  // 落ち: 手動設定があればそれを優先、なければ開結果が最大の人
+  let ochiIdx = -1;
+  if (lockedOchi.size > 0) {
+    ochiIdx = [...lockedOchi][0];
+  } else {
+    let maxRes = -Infinity;
+    valid.forEach((b, i) => {
+      if (isLocked(i)) return;
+      if (b.opener && b.openResult !== '' && b.openResult !== null && b.openResult !== undefined && +b.openResult > maxRes) {
+        maxRes = +b.openResult; ochiIdx = i;
+      }
+    });
+  }
+
+  // ケツ: 手動設定があればそれを使う。自動判定対象は残りから
   let minRes = Infinity;
   valid.forEach((b, i) => {
     if (i === ochiIdx) return;
+    if (isLocked(i)) return;
     if (b.opener && b.openResult !== '' && b.openResult !== null && b.openResult !== undefined && +b.openResult < minRes) {
       minRes = +b.openResult;
     }
@@ -791,34 +816,40 @@ function applyResultRules() {
   const ketsuIdxs = [];
   valid.forEach((b, i) => {
     if (i === ochiIdx) return;
+    if (isLocked(i)) return;
     if (b.opener && b.openResult !== '' && b.openResult !== null && b.openResult !== undefined && +b.openResult === minRes) {
       ketsuIdxs.push(i);
     }
   });
+  // 手動ケツも合わせる
+  lockedKetsu.forEach(i => { if (!ketsuIdxs.includes(i)) ketsuIdxs.push(i); });
 
-  // 大砲: 開結果が2番目に大きい人（同点なら先開き＝No.若い方、落ち・ケツ・欠席を除く）
-  let taihouIdx = -1, taihouRes = -Infinity;
-  valid.forEach((b, i) => {
-    if (i === ochiIdx || ketsuIdxs.includes(i)) return;
-    // 欠席者(出席タブで欠席状態の人)は大砲対象外
-    const att = r.attendance.find(a => a.name === b.opener);
-    if (att && att.present) return; // present===true は「欠席」表示
-    if (b.opener && b.openResult !== '' && b.openResult !== null && b.openResult !== undefined && +b.openResult > taihouRes) {
-      taihouRes = +b.openResult; taihouIdx = i;
-    }
-  });
+  // 大砲: 手動があればそれを優先
+  let taihouIdx = -1;
+  if (lockedTaihou.size > 0) {
+    taihouIdx = [...lockedTaihou][0];
+  } else {
+    let taihouRes = -Infinity;
+    valid.forEach((b, i) => {
+      if (i === ochiIdx || ketsuIdxs.includes(i)) return;
+      if (isLocked(i)) return;
+      const att = r.attendance.find(a => a.name === b.opener);
+      if (att && att.present) return;
+      if (b.opener && b.openResult !== '' && b.openResult !== null && b.openResult !== undefined && +b.openResult > taihouRes) {
+        taihouRes = +b.openResult; taihouIdx = i;
+      }
+    });
+  }
 
   // フラグリセット
   valid.forEach(b => { b.taihouFromKetsu = false; });
 
   // 特例: 通常ルールで大砲候補が0人かつ、ケツが2人以上いる場合
-  // → ケツの中で最も開きの早い人（欠席者は除く）を大砲表示に昇格
-  //   ただし、もともとケツなので配当扱いはケツのまま（taihouFromKetsu=true で印）
   let promotedIdx = -1;
   if (taihouIdx < 0 && ketsuIdxs.length >= 2) {
     promotedIdx = ketsuIdxs.find(i => {
       const att = r.attendance.find(a => a.name === valid[i].opener);
-      return !(att && att.present); // 欠席者(present===true)は除外
+      return !(att && att.present);
     });
     if (promotedIdx !== undefined && promotedIdx >= 0) {
       taihouIdx = promotedIdx;
@@ -833,6 +864,8 @@ function applyResultRules() {
   ketsuIdxs.forEach(i => {
     if (i !== taihouIdx) valid[i].result = 'ケツ';
   });
+  // 手動の空（−）はそのまま空
+  lockedNone.forEach(i => { valid[i].result = ''; });
   // 昇格した大砲には印を付ける
   if (promotedIdx >= 0) valid[promotedIdx].taihouFromKetsu = true;
 }
@@ -913,10 +946,18 @@ function onBidChange(el) {
 }
 
 function setResult(i, val) {
-  // 手動ボタンを押しても、自動判定が再走するので結局自動結果が優先される
-  round().bids[i].result = val;
-  applyResultRules(); // 即時自動再判定
+  const b = round().bids[i];
+  // 同じ値を再度押したら手動解除（自動判定に戻す）
+  if (b.manualResult && b.result === val) {
+    b.manualResult = false;
+    b.result = '';
+  } else {
+    b.result = val;
+    b.manualResult = true;
+  }
+  applyResultRules(); // 手動を尊重しつつ自動再判定
   syncOchiFromResults();
+  saveAll();
   renderBids();
   renderCalc();
   renderAttendance();
