@@ -919,7 +919,7 @@ function renderShare() {
   const ochiCount2 = r.attendance.filter(a => a.ochi).length;
   const slots = Math.max(1, app.members.length - ochiCount2);
   const bidRows = r.bids.slice(0, slots).map((b, i) => {
-    const calls = [b.call1, b.call2].filter(x => x !== '' && x != null).join('→') || '—';
+    const calls = [b.call1, b.call2].filter(x => x !== '' && x != null).join('+') || '—';
     const resColor = b.result === '大砲' ? '#2e7d32' : b.result === 'ケツ' ? '#1565c0' : b.result === '落ち' ? '#e65100' : '#999';
     const resBadge = b.result ? `<span style="background:${resColor};color:#fff;padding:1px 5px;border-radius:3px;font-size:10px;">${b.result}</span>` : '';
     return `
