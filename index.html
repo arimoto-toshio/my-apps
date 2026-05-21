@@ -264,6 +264,25 @@
 
 <script>
 // ============================================================
+// 自動更新チェック（キャッシュ対策）
+// ============================================================
+(async function autoUpdateCheck() {
+  try {
+    const res = await fetch(window.location.pathname + '?_cb=' + Date.now(), { cache: 'no-store' });
+    if (!res.ok) return;
+    const html = await res.text();
+    const hash = html.length + ':' + html.slice(0, 200);
+    const stored = localStorage.getItem('app_version_hash');
+    if (stored && stored !== hash) {
+      localStorage.setItem('app_version_hash', hash);
+      window.location.reload();
+      return;
+    }
+    if (!stored) localStorage.setItem('app_version_hash', hash);
+  } catch (e) { /* ignore */ }
+})();
+
+// ============================================================
 // データ：既存PC版と互換のキーを使う（同じレシピで読み書き）
 // ============================================================
 const STORAGE_KEY = 'rakuseikai_data';
