@@ -700,9 +700,15 @@ function renderCalc() {
   });
 
   // 欠席者（present===true, ochi===false）も配当対象に含める
+  // ただし叫び枠を既に持っている人（caller or opener）は除外（二重カウント防止）
+  const callerOrOpenerNames = new Set();
+  r.bids.forEach(b => {
+    if (b.caller) callerOrOpenerNames.add(b.caller);
+    if (b.opener) callerOrOpenerNames.add(b.opener);
+  });
   const absentNames = new Set();
   r.attendance.forEach(a => {
-    if (a.present && !a.ochi) absentNames.add(a.name);
+    if (a.present && !a.ochi && !callerOrOpenerNames.has(a.name)) absentNames.add(a.name);
   });
 
   // 配当(normal): 落ち・ケツに該当しない叫びをカウント（大砲は配当対象に含める／同名2回は2人分）
