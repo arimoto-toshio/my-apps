@@ -458,12 +458,24 @@ function renderBids() {
     }
   });
 
+  // ケツ昇格大砲の人を集める
+  const taihouFromKetsuNames = new Set();
+  r.bids.slice(0, slots).forEach(b => {
+    if (b.taihouFromKetsu && b.opener) taihouFromKetsuNames.add(b.opener);
+  });
+  const pill = (text, color) => `<span style="background:${color};color:white;padding:2px 8px;border-radius:10px;font-size:11px;font-weight:700;white-space:nowrap;">${text}</span>`;
   const badgeOf = (name, side) => {
     const res = resultByName[name];
     if (!res) return '';
     const col = res === '大砲' ? '#bf360c' : res === 'ケツ' ? '#1565c0' : '#e65100';
-    const label = res;
-    return ` <span style="background:${col};color:white;padding:2px 8px;border-radius:10px;font-size:11px;font-weight:700;margin-left:6px;white-space:nowrap;">${label}</span>`;
+    // 大砲かつケツ昇格者の場合は、大砲の下にケツも縦並びで表示
+    if (res === '大砲' && taihouFromKetsuNames.has(name)) {
+      return ` <span style="display:inline-flex;flex-direction:column;gap:3px;margin-left:6px;vertical-align:middle;">
+        ${pill('大砲', col)}
+        ${pill('ケツ', '#1565c0')}
+      </span>`;
+    }
+    return ` <span style="margin-left:6px;display:inline-block;vertical-align:middle;">${pill(res, col)}</span>`;
   };
   const bgOfName = (name) => {
     const res = resultByName[name];
