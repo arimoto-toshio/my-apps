@@ -954,12 +954,13 @@ function setResult(i, val) {
   if (b.manualResult && b.result === val) {
     b.manualResult = false;
     b.result = '';
+    // 自動判定に戻す（他のrowの自動結果は保持される）
+    applyResultRules();
   } else {
+    // クリックしたrowだけ変更。他のrowはそのまま（自動判定し直さない）
     b.result = val;
     b.manualResult = true;
   }
-  applyResultRules(); // 手動を尊重しつつ自動再判定
-  syncOchiFromResults();
   saveAll();
   renderBids();
   renderCalc();
