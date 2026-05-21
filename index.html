@@ -920,7 +920,7 @@ function renderShare() {
   const slots = Math.max(1, app.members.length - ochiCount2);
   const bidRows = r.bids.slice(0, slots).map((b, i) => {
     const calls = [b.call1, b.call2].filter(x => x !== '' && x != null).join('→') || '—';
-    const resColor = b.result === '大砲' ? '#bf360c' : b.result === 'ケツ' ? '#1565c0' : b.result === '落ち' ? '#e65100' : '#999';
+    const resColor = b.result === '大砲' ? '#2e7d32' : b.result === 'ケツ' ? '#1565c0' : b.result === '落ち' ? '#e65100' : '#999';
     const resBadge = b.result ? `<span style="background:${resColor};color:#fff;padding:1px 5px;border-radius:3px;font-size:10px;">${b.result}</span>` : '';
     return `
       <tr style="border-bottom:1px solid #eee;">
@@ -965,7 +965,7 @@ function renderShare() {
           <div>● 集金: ${app.kaihi.toLocaleString()}円 × ${paidCount}名 = <strong>${pool.toLocaleString()}円</strong></div>
           <div>● 配当 (${normalCallers.length}人分): ${haitouUnit.toLocaleString()} × ${normalCount} = <strong>${haitouNormal.toLocaleString()}円</strong> <span style="font-size:10px;color:#555;">対象: ${normalCallers.join('・') || '—'}</span></div>
           <div>● ケツ (${ketsuNamesSet.size}人分): ${ketsuUnit.toLocaleString()} × ${ketsuCount} = <strong>${haitouKetsu.toLocaleString()}円</strong> <span style="font-size:10px;color:#1565c0;">対象: ${[...ketsuNamesSet].join('・') || '—'}</span></div>
-          ${taihouNames.size ? `<div>● 大砲: <strong style="color:#bf360c;">${[...taihouNames].join('・')}</strong></div>` : ''}
+          ${taihouNames.size ? `<div>● 大砲: <strong style="color:#2e7d32;">${[...taihouNames].join('・')}</strong></div>` : ''}
           ${ochiNames.size  ? `<div>● 落ち: <strong style="color:#e65100;">${[...ochiNames].join('・')}</strong></div>` : ''}
           ${c.taihou       ? `<div>● 大砲: <strong>${(+c.taihou).toLocaleString()}円</strong></div>` : ''}
           ${c.amida        ? `<div>● あみだ: <strong>${(+c.amida).toLocaleString()}円</strong></div>` : ''}
