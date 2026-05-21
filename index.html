@@ -632,15 +632,21 @@ function renderCalc() {
   r.bids.forEach(b => {
     if (b.result === '落ち' && b.opener) ochiNames.add(b.opener);
   });
-  // 大砲 = 配当対象外、人数は1回分のみ（一人が2回叫んでも1人分）
+  // 大砲 = 配当対象（通常）
   const taihouNames = new Set();
   r.bids.forEach(b => {
     if (b.result === '大砲' && b.opener) taihouNames.add(b.opener);
   });
-  // ケツ = 配当対象外、人数は1回分のみ
+  // ケツ = 配当対象外
   const ketsuNamesSet = new Set();
   r.bids.forEach(b => {
     if (b.result === 'ケツ' && b.opener) ketsuNamesSet.add(b.opener);
+  });
+  // ケツから昇格した大砲は配当上はケツ扱い
+  r.bids.forEach(b => {
+    if (b.result === '大砲' && b.taihouFromKetsu && b.opener) {
+      ketsuNamesSet.add(b.opener);
+    }
   });
 
   // 配当(normal): 落ち・ケツに該当しない叫びをカウント（大砲は配当対象に含める／同名2回は2人分）
@@ -796,24 +802,33 @@ function applyResultRules() {
     }
   });
 
+  // フラグリセット
+  valid.forEach(b => { b.taihouFromKetsu = false; });
+
   // 特例: 通常ルールで大砲候補が0人かつ、ケツが2人以上いる場合
-  // → ケツの中で最も開きの早い人（欠席者は除く）を大砲に昇格
+  // → ケツの中で最も開きの早い人（欠席者は除く）を大砲表示に昇格
+  //   ただし、もともとケツなので配当扱いはケツのまま（taihouFromKetsu=true で印）
+  let promotedIdx = -1;
   if (taihouIdx < 0 && ketsuIdxs.length >= 2) {
-    const promote = ketsuIdxs.find(i => {
+    promotedIdx = ketsuIdxs.find(i => {
       const att = r.attendance.find(a => a.name === valid[i].opener);
       return !(att && att.present); // 欠席者(present===true)は除外
     });
-    if (promote !== undefined) {
-      taihouIdx = promote;
-      const k = ketsuIdxs.indexOf(promote);
-      if (k >= 0) ketsuIdxs.splice(k, 1);
+    if (promotedIdx !== undefined && promotedIdx >= 0) {
+      taihouIdx = promotedIdx;
+    } else {
+      promotedIdx = -1;
     }
   }
 
   // ラベル付け
   if (ochiIdx >= 0) valid[ochiIdx].result = '落ち';
   if (taihouIdx >= 0) valid[taihouIdx].result = '大砲';
-  ketsuIdxs.forEach(i => { valid[i].result = 'ケツ'; });
+  ketsuIdxs.forEach(i => {
+    if (i !== taihouIdx) valid[i].result = 'ケツ';
+  });
+  // 昇格した大砲には印を付ける
+  if (promotedIdx >= 0) valid[promotedIdx].taihouFromKetsu = true;
 }
 
 // ボタン用：ルール適用＋落ち者の ochi 伝播＋保存＋描画＋トースト
