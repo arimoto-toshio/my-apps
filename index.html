@@ -973,7 +973,7 @@ function renderShare() {
           ${c.tsumitatekin ? `<div>● 積立金: <strong>${(+c.tsumitatekin).toLocaleString()}円</strong></div>` : ''}
         </div>
         <div style="margin-top:6px;padding-top:6px;border-top:1px dashed #0d1b3e;font-size:13px;font-weight:700;color:#0d1b3e;text-align:right;">
-          差引精算: ${payout.toLocaleString()}円
+          ${ochiNames.size ? [...ochiNames].join('・') + '受取' : '差引精算'}: ${payout.toLocaleString()}円
         </div>
       </div>
       <div style="text-align:center;font-size:9px;color:#999;margin-top:4px;">― 楽晴会管理アプリ ―</div>
