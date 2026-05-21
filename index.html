@@ -927,8 +927,7 @@ function renderShare() {
     const resBadge = b.result ? `<span style="background:${resColor};color:#fff;padding:1px 5px;border-radius:3px;font-size:10px;">${b.result}</span>` : '';
     return `
       <tr style="border-bottom:1px solid #eee;">
-        <td style="padding:3px 4px;font-size:11px;text-align:center;color:#666;">${i+1}</td>
-        <td style="padding:3px 4px;font-size:11px;">${b.caller || '—'}</td>
+        <td style="padding:3px 4px;font-size:11px;text-align:center;">${b.caller || '—'}</td>
         <td style="padding:3px 4px;font-size:11px;text-align:center;color:#555;">${calls}</td>
         <td style="padding:3px 4px;font-size:11px;text-align:center;">${b.opener || '—'}</td>
         <td style="padding:3px 4px;font-size:11px;text-align:center;font-weight:600;">${b.openResult !== '' && b.openResult != null ? b.openResult : '—'}</td>
@@ -954,8 +953,7 @@ function renderShare() {
         <table style="width:100%;border-collapse:collapse;background:#fafbfd;">
           <thead>
             <tr style="background:#0d1b3e;color:#fff;">
-              <th style="padding:3px;font-size:10px;width:24px;">#</th>
-              <th style="padding:3px;font-size:10px;">叫び</th>
+              <th style="padding:3px;font-size:10px;">叫び順</th>
               <th style="padding:3px;font-size:10px;">経過</th>
               <th style="padding:3px;font-size:10px;">開き</th>
               <th style="padding:3px;font-size:10px;">開結果</th>
