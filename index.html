@@ -658,6 +658,12 @@ function renderCalc() {
     }
   });
 
+  // 欠席者（present===true, ochi===false）も配当対象に含める
+  const absentNames = new Set();
+  r.attendance.forEach(a => {
+    if (a.present && !a.ochi) absentNames.add(a.name);
+  });
+
   // 配当(normal): 落ち・ケツに該当しない叫びをカウント（大砲は配当対象に含める／同名2回は2人分）
   let autoNormal = 0;
   const autoKetsu = ketsuNamesSet.size;
@@ -668,6 +674,12 @@ function renderCalc() {
     if (ketsuNamesSet.has(b.caller)) return;
     autoNormal++;
   });
+  // 欠席者は叫び枠を持たないが配当に含める（一人1回分）
+  absentNames.forEach(n => {
+    if (ochiNames.has(n)) return;
+    if (ketsuNamesSet.has(n)) return;
+    autoNormal++;
+  });
   const normalCount = c.normalCount !== undefined ? c.normalCount : autoNormal;
   const ketsuCount  = c.ketsuCount  !== undefined ? c.ketsuCount  : autoKetsu;
 
@@ -676,13 +688,18 @@ function renderCalc() {
   const totalExpense = haitouNormal + haitouKetsu + c.taihou + c.amida + c.ryouridai + c.tsumitatekin;
   const payout = pool - totalExpense;
 
-  // 配当に含まれる叫び者リスト（重複あり）— 大砲は対象に含める
+  // 配当に含まれる叫び者リスト（重複あり）— 大砲は対象に含める、欠席者も追加
   const normalCallers = [];
   r.bids.forEach(b => {
     if (!b.caller) return;
     if (ochiNames.has(b.caller)) return;
     if (ketsuNamesSet.has(b.caller)) return;
     normalCallers.push(b.caller);
+  });
+  absentNames.forEach(n => {
+    if (ochiNames.has(n)) return;
+    if (ketsuNamesSet.has(n)) return;
+    normalCallers.push(n + '(欠席)');
   });
 
   document.getElementById('calcBody').innerHTML = `
