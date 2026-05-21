@@ -289,21 +289,29 @@ function loadApp() {
   try {
     const s = localStorage.getItem(STORAGE_KEY);
     if (s) {
-      app = JSON.parse(s);
-      curIdx = app.curIdx || 0;
-      // 現在のラウンドのみ結果を再計算用にリセット（過去ラウンドは保持）
-      const ci = app.curIdx || 0;
-      if (app.rounds[ci]) {
-        app.rounds[ci].bids.forEach(b => { b.result = ''; b.manualResult = false; });
-        app.rounds[ci].attendance.forEach(a => { a.ochi = false; });
-        if (app.rounds[ci].calc) {
-          delete app.rounds[ci].calc.normalCount;
-          delete app.rounds[ci].calc.ketsuCount;
-          delete app.rounds[ci].calc.taihouCount;
-          delete app.rounds[ci].calc.taihouUnit;
-        }
+      const parsed = JSON.parse(s);
+      if (parsed && Array.isArray(parsed.rounds) && parsed.rounds.length > 0) {
+        app = parsed;
+        if (!Array.isArray(app.members)) app.members = [...DEFAULT_MEMBERS];
+        if (app.kaihi == null) app.kaihi = 18000;
+        curIdx = app.curIdx || 0;
+        if (curIdx < 0 || curIdx >= app.rounds.length) curIdx = 0;
+        // 各ラウンドのフィールド補完
+        app.rounds.forEach(r => {
+          if (!Array.isArray(r.attendance)) r.attendance = [];
+          if (!Array.isArray(r.bids)) r.bids = [];
+          if (!r.calc) r.calc = {};
+        });
+        // 現在のラウンドのみ結果を再計算用にリセット（過去ラウンドは保持）
+        const cur = app.rounds[curIdx];
+        cur.bids.forEach(b => { b.result = ''; b.manualResult = false; });
+        cur.attendance.forEach(a => { a.ochi = false; });
+        delete cur.calc.normalCount;
+        delete cur.calc.ketsuCount;
+        delete cur.calc.taihouCount;
+        delete cur.calc.taihouUnit;
+        return;
       }
-      return;
     }
   } catch(e) {}
   app = {
@@ -1054,40 +1062,50 @@ async function syncUpload() {
 async function syncDownload() {
   if (!SYNC_URL) { toast('同期URLが未設定です'); return; }
   toast('ダウンロード中...');
+  let stage = 'fetch';
   try {
     const res = await fetch(SYNC_URL + '?action=load&key=rakuseikai_data');
+    stage = 'parse';
     const json = await res.json();
     if (!json.success || !json.data) {
       toast('クラウドにデータがありません');
       return;
     }
+    stage = 'validate';
     // データが文字列で返る場合はパース
     let d = json.data;
     if (typeof d === 'string') {
       try { d = JSON.parse(d); } catch(e) { toast('データ形式エラー'); return; }
     }
-    // データ構造を検証
     if (!d || typeof d !== 'object' || !Array.isArray(d.rounds) || d.rounds.length === 0) {
       toast('クラウドデータが不正です');
       return;
     }
+    stage = 'normalize';
     // 各ラウンドの必須フィールド補完
     d.rounds.forEach(r => {
       if (!Array.isArray(r.attendance)) r.attendance = [];
       if (!Array.isArray(r.bids)) r.bids = [];
       if (!r.calc) r.calc = {};
+      if (r.year == null) r.year = new Date().getFullYear();
+      if (r.month == null) r.month = new Date().getMonth() + 1;
+      if (r.num == null) r.num = 1;
     });
+    if (!Array.isArray(d.members)) d.members = [...DEFAULT_MEMBERS];
+    if (d.kaihi == null) d.kaihi = 18000;
+    let ci = d.curIdx || 0;
+    if (ci < 0 || ci >= d.rounds.length) ci = 0;
+    d.curIdx = ci;
+    stage = 'apply';
     app = d;
-    if (!Array.isArray(app.members)) app.members = [...DEFAULT_MEMBERS];
-    if (app.kaihi == null) app.kaihi = 18000;
-    let ci = app.curIdx || 0;
-    if (ci < 0 || ci >= app.rounds.length) ci = 0;
     curIdx = ci;
-    app.curIdx = ci;
     localStorage.setItem(STORAGE_KEY, JSON.stringify(app));
+    stage = 'render';
     render();
     toast('クラウドから読み込みました');
-  } catch(e) { toast('通信エラー: ' + e.message); }
+  } catch(e) {
+    toast('エラー[' + stage + ']: ' + (e && e.message ? e.message : e));
+  }
 }
 
 loadApp();
