@@ -1400,6 +1400,8 @@ async function syncDownload() {
       else if (d.value && Array.isArray(d.value.rounds)) d = d.value;
       else if (d.app && Array.isArray(d.app.rounds)) d = d.app;
     }
+    // d 自体が配列（古い形式：rounds 配列のみ保存）の場合はラップ
+    if (Array.isArray(d)) d = { rounds: d };
     if (!d || typeof d !== 'object' || !Array.isArray(d.rounds) || d.rounds.length === 0) {
       // 不正なデータの構造をユーザーに見せる
       const keys = d && typeof d === 'object' ? Object.keys(d).join(',') : typeof d;
