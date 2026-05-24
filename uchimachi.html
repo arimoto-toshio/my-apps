@@ -1,0 +1,1882 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>うちまち 理事会アプリ</title>
+<style>
+  :root {
+    --primary: #8B4513;
+    --primary-light: #c47c3e;
+    --accent: #d4622a;
+    --accent2: #e8a45c;
+    --bg: #fdf6ee;
+    --bg2: #fff8f0;
+    --card: #fffaf4;
+    --border: #e8d5b7;
+    --text: #3a2a1a;
+    --text2: #7a5c3a;
+    --green: #4a7c59;
+    --red: #b03030;
+    --blue: #2a5a8c;
+    --shadow: 0 2px 12px rgba(139,69,19,0.12);
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: 'Hiragino Kaku Gothic ProN', 'Noto Sans JP', sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+  }
+
+  /* ===== LOGIN ===== */
+  #login-screen {
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    background: linear-gradient(160deg, #6b3010 0%, #c47c3e 50%, #e8c896 100%);
+  }
+  .login-logo {
+    font-size: 3.5rem;
+    margin-bottom: 8px;
+  }
+  .login-title {
+    font-size: 1.5rem;
+    font-weight: 900;
+    color: #fff;
+    text-shadow: 0 2px 8px rgba(0,0,0,0.3);
+    margin-bottom: 4px;
+    letter-spacing: 0.08em;
+  }
+  .login-sub {
+    font-size: 0.85rem;
+    color: rgba(255,255,255,0.8);
+    margin-bottom: 40px;
+    letter-spacing: 0.12em;
+  }
+  .login-card {
+    background: rgba(255,255,255,0.95);
+    border-radius: 20px;
+    padding: 36px 40px;
+    width: 320px;
+    box-shadow: 0 8px 40px rgba(0,0,0,0.25);
+  }
+  .login-label {
+    font-size: 0.88rem;
+    color: var(--text2);
+    margin-bottom: 12px;
+    text-align: center;
+    font-weight: 600;
+  }
+  .pin-display {
+    display: flex;
+    gap: 10px;
+    justify-content: center;
+    margin-bottom: 24px;
+  }
+  .pin-dot {
+    width: 18px;
+    height: 18px;
+    border-radius: 50%;
+    border: 2px solid var(--primary-light);
+    background: transparent;
+    transition: background 0.2s;
+  }
+  .pin-dot.filled { background: var(--accent); border-color: var(--accent); }
+  .pin-pad {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 10px;
+  }
+  .pin-btn {
+    background: var(--bg);
+    border: 1.5px solid var(--border);
+    border-radius: 12px;
+    padding: 14px;
+    font-size: 1.3rem;
+    font-weight: 700;
+    color: var(--text);
+    cursor: pointer;
+    transition: all 0.15s;
+  }
+  .pin-btn:hover { background: var(--accent2); color: #fff; border-color: var(--accent2); }
+  .pin-btn:active { transform: scale(0.94); }
+  .pin-btn.del { font-size: 1rem; color: var(--text2); }
+  .pin-btn.zero { grid-column: 2; }
+  .login-error {
+    text-align: center;
+    color: var(--red);
+    font-size: 0.85rem;
+    margin-top: 14px;
+    min-height: 20px;
+  }
+  .login-hint {
+    text-align: center;
+    font-size: 0.75rem;
+    color: var(--text2);
+    margin-top: 16px;
+    opacity: 0.7;
+  }
+
+  /* ===== MAIN APP ===== */
+  #main-app { display: none; }
+
+  .app-header {
+    position: sticky;
+    top: 0;
+    z-index: 100;
+    box-shadow: 0 3px 16px rgba(0,0,0,0.3);
+    display: flex;
+    flex-direction: column;
+  }
+  /* 上段：タイトルテキスト */
+  .header-top-bar {
+    background: linear-gradient(90deg, #2a8ed8 0%, #4ab4f0 50%, #2a8ed8 100%);
+    height: 48px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    position: relative;
+    width: 100%;
+    flex-shrink: 0;
+  }
+  /* 下段：町並みイラスト */
+  .header-town-bar {
+    background: linear-gradient(180deg, #a8d8f0 0%, #d8eefc 40%, #f8eecc 70%, #f8d878 100%);
+    height: 218px;
+    position: relative;
+    overflow: hidden;
+    flex-shrink: 0;
+  }
+  .header-town-svg {
+    position: absolute;
+    bottom: 0; left: 0;
+    width: 100%; height: 100%;
+    pointer-events: none;
+  }
+  .header-bamboo {
+    position: absolute;
+    bottom: 0;
+    pointer-events: none;
+    z-index: 8;
+  }
+  .header-bamboo.bl { left: 4px; }
+  .header-bamboo.br { right: 54px; }
+  .header-sun {
+    position: absolute;
+    top: 6px; right: 88px;
+    width: 24px; height: 24px;
+    border-radius: 50%;
+    background: radial-gradient(circle at 38% 32%, #fffce0, #f8c800);
+    box-shadow: 0 0 14px rgba(255,220,0,1), 0 0 28px rgba(255,200,0,0.5);
+    z-index: 5;
+  }
+  .hcloud {
+    position: absolute;
+    background: white;
+    border-radius: 50%;
+    z-index: 4;
+    opacity: 0.88;
+  }
+  .app-header-center {
+    text-align: center;
+    z-index: 10;
+    position: relative;
+  }
+  .app-header-title {
+    font-size: 1.3rem;
+    font-weight: 900;
+    letter-spacing: 0.1em;
+    color: #fff;
+    text-shadow: 0 2px 6px rgba(0,60,140,0.6), 0 1px 0 rgba(0,0,0,0.2);
+  }
+  .app-header-sub {
+    font-size: 0.7rem;
+    color: rgba(255,255,255,0.95);
+    letter-spacing: 0.08em;
+    margin-top: 2px;
+    text-shadow: 0 1px 4px rgba(0,50,120,0.5);
+  }
+  .logout-btn {
+    position: absolute !important;
+    right: 12px; top: 50%; transform: translateY(-50%);
+    background: rgba(255,255,255,0.18);
+    border: 1px solid rgba(255,255,255,0.35);
+    color: white;
+    padding: 5px 11px;
+    border-radius: 16px;
+    font-size: 0.75rem;
+    cursor: pointer;
+    transition: background 0.2s;
+    z-index: 20;
+  }
+  .logout-btn:hover { background: rgba(255,255,255,0.32); }
+
+  /* ===== TABS ===== */
+  .tabs-bar {
+    background: var(--card);
+    border-bottom: 2px solid var(--border);
+    display: flex;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+  .tab-btn {
+    flex: 1;
+    min-width: 80px;
+    padding: 12px 8px 10px;
+    border: none;
+    background: transparent;
+    color: var(--text2);
+    font-size: 0.78rem;
+    font-weight: 600;
+    cursor: pointer;
+    border-bottom: 3px solid transparent;
+    transition: all 0.2s;
+    white-space: nowrap;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 2px;
+  }
+  .tab-btn .tab-icon { font-size: 1.2rem; }
+  .tab-btn.active {
+    color: var(--accent);
+    border-bottom-color: var(--accent);
+    background: var(--bg2);
+  }
+  .tab-btn:hover { background: var(--bg2); }
+
+  /* ===== CONTENT ===== */
+  .tab-content { display: none; padding: 20px; max-width: 800px; margin: 0 auto; }
+  .tab-content.active { display: block; }
+
+  /* ===== CARDS ===== */
+  .card {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    padding: 18px;
+    margin-bottom: 16px;
+    box-shadow: var(--shadow);
+  }
+  .card-title {
+    font-size: 0.92rem;
+    font-weight: 800;
+    color: var(--primary);
+    margin-bottom: 14px;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    border-bottom: 1px solid var(--border);
+    padding-bottom: 10px;
+  }
+
+  /* ===== FORMS ===== */
+  .form-group { margin-bottom: 12px; }
+  .form-group label { display: block; font-size: 0.82rem; color: var(--text2); margin-bottom: 4px; font-weight: 600; }
+  .form-group input, .form-group textarea, .form-group select {
+    width: 100%;
+    border: 1.5px solid var(--border);
+    border-radius: 8px;
+    padding: 9px 12px;
+    font-size: 0.9rem;
+    font-family: inherit;
+    background: var(--bg);
+    color: var(--text);
+    transition: border-color 0.2s;
+  }
+  .form-group input:focus, .form-group textarea:focus, .form-group select:focus {
+    outline: none;
+    border-color: var(--primary-light);
+  }
+  .form-group textarea { resize: vertical; min-height: 80px; }
+
+  .btn {
+    padding: 9px 20px;
+    border-radius: 8px;
+    border: none;
+    font-size: 0.88rem;
+    font-weight: 700;
+    cursor: pointer;
+    transition: all 0.2s;
+    font-family: inherit;
+  }
+  .btn-primary { background: var(--accent); color: white; }
+  .btn-primary:hover { background: var(--primary); }
+  .btn-danger { background: var(--red); color: white; }
+  .btn-danger:hover { opacity: 0.85; }
+  .btn-sm { padding: 5px 12px; font-size: 0.78rem; }
+
+  /* ===== NOTICE BOARD ===== */
+  .notice-item {
+    background: var(--bg2);
+    border: 1px solid var(--border);
+    border-left: 4px solid var(--accent);
+    border-radius: 10px;
+    padding: 14px;
+    margin-bottom: 12px;
+    position: relative;
+  }
+  .notice-item.important { border-left-color: var(--red); }
+  .notice-item.info { border-left-color: var(--blue); }
+  .notice-header { display: flex; align-items: center; gap: 8px; margin-bottom: 6px; flex-wrap: wrap; }
+  .notice-tag {
+    font-size: 0.7rem;
+    padding: 2px 8px;
+    border-radius: 10px;
+    font-weight: 700;
+  }
+  .tag-important { background: #ffe0e0; color: var(--red); }
+  .tag-info { background: #ddeeff; color: var(--blue); }
+  .tag-normal { background: #ffe8d0; color: var(--accent); }
+  .notice-title-text { font-size: 0.95rem; font-weight: 800; color: var(--text); }
+  .notice-meta { font-size: 0.75rem; color: var(--text2); }
+  .notice-body { font-size: 0.88rem; color: var(--text); line-height: 1.6; white-space: pre-wrap; }
+  .delete-btn { position: absolute; top: 10px; right: 10px; background: none; border: none; color: #ccc; cursor: pointer; font-size: 1.1rem; }
+  .delete-btn:hover { color: var(--red); }
+
+  /* ===== SCHEDULE ===== */
+  .schedule-item {
+    background: var(--bg2);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 12px 14px;
+    margin-bottom: 10px;
+    display: flex;
+    align-items: flex-start;
+    gap: 14px;
+    position: relative;
+  }
+  .schedule-date-box {
+    background: var(--accent);
+    color: white;
+    border-radius: 8px;
+    padding: 8px 12px;
+    text-align: center;
+    min-width: 52px;
+    flex-shrink: 0;
+  }
+  .schedule-month { font-size: 0.72rem; font-weight: 700; }
+  .schedule-day { font-size: 1.5rem; font-weight: 900; line-height: 1; }
+  .schedule-info { flex: 1; }
+  .schedule-title { font-size: 0.95rem; font-weight: 800; margin-bottom: 3px; }
+  .schedule-detail { font-size: 0.82rem; color: var(--text2); }
+  .schedule-place { display: inline-flex; align-items: center; gap: 3px; font-size: 0.8rem; color: var(--blue); margin-top: 4px; }
+
+  /* ===== MINUTES ===== */
+  .minutes-item {
+    background: var(--bg2);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 14px;
+    margin-bottom: 12px;
+    cursor: pointer;
+    transition: background 0.15s;
+    position: relative;
+  }
+  .minutes-item:hover { background: #fff3e5; }
+  .minutes-header-row { display: flex; align-items: center; gap: 10px; margin-bottom: 6px; }
+  .minutes-date { font-size: 0.8rem; color: var(--text2); }
+  .minutes-title { font-size: 0.95rem; font-weight: 800; }
+  .minutes-preview { font-size: 0.83rem; color: var(--text2); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .minutes-full { display: none; margin-top: 12px; padding-top: 12px; border-top: 1px solid var(--border); font-size: 0.88rem; white-space: pre-wrap; line-height: 1.7; }
+  .minutes-full.open { display: block; }
+
+  /* ===== MEMBERS ===== */
+  .member-item {
+    background: var(--bg2);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 12px 14px;
+    margin-bottom: 10px;
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    position: relative;
+  }
+  .member-avatar {
+    width: 44px;
+    height: 44px;
+    border-radius: 50%;
+    background: var(--accent2);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.3rem;
+    flex-shrink: 0;
+  }
+  .member-name { font-size: 0.95rem; font-weight: 800; }
+  .member-role { font-size: 0.78rem; color: var(--accent); font-weight: 600; }
+  .member-contact { font-size: 0.82rem; color: var(--text2); margin-top: 3px; }
+  .member-info { flex: 1; }
+
+  /* ===== TASKS ===== */
+  .task-item {
+    background: var(--bg2);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 12px 14px;
+    margin-bottom: 8px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    transition: opacity 0.2s;
+    position: relative;
+  }
+  .task-item.done { opacity: 0.5; }
+  .task-check {
+    width: 22px;
+    height: 22px;
+    border-radius: 50%;
+    border: 2.5px solid var(--border);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    flex-shrink: 0;
+    transition: all 0.2s;
+    font-size: 0.9rem;
+    color: transparent;
+  }
+  .task-check.checked { background: var(--green); border-color: var(--green); color: white; }
+  .task-text { flex: 1; font-size: 0.9rem; }
+  .task-item.done .task-text { text-decoration: line-through; color: var(--text2); }
+  .task-assignee { font-size: 0.78rem; color: var(--blue); font-weight: 600; }
+  .task-due { font-size: 0.75rem; color: var(--red); }
+
+  /* ===== DASHBOARD ===== */
+  .dash-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; margin-bottom: 20px; }
+  @media (max-width: 500px) { .dash-grid { grid-template-columns: 1fr; } }
+  .dash-card {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    padding: 16px;
+    text-align: center;
+    box-shadow: var(--shadow);
+    cursor: pointer;
+    transition: transform 0.15s, box-shadow 0.15s;
+  }
+  .dash-card:hover { transform: translateY(-2px); box-shadow: 0 6px 20px rgba(139,69,19,0.18); }
+  .dash-icon { font-size: 2.4rem; margin-bottom: 6px; }
+  .dash-name { font-size: 0.88rem; font-weight: 800; color: var(--text); }
+  .dash-count { font-size: 0.75rem; color: var(--text2); margin-top: 3px; }
+  .welcome-card {
+    background: linear-gradient(135deg, var(--primary) 0%, var(--primary-light) 100%);
+    border-radius: 14px;
+    padding: 20px;
+    color: white;
+    margin-bottom: 20px;
+    box-shadow: var(--shadow);
+  }
+  .welcome-title { font-size: 1.1rem; font-weight: 900; margin-bottom: 4px; }
+  .welcome-sub { font-size: 0.82rem; opacity: 0.85; }
+  .today-schedule { margin-top: 14px; background: rgba(255,255,255,0.15); border-radius: 10px; padding: 12px; }
+  .today-title { font-size: 0.8rem; font-weight: 700; margin-bottom: 8px; opacity: 0.9; }
+
+  /* ===== PIN CHANGE ===== */
+  .settings-section { margin-bottom: 20px; }
+  .settings-title { font-size: 0.95rem; font-weight: 800; color: var(--primary); margin-bottom: 12px; display: flex; align-items: center; gap: 6px; }
+
+  /* ===== MODAL ===== */
+  .modal-overlay {
+    display: none;
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.5);
+    z-index: 999;
+    align-items: center;
+    justify-content: center;
+  }
+  .modal-overlay.open { display: flex; }
+  .modal-box {
+    background: var(--card);
+    border-radius: 16px;
+    padding: 24px;
+    width: 90%;
+    max-width: 480px;
+    box-shadow: 0 8px 40px rgba(0,0,0,0.3);
+    max-height: 90vh;
+    overflow-y: auto;
+  }
+  .modal-title { font-size: 1rem; font-weight: 800; color: var(--primary); margin-bottom: 16px; }
+  .modal-footer { display: flex; gap: 10px; justify-content: flex-end; margin-top: 16px; }
+
+  /* ===== EMPTY STATE ===== */
+  .empty-state { text-align: center; padding: 40px 20px; color: var(--text2); }
+  .empty-state .empty-icon { font-size: 3rem; margin-bottom: 12px; }
+  .empty-state p { font-size: 0.88rem; }
+
+  /* ===== SECTION HEADER ===== */
+  .section-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 16px; }
+  .section-title { font-size: 1.05rem; font-weight: 900; color: var(--primary); display: flex; align-items: center; gap: 6px; }
+
+  /* ===== BADGE ===== */
+  .badge { display: inline-block; padding: 2px 8px; border-radius: 10px; font-size: 0.7rem; font-weight: 700; }
+  .badge-new { background: var(--red); color: white; }
+  .badge-soon { background: #fff3cd; color: #856404; }
+
+  /* ===== SYNC STEPS ===== */
+  .sync-step {
+    display: flex;
+    gap: 12px;
+    padding: 14px 0;
+    border-bottom: 1px solid var(--border);
+  }
+  .sync-step:last-child { border-bottom: none; }
+  .sync-step-num {
+    width: 28px;
+    height: 28px;
+    border-radius: 50%;
+    background: var(--accent);
+    color: white;
+    font-weight: 900;
+    font-size: 0.9rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    margin-top: 2px;
+  }
+  .sync-step-title { font-size: 0.92rem; font-weight: 800; margin-bottom: 4px; }
+  .sync-step-desc { font-size: 0.83rem; color: var(--text2); line-height: 1.6; }
+
+  /* 印刷対応 */
+  @media print {
+    .tabs-bar, .app-header, .btn { display: none !important; }
+    .tab-content { display: block !important; }
+  }
+</style>
+</head>
+<body>
+
+<!-- ===== LOGIN SCREEN ===== -->
+<div id="login-screen">
+  <div class="login-logo">🏘️</div>
+  <div class="login-title">うちまち 理事会</div>
+  <div class="login-sub">内子まちづくり商店街 理事専用</div>
+  <div class="login-card">
+    <div class="login-label">🔐 暗証番号を入力してください</div>
+    <div class="pin-display" id="pin-display">
+      <div class="pin-dot" id="dot-0"></div>
+      <div class="pin-dot" id="dot-1"></div>
+      <div class="pin-dot" id="dot-2"></div>
+      <div class="pin-dot" id="dot-3"></div>
+    </div>
+    <div class="pin-pad">
+      <button class="pin-btn" onclick="pinInput('1')">1</button>
+      <button class="pin-btn" onclick="pinInput('2')">2</button>
+      <button class="pin-btn" onclick="pinInput('3')">3</button>
+      <button class="pin-btn" onclick="pinInput('4')">4</button>
+      <button class="pin-btn" onclick="pinInput('5')">5</button>
+      <button class="pin-btn" onclick="pinInput('6')">6</button>
+      <button class="pin-btn" onclick="pinInput('7')">7</button>
+      <button class="pin-btn" onclick="pinInput('8')">8</button>
+      <button class="pin-btn" onclick="pinInput('9')">9</button>
+      <button class="pin-btn zero" onclick="pinInput('0')">0</button>
+      <button class="pin-btn del" onclick="pinDelete()">⌫</button>
+    </div>
+    <div class="login-error" id="login-error"></div>
+    <div class="login-hint">初期暗証番号: 1192</div>
+  </div>
+</div>
+
+<!-- ===== MAIN APP ===== -->
+<div id="main-app">
+  <div class="app-header">
+
+    <!-- ===== 上段：タイトル ===== -->
+    <div class="header-top-bar">
+      <div class="header-sun"></div>
+      <div class="hcloud" style="width:44px;height:16px;top:8px;left:8%"></div>
+      <div class="hcloud" style="width:28px;height:12px;top:5px;left:10%"></div>
+      <div class="hcloud" style="width:22px;height:10px;top:12px;left:6%"></div>
+      <div class="app-header-center">
+        <div class="app-header-title">🎋 うちまち 理事会</div>
+        <div class="app-header-sub">内子まちづくり商店街</div>
+      </div>
+      <div style="display:flex;gap:6px;align-items:center;">
+        <button class="logout-btn" onclick="syncUpload()" title="クラウドへ保存">☁︎↑</button>
+        <button class="logout-btn" onclick="syncDownload()" title="クラウドから読込">☁︎↓</button>
+        <button class="logout-btn" onclick="logout()">🚪 ログアウト</button>
+      </div>
+    </div>
+
+    <!-- ===== 下段：町並みイラスト ===== -->
+    <div class="header-town-bar">
+
+    <!-- 笹 左（短冊付き） -->
+    <svg class="header-bamboo bl" width="26" height="94" viewBox="0 0 36 155" xmlns="http://www.w3.org/2000/svg">
+      <rect x="16" y="0" width="4" height="155" fill="#2a5c10" rx="2"/>
+      <rect x="13" y="30" width="10" height="3" fill="#1a3c08" rx="1"/>
+      <rect x="13" y="66" width="10" height="3" fill="#1a3c08" rx="1"/>
+      <rect x="13" y="100" width="10" height="3" fill="#1a3c08" rx="1"/>
+      <rect x="13" y="132" width="10" height="3" fill="#1a3c08" rx="1"/>
+      <path d="M16,32 Q6,38 0,34" stroke="#2a5c10" stroke-width="2" fill="none"/>
+      <ellipse cx="-1" cy="32" rx="8" ry="3" fill="#3a8020" transform="rotate(-20,-1,32)"/>
+      <ellipse cx="-2" cy="37" rx="6" ry="2.2" fill="#50a828" transform="rotate(-36,-2,37)"/>
+      <path d="M20,68 Q30,74 36,70" stroke="#2a5c10" stroke-width="2" fill="none"/>
+      <ellipse cx="37" cy="68" rx="8" ry="3" fill="#3a8020" transform="rotate(20,37,68)"/>
+      <ellipse cx="38" cy="73" rx="6" ry="2.2" fill="#50a828" transform="rotate(36,38,73)"/>
+      <path d="M16,102 Q6,108 0,104" stroke="#2a5c10" stroke-width="2" fill="none"/>
+      <ellipse cx="-1" cy="102" rx="8" ry="3" fill="#3a8020" transform="rotate(-20,-1,102)"/>
+      <path d="M20,134 Q30,140 36,136" stroke="#2a5c10" stroke-width="1.8" fill="none"/>
+      <ellipse cx="37" cy="134" rx="7" ry="2.5" fill="#3a8020" transform="rotate(20,37,134)"/>
+      <!-- 短冊 -->
+      <rect x="4" y="32" width="7" height="26" fill="#e82020" rx="2" opacity="0.95"/>
+      <rect x="24" y="68" width="7" height="24" fill="#f0e010" rx="2" opacity="0.95"/>
+      <rect x="4" y="104" width="7" height="22" fill="#20a8e8" rx="2" opacity="0.95"/>
+      <rect x="24" y="135" width="7" height="18" fill="#30d030" rx="2" opacity="0.95"/>
+    </svg>
+
+    <!-- 笹 右（短冊付き） -->
+    <svg class="header-bamboo br" width="26" height="94" viewBox="0 0 36 155" xmlns="http://www.w3.org/2000/svg">
+      <rect x="16" y="0" width="4" height="155" fill="#2a5c10" rx="2"/>
+      <rect x="13" y="22" width="10" height="3" fill="#1a3c08" rx="1"/>
+      <rect x="13" y="56" width="10" height="3" fill="#1a3c08" rx="1"/>
+      <rect x="13" y="90" width="10" height="3" fill="#1a3c08" rx="1"/>
+      <rect x="13" y="122" width="10" height="3" fill="#1a3c08" rx="1"/>
+      <path d="M16,24 Q6,30 0,26" stroke="#2a5c10" stroke-width="2" fill="none"/>
+      <ellipse cx="-1" cy="24" rx="8" ry="3" fill="#3a8020" transform="rotate(-20,-1,24)"/>
+      <ellipse cx="-2" cy="29" rx="6" ry="2.2" fill="#50a828" transform="rotate(-36,-2,29)"/>
+      <path d="M20,58 Q30,64 36,60" stroke="#2a5c10" stroke-width="2" fill="none"/>
+      <ellipse cx="37" cy="58" rx="8" ry="3" fill="#3a8020" transform="rotate(20,37,58)"/>
+      <path d="M16,92 Q6,98 0,94" stroke="#2a5c10" stroke-width="2" fill="none"/>
+      <ellipse cx="-1" cy="92" rx="8" ry="3" fill="#3a8020" transform="rotate(-20,-1,92)"/>
+      <ellipse cx="-2" cy="97" rx="6" ry="2.2" fill="#50a828" transform="rotate(-36,-2,97)"/>
+      <path d="M20,124 Q30,130 36,126" stroke="#2a5c10" stroke-width="1.8" fill="none"/>
+      <ellipse cx="37" cy="124" rx="7" ry="2.5" fill="#3a8020" transform="rotate(20,37,124)"/>
+      <!-- 短冊 -->
+      <rect x="4" y="24" width="7" height="26" fill="#c020e8" rx="2" opacity="0.95"/>
+      <rect x="24" y="58" width="7" height="24" fill="#e87020" rx="2" opacity="0.95"/>
+      <rect x="4" y="93" width="7" height="22" fill="#e82060" rx="2" opacity="0.95"/>
+      <rect x="24" y="125" width="7" height="18" fill="#20e8c0" rx="2" opacity="0.95"/>
+    </svg>
+
+    <!-- ★ 内子の古い町並み カラーイラスト ★ -->
+    <svg class="header-town-svg" viewBox="0 0 800 110" preserveAspectRatio="none" xmlns="http://www.w3.org/2000/svg">
+
+      <!-- 遠景の山 -->
+      <ellipse cx="180" cy="112" rx="220" ry="65" fill="#7abf42" opacity="0.38"/>
+      <ellipse cx="620" cy="114" rx="240" ry="70" fill="#6aaf38" opacity="0.32"/>
+
+      <!-- 笹まつり飾り：短冊縄 -->
+      <path d="M0,20 Q100,16 200,20 Q300,16 400,20 Q500,16 600,20 Q700,16 800,20"
+            stroke="#b08040" stroke-width="1.3" fill="none" opacity="0.5"/>
+      <!-- 左側 短冊 -->
+      <rect x="18"  y="20" width="5" height="20" fill="#e82020" rx="1.5" opacity="0.82"/>
+      <rect x="46"  y="19" width="5" height="24" fill="#f0e020" rx="1.5" opacity="0.82"/>
+      <rect x="74"  y="20" width="5" height="18" fill="#2880e8" rx="1.5" opacity="0.82"/>
+      <rect x="102" y="19" width="5" height="22" fill="#28c020" rx="1.5" opacity="0.82"/>
+      <rect x="130" y="20" width="5" height="20" fill="#c820e8" rx="1.5" opacity="0.82"/>
+      <rect x="158" y="19" width="5" height="24" fill="#e87820" rx="1.5" opacity="0.82"/>
+      <rect x="186" y="20" width="5" height="18" fill="#20b8e8" rx="1.5" opacity="0.82"/>
+      <rect x="214" y="19" width="5" height="20" fill="#e82060" rx="1.5" opacity="0.82"/>
+      <!-- 右側 短冊 -->
+      <rect x="576" y="20" width="5" height="20" fill="#e82020" rx="1.5" opacity="0.82"/>
+      <rect x="604" y="19" width="5" height="24" fill="#f0e020" rx="1.5" opacity="0.82"/>
+      <rect x="632" y="20" width="5" height="18" fill="#2880e8" rx="1.5" opacity="0.82"/>
+      <rect x="660" y="19" width="5" height="22" fill="#28c020" rx="1.5" opacity="0.82"/>
+      <rect x="688" y="20" width="5" height="20" fill="#c820e8" rx="1.5" opacity="0.82"/>
+      <rect x="716" y="19" width="5" height="24" fill="#e87820" rx="1.5" opacity="0.82"/>
+      <rect x="744" y="20" width="5" height="18" fill="#20b8e8" rx="1.5" opacity="0.82"/>
+      <rect x="772" y="19" width="5" height="20" fill="#e82060" rx="1.5" opacity="0.82"/>
+      <!-- 小さな金の星（空に散らばる） -->
+      <circle cx="270" cy="10" r="3"   fill="#f8d030" opacity="0.7"/>
+      <circle cx="310" cy="6"  r="2"   fill="#f8e060" opacity="0.6"/>
+      <circle cx="490" cy="8"  r="2.5" fill="#f8d030" opacity="0.65"/>
+      <circle cx="530" cy="13" r="2"   fill="#f8e060" opacity="0.6"/>
+      <circle cx="400" cy="5"  r="1.8" fill="#f8d820" opacity="0.55"/>
+
+      <!-- ===== 左側の町家群 ===== -->
+
+      <!-- 左端 小さな町家 -->
+      <rect x="0" y="72" width="62" height="38" fill="#f2e6cc"/>
+      <polygon points="-3,72 31,56 65,72" fill="#3a2010"/>
+      <rect x="-5" y="65" width="9" height="12" fill="#3a2010"/><polygon points="-7,65 -1,59 5,65" fill="#2a1408"/>
+      <rect x="59" y="65" width="9" height="12" fill="#3a2010"/><polygon points="57,65 63,59 69,65" fill="#2a1408"/>
+      <rect x="8" y="78" width="13" height="10" fill="#b89868" opacity="0.85"/>
+      <line x1="10" y1="78" x2="10" y2="88" stroke="#6a3a18" stroke-width="0.8"/>
+      <line x1="12" y1="78" x2="12" y2="88" stroke="#6a3a18" stroke-width="0.8"/>
+      <line x1="14" y1="78" x2="14" y2="88" stroke="#6a3a18" stroke-width="0.8"/>
+      <line x1="16" y1="78" x2="16" y2="88" stroke="#6a3a18" stroke-width="0.8"/>
+      <line x1="18" y1="78" x2="18" y2="88" stroke="#6a3a18" stroke-width="0.8"/>
+      <rect x="40" y="78" width="13" height="10" fill="#b89868" opacity="0.85"/>
+      <rect x="20" y="92" width="22" height="18" fill="#6a3810"/>
+
+      <!-- 大きな商家（左） -->
+      <rect x="66" y="55" width="115" height="55" fill="#f0e4c8"/>
+      <polygon points="60,55 123,34 186,55" fill="#3a2010"/>
+      <rect x="119" y="32" width="12" height="5" fill="#2a1408"/>
+      <polygon points="121,32 125,28 129,32" fill="#1a0c04"/>
+      <!-- 卯達 -->
+      <rect x="62" y="47" width="9" height="13" fill="#3a2010"/><polygon points="60,47 66,41 72,47" fill="#2a1408"/>
+      <rect x="182" y="47" width="9" height="13" fill="#3a2010"/><polygon points="180,47 186,41 192,47" fill="#2a1408"/>
+      <!-- 2階 虫籠窓 -->
+      <rect x="74" y="61" width="13" height="11" fill="#c8b888" opacity="0.8"/>
+      <rect x="93" y="61" width="13" height="11" fill="#c8b888" opacity="0.8"/>
+      <rect x="112" y="61" width="13" height="11" fill="#c8b888" opacity="0.8"/>
+      <rect x="131" y="61" width="13" height="11" fill="#c8b888" opacity="0.8"/>
+      <rect x="150" y="61" width="13" height="11" fill="#c8b888" opacity="0.8"/>
+      <g stroke="#6a4020" stroke-width="0.9" opacity="0.9">
+        <line x1="76" y1="61" x2="76" y2="72"/><line x1="78" y1="61" x2="78" y2="72"/>
+        <line x1="80" y1="61" x2="80" y2="72"/><line x1="82" y1="61" x2="82" y2="72"/>
+        <line x1="84" y1="61" x2="84" y2="72"/><line x1="95" y1="61" x2="95" y2="72"/>
+        <line x1="97" y1="61" x2="97" y2="72"/><line x1="99" y1="61" x2="99" y2="72"/>
+        <line x1="101" y1="61" x2="101" y2="72"/><line x1="114" y1="61" x2="114" y2="72"/>
+        <line x1="116" y1="61" x2="116" y2="72"/><line x1="118" y1="61" x2="118" y2="72"/>
+        <line x1="120" y1="61" x2="120" y2="72"/><line x1="133" y1="61" x2="133" y2="72"/>
+        <line x1="135" y1="61" x2="135" y2="72"/><line x1="137" y1="61" x2="137" y2="72"/>
+        <line x1="152" y1="61" x2="152" y2="72"/><line x1="154" y1="61" x2="154" y2="72"/>
+        <line x1="156" y1="61" x2="156" y2="72"/>
+      </g>
+      <!-- 1階 -->
+      <rect x="68" y="80" width="113" height="30" fill="#e4d4a8"/>
+      <rect x="74" y="83" width="22" height="27" fill="#7a4820"/>
+      <rect x="116" y="83" width="22" height="27" fill="#7a4820"/>
+      <!-- 暖簾 赤 -->
+      <rect x="74" y="82" width="6" height="16" fill="#d82020" rx="1" opacity="0.9"/>
+      <rect x="82" y="82" width="6" height="16" fill="#d82020" rx="1" opacity="0.9"/>
+      <rect x="90" y="82" width="6" height="16" fill="#d82020" rx="1" opacity="0.9"/>
+      <rect x="98" y="82" width="6" height="16" fill="#d82020" rx="1" opacity="0.9"/>
+
+      <!-- 木（左） -->
+      <rect x="190" y="75" width="6" height="35" fill="#5a3810"/>
+      <ellipse cx="193" cy="68" rx="22" ry="28" fill="#3a7a20"/>
+      <ellipse cx="193" cy="60" rx="16" ry="20" fill="#4a9a28"/>
+      <ellipse cx="193" cy="53" rx="10" ry="14" fill="#5ab830"/>
+
+      <!-- 中規模の商家 -->
+      <rect x="218" y="62" width="80" height="48" fill="#f0e4c8"/>
+      <polygon points="213,62 258,44 303,62" fill="#3a2010"/>
+      <rect x="254" y="42" width="10" height="4" fill="#2a1408"/>
+      <rect x="227" y="68" width="12" height="10" fill="#c8b888" opacity="0.8"/>
+      <rect x="247" y="68" width="12" height="10" fill="#c8b888" opacity="0.8"/>
+      <rect x="267" y="68" width="12" height="10" fill="#c8b888" opacity="0.8"/>
+      <rect x="232" y="84" width="24" height="26" fill="#7a4820"/>
+      <!-- 暖簾 紺 -->
+      <rect x="232" y="83" width="7" height="18" fill="#1a3a88" rx="1" opacity="0.9"/>
+      <rect x="241" y="83" width="7" height="18" fill="#1a3a88" rx="1" opacity="0.9"/>
+      <rect x="250" y="83" width="7" height="18" fill="#1a3a88" rx="1" opacity="0.9"/>
+
+      <!-- ===== 内子座（中央・主役）リアル版 ===== -->
+
+      <!-- 袖棟（左右の小屋根） -->
+      <rect x="294" y="64" width="24" height="46" fill="#c8a882"/>
+      <polygon points="289,64 306,50 323,64" fill="#4a2a12"/>
+      <rect x="482" y="64" width="24" height="46" fill="#c8a882"/>
+      <polygon points="477,64 494,50 511,64" fill="#4a2a12"/>
+
+      <!-- 本体壁（茶色） -->
+      <rect x="308" y="26" width="184" height="84" fill="#d4b896"/>
+
+      <!-- 大屋根（入母屋造り） - 2層構造 -->
+      <!-- 下段ひさし（広い） -->
+      <polygon points="290,32 400,22 510,32" fill="#5a3218" opacity="0.85"/>
+      <!-- メイン屋根 -->
+      <polygon points="300,26 400,3 500,26" fill="#3a2010"/>
+      <!-- 屋根面の瓦ライン -->
+      <line x1="300" y1="26" x2="400" y2="3" stroke="#5a3018" stroke-width="1.2" opacity="0.5"/>
+      <line x1="500" y1="26" x2="400" y2="3" stroke="#5a3018" stroke-width="1.2" opacity="0.5"/>
+      <line x1="340" y1="20" x2="400" y2="3" stroke="#5a3018" stroke-width="0.7" opacity="0.3"/>
+      <line x1="460" y1="20" x2="400" y2="3" stroke="#5a3018" stroke-width="0.7" opacity="0.3"/>
+
+      <!-- 棟飾り（シンプル） -->
+      <rect x="394" y="1" width="12" height="5" fill="#2a1408" rx="1"/>
+      <polygon points="395,1 400,-3 405,1" fill="#1a0c04"/>
+
+      <!-- 2階 虫籠窓（横一列） -->
+      <rect x="314" y="32" width="172" height="24" fill="#c8a070"/>
+      <rect x="316" y="34" width="16" height="18" fill="#d0bc80" opacity="0.9"/>
+      <rect x="335" y="34" width="16" height="18" fill="#d0bc80" opacity="0.9"/>
+      <rect x="354" y="34" width="16" height="18" fill="#d0bc80" opacity="0.9"/>
+      <rect x="373" y="34" width="16" height="18" fill="#d0bc80" opacity="0.9"/>
+      <rect x="392" y="34" width="16" height="18" fill="#d0bc80" opacity="0.9"/>
+      <rect x="411" y="34" width="16" height="18" fill="#d0bc80" opacity="0.9"/>
+      <rect x="430" y="34" width="16" height="18" fill="#d0bc80" opacity="0.9"/>
+      <rect x="449" y="34" width="16" height="18" fill="#d0bc80" opacity="0.9"/>
+      <rect x="468" y="34" width="16" height="18" fill="#d0bc80" opacity="0.9"/>
+      <g stroke="#7a5030" stroke-width="0.85" opacity="0.9">
+        <line x1="318" y1="34" x2="318" y2="52"/><line x1="321" y1="34" x2="321" y2="52"/><line x1="324" y1="34" x2="324" y2="52"/><line x1="327" y1="34" x2="327" y2="52"/>
+        <line x1="337" y1="34" x2="337" y2="52"/><line x1="340" y1="34" x2="340" y2="52"/><line x1="343" y1="34" x2="343" y2="52"/>
+        <line x1="356" y1="34" x2="356" y2="52"/><line x1="359" y1="34" x2="359" y2="52"/><line x1="362" y1="34" x2="362" y2="52"/>
+        <line x1="375" y1="34" x2="375" y2="52"/><line x1="378" y1="34" x2="378" y2="52"/><line x1="381" y1="34" x2="381" y2="52"/>
+        <line x1="394" y1="34" x2="394" y2="52"/><line x1="397" y1="34" x2="397" y2="52"/><line x1="400" y1="34" x2="400" y2="52"/>
+        <line x1="413" y1="34" x2="413" y2="52"/><line x1="416" y1="34" x2="416" y2="52"/><line x1="419" y1="34" x2="419" y2="52"/>
+        <line x1="432" y1="34" x2="432" y2="52"/><line x1="435" y1="34" x2="435" y2="52"/><line x1="438" y1="34" x2="438" y2="52"/>
+        <line x1="451" y1="34" x2="451" y2="52"/><line x1="454" y1="34" x2="454" y2="52"/><line x1="457" y1="34" x2="457" y2="52"/>
+        <line x1="470" y1="34" x2="470" y2="52"/><line x1="473" y1="34" x2="473" y2="52"/>
+      </g>
+
+      <!-- 1階ファサード -->
+      <rect x="308" y="56" width="184" height="54" fill="#be9468"/>
+
+      <!-- のぼり旗（カラフル・正面左右） -->
+      <rect x="312" y="56" width="7" height="38" fill="#e82020" opacity="0.92" rx="1"/>
+      <rect x="321" y="58" width="7" height="35" fill="#f8d820" opacity="0.92" rx="1"/>
+      <rect x="330" y="60" width="7" height="32" fill="#2090e8" opacity="0.92" rx="1"/>
+      <rect x="456" y="56" width="7" height="38" fill="#20c020" opacity="0.92" rx="1"/>
+      <rect x="465" y="58" width="7" height="35" fill="#e820a0" opacity="0.92" rx="1"/>
+      <rect x="474" y="60" width="7" height="32" fill="#9820e8" opacity="0.92" rx="1"/>
+
+      <!-- 看板「内子座」（木彫り風） -->
+      <rect x="342" y="56" width="116" height="17" fill="#2a1008" rx="1"/>
+      <rect x="344" y="57" width="112" height="14" fill="#3a1a0a" rx="1"/>
+      <text x="400" y="69" font-size="12" fill="#f5d840" text-anchor="middle" font-weight="bold" font-family="serif" letter-spacing="5">内　子　座</text>
+
+      <!-- 正面入口（唐破風アーチ） -->
+      <rect x="355" y="74" width="90" height="36" fill="#8a5820"/>
+      <!-- 唐破風（曲線の庇） -->
+      <path d="M352,74 Q375,63 400,67 Q425,63 448,74" fill="#3a2010"/>
+      <!-- 装飾ライン -->
+      <path d="M355,74 Q375,66 400,70 Q425,66 445,74" fill="none" stroke="#5a3018" stroke-width="1.2" opacity="0.6"/>
+      <!-- 扉（左） -->
+      <rect x="357" y="76" width="38" height="34" fill="#5a3010"/>
+      <line x1="376" y1="76" x2="376" y2="110" stroke="#7a4820" stroke-width="1.5"/>
+      <rect x="361" y="82" width="12" height="10" fill="#7a4820" opacity="0.5"/>
+      <rect x="361" y="96" width="12" height="10" fill="#7a4820" opacity="0.5"/>
+      <!-- 扉（右） -->
+      <rect x="405" y="76" width="38" height="34" fill="#5a3010"/>
+      <line x1="424" y1="76" x2="424" y2="110" stroke="#7a4820" stroke-width="1.5"/>
+      <rect x="427" y="82" width="12" height="10" fill="#7a4820" opacity="0.5"/>
+      <rect x="427" y="96" width="12" height="10" fill="#7a4820" opacity="0.5"/>
+
+      <!-- 提灯（大・赤） -->
+      <rect x="371" y="62" width="4" height="10" fill="#7a3010"/>
+      <ellipse cx="373" cy="77" rx="7" ry="9" fill="#e81818" opacity="0.95"/>
+      <ellipse cx="373" cy="77" rx="5" ry="7" fill="#f03030" opacity="0.4"/>
+      <line x1="369" y1="74" x2="377" y2="74" stroke="#c81010" stroke-width="0.8"/>
+      <line x1="369" y1="77" x2="377" y2="77" stroke="#c81010" stroke-width="0.8"/>
+      <line x1="369" y1="80" x2="377" y2="80" stroke="#c81010" stroke-width="0.8"/>
+      <rect x="371" y="86" width="4" height="3" fill="#c81010"/>
+      <rect x="371" y="62" width="4" height="10" fill="#7a3010"/>
+      <ellipse cx="427" cy="77" rx="7" ry="9" fill="#e81818" opacity="0.95"/>
+      <ellipse cx="427" cy="77" rx="5" ry="7" fill="#f03030" opacity="0.4"/>
+      <line x1="423" y1="74" x2="431" y2="74" stroke="#c81010" stroke-width="0.8"/>
+      <line x1="423" y1="77" x2="431" y2="77" stroke="#c81010" stroke-width="0.8"/>
+      <line x1="423" y1="80" x2="431" y2="80" stroke="#c81010" stroke-width="0.8"/>
+      <rect x="425" y="86" width="4" height="3" fill="#c81010"/>
+      <rect x="425" y="62" width="4" height="10" fill="#7a3010"/>
+
+      <!-- 両脇の窓 -->
+      <rect x="315" y="66" width="34" height="22" fill="#d0bc88" opacity="0.85"/>
+      <g stroke="#7a5030" stroke-width="0.8" opacity="0.8">
+        <line x1="320" y1="66" x2="320" y2="88"/><line x1="324" y1="66" x2="324" y2="88"/>
+        <line x1="328" y1="66" x2="328" y2="88"/><line x1="332" y1="66" x2="332" y2="88"/>
+        <line x1="336" y1="66" x2="336" y2="88"/><line x1="340" y1="66" x2="340" y2="88"/>
+      </g>
+      <rect x="451" y="66" width="34" height="22" fill="#d0bc88" opacity="0.85"/>
+      <g stroke="#7a5030" stroke-width="0.8" opacity="0.8">
+        <line x1="456" y1="66" x2="456" y2="88"/><line x1="460" y1="66" x2="460" y2="88"/>
+        <line x1="464" y1="66" x2="464" y2="88"/><line x1="468" y1="66" x2="468" y2="88"/>
+        <line x1="472" y1="66" x2="472" y2="88"/><line x1="476" y1="66" x2="476" y2="88"/>
+      </g>
+
+      <!-- ===== 右側の町家群 ===== -->
+
+      <!-- 木（右） -->
+      <rect x="508" y="77" width="6" height="33" fill="#5a3810"/>
+      <ellipse cx="511" cy="70" rx="22" ry="28" fill="#3a7a20"/>
+      <ellipse cx="511" cy="62" rx="16" ry="20" fill="#4a9a28"/>
+      <ellipse cx="511" cy="55" rx="10" ry="13" fill="#5ab830"/>
+
+      <!-- 中規模商家（右） -->
+      <rect x="518" y="60" width="80" height="50" fill="#f0e4c8"/>
+      <polygon points="513,60 558,42 603,60" fill="#3a2010"/>
+      <rect x="554" y="40" width="10" height="4" fill="#2a1408"/>
+      <rect x="527" y="67" width="12" height="10" fill="#c8b888" opacity="0.8"/>
+      <rect x="547" y="67" width="12" height="10" fill="#c8b888" opacity="0.8"/>
+      <rect x="567" y="67" width="12" height="10" fill="#c8b888" opacity="0.8"/>
+      <rect x="534" y="83" width="24" height="27" fill="#7a4820"/>
+      <!-- 暖簾 緑 -->
+      <rect x="534" y="82" width="7" height="18" fill="#1a7820" rx="1" opacity="0.9"/>
+      <rect x="543" y="82" width="7" height="18" fill="#1a7820" rx="1" opacity="0.9"/>
+      <rect x="552" y="82" width="7" height="18" fill="#1a7820" rx="1" opacity="0.9"/>
+
+      <!-- 大きな商家（右）卯達あり -->
+      <rect x="606" y="52" width="118" height="58" fill="#f0e4c8"/>
+      <polygon points="600,52 665,30 730,52" fill="#3a2010"/>
+      <rect x="660" y="28" width="12" height="5" fill="#2a1408"/>
+      <polygon points="662,28 666,24 670,28" fill="#1a0c04"/>
+      <rect x="602" y="44" width="9" height="13" fill="#3a2010"/><polygon points="600,44 606,38 612,44" fill="#2a1408"/>
+      <rect x="726" y="44" width="9" height="13" fill="#3a2010"/><polygon points="724,44 730,38 736,44" fill="#2a1408"/>
+      <!-- 2階 虫籠窓 -->
+      <rect x="614" y="58" width="13" height="11" fill="#c8b888" opacity="0.8"/>
+      <rect x="633" y="58" width="13" height="11" fill="#c8b888" opacity="0.8"/>
+      <rect x="652" y="58" width="13" height="11" fill="#c8b888" opacity="0.8"/>
+      <rect x="671" y="58" width="13" height="11" fill="#c8b888" opacity="0.8"/>
+      <rect x="690" y="58" width="13" height="11" fill="#c8b888" opacity="0.8"/>
+      <rect x="709" y="58" width="13" height="11" fill="#c8b888" opacity="0.8"/>
+      <g stroke="#6a4020" stroke-width="0.9" opacity="0.9">
+        <line x1="616" y1="58" x2="616" y2="69"/><line x1="619" y1="58" x2="619" y2="69"/>
+        <line x1="622" y1="58" x2="622" y2="69"/><line x1="635" y1="58" x2="635" y2="69"/>
+        <line x1="638" y1="58" x2="638" y2="69"/><line x1="641" y1="58" x2="641" y2="69"/>
+        <line x1="654" y1="58" x2="654" y2="69"/><line x1="657" y1="58" x2="657" y2="69"/>
+        <line x1="673" y1="58" x2="673" y2="69"/><line x1="676" y1="58" x2="676" y2="69"/>
+        <line x1="692" y1="58" x2="692" y2="69"/><line x1="695" y1="58" x2="695" y2="69"/>
+      </g>
+      <!-- 1階 -->
+      <rect x="608" y="78" width="116" height="32" fill="#e4d4a8"/>
+      <rect x="614" y="81" width="22" height="29" fill="#7a4820"/>
+      <rect x="656" y="81" width="22" height="29" fill="#7a4820"/>
+      <rect x="698" y="81" width="22" height="29" fill="#7a4820"/>
+      <!-- 暖簾 紫 -->
+      <rect x="640" y="80" width="7" height="18" fill="#7020a8" rx="1" opacity="0.9"/>
+      <rect x="649" y="80" width="7" height="18" fill="#7020a8" rx="1" opacity="0.9"/>
+
+      <!-- 右端 小さな家 -->
+      <rect x="736" y="70" width="64" height="40" fill="#f2e6cc"/>
+      <polygon points="732,70 768,55 804,70" fill="#3a2010"/>
+      <rect x="746" y="77" width="12" height="9" fill="#b89868" opacity="0.8"/>
+      <rect x="768" y="77" width="12" height="9" fill="#b89868" opacity="0.8"/>
+      <rect x="752" y="89" width="22" height="21" fill="#7a4820"/>
+
+      <!-- 石畳の道 -->
+      <rect x="0" y="108" width="800" height="5" fill="#c8b07a"/>
+      <line x1="0" y1="109" x2="800" y2="109" stroke="#b09860" stroke-width="0.8" opacity="0.5"/>
+      <line x1="0" y1="111" x2="800" y2="111" stroke="#b09860" stroke-width="0.8" opacity="0.5"/>
+    </svg>
+
+    </div><!-- /header-town-bar -->
+  </div>
+
+  <div class="tabs-bar">
+    <button class="tab-btn active" onclick="switchTab('home')" id="tab-home">
+      <span class="tab-icon">🏠</span>ホーム
+    </button>
+    <button class="tab-btn" onclick="switchTab('notice')" id="tab-notice">
+      <span class="tab-icon">📢</span>掲示板
+    </button>
+    <button class="tab-btn" onclick="switchTab('schedule')" id="tab-schedule">
+      <span class="tab-icon">📅</span>日程
+    </button>
+    <button class="tab-btn" onclick="switchTab('minutes')" id="tab-minutes">
+      <span class="tab-icon">📝</span>議事録
+    </button>
+    <button class="tab-btn" onclick="switchTab('members')" id="tab-members">
+      <span class="tab-icon">👥</span>名簿
+    </button>
+    <button class="tab-btn" onclick="switchTab('tasks')" id="tab-tasks">
+      <span class="tab-icon">✅</span>タスク
+    </button>
+    <button class="tab-btn" onclick="switchTab('settings')" id="tab-settings">
+      <span class="tab-icon">⚙️</span>設定
+    </button>
+  </div>
+
+  <!-- ===== HOME ===== -->
+  <div class="tab-content active" id="content-home">
+    <div class="welcome-card">
+      <div class="welcome-title" id="welcome-msg">🌸 おはようございます</div>
+      <div class="welcome-sub" id="welcome-date"></div>
+      <div class="today-schedule">
+        <div class="today-title">📅 直近の予定</div>
+        <div id="home-upcoming"></div>
+      </div>
+    </div>
+    <div class="dash-grid">
+      <div class="dash-card" onclick="switchTab('notice')">
+        <div class="dash-icon">📢</div>
+        <div class="dash-name">掲示板</div>
+        <div class="dash-count" id="home-notice-count">0件の投稿</div>
+      </div>
+      <div class="dash-card" onclick="switchTab('schedule')">
+        <div class="dash-icon">📅</div>
+        <div class="dash-name">スケジュール</div>
+        <div class="dash-count" id="home-sched-count">0件の予定</div>
+      </div>
+      <div class="dash-card" onclick="switchTab('minutes')">
+        <div class="dash-icon">📝</div>
+        <div class="dash-name">議事録</div>
+        <div class="dash-count" id="home-min-count">0件</div>
+      </div>
+      <div class="dash-card" onclick="switchTab('tasks')">
+        <div class="dash-icon">✅</div>
+        <div class="dash-name">タスク</div>
+        <div class="dash-count" id="home-task-count">0件</div>
+      </div>
+    </div>
+    <div class="card">
+      <div class="card-title">📢 最新のお知らせ</div>
+      <div id="home-latest-notice"><div class="empty-state" style="padding:16px"><p>お知らせはありません</p></div></div>
+    </div>
+  </div>
+
+  <!-- ===== NOTICE BOARD ===== -->
+  <div class="tab-content" id="content-notice">
+    <div class="section-header">
+      <div class="section-title">📢 掲示板</div>
+      <button class="btn btn-primary" onclick="openModal('notice-modal')">＋ 投稿する</button>
+    </div>
+    <div id="notice-list"></div>
+  </div>
+
+  <!-- ===== SCHEDULE ===== -->
+  <div class="tab-content" id="content-schedule">
+    <div class="section-header">
+      <div class="section-title">📅 スケジュール</div>
+      <button class="btn btn-primary" onclick="openModal('sched-modal')">＋ 追加</button>
+    </div>
+    <div id="sched-list"></div>
+  </div>
+
+  <!-- ===== MINUTES ===== -->
+  <div class="tab-content" id="content-minutes">
+    <div class="section-header">
+      <div class="section-title">📝 議事録</div>
+      <button class="btn btn-primary" onclick="openModal('minutes-modal')">＋ 記録する</button>
+    </div>
+    <div id="minutes-list"></div>
+  </div>
+
+  <!-- ===== MEMBERS ===== -->
+  <div class="tab-content" id="content-members">
+    <div class="section-header">
+      <div class="section-title">👥 理事名簿</div>
+      <button class="btn btn-primary" onclick="openModal('member-modal')">＋ 追加</button>
+    </div>
+    <div id="member-list"></div>
+  </div>
+
+  <!-- ===== TASKS ===== -->
+  <div class="tab-content" id="content-tasks">
+    <div class="section-header">
+      <div class="section-title">✅ タスク管理</div>
+      <button class="btn btn-primary" onclick="openModal('task-modal')">＋ 追加</button>
+    </div>
+    <div style="margin-bottom:10px">
+      <span style="font-size:0.82rem;color:var(--text2)" id="task-progress"></span>
+    </div>
+    <div id="task-list"></div>
+    <div id="task-done-section" style="display:none">
+      <div style="font-size:0.82rem;color:var(--text2);margin:16px 0 8px;font-weight:600">── 完了済み ──</div>
+      <div id="task-done-list"></div>
+    </div>
+  </div>
+
+  <!-- ===== SETTINGS ===== -->
+  <div class="tab-content" id="content-settings">
+
+    <!-- LINE 共有 -->
+    <div class="settings-section">
+      <div class="card" style="border:2px solid var(--accent)">
+        <div class="card-title">📤 LINE共有・データ同期</div>
+        <p style="font-size:0.85rem;color:var(--text2);line-height:1.7;margin-bottom:16px">
+          管理者がデータを書き出して理事LINEグループに送り、<br>
+          他の理事が「読み込む」ことで同じデータを共有できます。
+        </p>
+
+        <!-- STEP 1: Export -->
+        <div class="sync-step">
+          <div class="sync-step-num">①</div>
+          <div class="sync-step-body">
+            <div class="sync-step-title">📤 管理者：データを書き出す</div>
+            <div class="sync-step-desc">掲示板・日程・議事録・名簿・タスクを<br>1つのファイルにまとめます</div>
+            <button class="btn btn-primary" style="margin-top:10px" onclick="exportData()">📤 書き出す（.jsonファイル）</button>
+            <div id="export-msg" style="font-size:0.82rem;margin-top:8px;min-height:18px"></div>
+          </div>
+        </div>
+
+        <!-- STEP 2: LINE -->
+        <div class="sync-step">
+          <div class="sync-step-num">②</div>
+          <div class="sync-step-body">
+            <div class="sync-step-title">💬 LINEでファイルを送る</div>
+            <div class="sync-step-desc">
+              ダウンロードされた <strong>うちまち_XXXXXXXX.json</strong> を<br>
+              理事グループLINEに添付して送ってください<br>
+              <span style="font-size:0.78rem;color:var(--text2)">
+                📱 スマホ：LINEの「＋」→「ファイル」→ダウンロードから選択<br>
+                💻 PC：LINEのチャット画面にドラッグ＆ドロップ
+              </span>
+            </div>
+          </div>
+        </div>
+
+        <!-- STEP 3: Import -->
+        <div class="sync-step">
+          <div class="sync-step-num">③</div>
+          <div class="sync-step-body">
+            <div class="sync-step-title">📥 各理事：ファイルを読み込む</div>
+            <div class="sync-step-desc">
+              LINEで受け取ったファイルを保存してから読み込みます<br>
+              <span style="font-size:0.78rem;color:var(--text2)">
+                📱 スマホ：LINEでファイルを長押し→「転送」→「ファイルに保存」
+              </span>
+            </div>
+            <input type="file" id="import-file" accept=".json" style="display:none" onchange="importData()">
+            <button class="btn" style="margin-top:10px;background:var(--green);color:white" onclick="triggerImport()">📥 ファイルを読み込む</button>
+            <div id="import-msg" style="font-size:0.82rem;margin-top:8px;min-height:18px"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="settings-section">
+      <div class="card">
+        <div class="card-title">🔐 暗証番号を変更</div>
+        <div class="form-group">
+          <label>現在の暗証番号</label>
+          <input type="password" id="old-pin" maxlength="4" placeholder="現在のPIN">
+        </div>
+        <div class="form-group">
+          <label>新しい暗証番号（4桁）</label>
+          <input type="password" id="new-pin" maxlength="4" placeholder="新PIN">
+        </div>
+        <div class="form-group">
+          <label>新しい暗証番号（確認）</label>
+          <input type="password" id="new-pin2" maxlength="4" placeholder="新PIN（確認）">
+        </div>
+        <button class="btn btn-primary" onclick="changePin()">変更する</button>
+        <div id="pin-change-msg" style="margin-top:10px;font-size:0.85rem"></div>
+      </div>
+    </div>
+    <div class="settings-section">
+      <div class="card">
+        <div class="card-title">🗑️ データ管理</div>
+        <p style="font-size:0.85rem;color:var(--text2);margin-bottom:14px">各データを全件削除します。取り消せません。</p>
+        <div style="display:flex;gap:10px;flex-wrap:wrap">
+          <button class="btn btn-danger btn-sm" onclick="clearData('notices','掲示板')">掲示板を削除</button>
+          <button class="btn btn-danger btn-sm" onclick="clearData('schedules','スケジュール')">日程を削除</button>
+          <button class="btn btn-danger btn-sm" onclick="clearData('minutes','議事録')">議事録を削除</button>
+          <button class="btn btn-danger btn-sm" onclick="clearData('members','名簿')">名簿を削除</button>
+          <button class="btn btn-danger btn-sm" onclick="clearData('tasks','タスク')">タスクを削除</button>
+        </div>
+      </div>
+    </div>
+    <div class="settings-section">
+      <div class="card">
+        <div class="card-title">ℹ️ アプリ情報</div>
+        <p style="font-size:0.85rem;color:var(--text2);line-height:1.7">
+          <strong>うちまち 理事会アプリ</strong><br>
+          内子まちづくり商店街 理事専用<br>
+          データはこの端末のみに保存されます。<br>
+          バージョン 1.0
+        </p>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ===== MODALS ===== -->
+
+<!-- Notice Modal -->
+<div class="modal-overlay" id="notice-modal">
+  <div class="modal-box">
+    <div class="modal-title">📢 お知らせを投稿</div>
+    <div class="form-group">
+      <label>種別</label>
+      <select id="notice-type">
+        <option value="normal">通常</option>
+        <option value="important">重要</option>
+        <option value="info">情報</option>
+      </select>
+    </div>
+    <div class="form-group">
+      <label>タイトル</label>
+      <input type="text" id="notice-title" placeholder="例: 次回理事会について">
+    </div>
+    <div class="form-group">
+      <label>投稿者名</label>
+      <input type="text" id="notice-author" placeholder="例: 有本">
+    </div>
+    <div class="form-group">
+      <label>内容</label>
+      <textarea id="notice-body" placeholder="詳細を入力..."></textarea>
+    </div>
+    <div class="modal-footer">
+      <button class="btn" onclick="closeModal('notice-modal')" style="background:var(--border)">キャンセル</button>
+      <button class="btn btn-primary" onclick="addNotice()">投稿する</button>
+    </div>
+  </div>
+</div>
+
+<!-- Schedule Modal -->
+<div class="modal-overlay" id="sched-modal">
+  <div class="modal-box">
+    <div class="modal-title">📅 予定を追加</div>
+    <div class="form-group">
+      <label>日付</label>
+      <input type="date" id="sched-date">
+    </div>
+    <div class="form-group">
+      <label>時間</label>
+      <input type="time" id="sched-time" placeholder="例: 19:00">
+    </div>
+    <div class="form-group">
+      <label>タイトル</label>
+      <input type="text" id="sched-title" placeholder="例: 第5回理事会">
+    </div>
+    <div class="form-group">
+      <label>場所</label>
+      <input type="text" id="sched-place" placeholder="例: うちまち事務所">
+    </div>
+    <div class="form-group">
+      <label>メモ</label>
+      <textarea id="sched-memo" style="min-height:60px" placeholder="備考など..."></textarea>
+    </div>
+    <div class="modal-footer">
+      <button class="btn" onclick="closeModal('sched-modal')" style="background:var(--border)">キャンセル</button>
+      <button class="btn btn-primary" onclick="addSchedule()">追加する</button>
+    </div>
+  </div>
+</div>
+
+<!-- Minutes Modal -->
+<div class="modal-overlay" id="minutes-modal">
+  <div class="modal-box">
+    <div class="modal-title">📝 議事録を記録</div>
+    <div class="form-group">
+      <label>開催日</label>
+      <input type="date" id="min-date">
+    </div>
+    <div class="form-group">
+      <label>会議名</label>
+      <input type="text" id="min-title" placeholder="例: 第5回理事会">
+    </div>
+    <div class="form-group">
+      <label>出席者</label>
+      <input type="text" id="min-attendees" placeholder="例: 有本、山田、鈴木...">
+    </div>
+    <div class="form-group">
+      <label>議事内容</label>
+      <textarea id="min-body" style="min-height:140px" placeholder="決定事項、議論内容などを記録..."></textarea>
+    </div>
+    <div class="form-group">
+      <label>次回予定</label>
+      <input type="text" id="min-next" placeholder="例: 来月15日 同所にて">
+    </div>
+    <div class="modal-footer">
+      <button class="btn" onclick="closeModal('minutes-modal')" style="background:var(--border)">キャンセル</button>
+      <button class="btn btn-primary" onclick="addMinutes()">記録する</button>
+    </div>
+  </div>
+</div>
+
+<!-- Member Modal -->
+<div class="modal-overlay" id="member-modal">
+  <div class="modal-box">
+    <div class="modal-title" id="member-modal-title">👤 理事を追加</div>
+    <div class="form-group">
+      <label>氏名</label>
+      <input type="text" id="mem-name" placeholder="例: 山田 太郎">
+    </div>
+    <div class="form-group">
+      <label>役職</label>
+      <select id="mem-role">
+        <option value="理事長">理事長</option>
+        <option value="副理事長">副理事長</option>
+        <option value="会計">会計</option>
+        <option value="書記">書記</option>
+        <option value="理事" selected>理事</option>
+        <option value="監事">監事</option>
+        <option value="顧問">顧問</option>
+      </select>
+    </div>
+    <div class="form-group">
+      <label>担当・店舗名</label>
+      <input type="text" id="mem-shop" placeholder="例: ○○商店">
+    </div>
+    <div class="form-group">
+      <label>電話番号</label>
+      <input type="tel" id="mem-tel" placeholder="例: 090-XXXX-XXXX">
+    </div>
+    <div class="form-group">
+      <label>メール（任意）</label>
+      <input type="email" id="mem-email" placeholder="例: yamada@example.com">
+    </div>
+    <div class="modal-footer">
+      <button class="btn" onclick="closeModal('member-modal')" style="background:var(--border)">キャンセル</button>
+      <button class="btn btn-primary" id="member-save-btn" onclick="addMember()">追加する</button>
+    </div>
+  </div>
+</div>
+
+<!-- Task Modal -->
+<div class="modal-overlay" id="task-modal">
+  <div class="modal-box">
+    <div class="modal-title">✅ タスクを追加</div>
+    <div class="form-group">
+      <label>タスク内容</label>
+      <input type="text" id="task-title" placeholder="例: 看板デザインの確認">
+    </div>
+    <div class="form-group">
+      <label>担当者</label>
+      <input type="text" id="task-assign" placeholder="例: 有本">
+    </div>
+    <div class="form-group">
+      <label>期限</label>
+      <input type="date" id="task-due">
+    </div>
+    <div class="modal-footer">
+      <button class="btn" onclick="closeModal('task-modal')" style="background:var(--border)">キャンセル</button>
+      <button class="btn btn-primary" onclick="addTask()">追加する</button>
+    </div>
+  </div>
+</div>
+
+<script>
+// ===== CLOUD SYNC =====
+const SYNC_URL = 'https://script.google.com/macros/s/AKfycbxwL19mAenATUMILRsQYrDL0ThjU2C583Cj729OfzNHEH3drMcZCExYULRp4VGOZ11J/exec';
+const SYNC_KEYS = ['notices','schedules','minutes','members','tasks'];
+
+async function syncUpload() {
+  if (!confirm('現在のデータをクラウドへ保存しますか？\n（クラウドの内容は上書きされます）')) return;
+  const data = {};
+  SYNC_KEYS.forEach(k => data[k] = JSON.parse(localStorage.getItem('urimachi_' + k) || '[]'));
+  try {
+    const res = await fetch(SYNC_URL + '?action=save&key=uchimachi_riji_data', {
+      method: 'POST',
+      body: JSON.stringify(data)
+    });
+    const json = await res.json();
+    if (json.success) alert('☁︎↑ クラウドに保存しました');
+    else alert('エラー: ' + (json.message || '不明'));
+  } catch(e) { alert('通信エラー: ' + e.message); }
+}
+
+async function syncDownload() {
+  if (!confirm('クラウドからデータを読み込みますか？\n（現在のデータは上書きされます）')) return;
+  try {
+    const res = await fetch(SYNC_URL + '?action=load&key=uchimachi_riji_data');
+    const json = await res.json();
+    if (!json.success || !json.data) { alert('クラウドにデータがありません'); return; }
+    let d = json.data;
+    if (typeof d === 'string') {
+      try { d = JSON.parse(d); } catch(e) { alert('データ形式エラー'); return; }
+    }
+    if (typeof d !== 'object' || Array.isArray(d)) { alert('データ不正'); return; }
+    SYNC_KEYS.forEach(k => localStorage.setItem('urimachi_' + k, JSON.stringify(d[k] || [])));
+    alert('☁︎↓ クラウドから読み込みました');
+    location.reload();
+  } catch(e) { alert('通信エラー: ' + e.message); }
+}
+
+// ===== DATA STORE =====
+const STORE = {
+  get: (key) => JSON.parse(localStorage.getItem('urimachi_' + key) || '[]'),
+  set: (key, val) => localStorage.setItem('urimachi_' + key, JSON.stringify(val)),
+  getPin: () => localStorage.getItem('urimachi_pin') || '1192',
+  setPin: (p) => localStorage.setItem('urimachi_pin', p),
+};
+
+// ===== PIN =====
+let pinEntry = '';
+
+function pinInput(d) {
+  if (pinEntry.length >= 4) return;
+  pinEntry += d;
+  updatePinDisplay();
+  if (pinEntry.length === 4) {
+    setTimeout(checkPin, 200);
+  }
+}
+
+function pinDelete() {
+  pinEntry = pinEntry.slice(0, -1);
+  updatePinDisplay();
+  document.getElementById('login-error').textContent = '';
+}
+
+function updatePinDisplay() {
+  for (let i = 0; i < 4; i++) {
+    document.getElementById('dot-' + i).classList.toggle('filled', i < pinEntry.length);
+  }
+}
+
+function checkPin() {
+  if (pinEntry === STORE.getPin()) {
+    document.getElementById('login-screen').style.display = 'none';
+    document.getElementById('main-app').style.display = 'block';
+    initApp();
+  } else {
+    document.getElementById('login-error').textContent = '暗証番号が違います';
+    pinEntry = '';
+    updatePinDisplay();
+    // shake animation
+    const card = document.querySelector('.login-card');
+    card.style.animation = 'none';
+    card.style.transform = 'translateX(-8px)';
+    setTimeout(() => { card.style.transform = 'translateX(8px)'; }, 80);
+    setTimeout(() => { card.style.transform = 'translateX(-5px)'; }, 160);
+    setTimeout(() => { card.style.transform = 'translateX(5px)'; }, 240);
+    setTimeout(() => { card.style.transform = 'translateX(0)'; }, 320);
+  }
+}
+
+function logout() {
+  if (!confirm('ログアウトしますか？')) return;
+  document.getElementById('login-screen').style.display = 'flex';
+  document.getElementById('main-app').style.display = 'none';
+  pinEntry = '';
+  updatePinDisplay();
+  document.getElementById('login-error').textContent = '';
+}
+
+// ===== INIT =====
+function initApp() {
+  updateWelcome();
+  renderAll();
+}
+
+function updateWelcome() {
+  const now = new Date();
+  const h = now.getHours();
+  const greet = h < 10 ? 'おはようございます 🌅' : h < 17 ? 'こんにちは ☀️' : 'お疲れ様です 🌙';
+  document.getElementById('welcome-msg').textContent = greet;
+  document.getElementById('welcome-date').textContent =
+    now.getFullYear() + '年' + (now.getMonth()+1) + '月' + now.getDate() + '日 (' + ['日','月','火','水','木','金','土'][now.getDay()] + ')';
+  renderHomeUpcoming();
+}
+
+function renderAll() {
+  renderNotices();
+  renderSchedules();
+  renderMinutes();
+  renderMembers();
+  renderTasks();
+  updateHomeCounts();
+  renderHomeUpcoming();
+  renderHomeLatest();
+}
+
+// ===== TABS =====
+function switchTab(name) {
+  document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
+  document.querySelectorAll('.tab-btn').forEach(el => el.classList.remove('active'));
+  document.getElementById('content-' + name).classList.add('active');
+  document.getElementById('tab-' + name).classList.add('active');
+  if (name === 'home') renderAll();
+}
+
+// ===== MODAL =====
+function openModal(id) {
+  document.getElementById(id).classList.add('open');
+  // set today's date for date inputs
+  const today = new Date().toISOString().split('T')[0];
+  const dateIn = document.querySelector('#' + id + ' input[type=date]');
+  if (dateIn && !dateIn.value) dateIn.value = today;
+}
+function closeModal(id) { document.getElementById(id).classList.remove('open'); }
+// close on overlay click
+document.querySelectorAll('.modal-overlay').forEach(el => {
+  el.addEventListener('click', (e) => { if (e.target === el) el.classList.remove('open'); });
+});
+
+// ===== NOTICE =====
+function addNotice() {
+  const type = document.getElementById('notice-type').value;
+  const title = document.getElementById('notice-title').value.trim();
+  const author = document.getElementById('notice-author').value.trim();
+  const body = document.getElementById('notice-body').value.trim();
+  if (!title || !body) { alert('タイトルと内容を入力してください'); return; }
+  const notices = STORE.get('notices');
+  notices.unshift({ id: Date.now(), type, title, author: author || '匿名', body, date: new Date().toLocaleDateString('ja-JP') });
+  STORE.set('notices', notices);
+  document.getElementById('notice-title').value = '';
+  document.getElementById('notice-author').value = '';
+  document.getElementById('notice-body').value = '';
+  closeModal('notice-modal');
+  renderNotices();
+  updateHomeCounts();
+  renderHomeLatest();
+}
+
+function renderNotices() {
+  const notices = STORE.get('notices');
+  const el = document.getElementById('notice-list');
+  if (!notices.length) { el.innerHTML = '<div class="empty-state"><div class="empty-icon">📭</div><p>まだ投稿がありません</p></div>'; return; }
+  el.innerHTML = notices.map(n => `
+    <div class="notice-item ${n.type === 'important' ? 'important' : n.type === 'info' ? 'info' : ''}">
+      <button class="delete-btn" onclick="deleteItem('notices',${n.id})">✕</button>
+      <div class="notice-header">
+        <span class="notice-tag ${n.type === 'important' ? 'tag-important' : n.type === 'info' ? 'tag-info' : 'tag-normal'}">
+          ${n.type === 'important' ? '🔴 重要' : n.type === 'info' ? '🔵 情報' : '🟠 通知'}
+        </span>
+        <span class="notice-title-text">${escHtml(n.title)}</span>
+      </div>
+      <div class="notice-meta">📅 ${n.date} &nbsp; ✍️ ${escHtml(n.author)}</div>
+      <div class="notice-body" style="margin-top:8px">${escHtml(n.body)}</div>
+    </div>
+  `).join('');
+}
+
+// ===== SCHEDULE =====
+function addSchedule() {
+  const date = document.getElementById('sched-date').value;
+  const time = document.getElementById('sched-time').value;
+  const title = document.getElementById('sched-title').value.trim();
+  const place = document.getElementById('sched-place').value.trim();
+  const memo = document.getElementById('sched-memo').value.trim();
+  if (!date || !title) { alert('日付とタイトルを入力してください'); return; }
+  const schedules = STORE.get('schedules');
+  schedules.push({ id: Date.now(), date, time, title, place, memo });
+  schedules.sort((a, b) => a.date.localeCompare(b.date));
+  STORE.set('schedules', schedules);
+  ['sched-date','sched-time','sched-title','sched-place','sched-memo'].forEach(id => document.getElementById(id).value = '');
+  closeModal('sched-modal');
+  renderSchedules();
+  updateHomeCounts();
+  renderHomeUpcoming();
+}
+
+function renderSchedules() {
+  const schedules = STORE.get('schedules');
+  const el = document.getElementById('sched-list');
+  const today = new Date().toISOString().split('T')[0];
+  if (!schedules.length) { el.innerHTML = '<div class="empty-state"><div class="empty-icon">📭</div><p>予定がありません</p></div>'; return; }
+  const upcoming = schedules.filter(s => s.date >= today);
+  const past = schedules.filter(s => s.date < today);
+  let html = '';
+  if (upcoming.length) {
+    html += upcoming.map(s => schedHtml(s, today)).join('');
+  }
+  if (past.length) {
+    html += '<div style="font-size:0.82rem;color:var(--text2);margin:16px 0 8px;font-weight:600">── 過去の予定 ──</div>';
+    html += past.reverse().map(s => schedHtml(s, today)).join('');
+  }
+  el.innerHTML = html;
+}
+
+function schedHtml(s, today) {
+  const d = new Date(s.date + 'T00:00:00');
+  const month = (d.getMonth()+1) + '月';
+  const day = d.getDate();
+  const youbi = ['日','月','火','水','木','金','土'][d.getDay()];
+  const diff = Math.round((d - new Date(today + 'T00:00:00')) / 86400000);
+  let badge = '';
+  if (diff === 0) badge = '<span class="badge badge-new">本日</span>';
+  else if (diff === 1) badge = '<span class="badge badge-soon">明日</span>';
+  else if (diff <= 7 && diff > 0) badge = `<span class="badge badge-soon">${diff}日後</span>`;
+  return `
+    <div class="schedule-item">
+      <button class="delete-btn" onclick="deleteItem('schedules',${s.id})">✕</button>
+      <div class="schedule-date-box" style="${s.date < today ? 'background:var(--text2)' : ''}">
+        <div class="schedule-month">${month}</div>
+        <div class="schedule-day">${day}</div>
+        <div class="schedule-month">${youbi}</div>
+      </div>
+      <div class="schedule-info">
+        <div class="schedule-title">${escHtml(s.title)} ${badge}</div>
+        <div class="schedule-detail">${s.time ? '🕐 ' + s.time + ' &nbsp;' : ''}${s.place ? '📍 ' + escHtml(s.place) : ''}</div>
+        ${s.memo ? `<div style="font-size:0.82rem;color:var(--text2);margin-top:4px">📌 ${escHtml(s.memo)}</div>` : ''}
+      </div>
+    </div>
+  `;
+}
+
+// ===== MINUTES =====
+function addMinutes() {
+  const date = document.getElementById('min-date').value;
+  const title = document.getElementById('min-title').value.trim();
+  const attendees = document.getElementById('min-attendees').value.trim();
+  const body = document.getElementById('min-body').value.trim();
+  const next = document.getElementById('min-next').value.trim();
+  if (!date || !title || !body) { alert('日付・会議名・内容を入力してください'); return; }
+  const minutes = STORE.get('minutes');
+  minutes.unshift({ id: Date.now(), date, title, attendees, body, next });
+  STORE.set('minutes', minutes);
+  ['min-date','min-title','min-attendees','min-body','min-next'].forEach(id => document.getElementById(id).value = '');
+  closeModal('minutes-modal');
+  renderMinutes();
+  updateHomeCounts();
+}
+
+function renderMinutes() {
+  const minutes = STORE.get('minutes');
+  const el = document.getElementById('minutes-list');
+  if (!minutes.length) { el.innerHTML = '<div class="empty-state"><div class="empty-icon">📭</div><p>議事録がありません</p></div>'; return; }
+  el.innerHTML = minutes.map(m => `
+    <div class="minutes-item" onclick="toggleMinutes(${m.id})">
+      <button class="delete-btn" onclick="event.stopPropagation();deleteItem('minutes',${m.id})">✕</button>
+      <div class="minutes-header-row">
+        <div class="minutes-date">📅 ${m.date}</div>
+      </div>
+      <div class="minutes-title">📝 ${escHtml(m.title)}</div>
+      ${m.attendees ? `<div class="minutes-preview">👥 ${escHtml(m.attendees)}</div>` : ''}
+      <div class="minutes-full" id="min-full-${m.id}">
+        <div style="margin-bottom:10px"><strong>出席者:</strong> ${escHtml(m.attendees || 'なし')}</div>
+        <div style="white-space:pre-wrap;line-height:1.8">${escHtml(m.body)}</div>
+        ${m.next ? `<div style="margin-top:12px;padding:10px;background:#fff8f0;border-radius:8px"><strong>📌 次回:</strong> ${escHtml(m.next)}</div>` : ''}
+      </div>
+    </div>
+  `).join('');
+}
+
+function toggleMinutes(id) {
+  document.getElementById('min-full-' + id).classList.toggle('open');
+}
+
+// ===== MEMBERS =====
+let editingMemberId = null;
+
+function addMember() {
+  const name = document.getElementById('mem-name').value.trim();
+  const role = document.getElementById('mem-role').value;
+  const shop = document.getElementById('mem-shop').value.trim();
+  const tel = document.getElementById('mem-tel').value.trim();
+  const email = document.getElementById('mem-email').value.trim();
+  if (!name) { alert('氏名を入力してください'); return; }
+  const members = STORE.get('members');
+  const roleOrder = ['理事長','副理事長','会計','書記','理事','監事','顧問'];
+  if (editingMemberId != null) {
+    const m = members.find(x => x.id === editingMemberId);
+    if (m) { m.name = name; m.role = role; m.shop = shop; m.tel = tel; m.email = email; }
+  } else {
+    members.push({ id: Date.now(), name, role, shop, tel, email });
+  }
+  members.sort((a, b) => roleOrder.indexOf(a.role) - roleOrder.indexOf(b.role));
+  STORE.set('members', members);
+  ['mem-name','mem-shop','mem-tel','mem-email'].forEach(id => document.getElementById(id).value = '');
+  editingMemberId = null;
+  document.getElementById('member-modal-title').textContent = '👤 理事を追加';
+  document.getElementById('member-save-btn').textContent = '追加する';
+  closeModal('member-modal');
+  renderMembers();
+  updateHomeCounts();
+}
+
+function editMember(id) {
+  const members = STORE.get('members');
+  const m = members.find(x => x.id === id);
+  if (!m) return;
+  editingMemberId = id;
+  document.getElementById('mem-name').value = m.name || '';
+  document.getElementById('mem-role').value = m.role || '理事';
+  document.getElementById('mem-shop').value = m.shop || '';
+  document.getElementById('mem-tel').value = m.tel || '';
+  document.getElementById('mem-email').value = m.email || '';
+  document.getElementById('member-modal-title').textContent = '👤 理事を編集';
+  document.getElementById('member-save-btn').textContent = '保存する';
+  openModal('member-modal');
+}
+
+function renderMembers() {
+  const members = STORE.get('members');
+  const el = document.getElementById('member-list');
+  if (!members.length) { el.innerHTML = '<div class="empty-state"><div class="empty-icon">👥</div><p>理事を追加してください</p></div>'; return; }
+  const roleEmoji = { '理事長':'👑','副理事長':'🌟','会計':'💰','書記':'✏️','理事':'🏘️','監事':'🔍','顧問':'🎓' };
+  el.innerHTML = members.map(m => `
+    <div class="member-item" onclick="editMember(${m.id})" style="cursor:pointer">
+      <button class="delete-btn" onclick="event.stopPropagation();deleteItem('members',${m.id})">✕</button>
+      <div class="member-avatar">${roleEmoji[m.role] || '👤'}</div>
+      <div class="member-info">
+        <div class="member-name">${escHtml(m.name)}</div>
+        <div class="member-role">${m.role}${m.shop ? ' ／ ' + escHtml(m.shop) : ''}</div>
+        <div class="member-contact">${m.tel ? '📞 ' + escHtml(m.tel) : ''}${m.email ? ' 　✉️ ' + escHtml(m.email) : ''}</div>
+      </div>
+    </div>
+  `).join('');
+}
+
+// ===== TASKS =====
+function addTask() {
+  const title = document.getElementById('task-title').value.trim();
+  const assign = document.getElementById('task-assign').value.trim();
+  const due = document.getElementById('task-due').value;
+  if (!title) { alert('タスク内容を入力してください'); return; }
+  const tasks = STORE.get('tasks');
+  tasks.unshift({ id: Date.now(), title, assign, due, done: false });
+  STORE.set('tasks', tasks);
+  ['task-title','task-assign','task-due'].forEach(id => document.getElementById(id).value = '');
+  closeModal('task-modal');
+  renderTasks();
+  updateHomeCounts();
+}
+
+function toggleTask(id) {
+  const tasks = STORE.get('tasks');
+  const t = tasks.find(x => x.id === id);
+  if (t) t.done = !t.done;
+  STORE.set('tasks', tasks);
+  renderTasks();
+  updateHomeCounts();
+}
+
+function renderTasks() {
+  const tasks = STORE.get('tasks');
+  const todo = tasks.filter(t => !t.done);
+  const done = tasks.filter(t => t.done);
+  const today = new Date().toISOString().split('T')[0];
+  const renderTask = (t) => {
+    let dueStr = '';
+    if (t.due) {
+      const overdue = t.due < today && !t.done;
+      dueStr = `<div class="task-due" style="${overdue ? 'color:var(--red);font-weight:700' : ''}">${overdue ? '⚠️ 期限切れ: ' : '📅 '}${t.due}</div>`;
+    }
+    return `
+      <div class="task-item ${t.done ? 'done' : ''}">
+        <div class="task-check ${t.done ? 'checked' : ''}" onclick="toggleTask(${t.id})">
+          ${t.done ? '✓' : ''}
+        </div>
+        <div style="flex:1">
+          <div class="task-text">${escHtml(t.title)}</div>
+          ${t.assign ? `<div class="task-assignee">👤 ${escHtml(t.assign)}</div>` : ''}
+          ${dueStr}
+        </div>
+        <button class="delete-btn" style="position:static;margin-left:4px" onclick="deleteItem('tasks',${t.id})">✕</button>
+      </div>
+    `;
+  };
+  document.getElementById('task-list').innerHTML = todo.length ? todo.map(renderTask).join('') : '<div class="empty-state" style="padding:20px"><div class="empty-icon">🎉</div><p>全て完了しています！</p></div>';
+  document.getElementById('task-done-list').innerHTML = done.map(renderTask).join('');
+  document.getElementById('task-done-section').style.display = done.length ? 'block' : 'none';
+  document.getElementById('task-progress').textContent = tasks.length ? `完了 ${done.length} / ${tasks.length} 件` : '';
+}
+
+// ===== HOME =====
+function updateHomeCounts() {
+  document.getElementById('home-notice-count').textContent = STORE.get('notices').length + '件の投稿';
+  document.getElementById('home-sched-count').textContent = STORE.get('schedules').length + '件の予定';
+  document.getElementById('home-min-count').textContent = STORE.get('minutes').length + '件';
+  const tasks = STORE.get('tasks');
+  const undone = tasks.filter(t => !t.done).length;
+  document.getElementById('home-task-count').textContent = undone ? `未完了 ${undone}件` : '全完了 ✅';
+}
+
+function renderHomeUpcoming() {
+  const today = new Date().toISOString().split('T')[0];
+  const soon = STORE.get('schedules').filter(s => s.date >= today).slice(0, 3);
+  const el = document.getElementById('home-upcoming');
+  if (!soon.length) { el.innerHTML = '<div style="font-size:0.82rem;opacity:0.7">直近の予定はありません</div>'; return; }
+  el.innerHTML = soon.map(s => {
+    const d = new Date(s.date + 'T00:00:00');
+    const diff = Math.round((d - new Date(today + 'T00:00:00')) / 86400000);
+    const diffStr = diff === 0 ? '本日' : diff === 1 ? '明日' : diff + '日後';
+    return `<div style="font-size:0.82rem;color:white;padding:4px 0;border-bottom:1px solid rgba(255,255,255,0.2)">
+      <span style="opacity:0.75">${diffStr}</span> 　${escHtml(s.title)}${s.time ? ' ' + s.time : ''}
+    </div>`;
+  }).join('');
+}
+
+function renderHomeLatest() {
+  const notices = STORE.get('notices').slice(0, 2);
+  const el = document.getElementById('home-latest-notice');
+  if (!notices.length) { el.innerHTML = '<div class="empty-state" style="padding:16px"><p>お知らせはありません</p></div>'; return; }
+  el.innerHTML = notices.map(n => `
+    <div style="padding:10px 0;border-bottom:1px solid var(--border)">
+      <div style="display:flex;align-items:center;gap:6px;margin-bottom:4px">
+        <span class="notice-tag ${n.type === 'important' ? 'tag-important' : n.type === 'info' ? 'tag-info' : 'tag-normal'}" style="font-size:0.68rem">
+          ${n.type === 'important' ? '🔴 重要' : n.type === 'info' ? '🔵 情報' : '🟠 通知'}
+        </span>
+        <span style="font-size:0.9rem;font-weight:700">${escHtml(n.title)}</span>
+      </div>
+      <div style="font-size:0.8rem;color:var(--text2)">${escHtml(n.body.slice(0, 80))}${n.body.length > 80 ? '...' : ''}</div>
+    </div>
+  `).join('');
+}
+
+// ===== DELETE =====
+function deleteItem(key, id) {
+  if (!confirm('削除しますか？')) return;
+  const items = STORE.get(key).filter(x => x.id !== id);
+  STORE.set(key, items);
+  renderAll();
+}
+
+// ===== SETTINGS =====
+function changePin() {
+  const old = document.getElementById('old-pin').value;
+  const np = document.getElementById('new-pin').value;
+  const np2 = document.getElementById('new-pin2').value;
+  const msg = document.getElementById('pin-change-msg');
+  if (old !== STORE.getPin()) { msg.style.color = 'var(--red)'; msg.textContent = '現在の暗証番号が違います'; return; }
+  if (np.length !== 4 || !/^\d{4}$/.test(np)) { msg.style.color = 'var(--red)'; msg.textContent = '4桁の数字で入力してください'; return; }
+  if (np !== np2) { msg.style.color = 'var(--red)'; msg.textContent = '新しい暗証番号が一致しません'; return; }
+  STORE.setPin(np);
+  msg.style.color = 'var(--green)';
+  msg.textContent = '✅ 暗証番号を変更しました';
+  ['old-pin','new-pin','new-pin2'].forEach(id => document.getElementById(id).value = '');
+}
+
+function clearData(key, label) {
+  if (!confirm(label + 'のデータを全て削除しますか？')) return;
+  STORE.set(key, []);
+  renderAll();
+  alert(label + 'を削除しました');
+}
+
+// ===== EXPORT / IMPORT =====
+function exportData() {
+  const data = {
+    version: 1,
+    exported: new Date().toISOString(),
+    notices:   STORE.get('notices'),
+    schedules: STORE.get('schedules'),
+    minutes:   STORE.get('minutes'),
+    members:   STORE.get('members'),
+    tasks:     STORE.get('tasks'),
+  };
+  const json = JSON.stringify(data, null, 2);
+  const blob = new Blob([json], { type: 'application/json' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  const now = new Date();
+  const ds = now.getFullYear() + ('0'+(now.getMonth()+1)).slice(-2) + ('0'+now.getDate()).slice(-2);
+  a.href = url;
+  a.download = 'うちまち_' + ds + '.json';
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+  const msg = document.getElementById('export-msg');
+  msg.textContent = '✅ 書き出しました！LINEグループに添付して送ってください。';
+  msg.style.color = 'var(--green)';
+}
+
+function triggerImport() {
+  document.getElementById('import-file').click();
+}
+
+function importData() {
+  const file = document.getElementById('import-file').files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = (e) => {
+    const msg = document.getElementById('import-msg');
+    try {
+      const data = JSON.parse(e.target.result);
+      if (!data.version || !Array.isArray(data.notices)) throw new Error('不正なファイル');
+
+      const expDate = data.exported ? new Date(data.exported).toLocaleString('ja-JP') : '不明';
+      const mode = confirm(
+        '【 ' + expDate + ' 】のデータを読み込みます。\n\n' +
+        'OK      → 完全に置き換える\n          （全データが送られてきた内容になります）\n\n' +
+        'キャンセル → 新しいものだけ追加する\n          （既存データを残しつつ差分を追加）'
+      );
+
+      const mergeList = (key, incoming) => {
+        const existing = STORE.get(key);
+        const ids = new Set(existing.map(x => x.id));
+        const added = (incoming || []).filter(x => !ids.has(x.id));
+        STORE.set(key, [...added, ...existing]);
+      };
+
+      if (mode) {
+        ['notices','schedules','minutes','members','tasks'].forEach(k => STORE.set(k, data[k] || []));
+        msg.textContent = '✅ 全データを置き換えました！';
+      } else {
+        ['notices','schedules','minutes','members','tasks'].forEach(k => mergeList(k, data[k]));
+        msg.textContent = '✅ 新しいデータを追加しました！';
+      }
+      msg.style.color = 'var(--green)';
+      renderAll();
+    } catch(err) {
+      msg.textContent = '❌ 読み込みに失敗しました。正しいファイルを選んでください。';
+      msg.style.color = 'var(--red)';
+    }
+    document.getElementById('import-file').value = '';
+  };
+  reader.readAsText(file);
+}
+
+// ===== UTILS =====
+function escHtml(str) {
+  if (!str) return '';
+  return str.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+</script>
+</body>
+</html>
