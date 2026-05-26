@@ -666,7 +666,44 @@ async function syncDownload() {
     const res = await fetch(SYNC_URL + '?action=load&key=' + SYNC_KEY);
     const json = await res.json();
     if (json.success && json.data) {
-      app = json.data;
+      let d = json.data;
+      if (typeof d === 'string') {
+        try { d = JSON.parse(d); } catch(e) { toast('データ形式エラー'); return; }
+      }
+      // ラップされている場合に対応
+      if (d && !Array.isArray(d.games) && d.data) d = d.data;
+      if (Array.isArray(d)) d = { games: d };
+      if (!d || typeof d !== 'object') { toast('データ不正'); return; }
+      // 正規化（load() と同じロジック）
+      if (!Array.isArray(d.members)) d.members = defaultMembers();
+      if (!Array.isArray(d.games)) d.games = [];
+      if (d.current && d.games.length === 0) {
+        const today = new Date();
+        d.current.id = d.current.id || Date.now();
+        d.current.year = d.current.year || today.getFullYear();
+        d.current.month = d.current.month || (today.getMonth() + 1);
+        d.current.num = d.current.num || 1;
+        d.games.push(d.current);
+      }
+      if (d.games.length === 0) d.games.push(newGameData());
+      if (d.curIdx == null || d.curIdx < 0 || d.curIdx >= d.games.length) d.curIdx = 0;
+      d.games.forEach(g => {
+        if (g.id == null) g.id = Date.now() + Math.random();
+        if (!g.scores || typeof g.scores !== 'object') g.scores = {};
+        if (g.arimotoHandi == null) g.arimotoHandi = 36;
+        if (g.arimotoAm == null) g.arimotoAm = '';
+        if (g.arimotoPm == null) g.arimotoPm = '';
+        if (!g.date) g.date = new Date().toISOString().slice(0, 10);
+        if (g.memo == null) g.memo = '';
+        if (g.extraPrize == null) g.extraPrize = '';
+        if (g.extraUma == null) g.extraUma = '';
+        if (g.extraNigiri == null) g.extraNigiri = '';
+        if (g.year == null) g.year = new Date(g.date).getFullYear() || new Date().getFullYear();
+        if (g.month == null) g.month = (new Date(g.date).getMonth() + 1) || (new Date().getMonth() + 1);
+        if (g.num == null) g.num = 1;
+      });
+      d.current = d.games[d.curIdx];
+      app = d;
       save();
       render();
       toast('クラウドから読み込みました');
