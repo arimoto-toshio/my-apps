@@ -4,6 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>うちまち 理事会アプリ</title>
+<link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'><rect width='64' height='64' rx='14' fill='%238B4513'/><path d='M6 40 L18 30 L46 30 L58 40 Z' fill='%23e8c896'/><rect x='14' y='38' width='36' height='20' fill='%23c99a4e'/><rect x='10' y='40' width='44' height='3' fill='%232f231a'/><rect x='22' y='22' width='6' height='18' fill='%23f3ece0'/><path d='M20 23 L25 18 L30 23 Z' fill='%232f231a'/><rect x='36' y='22' width='6' height='18' fill='%23f3ece0'/><path d='M34 23 L39 18 L44 23 Z' fill='%232f231a'/></svg>">
 <style>
   :root {
     --primary: #8B4513;
@@ -36,11 +37,14 @@
     flex-direction: column;
     align-items: center;
     justify-content: center;
-    background: linear-gradient(160deg, #6b3010 0%, #c47c3e 50%, #e8c896 100%);
+    background:
+      url("data:image/svg+xml,%3Csvg%20xmlns='http://www.w3.org/2000/svg'%20viewBox='0%200%20480%20170'%3E%3Cg%20fill='%235a3a1c'%3E%3Crect%20x='0'%20y='118'%20width='480'%20height='52'/%3E%3Crect%20x='12'%20y='84'%20width='96'%20height='40'/%3E%3Crect%20x='132'%20y='84'%20width='96'%20height='40'/%3E%3Crect%20x='252'%20y='84'%20width='96'%20height='40'/%3E%3Crect%20x='372'%20y='84'%20width='96'%20height='40'/%3E%3Cpath%20d='M0%2086%20L30%2068%20L90%2068%20L120%2086%20Z'/%3E%3Cpath%20d='M120%2086%20L150%2068%20L210%2068%20L240%2086%20Z'/%3E%3Cpath%20d='M240%2086%20L270%2068%20L330%2068%20L360%2086%20Z'/%3E%3Cpath%20d='M360%2086%20L390%2068%20L450%2068%20L480%2086%20Z'/%3E%3C/g%3E%3Cg%20fill='%23c99a4e'%3E%3Crect%20x='30'%20y='98'%20width='60'%20height='26'/%3E%3Crect%20x='150'%20y='98'%20width='60'%20height='26'/%3E%3Crect%20x='270'%20y='98'%20width='60'%20height='26'/%3E%3Crect%20x='390'%20y='98'%20width='60'%20height='26'/%3E%3C/g%3E%3Cg%20fill='%23f3ece0'%3E%3Crect%20x='114'%20y='58'%20width='12'%20height='30'/%3E%3Crect%20x='234'%20y='58'%20width='12'%20height='30'/%3E%3Crect%20x='354'%20y='58'%20width='12'%20height='30'/%3E%3C/g%3E%3Cg%20fill='%232f231a'%3E%3Cpath%20d='M110%2060%20L120%2051%20L130%2060%20Z'/%3E%3Cpath%20d='M230%2060%20L240%2051%20L250%2060%20Z'/%3E%3Cpath%20d='M350%2060%20L360%2051%20L370%2060%20Z'/%3E%3C/g%3E%3C/svg%3E") bottom center / 100% auto no-repeat,
+      linear-gradient(160deg, #6b3010 0%, #b86f33 48%, #e8c896 100%);
   }
   .login-logo {
-    font-size: 3.5rem;
-    margin-bottom: 8px;
+    line-height: 0;
+    margin-bottom: 10px;
+    filter: drop-shadow(0 4px 12px rgba(0,0,0,0.3));
   }
   .login-title {
     font-size: 1.5rem;
@@ -381,8 +385,23 @@
   .minutes-date { font-size: 0.8rem; color: var(--text2); }
   .minutes-title { font-size: 0.95rem; font-weight: 800; }
   .minutes-preview { font-size: 0.83rem; color: var(--text2); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-  .minutes-full { display: none; margin-top: 12px; padding-top: 12px; border-top: 1px solid var(--border); font-size: 0.88rem; white-space: pre-wrap; line-height: 1.7; }
+  .minutes-full { display: none; margin-top: 12px; padding-top: 12px; border-top: 1px solid var(--border); font-size: 0.88rem; line-height: 1.7; }
   .minutes-full.open { display: block; }
+  /* 議事録 整形ビュー */
+  .min-attendees { font-size: 0.82rem; color: var(--text2); background: #f7eedf; border-radius: 8px; padding: 8px 12px; margin-bottom: 14px; line-height: 1.6; }
+  .min-att-label { display: block; font-weight: 800; color: var(--primary); margin-bottom: 2px; }
+  .min-body { font-size: 0.88rem; }
+  .min-h1 { font-weight: 900; color: #fff; background: linear-gradient(90deg, var(--accent), var(--accent2)); padding: 7px 12px; border-radius: 8px; margin: 18px 0 10px; font-size: 0.92rem; letter-spacing: 0.02em; box-shadow: var(--shadow); }
+  .min-h1:first-child { margin-top: 0; }
+  .min-h2 { font-weight: 800; color: var(--primary); border-left: 4px solid var(--accent2); padding: 2px 0 2px 10px; margin: 14px 0 6px; font-size: 0.88rem; }
+  .min-ul { list-style: none; margin: 0 0 4px; padding: 0; }
+  .min-ul li { position: relative; padding: 5px 8px 5px 20px; margin-bottom: 4px; line-height: 1.65; border-bottom: 1px dashed #ecdcc4; }
+  .min-ul li:last-child { border-bottom: none; }
+  .min-ul li::before { content: '●'; position: absolute; left: 4px; top: 5px; color: var(--accent2); font-size: 0.62rem; }
+  .min-cont { padding: 3px 8px 3px 20px; line-height: 1.65; color: var(--text2); }
+  .min-arrow { color: var(--accent); font-weight: 800; }
+  .min-next { margin-top: 16px; padding: 12px 14px; background: #fff3e6; border: 1px solid var(--accent2); border-radius: 10px; font-size: 0.9rem; }
+  .min-next strong { color: var(--accent); }
 
   /* ===== MEMBERS ===== */
   .member-item {
@@ -554,7 +573,38 @@
 
 <!-- ===== LOGIN SCREEN ===== -->
 <div id="login-screen">
-  <div class="login-logo">🏘️</div>
+  <div class="login-logo"><svg viewBox="0 0 100 100" width="120" height="120" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="内子のうだつの町並み">
+    <defs>
+      <clipPath id="ucClip"><circle cx="50" cy="50" r="46"/></clipPath>
+      <linearGradient id="ucSky" x1="0" y1="0" x2="0" y2="1">
+        <stop offset="0" stop-color="#f7e4be"/>
+        <stop offset="1" stop-color="#fcefd9"/>
+      </linearGradient>
+    </defs>
+    <circle cx="50" cy="50" r="47" fill="url(#ucSky)" stroke="#8B4513" stroke-width="3"/>
+    <g clip-path="url(#ucClip)">
+      <path d="M-2 60 L22 46 L40 58 L60 44 L82 58 L102 50 L102 102 L-2 102 Z" fill="#bfa873"/>
+      <rect x="-2" y="82" width="104" height="22" fill="#6e4f2c"/>
+      <rect x="22" y="52" width="56" height="32" fill="#c99a4e"/>
+      <rect x="22" y="68" width="56" height="16" fill="#a9772f"/>
+      <g stroke="#6e4a1f" stroke-width="1.1">
+        <line x1="28" y1="56" x2="28" y2="64"/>
+        <line x1="33" y1="56" x2="33" y2="64"/>
+        <line x1="38" y1="56" x2="38" y2="64"/>
+        <line x1="62" y1="56" x2="62" y2="64"/>
+        <line x1="67" y1="56" x2="67" y2="64"/>
+        <line x1="72" y1="56" x2="72" y2="64"/>
+      </g>
+      <rect x="45" y="70" width="10" height="14" fill="#7a5126"/>
+      <path d="M16 54 L30 42 L70 42 L84 54 Z" fill="#46362a"/>
+      <rect x="16" y="54" width="68" height="2.5" fill="#2f231a"/>
+      <rect x="30" y="40" width="40" height="3" rx="1.5" fill="#2f231a"/>
+      <rect x="32" y="34" width="7" height="20" fill="#f3ece0"/>
+      <path d="M30 35 L35.5 30 L41 35 Z" fill="#2f231a"/>
+      <rect x="61" y="34" width="7" height="20" fill="#f3ece0"/>
+      <path d="M59 35 L64.5 30 L70 35 Z" fill="#2f231a"/>
+    </g>
+  </svg></div>
   <div class="login-title">うちまち 理事会</div>
   <div class="login-sub">内子まちづくり商店街 理事専用</div>
   <div class="login-card">
@@ -1415,8 +1465,147 @@ function logout() {
   document.getElementById('login-error').textContent = '';
 }
 
+// ===== 笹祭り実行委員会（第4回）データ取込 =====
+function seedSasaMatsuri2026() {
+  const FLAG = 'urimachi_seed_sasa4';
+  if (localStorage.getItem(FLAG) === '1') return;
+
+  const minBody =
+`【議題1】各部の進捗状況
+
+■ 庶務・出店関係
+・松山街商組合：吉長駐車場（みやせスポーツ横）で出店希望。実行委員長から吉長さんへ依頼・使用了承済。昨年同様、駐車場奥側のみ空けておけばOK。ただし駐車場の使用料 3,000円/1日。
+・レンタル携帯（プリペイド）：大西さん担当。宿の緊急用プリペイド携帯を当日連絡用に使用。当日以外の問い合わせ先は町並・地域振興課。来年度はプリペイド携帯を無しにしても良いか検討。
+・キッチンカーの案内：候補地選択を行ってから案内（事務局）。その他の出店問い合わせがあれば都度候補地選択し対応。
+　昨年度候補地：内子の宿こころP、内子の宿くらP、内子座P、みやせスポーツP、尾崎糸店跡地、池田食品前P（昨年度は笹飾り）。使用可否は実行委員で確認が必要。
+・「出店申込書」→「出店届出書」に名称変更。キッチンカー用・街商組合用とは別に添付の届出書を新規作成。周知方法はポスティング。今年から提出してもらうため案内文もつける。
+
+■ 財政部
+・内子町・観光協会へ共催依頼（事務局・未）→実施要項完成後に依頼。
+・各メディアへ後援依頼（事務局・未）→実施要項完成後に依頼。
+・愛媛新聞広報の確認（実行委員長へ）：する（例年通り）。昨年度は8月4日(火)掲載、広告掲載料22,000円(税込)。
+・自治会（六日市・中央・八日市・畑中・廿日市・第五）へ寄付依頼：事務局より6月中に依頼予定（7月15日〆切）。とりまとめ先は坂見実行委員長（取りまとめ後 山岡さんに）。
+・内子町へ募金依頼／町議会へ協賛金依頼／町観光協会へ協賛金依頼：いずれも事務局・5月中に依頼予定。
+・チラシ作成（8,000部）→セキ(株)に見積依頼予定。
+・提灯・プレートの確認→新規や作りかえが必要なら見積依頼。石田工芸(25-0815/090-4336-0135)→現物を確認。
+・スポンサー依頼先・担当者の確定をお願いします（6月早々に送付）。担当者は7月13日(月)〜17日(金)に集金。お金と一緒に広告申込書を集めて、山岡さんに18日(土)〜19日(日)に集約。6月にスポンサー依頼先へ集金の案内文書を発送（事務局）。
+
+■ 企画部（MORITEI 宇都宮さん 企画部員）
+・トランペット鼓笛隊の依頼：坂見さん（文書作成済）→内子小運動会が終わったら持っていく。
+・内子高校への当日アルバイト募集人数：8人（別紙依頼文書参照）。
+・アンブレラスカイ：7月11日(土)〜お盆頃（準備は7月9日(木)か10日(金)）。宇都宮部長の指示で。
+・ランタン飾り作成：直前になったら準備（魚林宴会場が空いたら）。宇都宮部長の指示で。
+・フウセン飾り→無し。
+・8月6日(木)に森邸でバンド演奏。使用料800円をバンドが負担。MORITEI客座敷で演奏予定。
+
+■ 装飾部
+・JR内子駅への笹飾り掲揚依頼（事務局）→5月中に依頼予定。
+・笹飾り足場組立・竹枠搬入：6月10日(水)10時〜12時、昼を挟んで街路灯清掃作業（10時に内子町商工会集合）。山本建設への事前連絡→坂見実行委員長から連絡済。
+・当日、内子高校生17名が「総合的探究の時間」で14〜15時頃に就業改善センターに来訪。笹飾りの歴史等を実行委員長より話し、竹枠を3階に上げる作業を一緒に実施。
+・笹飾りパートさん開始：6月15日(月)〜。9時過ぎに実行委員長が挨拶対応。出勤簿を6月15日までに準備（事務局）。
+・花紙・輪紙・針金等を注文（事務局）→6月15日までに準備。
+・かいとでの作業（有料）：笹飾りパートと相談して実施（かいとはOK）。
+・段ボール注文：枚数確認し注文予定。昨年度は全部で130枚（5月21日注文）。
+・笹装飾一覧の確認→委員会で作成するのは75玉（凛前3玉を除けると72玉）。森脇さんよりパートさん75玉作成可能と確認済。
+・笹コンクール賞金・一般笹補助金額：金銀銅それぞれ1本ずつ、協力賞2本。金額は昨年同様。
+・笹装飾コンクール審査員：昨年同様（実行委員長・副実行委員長・装飾部・事務局の計5名）。
+・笹飾り自作出展者へ補助金交付＆聞き取り→次回実行委員会に持ち越し（担当者は今宮部長を中心に決定）。
+
+■ 踊り部
+・踊り用CD2枚を宮瀬さんに渡す。新規で「さくら介護」にも案内。
+・笹踊り案内（事務局）→参加要項完成後に6月中に依頼予定。
+・審査員依頼送付予定（審査員を確認）。
+
+■ 渉外担当
+・ポスター（100枚程度）デザイン：日時・場所・英語表記は上段（英語表記は UCHIKO SASA FESTIVAL）、「内子笹まつり」は下段デザイン。
+・オキデンさんの本部音響→事務局から見積り依頼も兼ねて依頼すること。
+・外部アナウンサー→事務局から観光協会に依頼済（西本さんの予定）。
+
+【その他・確認事項】
+・笹まつり以後の笹飾りの貸し出し：1玉 2,000円（R6・R7は1玉1,500円）。
+・道路使用許可申請…6月中に提出予定。
+・内子高校から「総合的な探求の時間」でボランティアの申し出（アルバイト・笹飾り研究17名とは別）→具体的な内容を高校側に依頼中。MORITEIにも別グループから同様の申し出あり。
+・今田さんについて（R6に「駐車場を準備するように」と電話あり）→特に何もしなくてOK。`;
+
+  // --- 議事録 ---
+  const minutes = STORE.get('minutes');
+  if (!minutes.some(m => m.seed === 'sasa4')) {
+    minutes.unshift({
+      id: 1747500000001, seed: 'sasa4',
+      date: '2026-05-18',
+      title: '第4回 第67回内子笹祭り実行委員会',
+      attendees: '坂見実行委員長、今宮、有本、宇都宮、山岡、上田、宮瀬、大西、矢野、森脇、宇都宮(MORITEI)／事務局：大田・岡田・川久保・林・河野',
+      body: minBody,
+      next: '6月29日(月) 19:00〜　場所：南予サイン'
+    });
+    STORE.set('minutes', minutes);
+  }
+
+  // --- 日程（スケジュール）---
+  const schedSeed = [
+    { d:'2026-05-18', t:'第4回 内子笹祭り実行委員会', tm:'19:30', p:'Nanyoサイン', m:'' },
+    { d:'2026-06-10', t:'灯具清掃・笹玉枠運び込み・足場一部解体', tm:'10:00〜12:00', p:'内子町商工会 10時集合', m:'街路灯清掃。山本建設へ連絡済' },
+    { d:'2026-06-15', t:'笹飾りパートさん開始', tm:'9時〜', p:'', m:'9時過ぎに実行委員長が挨拶対応' },
+    { d:'2026-06-29', t:'第5回 内子笹祭り実行委員会', tm:'19:00', p:'南予サイン', m:'' },
+    { d:'2026-07-09', t:'アンブレラスカイ準備', tm:'', p:'', m:'7/9か7/10。本番は7/11(土)〜お盆頃' },
+    { d:'2026-07-11', t:'アンブレラスカイ（〜お盆頃）', tm:'', p:'', m:'宇都宮部長の指示で' },
+    { d:'2026-07-13', t:'スポンサー広告料集金（〜7/17）', tm:'', p:'', m:'各担当者が集金' },
+    { d:'2026-07-15', t:'自治会への寄付依頼〆切', tm:'', p:'', m:'とりまとめ：坂見委員長→山岡さん' },
+    { d:'2026-07-18', t:'スポンサー広告 集約期日（〜7/19）', tm:'', p:'フローリストやまおか', m:'山岡さんに集約' },
+    { d:'2026-07-22', t:'広告チラシ校正', tm:'', p:'', m:'坂見財政部長・山岡会計' },
+    { d:'2026-07-24', t:'広告チラシ校正（最終）', tm:'', p:'', m:'事務局' },
+    { d:'2026-08-01', t:'愛媛新聞広告', tm:'', p:'', m:'昨年度は広告掲載料22,000円(税込)' },
+    { d:'2026-08-02', t:'広告チラシ 新聞折込', tm:'', p:'', m:'8,000部' },
+    { d:'2026-08-05', t:'内子高校壁画取付・笹飾り配り・提灯やぐら取付', tm:'', p:'', m:'山本建設(午前)/内子高校(午後)、西渕工務店・森脇さん' },
+    { d:'2026-08-06', t:'笹まつり 当日', tm:'', p:'', m:'森邸でバンド演奏(MORITEI客座敷)' },
+    { d:'2026-08-07', t:'笹まつり 当日（笹踊り）', tm:'', p:'', m:'' },
+    { d:'2026-08-08', t:'笹まつり 後片付け', tm:'9:00〜', p:'', m:'' },
+  ];
+  const schedules = STORE.get('schedules');
+  schedSeed.forEach((s, i) => {
+    const sid = 'sasa4-' + s.d + '-' + i;
+    if (!schedules.some(x => x.seedId === sid)) {
+      schedules.push({ id: 1747500001000 + i, seedId: sid, date: s.d, title: s.t, time: s.tm, place: s.p, memo: s.m });
+    }
+  });
+  schedules.sort((a, b) => (a.date < b.date ? -1 : a.date > b.date ? 1 : 0));
+  STORE.set('schedules', schedules);
+
+  // --- タスク（やること）---
+  const taskSeed = [
+    { t:'スポンサー依頼先・担当者を確定（6月早々に送付）', a:'財政部', due:'2026-06-12' },
+    { t:'スポンサー広告料を集金', a:'各担当者', due:'2026-07-17' },
+    { t:'集金分を山岡さんに集約', a:'山岡', due:'2026-07-19' },
+    { t:'自治会(六日市・中央・八日市・畑中・廿日市・第五)へ寄付依頼', a:'事務局／坂見委員長', due:'2026-07-15' },
+    { t:'内子町へ募金依頼・町議会／観光協会へ協賛金依頼', a:'事務局', due:'2026-05-31' },
+    { t:'提灯・プレートの現物確認（石田工芸 25-0815）', a:'装飾部', due:'2026-06-29' },
+    { t:'チラシ作成(8,000部)をセキ(株)に見積依頼', a:'財政部', due:'2026-06-29' },
+    { t:'トランペット鼓笛隊の依頼文書を持参（内子小運動会後）', a:'坂見', due:'' },
+    { t:'踊り用CD2枚を宮瀬さんに渡す＋さくら介護へ案内', a:'踊り部', due:'2026-06-29' },
+    { t:'笹飾りパート出勤簿の作成', a:'事務局', due:'2026-06-15' },
+    { t:'花紙・輪紙・針金等を注文', a:'事務局', due:'2026-06-15' },
+    { t:'笹飾りパート用 段ボール注文（枚数確認）', a:'事務局', due:'2026-06-15' },
+    { t:'JR内子駅への笹飾り掲揚依頼', a:'事務局', due:'2026-05-31' },
+    { t:'笹飾り自作出展者への補助金交付＆聞き取り（担当決め）', a:'今宮部長 中心', due:'2026-06-29' },
+    { t:'ポスター(100枚程度)のデザイン', a:'渉外担当', due:'' },
+    { t:'オキデンさんへ本部音響の見積り依頼', a:'事務局', due:'' },
+    { t:'道路使用許可申請を提出', a:'事務局', due:'2026-06-30' },
+  ];
+  const tasks = STORE.get('tasks');
+  taskSeed.forEach((t, i) => {
+    const tid = 'sasa4-task-' + i;
+    if (!tasks.some(x => x.seedId === tid)) {
+      tasks.push({ id: 1747500002000 + i, seedId: tid, title: t.t, assign: t.a, due: t.due, done: false });
+    }
+  });
+  STORE.set('tasks', tasks);
+
+  localStorage.setItem(FLAG, '1');
+}
+
 // ===== INIT =====
 function initApp() {
+  seedSasaMatsuri2026();
   updateWelcome();
   renderAll();
 }
@@ -1597,9 +1786,9 @@ function renderMinutes() {
       <div class="minutes-title">📝 ${escHtml(m.title)}</div>
       ${m.attendees ? `<div class="minutes-preview">👥 ${escHtml(m.attendees)}</div>` : ''}
       <div class="minutes-full" id="min-full-${m.id}">
-        <div style="margin-bottom:10px"><strong>出席者:</strong> ${escHtml(m.attendees || 'なし')}</div>
-        <div style="white-space:pre-wrap;line-height:1.8">${escHtml(m.body)}</div>
-        ${m.next ? `<div style="margin-top:12px;padding:10px;background:#fff8f0;border-radius:8px"><strong>📌 次回:</strong> ${escHtml(m.next)}</div>` : ''}
+        <div class="min-attendees"><span class="min-att-label">👥 出席者</span>${escHtml(m.attendees || 'なし')}</div>
+        <div class="min-body">${formatMinutesBody(m.body)}</div>
+        ${m.next ? `<div class="min-next"><strong>📌 次回</strong> ${escHtml(m.next)}</div>` : ''}
       </div>
     </div>
   `).join('');
@@ -1607,6 +1796,37 @@ function renderMinutes() {
 
 function toggleMinutes(id) {
   document.getElementById('min-full-' + id).classList.toggle('open');
+}
+
+// 議事録の本文を見やすく整形（【見出し】■小見出し ・箇条書き）
+function formatMinutesBody(raw) {
+  const lines = (raw || '').split('\n');
+  let html = '';
+  let inList = false;
+  const closeList = () => { if (inList) { html += '</ul>'; inList = false; } };
+  lines.forEach(line => {
+    const t = line.trim();
+    if (!t) { closeList(); return; }
+    if (/^【.*】$/.test(t)) {
+      closeList();
+      html += `<div class="min-h1">${escHtml(t.replace(/^【|】$/g, ''))}</div>`;
+    } else if (/^■/.test(t)) {
+      closeList();
+      html += `<div class="min-h2">${escHtml(t.replace(/^■\s*/, ''))}</div>`;
+    } else if (/^[・･]/.test(t)) {
+      if (!inList) { html += '<ul class="min-ul">'; inList = true; }
+      let item = escHtml(t.replace(/^[・･]\s*/, ''));
+      // 「→」以降を強調（決定・対応事項）
+      item = item.replace(/→/g, '<span class="min-arrow">→</span>');
+      html += `<li>${item}</li>`;
+    } else {
+      closeList();
+      let p = escHtml(t).replace(/→/g, '<span class="min-arrow">→</span>');
+      html += `<div class="min-cont">${p}</div>`;
+    }
+  });
+  closeList();
+  return html;
 }
 
 // ===== MEMBERS =====
