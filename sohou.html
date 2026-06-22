@@ -1,0 +1,329 @@
+<!DOCTYPE html><html lang="ja"><head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<title>🚒 操法タイム記録</title>
+<style>
+  :root{--red:#c1121f;--red2:#e63946;--ink:#1d2330;--bg:#f4f6fa;--card:#fff;
+        --good:#1f9e54;--bad:#d11;--line:#e2e8f0;--muted:#64748b;}
+  *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent;}
+  body{font-family:-apple-system,'Hiragino Sans',sans-serif;background:var(--bg);color:var(--ink);
+       -webkit-user-select:none;user-select:none;padding-bottom:40px;}
+  header{background:linear-gradient(135deg,#9d0208,#c1121f);color:#fff;padding:14px 16px;}
+  header h1{font-size:20px;display:flex;align-items:center;gap:8px;}
+  .meta{display:flex;gap:10px;margin-top:8px;flex-wrap:wrap;}
+  .badge{background:rgba(255,255,255,.18);border-radius:10px;padding:6px 12px;font-size:13px;font-weight:700;}
+  .badge b{font-size:18px;}
+  .tabs{display:flex;background:#7a0a0d;}
+  .tab{flex:1;padding:12px 4px;text-align:center;color:rgba(255,255,255,.7);font-size:14px;font-weight:700;
+       border-bottom:3px solid transparent;cursor:pointer;}
+  .tab.on{color:#fff;border-bottom-color:#ffd166;background:rgba(255,255,255,.08);}
+  .wrap{max-width:760px;margin:0 auto;padding:16px;}
+  .page{display:none;} .page.on{display:block;}
+  .card{background:var(--card);border-radius:14px;padding:18px;margin-bottom:14px;box-shadow:0 2px 8px rgba(0,0,0,.06);}
+  .big-time{font-variant-numeric:tabular-nums;font-weight:800;text-align:center;font-size:clamp(56px,16vw,110px);
+            line-height:1;color:var(--ink);margin:6px 0;}
+  .big-time .u{font-size:.4em;color:var(--muted);margin-left:6px;}
+  .nextbtn{width:100%;padding:26px;border:none;border-radius:16px;background:var(--red);color:#fff;
+           font-size:clamp(22px,5vw,30px);font-weight:800;cursor:pointer;box-shadow:0 6px 16px rgba(193,18,31,.35);}
+  .nextbtn:active{transform:scale(.98);}
+  .nextbtn.go{background:var(--good);}
+  .nextbtn:disabled{background:#cbd5e1;box-shadow:none;}
+  .subbtns{display:flex;gap:10px;margin-top:12px;}
+  .sbtn{flex:1;padding:13px;border:1.5px solid var(--line);border-radius:12px;background:#fff;font-size:15px;font-weight:700;cursor:pointer;}
+  .sbtn.save{background:var(--good);color:#fff;border-color:var(--good);}
+  .chips{display:flex;flex-wrap:wrap;gap:8px;margin-top:14px;}
+  .chip{flex:1;min-width:84px;text-align:center;padding:10px 6px;border-radius:12px;background:#f1f5f9;border:2px solid transparent;}
+  .chip .nm{font-size:12px;color:var(--muted);font-weight:700;}
+  .chip .lp{font-size:20px;font-weight:800;font-variant-numeric:tabular-nums;}
+  .chip.done{background:#eafaf0;} .chip.next{border-color:var(--red);background:#fff5f5;}
+  table{width:100%;border-collapse:collapse;font-size:15px;}
+  th,td{padding:9px 6px;text-align:right;border-bottom:1px solid var(--line);font-variant-numeric:tabular-nums;}
+  th{font-size:12px;color:var(--muted);font-weight:700;text-align:right;}
+  th:first-child,td:first-child{text-align:left;}
+  .pos{color:var(--good);font-weight:800;} .neg{color:var(--bad);font-weight:800;}
+  tr.total td{border-top:2px solid var(--ink);font-weight:800;font-size:17px;border-bottom:none;}
+  .rec{display:flex;justify-content:space-between;align-items:center;padding:12px 4px;border-bottom:1px solid var(--line);cursor:pointer;}
+  .rec .d{font-weight:700;} .rec .sub{font-size:12px;color:var(--muted);}
+  .rec .t{font-size:20px;font-weight:800;font-variant-numeric:tabular-nums;text-align:right;}
+  .del{color:var(--bad);background:none;border:none;font-size:18px;cursor:pointer;padding:4px 8px;}
+  .seg-edit{display:flex;gap:8px;align-items:center;margin-bottom:8px;}
+  .seg-edit input{padding:9px;border:1.5px solid var(--line);border-radius:9px;font-size:15px;}
+  .seg-edit .n{flex:1;} .seg-edit .b{width:90px;text-align:right;}
+  label.f{display:block;font-size:13px;font-weight:700;color:var(--muted);margin:14px 0 6px;}
+  input.field{width:100%;padding:11px;border:1.5px solid var(--line);border-radius:10px;font-size:16px;}
+  .row2{display:flex;gap:10px;} .row2>*{flex:1;}
+  .btn{padding:12px 14px;border:none;border-radius:11px;font-size:15px;font-weight:700;cursor:pointer;}
+  .btn.p{background:var(--red);color:#fff;} .btn.g{background:#e2e8f0;color:#1d2330;}
+  .btn.cloud{background:#0d9488;color:#fff;}
+  .empty{text-align:center;color:var(--muted);padding:30px;font-size:15px;}
+  .hint{font-size:12px;color:var(--muted);margin-top:8px;line-height:1.6;}
+  #toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%) translateY(100px);
+         background:#1d2330;color:#fff;padding:11px 20px;border-radius:30px;font-size:14px;
+         transition:transform .3s;z-index:50;opacity:.97;} #toast.show{transform:translateX(-50%) translateY(0);}
+  svg{width:100%;height:auto;display:block;}
+  .legend{font-size:12px;color:var(--muted);display:flex;gap:14px;justify-content:center;margin-top:6px;}
+  .bar-row{display:flex;align-items:center;gap:8px;margin:7px 0;font-size:14px;}
+  .bar-row .bn{width:64px;font-weight:700;}
+  .bar-wrap{flex:1;background:#eef2f7;border-radius:6px;height:22px;position:relative;overflow:hidden;}
+  .bar{height:100%;border-radius:6px;}
+  .bar-row .bv{width:96px;text-align:right;font-variant-numeric:tabular-nums;font-weight:700;}
+</style></head>
+<body>
+<header>
+  <h1>🚒 ポンプ車操法 タイム記録</h1>
+  <div class="meta">
+    <div class="badge">🏆 県大会まで <b id="days">--</b> 日</div>
+    <div class="badge">📅 残り練習 約 <b id="lefts">--</b> 回</div>
+    <div class="badge" id="runnerB">🏃 <b id="runnerName">2番員</b></div>
+  </div>
+</header>
+<div class="tabs">
+  <div class="tab on" data-p="measure" onclick="tab('measure')">⏱ 計測</div>
+  <div class="tab" data-p="hist" onclick="tab('hist')">📋 記録</div>
+  <div class="tab" data-p="grow" onclick="tab('grow')">📈 のび</div>
+  <div class="tab" data-p="set" onclick="tab('set')">⚙ 設定</div>
+</div>
+
+<div class="wrap">
+  <!-- 計測 -->
+  <div class="page on" id="p-measure">
+    <div class="card">
+      <div class="big-time"><span id="elapsed">0.0</span><span class="u">秒</span></div>
+      <button class="nextbtn go" id="next" onclick="nextTap()">▶ スタート</button>
+      <div class="subbtns">
+        <button class="sbtn" onclick="resetRun()">⟲ やり直し</button>
+      </div>
+      <div class="chips" id="chips"></div>
+    </div>
+    <div class="card" id="result" style="display:none">
+      <div id="result-table"></div>
+      <input class="field" id="note" placeholder="メモ（走者・天候・気づき など）" style="margin-top:12px">
+      <div class="subbtns">
+        <button class="sbtn save" onclick="saveRun()">💾 この記録を保存</button>
+      </div>
+    </div>
+    <div class="hint">使い方：模範開始で「▶スタート」→ 各区間が終わるたびに大ボタンをタップ → 最後の区間で自動的に止まります。区間ごとの基本タイムとの差が出ます。</div>
+  </div>
+
+  <!-- 記録 -->
+  <div class="page" id="p-hist">
+    <div class="card"><div id="hist-list"></div></div>
+  </div>
+
+  <!-- のび -->
+  <div class="page" id="p-grow">
+    <div class="card">
+      <div style="font-weight:800;margin-bottom:8px;">📈 合計タイムの推移</div>
+      <div id="chart"></div>
+    </div>
+    <div class="card">
+      <div style="font-weight:800;margin-bottom:8px;">🔍 直近の区間別（基本との差）</div>
+      <div id="bars"></div>
+    </div>
+  </div>
+
+  <!-- 設定 -->
+  <div class="page" id="p-set">
+    <div class="card">
+      <label class="f">走者（ポジション）</label>
+      <input class="field" id="s-runner" placeholder="例：2番員">
+      <div class="row2" style="margin-top:6px;">
+        <div><label class="f">県大会の日付</label><input class="field" type="date" id="s-comp"></div>
+        <div><label class="f">合計 基本タイム（秒）</label><input class="field" type="number" step="0.1" id="s-total" placeholder="例：32.0"></div>
+      </div>
+      <label class="f">区間と基本タイム（秒）</label>
+      <div id="seg-editor"></div>
+      <button class="btn g" onclick="addSeg()" style="width:100%;margin-top:6px;">＋ 区間を追加</button>
+      <div class="row2" style="margin-top:16px;">
+        <button class="btn p" onclick="applySettings()">設定を保存</button>
+        <button class="btn g" onclick="resetAll()">全データ消去</button>
+      </div>
+    </div>
+    <div class="card">
+      <label class="f">バックアップ・同期</label>
+      <div class="row2">
+        <button class="btn cloud" onclick="cloudUp()">☁↑ クラウド保存</button>
+        <button class="btn cloud" onclick="cloudDown()">☁↓ クラウド読込</button>
+      </div>
+      <div class="row2" style="margin-top:10px;">
+        <button class="btn g" onclick="exportJSON()">⬇ 書き出し</button>
+        <label class="btn g" style="cursor:pointer;text-align:center;">⬆ 読込<input type="file" accept=".json" onchange="importJSON(event)" style="display:none"></label>
+      </div>
+      <div class="hint">記録するたびに自動でこの端末＋クラウドに保存されます。別端末では「☁↓ 読込」で同期できます。</div>
+    </div>
+  </div>
+</div>
+<div id="toast"></div>
+
+<script>
+const SKEY='sohou_time_v1';
+const SYNC_URL='https://script.google.com/macros/s/AKfycbxwL19mAenATUMILRsQYrDL0ThjU2C583Cj729OfzNHEH3drMcZCExYULRp4VGOZ11J/exec';
+const SYNC_KEY='sohou_2ban_data';
+
+let data = {
+  runner:'2番員',
+  comp:'',
+  totalBase:0,
+  segments:[{name:'初動',base:0},{name:'搬送',base:0},{name:'展張',base:0},{name:'結合',base:0},{name:'定位置',base:0}],
+  sessions:[],
+  practicePerWeek:3
+};
+let cloudReady=false, cloudTimer=null;
+
+function load(){
+  try{ const s=JSON.parse(localStorage.getItem(SKEY)); if(s) data=Object.assign(data,s); }catch(e){}
+  if(!data.comp){ const d=new Date(); d.setDate(d.getDate()+30); data.comp=d.toISOString().slice(0,10); }
+}
+function save(){
+  localStorage.setItem(SKEY, JSON.stringify(data));
+  if(cloudReady){ clearTimeout(cloudTimer); cloudTimer=setTimeout(pushCloud,1500); }
+}
+async function pushCloud(){
+  try{ const r=await fetch(SYNC_URL+'?action=save&key='+SYNC_KEY,{method:'POST',body:JSON.stringify(data)});
+    const j=await r.json(); if(j&&j.success) toast('☁ 自動保存しました'); }catch(e){}
+}
+
+function $(id){return document.getElementById(id);}
+function toast(m){const t=$('toast');t.textContent=m;t.classList.add('show');clearTimeout(t._t);t._t=setTimeout(()=>t.classList.remove('show'),2200);}
+function fmt(sec){ if(sec==null||isNaN(sec))return '--'; sec=Math.max(0,sec);
+  if(sec>=60){const m=Math.floor(sec/60),s=sec-m*60;return m+':'+(s<10?'0':'')+s.toFixed(1);} return sec.toFixed(1); }
+function diffHTML(lap,base){ if(!base||base<=0) return '<span style="color:#94a3b8">—</span>';
+  const d=lap-base; const cls=d<=0?'pos':'neg'; const s=(d<=0?'−':'+')+Math.abs(d).toFixed(1);
+  return '<span class="'+cls+'">'+s+'</span>'; }
+function totalBase(){ if(data.totalBase>0) return data.totalBase;
+  const s=data.segments.reduce((a,x)=>a+(+x.base||0),0); return s>0?s:0; }
+
+// ===== タブ =====
+function tab(p){ document.querySelectorAll('.tab').forEach(t=>t.classList.toggle('on',t.dataset.p===p));
+  document.querySelectorAll('.page').forEach(pg=>pg.classList.remove('on')); $('p-'+p).classList.add('on');
+  if(p==='hist')renderHist(); if(p==='grow')renderGrow(); if(p==='set')fillSettings(); }
+
+// ===== 計測 =====
+let running=false, startT=0, splits=[], segIdx=0, raf=0, lastLaps=null;
+function loop(){ if(running){ $('elapsed').textContent=((performance.now()-startT)/1000).toFixed(1); raf=requestAnimationFrame(loop);} }
+function nextTap(){
+  const segs=data.segments;
+  if(!running){ // start
+    running=true; startT=performance.now(); splits=[]; segIdx=0; lastLaps=null;
+    $('result').style.display='none'; renderChips();
+    $('next').classList.remove('go'); updateNextLabel();
+    raf=requestAnimationFrame(loop); return;
+  }
+  const cum=(performance.now()-startT)/1000; splits.push(cum); segIdx++;
+  renderChips();
+  if(segIdx>=segs.length){ finishRun(); } else { updateNextLabel(); }
+}
+function updateNextLabel(){ const s=data.segments[segIdx]; $('next').textContent='✓ '+(segIdx+1)+'「'+(s?s.name:'')+'」完了 →'; }
+function finishRun(){
+  running=false; cancelAnimationFrame(raf);
+  const laps=splits.map((c,i)=> i===0? c : c-splits[i-1]);
+  lastLaps=laps;
+  const total=splits[splits.length-1];
+  $('elapsed').textContent=total.toFixed(1);
+  $('next').textContent='▶ スタート'; $('next').classList.add('go'); segIdx=0;
+  // 結果表
+  let rows=''; data.segments.forEach((s,i)=>{ rows+='<tr><td>'+(i+1)+' '+s.name+'</td><td>'+fmt(laps[i])+'</td><td>'+(s.base>0?fmt(s.base):'—')+'</td><td>'+diffHTML(laps[i],s.base)+'</td></tr>'; });
+  const tb=totalBase();
+  rows+='<tr class="total"><td>合計</td><td>'+fmt(total)+'</td><td>'+(tb>0?fmt(tb):'—')+'</td><td>'+diffHTML(total,tb)+'</td></tr>';
+  $('result-table').innerHTML='<table><tr><th>区間</th><th>区間タイム</th><th>基本</th><th>差</th></tr>'+rows+'</table>';
+  $('result').style.display='block'; $('note').value='';
+  renderChips();
+}
+function renderChips(){
+  const el=$('chips'); el.innerHTML='';
+  data.segments.forEach((s,i)=>{
+    const done=i<splits.length; const isNext=running&&i===segIdx;
+    const lap= done ? (i===0?splits[0]:splits[i]-splits[i-1]) : null;
+    el.insertAdjacentHTML('beforeend',
+      '<div class="chip'+(done?' done':'')+(isNext?' next':'')+'"><div class="nm">'+(i+1)+' '+s.name+'</div><div class="lp">'+(lap!=null?fmt(lap):'–')+'</div></div>');
+  });
+}
+function resetRun(){ running=false; cancelAnimationFrame(raf); splits=[]; segIdx=0; lastLaps=null;
+  $('elapsed').textContent='0.0'; $('next').textContent='▶ スタート'; $('next').classList.add('go'); $('result').style.display='none'; renderChips(); }
+function saveRun(){
+  if(!lastLaps){ toast('先に計測してください'); return; }
+  const total=lastLaps.reduce((a,b)=>a+b,0);
+  data.sessions.push({ id:Date.now(), date:new Date().toISOString().slice(0,10),
+    runner:data.runner, total:+total.toFixed(2), laps:lastLaps.map(x=>+x.toFixed(2)), note:$('note').value.trim() });
+  save(); toast('💾 記録を保存しました'); resetRun(); renderHeader();
+}
+
+// ===== 記録 =====
+function renderHist(){
+  const el=$('hist-list');
+  if(!data.sessions.length){ el.innerHTML='<div class="empty">まだ記録がありません。「⏱ 計測」で測って保存してください。</div>'; return; }
+  const tb=totalBase();
+  el.innerHTML=[...data.sessions].reverse().map(s=>{
+    const d= tb>0? '<span class="'+((s.total-tb)<=0?'pos':'neg')+'">'+((s.total-tb)<=0?'−':'+')+Math.abs(s.total-tb).toFixed(1)+'</span>':'';
+    return '<div class="rec" onclick="toggleRec('+s.id+')"><div><div class="d">'+s.date+'　<span class="sub">'+esc(s.runner||'')+'</span></div><div class="sub" id="exp-'+s.id+'" style="display:none"></div>'+(s.note?'<div class="sub">📝 '+esc(s.note)+'</div>':'')+'</div>'
+      +'<div style="display:flex;align-items:center;gap:6px"><div class="t">'+fmt(s.total)+'<span style="font-size:12px"> 秒 '+d+'</span></div><button class="del" onclick="event.stopPropagation();delRec('+s.id+')">✕</button></div></div>';
+  }).join('');
+}
+function toggleRec(id){ const s=data.sessions.find(x=>x.id===id); const e=$('exp-'+id); if(!e)return;
+  if(e.style.display==='none'){ e.style.display='block'; e.innerHTML=data.segments.map((sg,i)=>esc(sg.name)+' '+fmt(s.laps[i])).join(' / '); } else e.style.display='none'; }
+function delRec(id){ if(!confirm('この記録を削除しますか？'))return; data.sessions=data.sessions.filter(x=>x.id!==id); save(); renderHist(); renderHeader(); }
+function esc(s){return String(s==null?'':s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));}
+
+// ===== のび（グラフ） =====
+function renderGrow(){
+  const ss=data.sessions; const chart=$('chart'); const bars=$('bars');
+  if(ss.length<1){ chart.innerHTML='<div class="empty">記録がまだありません</div>'; bars.innerHTML=''; return; }
+  // 折れ線：合計タイム
+  const W=680,H=240,pad=38;
+  const totals=ss.map(s=>s.total); const tb=totalBase();
+  let mn=Math.min(...totals), mx=Math.max(...totals); if(tb>0){mn=Math.min(mn,tb);mx=Math.max(mx,tb);}
+  const span=(mx-mn)||1; mn-=span*0.12; mx+=span*0.12;
+  const x=i=>pad+(ss.length<=1?0:i*(W-2*pad)/(ss.length-1));
+  const y=v=>H-pad-(v-mn)/(mx-mn)*(H-2*pad);
+  let pts=totals.map((v,i)=>x(i)+','+y(v)).join(' ');
+  let dots=totals.map((v,i)=>'<circle cx="'+x(i)+'" cy="'+y(v)+'" r="4" fill="#c1121f"/><text x="'+x(i)+'" y="'+(y(v)-9)+'" font-size="11" text-anchor="middle" fill="#1d2330">'+v.toFixed(1)+'</text>').join('');
+  let baseLine = tb>0 ? '<line x1="'+pad+'" y1="'+y(tb)+'" x2="'+(W-pad)+'" y2="'+y(tb)+'" stroke="#1f9e54" stroke-dasharray="6 5" stroke-width="2"/><text x="'+(W-pad)+'" y="'+(y(tb)-6)+'" font-size="11" text-anchor="end" fill="#1f9e54">基本 '+tb.toFixed(1)+'</text>' : '';
+  let xlab=ss.map((s,i)=> i%Math.ceil(ss.length/6||1)===0 ? '<text x="'+x(i)+'" y="'+(H-pad+16)+'" font-size="10" text-anchor="middle" fill="#64748b">'+s.date.slice(5)+'</text>':'').join('');
+  chart.innerHTML='<svg viewBox="0 0 '+W+' '+H+'"><line x1="'+pad+'" y1="'+(H-pad)+'" x2="'+(W-pad)+'" y2="'+(H-pad)+'" stroke="#cbd5e1"/>'+baseLine+'<polyline points="'+pts+'" fill="none" stroke="#c1121f" stroke-width="3"/>'+dots+xlab+'</svg>'
+    +'<div class="legend"><span>🔴 合計タイム</span>'+(tb>0?'<span>🟢 基本タイム</span>':'')+'</div>';
+  // 区間別バー（直近）
+  const last=ss[ss.length-1]; const maxLap=Math.max(...last.laps,...data.segments.map(s=>+s.base||0))||1;
+  bars.innerHTML=data.segments.map((sg,i)=>{
+    const lap=last.laps[i]||0, base=+sg.base||0; const over=base>0&&lap>base;
+    const w=Math.round(lap/maxLap*100);
+    const d= base>0? ((lap-base<=0?'−':'+')+Math.abs(lap-base).toFixed(1)) : '';
+    return '<div class="bar-row"><div class="bn">'+esc(sg.name)+'</div><div class="bar-wrap"><div class="bar" style="width:'+w+'%;background:'+(over?'#e63946':'#1f9e54')+'"></div></div><div class="bv">'+fmt(lap)+(d?' <span class="'+(lap-base<=0?'pos':'neg')+'">'+d+'</span>':'')+'</div></div>';
+  }).join('')+'<div class="hint">直近の記録('+last.date+')の区間タイム。赤=基本より遅い区間＝伸びしろ。</div>';
+}
+
+// ===== 設定 =====
+function fillSettings(){
+  $('s-runner').value=data.runner; $('s-comp').value=data.comp; $('s-total').value=data.totalBase||'';
+  const se=$('seg-editor'); se.innerHTML='';
+  data.segments.forEach((s,i)=>{ se.insertAdjacentHTML('beforeend',
+    '<div class="seg-edit"><input class="n" value="'+esc(s.name)+'" oninput="data.segments['+i+'].name=this.value"><input class="b" type="number" step="0.1" placeholder="基本秒" value="'+(s.base||'')+'" oninput="data.segments['+i+'].base=parseFloat(this.value)||0"><button class="del" onclick="rmSeg('+i+')">✕</button></div>'); });
+}
+function addSeg(){ data.segments.push({name:'区間'+(data.segments.length+1),base:0}); fillSettings(); }
+function rmSeg(i){ if(data.segments.length<=1){toast('1つは必要です');return;} data.segments.splice(i,1); fillSettings(); }
+function applySettings(){ data.runner=$('s-runner').value.trim()||'2番員'; data.comp=$('s-comp').value;
+  data.totalBase=parseFloat($('s-total').value)||0; save(); renderHeader(); renderChips(); toast('設定を保存しました'); }
+function resetAll(){ if(!confirm('すべての記録と設定を消去しますか？（元に戻せません）'))return;
+  localStorage.removeItem(SKEY); location.reload(); }
+
+// ===== クラウド／バックアップ =====
+async function cloudUp(){ toast('☁ アップロード中…'); try{ const r=await fetch(SYNC_URL+'?action=save&key='+SYNC_KEY,{method:'POST',body:JSON.stringify(data)}); const j=await r.json(); toast(j&&j.success?'✅ クラウドに保存しました':'保存失敗'); }catch(e){toast('通信エラー');} }
+async function cloudDown(){ toast('☁ ダウンロード中…'); try{ const r=await fetch(SYNC_URL+'?action=load&key='+SYNC_KEY); const j=await r.json(); let d=j&&j.data; if(typeof d==='string'){try{d=JSON.parse(d);}catch(e){}} if(!d||!d.segments){toast('クラウドにデータがありません');return;} if(!confirm('クラウドの内容で置き換えますか？'))return; data=d; save(); renderHeader(); renderChips(); toast('✅ 読み込みました'); }catch(e){toast('通信エラー');} }
+function exportJSON(){ const b=new Blob([JSON.stringify(data,null,2)],{type:'application/json'}); const a=document.createElement('a'); a.href=URL.createObjectURL(b); a.download='操法タイム_'+new Date().toISOString().slice(0,10)+'.json'; a.click(); }
+function importJSON(e){ const f=e.target.files[0]; if(!f)return; const r=new FileReader(); r.onload=ev=>{ try{ const d=JSON.parse(ev.target.result); if(!d.segments)throw 0; data=d; save(); renderHeader(); renderChips(); toast('読み込みました'); }catch(err){toast('読込エラー');} e.target.value=''; }; r.readAsText(f); }
+
+// ===== ヘッダー =====
+function renderHeader(){
+  $('runnerName').textContent=data.runner;
+  if(data.comp){ const today=new Date(); today.setHours(0,0,0,0); const c=new Date(data.comp);
+    const days=Math.max(0,Math.round((c-today)/86400000)); $('days').textContent=days;
+    $('lefts').textContent=Math.max(0,Math.round(days/7*(data.practicePerWeek||3)));
+  } else { $('days').textContent='--'; $('lefts').textContent='--'; }
+}
+
+// ===== 初期化 =====
+load(); renderHeader(); renderChips();
+cloudReady=true;
+</script>
+</body></html>
