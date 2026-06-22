@@ -1,0 +1,311 @@
+<!DOCTYPE html><html lang="ja"><head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<title>🎱 ビリヤード対局時計</title>
+<style>
+  :root{
+    --bg:#0b1020; --c0:#0d9488; --c0d:#0b3b39; --c1:#ea580c; --c1d:#4a2410;
+    --ot:#dc2626; --warn:#f59e0b; --ink:#f8fafc;
+  }
+  *{box-sizing:border-box; margin:0; padding:0; -webkit-tap-highlight-color:transparent;}
+  html,body{height:100%; overflow:hidden; background:var(--bg);}
+  body{
+    font-family:-apple-system,'Hiragino Sans','Helvetica Neue',sans-serif;
+    color:var(--ink); position:fixed; inset:0; touch-action:manipulation;
+    -webkit-user-select:none; user-select:none;
+  }
+  #clock{display:flex; flex-direction:row; height:100%; width:100%;}
+  .side{
+    flex:1; position:relative; display:flex; flex-direction:column;
+    align-items:center; justify-content:center; cursor:pointer;
+    transition:background .15s, opacity .15s; overflow:hidden;
+  }
+  .side.s0{background:var(--c0d);}
+  .side.s1{background:var(--c1d);}
+  .side.s0.active{background:var(--c0);}
+  .side.s1.active{background:var(--c1);}
+  .side.active{box-shadow:inset 0 0 0 6px rgba(255,255,255,.5);}
+  .side:not(.active){opacity:.5;}
+  .side.over,.side.foul{animation:flash .5s steps(1) infinite;}
+  @keyframes flash{50%{background:var(--ot)!important; opacity:1;}}
+  .name{font-size:clamp(16px,3.5vh,30px); font-weight:700; opacity:.9; margin-bottom:2vh; letter-spacing:.04em;}
+  .time{
+    font-variant-numeric:tabular-nums; font-feature-settings:"tnum";
+    font-weight:800; line-height:1; letter-spacing:.01em;
+    font-size:clamp(56px,17vw,200px);
+  }
+  .time.shot{font-size:clamp(80px,24vw,280px);}
+  .mode{margin-top:2.5vh; font-size:clamp(13px,2.4vh,22px); font-weight:700;
+        padding:.4em 1em; border-radius:999px; background:rgba(0,0,0,.28);}
+  .mode.ot{background:var(--ot); color:#fff;}
+  .sub{margin-top:1.2vh; font-size:clamp(11px,1.8vh,16px); opacity:.8;}
+
+  /* 中央コントロール */
+  #ctr{
+    position:absolute; top:50%; left:50%; transform:translate(-50%,-50%);
+    display:flex; flex-direction:column; gap:14px; align-items:center; z-index:5;
+  }
+  .cbtn{
+    width:clamp(62px,11vh,84px); height:clamp(62px,11vh,84px); border-radius:50%;
+    border:none; background:rgba(15,23,42,.92); color:#fff;
+    font-size:clamp(24px,4.5vh,34px); display:flex; align-items:center; justify-content:center;
+    box-shadow:0 6px 20px rgba(0,0,0,.5); cursor:pointer; -webkit-backdrop-filter:blur(4px);
+  }
+  .cbtn:active{transform:scale(.92);}
+  .cbtn.main{width:clamp(82px,15vh,116px); height:clamp(82px,15vh,116px); font-size:clamp(34px,7vh,52px); background:#1e293b;}
+  .cbtn.small{width:clamp(50px,8vh,62px); height:clamp(50px,8vh,62px); font-size:clamp(20px,3.5vh,26px);}
+  .crow{display:flex; gap:14px;}
+
+  /* 開始ヒント */
+  #hint{
+    position:absolute; bottom:3vh; left:50%; transform:translateX(-50%);
+    background:rgba(15,23,42,.85); padding:10px 18px; border-radius:999px;
+    font-size:clamp(12px,2vh,16px); z-index:4; text-align:center; pointer-events:none;
+  }
+
+  /* 設定モーダル */
+  #ov{position:fixed; inset:0; background:rgba(0,0,0,.6); display:none; z-index:20;
+      align-items:center; justify-content:center; padding:16px; -webkit-backdrop-filter:blur(3px);}
+  #ov.show{display:flex;}
+  .modal{background:#111827; border-radius:18px; padding:22px; width:min(560px,94vw);
+         max-height:92vh; overflow:auto; box-shadow:0 20px 60px rgba(0,0,0,.6);}
+  .modal h2{font-size:20px; margin-bottom:4px;}
+  .modal .lead{font-size:13px; opacity:.7; margin-bottom:16px;}
+  .grp{margin-bottom:18px;}
+  .grp>label{display:block; font-size:14px; font-weight:700; margin-bottom:8px; color:#cbd5e1;}
+  .chips{display:flex; flex-wrap:wrap; gap:8px;}
+  .chip{padding:9px 14px; border-radius:10px; border:1.5px solid #334155; background:#1e293b;
+        color:#e2e8f0; font-size:15px; font-weight:700; cursor:pointer;}
+  .chip.sel{background:#0d9488; border-color:#0d9488; color:#fff;}
+  .nameRow{display:flex; gap:10px;}
+  .nameRow input{flex:1; padding:10px; border-radius:10px; border:1.5px solid #334155;
+                 background:#1e293b; color:#fff; font-size:15px;}
+  .modal .done{width:100%; margin-top:6px; padding:14px; border:none; border-radius:12px;
+               background:#0d9488; color:#fff; font-size:17px; font-weight:800; cursor:pointer;}
+  .note{font-size:12px; opacity:.65; margin-top:10px; line-height:1.6;}
+</style></head>
+<body>
+
+<div id="clock">
+  <div class="side s0" data-i="0">
+    <div class="name" id="n0">プレイヤー①</div>
+    <div class="time" id="t0">5:00</div>
+    <div class="mode" id="m0">持ち時間</div>
+    <div class="sub" id="sub0"></div>
+  </div>
+  <div class="side s1" data-i="1">
+    <div class="name" id="n1">プレイヤー②</div>
+    <div class="time" id="t1">5:00</div>
+    <div class="mode" id="m1">持ち時間</div>
+    <div class="sub" id="sub1"></div>
+  </div>
+</div>
+
+<div id="ctr">
+  <button class="cbtn main" id="pp" title="開始 / 一時停止">▶</button>
+  <div class="crow">
+    <button class="cbtn small" id="rst" title="リセット">⟲</button>
+    <button class="cbtn small" id="cfg" title="設定">⚙</button>
+  </div>
+</div>
+
+<div id="hint">手番のプレイヤー側をタップして開始</div>
+
+<div id="ov">
+  <div class="modal">
+    <h2>⚙ 設定</h2>
+    <div class="lead">持ち時間を使い切ると「ショットクロック」に切り替わります。</div>
+
+    <div class="grp">
+      <label>① 持ち時間（1人あたり）</label>
+      <div class="chips" id="ch-main"></div>
+    </div>
+    <div class="grp">
+      <label>② ショットクロック（持ち時間を超えた後・1手あたり）</label>
+      <div class="chips" id="ch-shot"></div>
+    </div>
+    <div class="grp">
+      <label>プレイヤー名</label>
+      <div class="nameRow">
+        <input id="in0" maxlength="10" placeholder="プレイヤー①">
+        <input id="in1" maxlength="10" placeholder="プレイヤー②">
+      </div>
+    </div>
+    <button class="done" id="apply">この設定で開始（リセット）</button>
+    <div class="note">
+      ・遊び方：自分のショットが終わったら<b>自分側をタップ</b>→相手の時計が動きます。<br>
+      ・持ち時間が0になると赤い「ショットクロック」表示に変わり、1手ごとに秒数がリセットされます。<br>
+      ・ショットクロックも0になると警報音＝時間切れ（反則）。タップで相手に交代。<br>
+      ・残り5秒から「ピッ」と予告音が鳴ります。
+    </div>
+  </div>
+</div>
+
+<script>
+(function(){
+  const SKEY='billiards_clock_v1';
+  // 設定
+  let cfg = { mainMin:5, shotSec:30, names:['プレイヤー①','プレイヤー②'] };
+  try{ const s=JSON.parse(localStorage.getItem(SKEY)); if(s) cfg=Object.assign(cfg,s); }catch(e){}
+
+  // 状態
+  let main=[0,0], shot=[0,0], ot=[false,false], foul=[false,false];
+  let active=-1, paused=false, over=false, loser=-1;
+  let lastTick=0, raf=0, lastWarn=[null,null];
+
+  const $=id=>document.getElementById(id);
+  const baseMain=()=>cfg.mainMin*60000;
+  const baseShot=()=>cfg.shotSec*1000;
+
+  function resetGame(){
+    main=[baseMain(),baseMain()]; shot=[baseShot(),baseShot()];
+    ot=[false,false]; foul=[false,false];
+    active=-1; paused=false; over=false; loser=-1; lastWarn=[null,null];
+    relWake(); draw();
+  }
+
+  // ===== 音 =====
+  let actx=null;
+  function ensureAudio(){ try{ if(!actx) actx=new (window.AudioContext||window.webkitAudioContext)(); if(actx.state==='suspended') actx.resume(); }catch(e){} }
+  function beep(freq,dur,vol){ if(!actx) return; try{
+    const o=actx.createOscillator(), g=actx.createGain();
+    o.type='square'; o.frequency.value=freq; o.connect(g); g.connect(actx.destination);
+    const t=actx.currentTime; g.gain.setValueAtTime(vol,t);
+    g.gain.exponentialRampToValueAtTime(0.0001,t+dur); o.start(t); o.stop(t+dur);
+  }catch(e){} }
+  function alarm(){ [0,200,400,600].forEach(ms=>setTimeout(()=>beep(330,0.18,0.5),ms)); }
+
+  // ===== 画面ロック維持 =====
+  let wl=null;
+  async function reqWake(){ try{ if('wakeLock' in navigator) wl=await navigator.wakeLock.request('screen'); }catch(e){} }
+  function relWake(){ try{ if(wl){ wl.release(); wl=null; } }catch(e){} }
+  document.addEventListener('visibilitychange',()=>{ if(document.visibilityState==='visible' && active>=0 && !paused && !over) reqWake(); });
+
+  // ===== タップで手番交代 =====
+  function tapSide(i){
+    ensureAudio();
+    if(over) return;
+    if(paused) return;
+    if(active===-1){            // 開始：タップした人が手番に
+      active=i; foul=[false,false];
+      if(ot[i]){ shot[i]=baseShot(); }
+      lastTick=performance.now(); reqWake(); beep(880,0.07,0.35); update(); return;
+    }
+    if(active!==i) return;      // 待機側のタップは無視
+    // 手番終了 → 相手へ
+    if(ot[i]){ shot[i]=baseShot(); foul[i]=false; }
+    active=1-i;
+    if(ot[active]){ shot[active]=baseShot(); foul[active]=false; }
+    lastWarn=[null,null];
+    lastTick=performance.now(); beep(880,0.07,0.35); update();
+  }
+  document.querySelectorAll('.side').forEach(el=>{
+    el.addEventListener('pointerdown', e=>{ e.preventDefault(); tapSide(+el.dataset.i); });
+  });
+
+  // ===== ループ =====
+  function tick(now){
+    if(active>=0 && !paused && !over){
+      const dt=now-lastTick; const i=active;
+      if(!ot[i]){
+        main[i]-=dt;
+        if(main[i]<=0){
+          const carry=-main[i]; main[i]=0;
+          if(cfg.shotSec>0){ ot[i]=true; shot[i]=baseShot()-carry; if(shot[i]<0)shot[i]=0; beep(330,0.25,0.45); }
+          else { over=true; loser=i; alarm(); relWake(); }
+        }
+      } else {
+        shot[i]-=dt;
+        if(shot[i]<=0){ shot[i]=0; if(!foul[i]){ foul[i]=true; alarm(); } }
+      }
+      // 残り5秒予告音
+      const rem = ot[i]? shot[i] : main[i];
+      if(rem>0 && rem<=5000){ const sec=Math.ceil(rem/1000); if(sec!==lastWarn[i]){ lastWarn[i]=sec; beep(660,0.06,0.3); } }
+      else lastWarn[i]=null;
+    }
+    lastTick=now; update();
+    raf=requestAnimationFrame(tick);
+  }
+
+  function fmtMain(ms){ if(ms<0)ms=0; let s=Math.ceil(ms/1000);
+    const h=Math.floor(s/3600); s%=3600; const m=Math.floor(s/60), ss=s%60;
+    const p=n=>String(n).padStart(2,'0');
+    return h>0 ? h+':'+p(m)+':'+p(ss) : m+':'+p(ss);
+  }
+  function fmtShot(ms){ if(ms<0)ms=0; return ms<5000 ? (ms/1000).toFixed(1) : String(Math.ceil(ms/1000)); }
+
+  function update(){
+    for(let i=0;i<2;i++){
+      const side=document.querySelector('.side.s'+i);
+      const tEl=$('t'+i), mEl=$('m'+i), subEl=$('sub'+i);
+      side.classList.toggle('active', active===i && !over);
+      side.classList.toggle('foul', foul[i] && active===i);
+      side.classList.toggle('over', over && loser===i);
+      if(ot[i]){
+        tEl.textContent=fmtShot(shot[i]); tEl.classList.add('shot');
+        mEl.textContent='ショットクロック'; mEl.classList.add('ot');
+        subEl.textContent = foul[i] ? '⛔ 時間切れ！' : '持ち時間切れ → 1手 '+cfg.shotSec+'秒';
+      } else {
+        tEl.textContent=fmtMain(main[i]); tEl.classList.remove('shot');
+        mEl.textContent='持ち時間'; mEl.classList.remove('ot');
+        subEl.textContent = (over&&loser===i) ? '時間切れ' : '';
+      }
+    }
+    // 中央ボタン
+    $('pp').textContent = over ? '⟲' : (active===-1 ? '▶' : (paused ? '▶' : '⏸'));
+    const hint=$('hint');
+    if(over){ hint.textContent='時間切れ — ⟲ でリセット'; hint.style.display=''; }
+    else if(active===-1){ hint.textContent='手番のプレイヤー側をタップして開始'; hint.style.display=''; }
+    else if(paused){ hint.textContent='一時停止中 — ▶ で再開'; hint.style.display=''; }
+    else { hint.style.display='none'; }
+  }
+  function draw(){ update(); }
+
+  // ===== 中央ボタン =====
+  $('pp').addEventListener('click', ()=>{
+    ensureAudio();
+    if(over){ resetGame(); return; }
+    if(active===-1){ active=0; foul=[false,false]; if(ot[0])shot[0]=baseShot(); lastTick=performance.now(); reqWake(); beep(880,0.07,0.35); update(); return; }
+    paused=!paused;
+    if(paused){ relWake(); } else { lastTick=performance.now(); reqWake(); }
+    update();
+  });
+  $('rst').addEventListener('click', ()=>{ if(confirm('時計をリセットしますか？')) resetGame(); });
+  $('cfg').addEventListener('click', openCfg);
+
+  // ===== 設定モーダル =====
+  const MAIN_PRESETS=[1,3,5,10,15,20,30,45,60];
+  const SHOT_PRESETS=[0,10,15,20,25,30,45,60];
+  function buildChips(){
+    const cm=$('ch-main'); cm.innerHTML='';
+    MAIN_PRESETS.forEach(v=>{ const b=document.createElement('button');
+      b.className='chip'+(v===cfg.mainMin?' sel':''); b.textContent=v+'分'; b.dataset.v=v;
+      b.onclick=()=>{ cfg.mainMin=v; buildChips(); }; cm.appendChild(b); });
+    const cs=$('ch-shot'); cs.innerHTML='';
+    SHOT_PRESETS.forEach(v=>{ const b=document.createElement('button');
+      b.className='chip'+(v===cfg.shotSec?' sel':''); b.textContent=(v===0?'なし':v+'秒'); b.dataset.v=v;
+      b.onclick=()=>{ cfg.shotSec=v; buildChips(); }; cs.appendChild(b); });
+  }
+  function openCfg(){ buildChips(); $('in0').value=cfg.names[0]; $('in1').value=cfg.names[1]; $('ov').classList.add('show'); }
+  $('apply').addEventListener('click', ()=>{
+    cfg.names[0]=$('in0').value.trim()||'プレイヤー①';
+    cfg.names[1]=$('in1').value.trim()||'プレイヤー②';
+    localStorage.setItem(SKEY, JSON.stringify(cfg));
+    $('n0').textContent=cfg.names[0]; $('n1').textContent=cfg.names[1];
+    $('ov').classList.remove('show');
+    resetGame();
+  });
+  $('ov').addEventListener('click', e=>{ if(e.target.id==='ov') $('ov').classList.remove('show'); });
+
+  // ===== 初期化 =====
+  $('n0').textContent=cfg.names[0]; $('n1').textContent=cfg.names[1];
+  resetGame();
+  raf=requestAnimationFrame(tick);
+
+  // テスト用に公開
+  window.__clock={ get s(){return {main,shot,ot,foul,active,paused,over,loser,cfg};}, tapSide, reset:resetGame };
+})();
+</script>
+</body></html>
