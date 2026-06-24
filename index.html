@@ -319,7 +319,7 @@ function loadApp() {
         app = parsed;
         if (!Array.isArray(app.members)) app.members = [...DEFAULT_MEMBERS];
         if (app.kaihi == null) app.kaihi = 18000;
-        curIdx = app.curIdx || 0;
+        curIdx = app.rounds.length - 1;
         if (curIdx < 0 || curIdx >= app.rounds.length) curIdx = 0;
         // 各ラウンドのフィールド補完
         app.rounds.forEach(r => {
@@ -356,6 +356,7 @@ function saveAll() {
   app.curIdx = curIdx;
   localStorage.setItem(STORAGE_KEY, JSON.stringify(app));
   toast('保存しました');
+  scheduleCloudSave();   // ← 編集のたびに自動でクラウドにも保存
 }
 
 function round() { return app.rounds[curIdx]; }
@@ -952,6 +953,27 @@ function renderShare() {
     `;
   }).join('');
 
+  // LINE／コピー用のテキスト版
+  const _sl = [];
+  _sl.push(`【楽晴会】第${r.num}回（${r.year}年${r.month}月）`);
+  _sl.push('──────────');
+  _sl.push(`●出席(${presentList.length}): ${presentList.join('・')||'—'}`);
+  _sl.push(`●欠席(${absentList.length}): ${absentList.join('・')||'—'}`);
+  _sl.push('──────────');
+  _sl.push('■ 精算・配当');
+  _sl.push(`・集金: ${app.kaihi.toLocaleString()}円 × ${paidCount}名 = ${pool.toLocaleString()}円`);
+  _sl.push(`・配当(${normalCallers.length}人): ${haitouUnit.toLocaleString()}×${normalCount}=${haitouNormal.toLocaleString()}円`);
+  _sl.push(`・ケツ(${ketsuCount}人): ${ketsuUnit.toLocaleString()}×${ketsuCount}=${haitouKetsu.toLocaleString()}円`);
+  if (taihouNames.size) _sl.push(`・大砲: ${[...taihouNames].join('・')}`);
+  if (ochiNames.size) _sl.push(`・落ち: ${[...ochiNames].join('・')}`);
+  if (c.taihou) _sl.push(`・大砲: ${(+c.taihou).toLocaleString()}円`);
+  if (c.amida) _sl.push(`・あみだ: ${(+c.amida).toLocaleString()}円`);
+  if (c.ryouridai) _sl.push(`・料理代: ${(+c.ryouridai).toLocaleString()}円`);
+  if (c.tsumitatekin) _sl.push(`・積立金: ${(+c.tsumitatekin).toLocaleString()}円`);
+  _sl.push('──────────');
+  _sl.push(`${ochiNames.size ? [...ochiNames].join('・')+'受取' : '差引精算'}: ${payout.toLocaleString()}円`);
+  lastShareText = _sl.join('\n');
+
   el.innerHTML = `
     <div style="background:#fff;border:2px solid #0d1b3e;border-radius:8px;padding:12px;font-family:sans-serif;">
       <div style="text-align:center;border-bottom:2px solid #0d1b3e;padding-bottom:3px;margin-bottom:6px;">
@@ -997,7 +1019,26 @@ function renderShare() {
       </div>
       <div style="text-align:center;font-size:9px;color:#999;margin-top:4px;">― 楽晴会管理アプリ ―</div>
     </div>
+    <div style="display:flex;gap:8px;margin-top:12px;">
+      <button onclick="copyShareText()" style="flex:1;padding:14px;border:none;border-radius:10px;background:#0d1b3e;color:#fff;font-size:15px;font-weight:700;cursor:pointer;">📋 コピー</button>
+      <button onclick="sendShareLine()" style="flex:1;padding:14px;border:none;border-radius:10px;background:#06C755;color:#fff;font-size:15px;font-weight:700;cursor:pointer;">💬 LINEで送る</button>
+    </div>
   `;
+}
+
+let lastShareText = '';
+function copyShareText(){
+  if(!lastShareText){ toast('共有データがありません'); return; }
+  if(navigator.clipboard && navigator.clipboard.writeText){
+    navigator.clipboard.writeText(lastShareText).then(()=>toast('📋 コピーしました（LINEに貼り付け）')).catch(()=>_fallbackCopy(lastShareText));
+  } else { _fallbackCopy(lastShareText); }
+}
+function _fallbackCopy(t){
+  try{ const ta=document.createElement('textarea'); ta.value=t; ta.style.position='fixed'; ta.style.opacity='0'; document.body.appendChild(ta); ta.focus(); ta.select(); document.execCommand('copy'); document.body.removeChild(ta); toast('📋 コピーしました（LINEに貼り付け）'); }catch(e){ toast('コピーできませんでした'); }
+}
+function sendShareLine(){
+  if(!lastShareText){ toast('共有データがありません'); return; }
+  window.open('https://line.me/R/share?text=' + encodeURIComponent(lastShareText), '_blank');
 }
 
 // ============================================================
@@ -1435,8 +1476,55 @@ async function syncDownload() {
   }
 }
 
+// ===== 自動同期（開いたら読込・編集で自動保存・閉じたら保存）=====
+let cloudReady = false, cloudTimer = null;
+function scheduleCloudSave(){
+  if (!cloudReady) return;                 // 起動直後の誤上書き防止
+  clearTimeout(cloudTimer);
+  cloudTimer = setTimeout(pushCloudSilent, 1500);
+}
+async function pushCloudSilent(){
+  try{
+    app.curIdx = curIdx;
+    const res = await fetch(SYNC_URL + '?action=save&key=rakuseikai_data', { method:'POST', body: JSON.stringify(app) });
+    const j = await res.json();
+    if (j && j.success) toast('☁ 自動保存しました');
+  }catch(e){ /* オフライン等は端末内に保存済み */ }
+}
+function flushCloudSave(){    // 閉じる瞬間に確実に送る
+  try{ app.curIdx = curIdx; navigator.sendBeacon(SYNC_URL + '?action=save&key=rakuseikai_data', JSON.stringify(app)); }catch(e){}
+}
+async function autoRestore(){  // 開いたらクラウドから自動読込（手動☁↓と同じ処理）
+  try{
+    const res = await fetch(SYNC_URL + '?action=load&key=rakuseikai_data');
+    const json = await res.json();
+    if (!json || !json.success || !json.data) return;
+    let d = json.data;
+    if (typeof d === 'string'){ try{ d = JSON.parse(d); }catch(e){ return; } }
+    if (d && !Array.isArray(d.rounds)){
+      if (d.data && Array.isArray(d.data.rounds)) d = d.data;
+      else if (d.value && Array.isArray(d.value.rounds)) d = d.value;
+      else if (d.app && Array.isArray(d.app.rounds)) d = d.app;
+    }
+    if (Array.isArray(d)) d = { rounds: d };
+    if (!d || typeof d !== 'object' || !Array.isArray(d.rounds) || d.rounds.length === 0) return;
+    d.rounds.forEach(r => { if(!Array.isArray(r.attendance)) r.attendance=[]; if(!Array.isArray(r.bids)) r.bids=[]; if(!r.calc) r.calc={}; if(r.year==null) r.year=new Date().getFullYear(); if(r.month==null) r.month=new Date().getMonth()+1; if(r.num==null) r.num=1; });
+    if (!Array.isArray(d.members)) d.members = [...DEFAULT_MEMBERS];
+    if (d.kaihi == null) d.kaihi = 18000;
+    let ci = d.curIdx || 0; if (ci < 0 || ci >= d.rounds.length) ci = 0;
+    app = d; curIdx = ci;
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(app));
+    render();
+  }catch(e){ /* オフライン等は端末内データのまま */ }
+}
+
 loadApp();
 render();
+// 開いたら自動でクラウドから最新を読込 → その後ユーザー編集の自動保存を有効化
+autoRestore().finally(()=>{ cloudReady = true; });
+// 閉じる・離れるときに最新を確実に保存
+window.addEventListener('beforeunload', flushCloudSave);
+window.addEventListener('pagehide', flushCloudSave);
 </script>
 </body>
 </html>
