@@ -490,13 +490,14 @@ function renderYear() {
         });
         return rc;
       });
-    // メンバー別集計
+    // メンバー別集計（落ちは回数ではなく落ちた月を記録）
     const stats = {};
     rounds.forEach(r => r.bids.forEach(b => {
       if (!b.opener) return;
       if (b.result !== '大砲' && b.result !== 'ケツ' && b.result !== '落ち') return;
-      stats[b.opener] = stats[b.opener] || { '大砲': 0, 'ケツ': 0, '落ち': 0 };
+      stats[b.opener] = stats[b.opener] || { '大砲': 0, 'ケツ': 0, '落ち': 0, ochiMonths: [] };
       stats[b.opener][b.result]++;
+      if (b.result === '落ち') stats[b.opener].ochiMonths.push(r.month);
     }));
 
     const roundRows = rounds.map(r => {
@@ -516,12 +517,15 @@ function renderYear() {
     const statRows = statMembers.map(m => {
       const s = stats[m];
       const cell = (v, color) => v ? `<strong style="color:${color};">${v}</strong>` : '<span style="color:#ccc;">0</span>';
+      const ochiCell = s.ochiMonths.length
+        ? `<strong style="color:#e65100;">${s.ochiMonths.map(mo => mo + '月').join('・')}</strong>`
+        : '<span style="color:#ccc;">—</span>';
       return `
       <tr style="border-bottom:1px solid #eee;">
         <td style="padding:5px 6px;font-size:12px;font-weight:600;">${esc(m)}</td>
         <td style="padding:5px 4px;font-size:13px;text-align:center;">${cell(s['大砲'], '#bf360c')}</td>
         <td style="padding:5px 4px;font-size:13px;text-align:center;">${cell(s['ケツ'], '#1565c0')}</td>
-        <td style="padding:5px 4px;font-size:13px;text-align:center;">${cell(s['落ち'], '#e65100')}</td>
+        <td style="padding:5px 4px;font-size:13px;text-align:center;">${ochiCell}</td>
       </tr>`;
     }).join('');
 
