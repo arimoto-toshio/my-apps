@@ -131,6 +131,7 @@
 
 <div class="tabs">
   <div class="tab active" data-page="game" onclick="showPage('game')">⛳ スコア</div>
+  <div class="tab" data-page="history" onclick="showPage('history')">📅 履歴・集計</div>
   <div class="tab" data-page="members" onclick="showPage('members')">👥 メンバー</div>
 </div>
 
@@ -200,6 +201,11 @@
   </div>
 </div>
 
+<!-- 履歴・集計ページ -->
+<div id="page-history" class="page hidden">
+  <div id="historyBody"></div>
+</div>
+
 <!-- メンバーページ -->
 <div id="page-members" class="page hidden">
   <div class="card">
@@ -214,6 +220,15 @@
       <button class="btn" style="background:#c62828;color:white;width:100%;" onclick="resetMembers()">🔄 初期メンバー11名を復元</button>
     </div>
   </div>
+  <div class="card">
+    <div class="card-h">💾 バックアップ</div>
+    <div style="display:flex;gap:8px;">
+      <button class="btn" style="flex:1;background:#1b5e20;color:white;" onclick="exportBackup()">💾 書き出し（JSON）</button>
+      <button class="btn" style="flex:1;background:#2e7d32;color:white;" onclick="document.getElementById('importFile').click()">📂 読み込み</button>
+      <input type="file" id="importFile" accept=".json,application/json" style="display:none;" onchange="importBackup(event)">
+    </div>
+    <div style="font-size:11px;color:#888;margin-top:6px;">クラウド同期とは別に、手元にJSONファイルとして残せます</div>
+  </div>
 </div>
 
 <div class="footer">
@@ -223,6 +238,23 @@
 <div class="toast" id="toast"></div>
 
 <script>
+// ====== 自動更新チェック（キャッシュ対策）======
+(async function autoUpdateCheck() {
+  try {
+    const res = await fetch(window.location.pathname + '?_cb=' + Date.now(), { cache: 'no-store' });
+    if (!res.ok) return;
+    const html = await res.text();
+    const hash = html.length + ':' + html.slice(0, 200);
+    const stored = localStorage.getItem('golf_app_version_hash');
+    if (stored && stored !== hash) {
+      localStorage.setItem('golf_app_version_hash', hash);
+      window.location.reload();
+      return;
+    }
+    if (!stored) localStorage.setItem('golf_app_version_hash', hash);
+  } catch (e) { /* file://等では無視 */ }
+})();
+
 const STORAGE_KEY = 'golf_score_app_v2';
 // v1の古いデータを引き継いで、メンバーが空ならリセットする
 (function migrate() {
@@ -323,17 +355,25 @@ function newGameData(year, month, num) {
   };
 }
 
+let booted = false;   // 起動時の初期描画では savedAt を進めない
+let dirty = false;    // この画面でユーザーが編集したか
 function save() {
+  if (booted) {
+    dirty = true;
+    app.savedAt = Date.now();
+    scheduleCloudSave();   // 編集の1.5秒後に自動でクラウドへ保存
+  }
   localStorage.setItem(STORAGE_KEY, JSON.stringify(app));
 }
 
 // ========== PAGE ==========
 function showPage(name) {
   document.querySelectorAll('.tab').forEach(t => t.classList.toggle('active', t.dataset.page === name));
-  ['game', 'members'].forEach(p => {
+  ['game', 'history', 'members'].forEach(p => {
     document.getElementById('page-' + p).classList.toggle('hidden', p !== name);
   });
   if (name === 'game') render();
+  if (name === 'history') renderHistory();
   if (name === 'members') renderMembers();
 }
 
@@ -394,6 +434,65 @@ function render() {
   }).join('');
 
   recalc();
+}
+
+// 1試合分の収支（対戦分・追加収支）をデータから計算
+function gameNets(g) {
+  const aHalf = (+g.arimotoHandi || 0) / 2;
+  const aAmRes = (g.arimotoAm === '' || g.arimotoAm == null) ? null : +g.arimotoAm - aHalf;
+  const aPmRes = (g.arimotoPm === '' || g.arimotoPm == null) ? null : +g.arimotoPm - aHalf;
+  let net = 0;
+  app.members.forEach(m => {
+    const sc = (g.scores && g.scores[m.name]) || { am: '', pm: '' };
+    const half = (+m.handi || 0) / 2;
+    const amRes = (sc.am === '' || sc.am == null) ? null : +sc.am - half;
+    const pmRes = (sc.pm === '' || sc.pm == null) ? null : +sc.pm - half;
+    net += calcMoney(compare(aAmRes, amRes), compare(aPmRes, pmRes));
+  });
+  const extras = (+g.extraPrize || 0) + (+g.extraUma || 0) + (+g.extraNigiri || 0);
+  return { net, extras, total: net + extras };
+}
+
+function renderHistory() {
+  const body = document.getElementById('historyBody');
+  // 年ごとにグループ化（元のindexを保持）
+  const byYear = {};
+  app.games.forEach((g, idx) => {
+    (byYear[g.year] = byYear[g.year] || []).push({ g, idx });
+  });
+  const years = Object.keys(byYear).map(Number).sort((a, b) => b - a);
+  const moneyStr = v => (v >= 0 ? '+¥' : '-¥') + Math.abs(v).toLocaleString();
+  const moneyColor = v => v > 0 ? '#1b5e20' : v < 0 ? '#c62828' : '#999';
+
+  let html = '';
+  years.forEach(y => {
+    const list = byYear[y].slice().sort((a, b) => (a.g.month - b.g.month) || (a.g.num - b.g.num));
+    const yearTotal = list.reduce((s, x) => s + gameNets(x.g).total, 0);
+    html += `<div class="month-header"><span>${y}年（${list.length}試合）</span><span style="color:${yearTotal >= 0 ? '#9be3b8' : '#ffb3ab'};">${moneyStr(yearTotal)}</span></div>`;
+    html += '<div class="card" style="border-radius:0 0 10px 10px;margin-bottom:12px;padding:4px 14px;">';
+    list.forEach(({ g, idx }) => {
+      const n = gameNets(g);
+      const isCur = idx === app.curIdx;
+      html += `
+      <div class="history-item" onclick="openGame(${idx})" style="display:flex;justify-content:space-between;align-items:center;gap:8px;${isCur ? 'background:#f0f7f0;' : ''}">
+        <div>
+          <div style="font-weight:700;">${g.month}月 第${g.num}回${isCur ? ' <span style="font-size:10px;color:#2e7d32;">（表示中）</span>' : ''}</div>
+          <div class="history-meta">${esc(g.date || '')}${g.memo ? '　' + esc(g.memo) : ''}　<span style="color:#888;">対戦${moneyStr(n.net)}・追加${moneyStr(n.extras)}</span></div>
+        </div>
+        <div style="font-weight:900;font-size:16px;white-space:nowrap;color:${moneyColor(n.total)};">${moneyStr(n.total)}</div>
+      </div>`;
+    });
+    html += '</div>';
+  });
+  body.innerHTML = html || '<div class="card" style="text-align:center;color:#999;">まだ試合がありません</div>';
+}
+
+function openGame(idx) {
+  if (idx < 0 || idx >= app.games.length) return;
+  app.curIdx = idx;
+  app.current = app.games[idx];
+  save();
+  showPage('game');
 }
 
 function renderMembers() {
@@ -546,7 +645,6 @@ function updateHandi(i, val) {
 
 function updateArimotoHandi(val) {
   app.current.arimotoHandi = parseFloat(val) || 0;
-  document.getElementById('arimoto-handi').textContent = app.current.arimotoHandi;
   document.getElementById('arimoto-half').textContent = (app.current.arimotoHandi / 2).toFixed(1);
   save();
   recalc();
@@ -648,6 +746,37 @@ document.getElementById('gameMemo').addEventListener('input', recalc);
 const SYNC_URL = 'https://script.google.com/macros/s/AKfycbxwL19mAenATUMILRsQYrDL0ThjU2C583Cj729OfzNHEH3drMcZCExYULRp4VGOZ11J/exec';
 const SYNC_KEY = 'golf_score';
 
+let cloudReady = false, cloudTimer = null;
+function scheduleCloudSave() {
+  if (!cloudReady) return;
+  clearTimeout(cloudTimer);
+  cloudTimer = setTimeout(pushCloudSilent, 1500);
+}
+async function pushCloudSilent() {
+  try {
+    const res = await fetch(SYNC_URL + '?action=save&key=' + SYNC_KEY, { method: 'POST', body: JSON.stringify(app) });
+    const j = await res.json();
+    if (j && j.success) toast('☁ 自動保存しました');
+  } catch(e) { /* オフライン等は端末内に保存済み */ }
+}
+function flushCloudSave() {   // 閉じる瞬間に送る（編集していない画面からは送らない）
+  if (!dirty) return;
+  try { navigator.sendBeacon(SYNC_URL + '?action=save&key=' + SYNC_KEY, JSON.stringify(app)); } catch(e) {}
+}
+// クラウドデータの検証（ゴルフのデータ以外で上書きしない）
+function parseCloudGolf(d) {
+  if (d == null) return null;
+  if (typeof d === 'string') { try { d = JSON.parse(d); } catch(e) { return null; } }
+  if (d && Array.isArray(d.games) && Array.isArray(d.members)) return d;
+  if (d && d.data && Array.isArray(d.data.games)) return d.data;
+  return null;
+}
+function applyCloudGolf(d) {
+  localStorage.setItem(STORAGE_KEY, JSON.stringify(d));
+  app = loadApp();   // loadAppの補完処理を通して安全に取り込む
+  render();
+}
+
 async function syncUpload() {
   toast('アップロード中...');
   try {
@@ -665,54 +794,58 @@ async function syncDownload() {
   try {
     const res = await fetch(SYNC_URL + '?action=load&key=' + SYNC_KEY);
     const json = await res.json();
-    if (json.success && json.data) {
-      let d = json.data;
-      if (typeof d === 'string') {
-        try { d = JSON.parse(d); } catch(e) { toast('データ形式エラー'); return; }
-      }
-      // ラップされている場合に対応
-      if (d && !Array.isArray(d.games) && d.data) d = d.data;
-      if (Array.isArray(d)) d = { games: d };
-      if (!d || typeof d !== 'object') { toast('データ不正'); return; }
-      // 正規化（load() と同じロジック）
-      if (!Array.isArray(d.members)) d.members = defaultMembers();
-      if (!Array.isArray(d.games)) d.games = [];
-      if (d.current && d.games.length === 0) {
-        const today = new Date();
-        d.current.id = d.current.id || Date.now();
-        d.current.year = d.current.year || today.getFullYear();
-        d.current.month = d.current.month || (today.getMonth() + 1);
-        d.current.num = d.current.num || 1;
-        d.games.push(d.current);
-      }
-      if (d.games.length === 0) d.games.push(newGameData());
-      if (d.curIdx == null || d.curIdx < 0 || d.curIdx >= d.games.length) d.curIdx = 0;
-      d.games.forEach(g => {
-        if (g.id == null) g.id = Date.now() + Math.random();
-        if (!g.scores || typeof g.scores !== 'object') g.scores = {};
-        if (g.arimotoHandi == null) g.arimotoHandi = 36;
-        if (g.arimotoAm == null) g.arimotoAm = '';
-        if (g.arimotoPm == null) g.arimotoPm = '';
-        if (!g.date) g.date = new Date().toISOString().slice(0, 10);
-        if (g.memo == null) g.memo = '';
-        if (g.extraPrize == null) g.extraPrize = '';
-        if (g.extraUma == null) g.extraUma = '';
-        if (g.extraNigiri == null) g.extraNigiri = '';
-        if (g.year == null) g.year = new Date(g.date).getFullYear() || new Date().getFullYear();
-        if (g.month == null) g.month = (new Date(g.date).getMonth() + 1) || (new Date().getMonth() + 1);
-        if (g.num == null) g.num = 1;
-      });
-      d.current = d.games[d.curIdx];
-      app = d;
-      save();
-      render();
+    const d = parseCloudGolf(json && json.success ? json.data : null);
+    if (d) {
+      applyCloudGolf(d);
       toast('クラウドから読み込みました');
     } else toast('クラウドにデータがありません');
   } catch(e) { toast('通信エラー: ' + e.message); }
 }
 
-// 初期描画
+async function autoRestore() {   // 開いたら自動でクラウドから読込
+  try {
+    const res = await fetch(SYNC_URL + '?action=load&key=' + SYNC_KEY);
+    const json = await res.json();
+    const d = parseCloudGolf(json && json.success ? json.data : null);
+    if (!d) return;
+    // 手元の方が新しい場合はクラウドで上書きせず、逆に手元をクラウドへ送る
+    if (d.savedAt && app.savedAt && app.savedAt > d.savedAt) { pushCloudSilent(); return; }
+    applyCloudGolf(d);
+  } catch(e) { /* オフライン等は端末内データのまま */ }
+}
+
+// ====== バックアップ ======
+function exportBackup() {
+  const blob = new Blob([JSON.stringify(app, null, 2)], { type: 'application/json' });
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = 'ゴルフスコア_控え_' + new Date().toISOString().slice(0, 10) + '.json';
+  a.click();
+  toast('控え(JSON)を書き出しました');
+}
+function importBackup(ev) {
+  const f = ev.target.files[0]; if (!f) return;
+  const r = new FileReader();
+  r.onload = e => {
+    try {
+      const d = JSON.parse(e.target.result);
+      if (!d || !Array.isArray(d.games)) { toast('ゴルフのデータではありません'); return; }
+      if (!confirm('控えを読み込み、今のデータを置き換えます。よろしいですか？')) return;
+      applyCloudGolf(d);
+      save();
+      toast('控えを読み戻しました');
+    } catch(err) { toast('読み込み失敗'); }
+  };
+  r.readAsText(f);
+  ev.target.value = '';
+}
+
+// 初期描画 → クラウドから自動読込 → 以後は編集のたび自動保存
 render();
+booted = true;
+autoRestore().finally(() => { cloudReady = true; });
+window.addEventListener('beforeunload', flushCloudSave);
+window.addEventListener('pagehide', flushCloudSave);
 </script>
 </body>
 </html>
