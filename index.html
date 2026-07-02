@@ -472,7 +472,22 @@ function renderYear() {
 
   let html = '';
   years.forEach(y => {
-    const rounds = byYear[y].slice().sort((a, b) => (a.month - b.month) || (a.num - b.num));
+    // 保存データを直接使わず、コピーに自動判定ルールをかけ直してから集計
+    // （大砲1名・落ち1名・ケツ複数可のルールを常に保証する）
+    const rounds = byYear[y].slice().sort((a, b) => (a.month - b.month) || (a.num - b.num))
+      .map(r => {
+        const rc = JSON.parse(JSON.stringify(r));
+        try { applyResultRules(rc); } catch (e) {}
+        // 手動ロックが重複していても大砲・落ちは各1名に絞る（開結果が大きい方を採用）
+        ['落ち', '大砲'].forEach(res => {
+          const marked = rc.bids.filter(b => b.result === res && b.opener);
+          if (marked.length <= 1) return;
+          let best = marked[0];
+          marked.forEach(b => { if ((+b.openResult || 0) > (+best.openResult || 0)) best = b; });
+          marked.forEach(b => { if (b !== best) b.result = ''; });
+        });
+        return rc;
+      });
     // メンバー別集計
     const stats = {};
     rounds.forEach(r => r.bids.forEach(b => {
@@ -1157,8 +1172,9 @@ function sendShareLine(){
 // EVENT
 // ============================================================
 // 純粋にルールを適用するだけ（描画/保存/トーストなし）
-function applyResultRules() {
-  const r = round();
+// rr を渡すとその回に適用（省略時は現在の回）
+function applyResultRules(rr) {
+  const r = rr || round();
   const ochiCount = r.attendance.filter(a => a.ochi).length;
   const expectedSlots = Math.max(1, app.members.length - ochiCount);
   const slots = Math.min(expectedSlots, r.bids.length);
