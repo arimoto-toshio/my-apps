@@ -191,6 +191,7 @@
     <button class="btn btn-ghost" onclick="openTiers()">⚙ 枠の設定</button>
     <button class="btn btn-ghost" onclick="importJSON()">📥 集金データ読込</button>
     <button class="btn btn-print" onclick="exportCSV()">⬇ CSV</button>
+    <button class="btn btn-print" onclick="exportBackup()">💾 控え(JSON)</button>
     <button class="btn btn-print" onclick="window.print()">🖨 印刷</button>
     <button class="btn btn-print" onclick="printBoardOnePage()">🖨 下見を1枚に</button>
     <button class="btn btn-cloud" onclick="syncUpload()">☁↑ 保存</button>
@@ -369,7 +370,7 @@
     loadTiers();
     let estore=null; try{ estore=JSON.parse(localStorage.getItem(EKEY)); }catch(e){}
     if(estore && Array.isArray(estore.list) && estore.list.length){
-      editions=estore.list; curId=estore.curId;
+      editions=estore.list; curId=estore.curId; dataSavedAt=Number(estore.savedAt)||0;
       if(!editions.some(e=>e.id===curId)) curId=editions[0].id;
       sponsors=curEdition().sponsors;
     } else {
@@ -382,8 +383,10 @@
     sponsors.forEach(s=>{ if(s.tierOverride===undefined) s.tierOverride=''; if(s.note===undefined) s.note=''; });
     save();
   }
-  function saveEditions(){ if(editions.length) localStorage.setItem(EKEY, JSON.stringify({list:editions, curId})); }
+  let dataSavedAt = 0;   // 最後にユーザーが編集した時刻（クラウドとの新旧比較用）
+  function saveEditions(){ if(editions.length) localStorage.setItem(EKEY, JSON.stringify({list:editions, curId, savedAt:dataSavedAt})); }
   function save(){
+    dataSavedAt = Date.now();
     const ed=curEdition(); if(ed) ed.sponsors=sponsors;
     localStorage.setItem(KEY, JSON.stringify(sponsors));
     localStorage.setItem(TKEY, JSON.stringify(tiers));
@@ -394,19 +397,36 @@
   // ====== クラウド同期 ======
   let cloudReady=false, cloudTimer=null;
   function scheduleCloudSave(){ if(!cloudReady) return; clearTimeout(cloudTimer); cloudTimer=setTimeout(pushCloudSilent,1500); }
-  function cloudPayload(){ const ed=curEdition(); return { label:(ed&&ed.label)||'', sponsors, tiers }; }
+  // 全ての回をまるごと保存する（開いている回だけだと、別の回を開いた端末との同期でデータが混ざるため）
+  function cloudPayload(){ const ed=curEdition(); if(ed) ed.sponsors=sponsors; return { editions, curId, tiers, savedAt:dataSavedAt }; }
   function parseCloud(d){
     if(d==null) return null;
     if(typeof d==='string'){ try{ d=JSON.parse(d); }catch(e){ return null; } }
     if(Array.isArray(d)) return { sponsors:d, label:null, tiers:null };
+    if(Array.isArray(d.editions)&&d.editions.length) return { editions:d.editions, curId:d.curId||null, tiers:Array.isArray(d.tiers)?d.tiers:null, savedAt:Number(d.savedAt)||0 };
     if(d.sponsors&&Array.isArray(d.sponsors)) return { sponsors:d.sponsors, label:d.label||null, tiers:Array.isArray(d.tiers)?d.tiers:null };
     return null;
   }
+  function normSponsors(a){ return a.map(s=>({ name:s.name||'', person:s.person||'', amount:Number(s.amount)||0, note:s.note||'', tierOverride:s.tierOverride||'' })); }
   function applyCloud(p){
-    if(!p||!Array.isArray(p.sponsors)) return false;
-    sponsors=p.sponsors.map(s=>({ name:s.name||'', person:s.person||'', amount:Number(s.amount)||0, note:s.note||'', tierOverride:s.tierOverride||'' }));
+    if(!p) return false;
+    if(Array.isArray(p.editions)&&p.editions.length){
+      // 新形式: 全回まるごと
+      editions=p.editions.map(e=>({ id:e.id||genId(), label:e.label||'', sponsors:normSponsors(e.sponsors||[]) }));
+      curId=(p.curId&&editions.some(e=>e.id===p.curId)) ? p.curId : editions[0].id;
+      sponsors=curEdition().sponsors;
+      if(p.tiers&&p.tiers.length){ tiers=p.tiers; localStorage.setItem(TKEY, JSON.stringify(tiers)); }
+      dataSavedAt=p.savedAt||dataSavedAt;
+      localStorage.setItem(KEY, JSON.stringify(sponsors)); saveEditions(); return true;
+    }
+    if(!Array.isArray(p.sponsors)) return false;
+    // 旧形式: ラベルが一致する回に適用（見つからなければ開いている回）
+    const list=normSponsors(p.sponsors);
+    const tgt=(p.label&&editions.find(e=>e.label===p.label))||curEdition();
+    if(!tgt) return false;
+    tgt.sponsors=list;
+    if(tgt.id===curId) sponsors=list;
     if(p.tiers&&p.tiers.length){ tiers=p.tiers; localStorage.setItem(TKEY, JSON.stringify(tiers)); }
-    const ed=curEdition(); if(ed){ ed.sponsors=sponsors; if(p.label) ed.label=p.label; }
     localStorage.setItem(KEY, JSON.stringify(sponsors)); saveEditions(); return true;
   }
   async function pushCloudSilent(){
@@ -430,7 +450,11 @@
   async function autoRestore(){
     try{ const res=await fetch(SYNC_URL+'?action=load&key='+SYNC_KEY);
       const j=await res.json(); const p=parseCloud(j&&j.data!==undefined?j.data:j);
-      if(p&&p.sponsors&&p.sponsors.length){ applyCloud(p); render(); } }catch(e){}
+      if(!p) return;
+      // 手元の方が新しい場合はクラウドで上書きせず、逆に手元をクラウドへ送る
+      if(p.savedAt && dataSavedAt > p.savedAt){ pushCloudSilent(); return; }
+      const has=(Array.isArray(p.editions)&&p.editions.length)||(Array.isArray(p.sponsors)&&p.sponsors.length);
+      if(has){ applyCloud(p); render(); } }catch(e){}
   }
 
   // ====== 描画 ======
@@ -583,6 +607,15 @@
   }
 
   // ====== 取り込み・書き出し ======
+  // 全回まるごとのバックアップを書き出し（「集金データ読込」からそのまま読み戻せます）
+  function exportBackup(){
+    const ed=curEdition(); if(ed) ed.sponsors=sponsors;
+    const json=JSON.stringify({ editions, curId, tiers, savedAt:dataSavedAt }, null, 2);
+    const blob=new Blob([json],{type:'application/json'});
+    const a=document.createElement('a'); a.href=URL.createObjectURL(blob);
+    a.download=`笹まつり広告_控え_${new Date().toISOString().slice(0,10)}.json`; a.click();
+    toast('控え(JSON)を書き出しました');
+  }
   function importJSON(){
     const inp=document.createElement('input'); inp.type='file'; inp.accept='.json,application/json';
     inp.onchange=e=>{
@@ -591,6 +624,13 @@
       r.onload=ev=>{
         try{
           let d=JSON.parse(ev.target.result);
+          // 「控え(JSON)」（全回まるごと）の読み戻し
+          if(d&&Array.isArray(d.editions)&&d.editions.length){
+            if(!confirm(`控えデータ（${d.editions.length}回分）を読み込みます。今の全ての回を置き換えます。よろしいですか？`)) return;
+            applyCloud(parseCloud(d));
+            save(); render(); toast('控えを読み戻しました');
+            return;
+          }
           let arr = Array.isArray(d) ? d : (d.sponsors||d.data||d.value);
           if(!Array.isArray(arr)) throw 0;
           if(!confirm(`${arr.length}件を読み込みます。今の一覧に置き換えます。よろしいですか？\n（集金アプリの「書き出し」JSONをそのまま読み込めます）`)) return;
