@@ -462,21 +462,24 @@ function render() {
 function renderYear() {
   const el = document.getElementById('yearBody');
   if (!el) return;
-  // 年ごとにグループ化
-  const byYear = {};
+  // 年ではなく講の1周（第1回〜第12回）ごとにグループ化（回の数字が戻ったら新しい周）
+  const cycles = [];
+  let prevNum = Infinity;
   app.rounds.forEach(r => {
-    (byYear[r.year] = byYear[r.year] || []).push(r);
+    if (r.num <= prevNum) cycles.push([]);
+    cycles[cycles.length - 1].push(r);
+    prevNum = r.num;
   });
-  const years = Object.keys(byYear).map(Number).sort((a, b) => b - a); // 新しい年が上
+  cycles.reverse(); // 新しい周が上
   const pillOf = (names, color) => names.length
     ? names.map(n => `<span style="background:${color};color:#fff;padding:1px 6px;border-radius:8px;font-size:10px;white-space:nowrap;">${esc(n)}</span>`).join(' ')
     : '<span style="color:#bbb;">—</span>';
 
   let html = '';
-  years.forEach(y => {
+  cycles.forEach(cycle => {
     // 保存データを直接使わず、コピーに自動判定ルールをかけ直してから集計
     // （大砲1名・落ち1名・ケツ複数可のルールを常に保証する）
-    const rounds = byYear[y].slice().sort((a, b) => (a.month - b.month) || (a.num - b.num))
+    const rounds = cycle.slice().sort((a, b) => a.num - b.num)
       .map(r => {
         const rc = JSON.parse(JSON.stringify(r));
         try { applyResultRules(rc); } catch (e) {}
@@ -500,16 +503,32 @@ function renderYear() {
       if (b.result === '落ち') stats[b.opener].ochiMonths.push(r.month);
     }));
 
-    const roundRows = rounds.map(r => {
-      const names = res => [...new Set(r.bids.filter(b => b.result === res && b.opener).map(b => b.opener))];
-      return `
+    // 第1回〜第12回を通しで表示（未入力の回も枠として出す）
+    const byNum = {};
+    rounds.forEach(r => { byNum[r.num] = r; });
+    const totalRounds = Math.max(12, ...rounds.map(r => r.num));
+    let roundRows = '';
+    for (let n = 1; n <= totalRounds; n++) {
+      const r = byNum[n];
+      if (!r) {
+        roundRows += `
       <tr style="border-bottom:1px solid #eee;">
-        <td style="padding:5px 4px;font-size:12px;text-align:center;font-weight:700;color:#0d1b3e;white-space:nowrap;">第${r.num}回<div style="font-size:10px;font-weight:400;color:#888;">${r.month}月</div></td>
+        <td style="padding:5px 4px;font-size:12px;text-align:center;font-weight:700;color:#bbb;white-space:nowrap;">第${n}回</td>
+        <td style="padding:5px 4px;text-align:center;color:#ddd;">—</td>
+        <td style="padding:5px 4px;text-align:center;color:#ddd;">—</td>
+        <td style="padding:5px 4px;text-align:center;color:#ddd;">—</td>
+      </tr>`;
+        continue;
+      }
+      const names = res => [...new Set(r.bids.filter(b => b.result === res && b.opener).map(b => b.opener))];
+      roundRows += `
+      <tr style="border-bottom:1px solid #eee;">
+        <td style="padding:5px 4px;font-size:12px;text-align:center;font-weight:700;color:#0d1b3e;white-space:nowrap;">第${r.num}回<div style="font-size:10px;font-weight:400;color:#888;">${r.year}年${r.month}月</div></td>
         <td style="padding:5px 4px;text-align:center;">${pillOf(names('大砲'), '#bf360c')}</td>
         <td style="padding:5px 4px;text-align:center;">${pillOf(names('ケツ'), '#1565c0')}</td>
         <td style="padding:5px 4px;text-align:center;">${pillOf(names('落ち'), '#e65100')}</td>
       </tr>`;
-    }).join('');
+    }
 
     // メンバー行: 登録順、記録のある人のみ
     const statMembers = app.members.filter(m => stats[m]);
@@ -529,9 +548,12 @@ function renderYear() {
       </tr>`;
     }).join('');
 
+    const label = rounds.length
+      ? rounds[0].year + '年' + rounds[0].month + '月〜' + rounds[rounds.length - 1].year + '年' + rounds[rounds.length - 1].month + '月'
+      : '';
     html += `
     <div class="card">
-      <div class="card-h">📅 ${y}年 回ごとの結果（全${rounds.length}回）</div>
+      <div class="card-h">📅 回ごとの結果（全12回） <span style="font-weight:400;color:#888;font-size:11px;">${label}</span></div>
       <table style="width:100%;border-collapse:collapse;">
         <thead>
           <tr style="background:#0d1b3e;color:#fff;">
@@ -545,7 +567,7 @@ function renderYear() {
       </table>
     </div>
     <div class="card">
-      <div class="card-h">👥 ${y}年 メンバー別成績</div>
+      <div class="card-h">👥 メンバー別成績</div>
       ${statMembers.length ? `
       <table style="width:100%;border-collapse:collapse;">
         <thead>
