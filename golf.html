@@ -170,9 +170,11 @@
 
   <!-- 合計 -->
   <div class="total-card">
-    <h2>💰 にぎり（有本視点の収支）</h2>
-    <div class="total-row"><span>勝ち合計</span><span id="totalWin">¥0</span></div>
-    <div class="total-row"><span>負け合計</span><span id="totalLose">¥0</span></div>
+    <h2>💰 この試合の収支（有本視点）</h2>
+    <div class="total-row"><span>にぎり 勝ち合計</span><span id="totalWin">¥0</span></div>
+    <div class="total-row"><span>にぎり 負け合計</span><span id="totalLose">¥0</span></div>
+    <div class="total-row"><span>にぎり差引</span><span id="totalNigiri">¥0</span></div>
+    <div class="total-row"><span>追加収支（賞金・馬・にぎり）</span><span id="totalExtras">¥0</span></div>
     <div class="total-row grand" id="totalGrand">¥0</div>
   </div>
 
@@ -184,15 +186,15 @@
     <div class="card-h">💴 追加収支（手入力）</div>
     <div class="extras-row">
       <label>賞金</label>
-      <div class="extras-input-wrap"><span class="yen-mark">¥</span><input type="number" id="extra-prize" oninput="recalcExtras()" inputmode="numeric" placeholder="0"></div>
+      <div class="extras-input-wrap"><span class="yen-mark">¥</span><input type="number" id="extra-prize" oninput="recalc()" inputmode="numeric" placeholder="0"></div>
     </div>
     <div class="extras-row">
       <label>馬</label>
-      <div class="extras-input-wrap"><span class="yen-mark">¥</span><input type="number" id="extra-uma" oninput="recalcExtras()" inputmode="numeric" placeholder="0"></div>
+      <div class="extras-input-wrap"><span class="yen-mark">¥</span><input type="number" id="extra-uma" oninput="recalc()" inputmode="numeric" placeholder="0"></div>
     </div>
     <div class="extras-row">
       <label>にぎり</label>
-      <div class="extras-input-wrap"><span class="yen-mark">¥</span><input type="number" id="extra-nigiri" oninput="recalcExtras()" inputmode="numeric" placeholder="0"></div>
+      <div class="extras-input-wrap"><span class="yen-mark">¥</span><input type="number" id="extra-nigiri" oninput="recalc()" inputmode="numeric" placeholder="0"></div>
     </div>
     <div class="extras-total">
       <span>合計</span>
@@ -576,9 +578,17 @@ function recalc() {
   document.getElementById('totalWin').textContent = '¥' + totalWin.toLocaleString();
   document.getElementById('totalLose').textContent = '¥' + totalLose.toLocaleString();
   const net = totalWin - totalLose;
+  const extras = (+c.extraPrize || 0) + (+c.extraUma || 0) + (+c.extraNigiri || 0);
+  const fmt = v => (v >= 0 ? '+¥' : '-¥') + Math.abs(v).toLocaleString();
+  const colorOf = v => v > 0 ? '#1b5e20' : v < 0 ? '#c62828' : '#666';
+  const nEl = document.getElementById('totalNigiri');
+  nEl.textContent = fmt(net); nEl.style.color = colorOf(net);
+  const eEl = document.getElementById('totalExtras');
+  eEl.textContent = fmt(extras); eEl.style.color = colorOf(extras);
+  const total = net + extras;
   const grand = document.getElementById('totalGrand');
-  grand.innerHTML = `<span>差引</span><span>${net >= 0 ? '+' : '-'}¥${Math.abs(net).toLocaleString()}</span>`;
-  grand.classList.toggle('minus', net < 0);
+  grand.innerHTML = `<span>この試合の合計</span><span>${fmt(total)}</span>`;
+  grand.classList.toggle('minus', total < 0);
 
   save();
 }
