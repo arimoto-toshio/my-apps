@@ -170,11 +170,9 @@
 
   <!-- 合計 -->
   <div class="total-card">
-    <h2>💰 この試合の収支（有本視点）</h2>
-    <div class="total-row"><span>にぎり 勝ち合計</span><span id="totalWin">¥0</span></div>
-    <div class="total-row"><span>にぎり 負け合計</span><span id="totalLose">¥0</span></div>
-    <div class="total-row"><span>にぎり差引</span><span id="totalNigiri">¥0</span></div>
-    <div class="total-row"><span>追加収支（賞金・馬・にぎり）</span><span id="totalExtras">¥0</span></div>
+    <h2>💰 にぎり（有本視点・この試合）</h2>
+    <div class="total-row"><span>勝ち合計</span><span id="totalWin">¥0</span></div>
+    <div class="total-row"><span>負け合計</span><span id="totalLose">¥0</span></div>
     <div class="total-row grand" id="totalGrand">¥0</div>
   </div>
 
@@ -183,7 +181,7 @@
 
   <!-- 追加収支（賞金・馬・にぎり） -->
   <div class="card extras-card">
-    <div class="card-h">💴 追加収支（手入力）</div>
+    <div class="card-h">💴 追加収支の累計（今までの合計・手入力）</div>
     <div class="extras-row">
       <label>賞金</label>
       <div class="extras-input-wrap"><span class="yen-mark">¥</span><input type="number" id="extra-prize" oninput="recalc()" inputmode="numeric" placeholder="0"></div>
@@ -197,9 +195,10 @@
       <div class="extras-input-wrap"><span class="yen-mark">¥</span><input type="number" id="extra-nigiri" oninput="recalc()" inputmode="numeric" placeholder="0"></div>
     </div>
     <div class="extras-total">
-      <span>合計</span>
+      <span>累計合計</span>
       <span id="extrasTotal">¥0</span>
     </div>
+    <div style="font-size:11px;color:#888;margin-top:6px;">※ 新規試合を作ると前回の累計を引き継ぎます。その日の分を足し引きしてください</div>
   </div>
 </div>
 
@@ -451,8 +450,9 @@ function gameNets(g) {
     const pmRes = (sc.pm === '' || sc.pm == null) ? null : +sc.pm - half;
     net += calcMoney(compare(aAmRes, amRes), compare(aPmRes, pmRes));
   });
+  // extras は「今までの累計」の記録（試合ごとの金額ではない）
   const extras = (+g.extraPrize || 0) + (+g.extraUma || 0) + (+g.extraNigiri || 0);
-  return { net, extras, total: net + extras };
+  return { net, cum: extras };
 }
 
 function renderHistory() {
@@ -469,8 +469,10 @@ function renderHistory() {
   let html = '';
   years.forEach(y => {
     const list = byYear[y].slice().sort((a, b) => (a.g.month - b.g.month) || (a.g.num - b.g.num));
-    const yearTotal = list.reduce((s, x) => s + gameNets(x.g).total, 0);
-    html += `<div class="month-header"><span>${y}年（${list.length}試合）</span><span style="color:${yearTotal >= 0 ? '#9be3b8' : '#ffb3ab'};">${moneyStr(yearTotal)}</span></div>`;
+    const yearNigiri = list.reduce((s, x) => s + gameNets(x.g).net, 0);
+    // 追加収支は累計記録なので、その年の最後の試合の値を表示
+    const lastCum = list.length ? gameNets(list[list.length - 1].g).cum : 0;
+    html += `<div class="month-header"><span>${y}年（${list.length}試合）</span><span style="font-size:12px;">にぎり計 <span style="color:${yearNigiri >= 0 ? '#9be3b8' : '#ffb3ab'};">${moneyStr(yearNigiri)}</span>　累計 <span style="color:${lastCum >= 0 ? '#9be3b8' : '#ffb3ab'};">${moneyStr(lastCum)}</span></span></div>`;
     html += '<div class="card" style="border-radius:0 0 10px 10px;margin-bottom:12px;padding:4px 14px;">';
     list.forEach(({ g, idx }) => {
       const n = gameNets(g);
@@ -479,9 +481,12 @@ function renderHistory() {
       <div class="history-item" onclick="openGame(${idx})" style="display:flex;justify-content:space-between;align-items:center;gap:8px;${isCur ? 'background:#f0f7f0;' : ''}">
         <div>
           <div style="font-weight:700;">${g.month}月 第${g.num}回${isCur ? ' <span style="font-size:10px;color:#2e7d32;">（表示中）</span>' : ''}</div>
-          <div class="history-meta">${esc(g.date || '')}${g.memo ? '　' + esc(g.memo) : ''}　<span style="color:#888;">にぎり${moneyStr(n.net)}・追加${moneyStr(n.extras)}</span></div>
+          <div class="history-meta">${esc(g.date || '')}${g.memo ? '　' + esc(g.memo) : ''}　<span style="color:#888;">追加収支の累計 ¥${n.cum.toLocaleString()}</span></div>
         </div>
-        <div style="font-weight:900;font-size:16px;white-space:nowrap;color:${moneyColor(n.total)};">${moneyStr(n.total)}</div>
+        <div style="text-align:right;white-space:nowrap;">
+          <div style="font-size:10px;color:#888;">にぎり</div>
+          <div style="font-weight:900;font-size:16px;color:${moneyColor(n.net)};">${moneyStr(n.net)}</div>
+        </div>
       </div>`;
     });
     html += '</div>';
@@ -578,17 +583,9 @@ function recalc() {
   document.getElementById('totalWin').textContent = '¥' + totalWin.toLocaleString();
   document.getElementById('totalLose').textContent = '¥' + totalLose.toLocaleString();
   const net = totalWin - totalLose;
-  const extras = (+c.extraPrize || 0) + (+c.extraUma || 0) + (+c.extraNigiri || 0);
-  const fmt = v => (v >= 0 ? '+¥' : '-¥') + Math.abs(v).toLocaleString();
-  const colorOf = v => v > 0 ? '#1b5e20' : v < 0 ? '#c62828' : '#666';
-  const nEl = document.getElementById('totalNigiri');
-  nEl.textContent = fmt(net); nEl.style.color = colorOf(net);
-  const eEl = document.getElementById('totalExtras');
-  eEl.textContent = fmt(extras); eEl.style.color = colorOf(extras);
-  const total = net + extras;
   const grand = document.getElementById('totalGrand');
-  grand.innerHTML = `<span>この試合の合計</span><span>${fmt(total)}</span>`;
-  grand.classList.toggle('minus', total < 0);
+  grand.innerHTML = `<span>にぎり差引</span><span>${net >= 0 ? '+' : '-'}¥${Math.abs(net).toLocaleString()}</span>`;
+  grand.classList.toggle('minus', net < 0);
 
   save();
 }
@@ -695,6 +692,10 @@ function newGame() {
   const cur = app.current;
   const sameMonthCount = app.games.filter(g => g.year === cur.year && g.month === cur.month).length;
   const ng = newGameData(cur.year, cur.month, sameMonthCount + 1);
+  // 追加収支（賞金・馬・にぎり）は累計なので前の試合から引き継ぐ
+  ng.extraPrize = cur.extraPrize;
+  ng.extraUma = cur.extraUma;
+  ng.extraNigiri = cur.extraNigiri;
   app.games.push(ng);
   app.curIdx = app.games.length - 1;
   app.current = ng;
