@@ -45,11 +45,13 @@
   .tabs {
     display:flex; background: white; box-shadow: 0 1px 3px rgba(0,0,0,0.08);
     position: sticky; top: 90px; z-index: 99;
+    overflow-x: auto;
   }
   .tab {
-    flex: 1; padding: 14px 4px; text-align: center; font-size: 13px;
+    flex: 1; padding: 14px 3px; text-align: center; font-size: 12px;
     font-weight: 600; cursor: pointer; color: #666;
     border-bottom: 3px solid transparent; transition: all 0.15s;
+    white-space: nowrap;
   }
   .tab.active { color: #0d1b3e; border-bottom-color: #f0c040; background: #f7f9fc; }
 
@@ -200,6 +202,7 @@
   <div class="tab active" data-page="att" onclick="showPage('att')">📋 出席</div>
   <div class="tab" data-page="bid" onclick="showPage('bid')">🃏 入札</div>
   <div class="tab" data-page="calc" onclick="showPage('calc')">💰 精算</div>
+  <div class="tab" data-page="year" onclick="showPage('year')">📅 年間</div>
   <div class="tab" data-page="mem" onclick="showPage('mem')">👥 メンバー</div>
   <div class="tab" data-page="share" onclick="showPage('share')">📤 共有</div>
 </div>
@@ -224,6 +227,11 @@
     <div id="calcBody"></div>
   </div>
   <div id="finalBox"></div>
+</div>
+
+<!-- 年間サマリーページ -->
+<div id="page-year" class="page">
+  <div id="yearBody"></div>
 </div>
 
 <!-- 共有ページ -->
@@ -446,6 +454,92 @@ function render() {
   renderCalc();
   renderMembers();
   renderShare();
+  renderYear();
+}
+
+function renderYear() {
+  const el = document.getElementById('yearBody');
+  if (!el) return;
+  // 年ごとにグループ化
+  const byYear = {};
+  app.rounds.forEach(r => {
+    (byYear[r.year] = byYear[r.year] || []).push(r);
+  });
+  const years = Object.keys(byYear).map(Number).sort((a, b) => b - a); // 新しい年が上
+  const pillOf = (names, color) => names.length
+    ? names.map(n => `<span style="background:${color};color:#fff;padding:1px 6px;border-radius:8px;font-size:10px;white-space:nowrap;">${esc(n)}</span>`).join(' ')
+    : '<span style="color:#bbb;">—</span>';
+
+  let html = '';
+  years.forEach(y => {
+    const rounds = byYear[y].slice().sort((a, b) => (a.month - b.month) || (a.num - b.num));
+    // メンバー別集計
+    const stats = {};
+    rounds.forEach(r => r.bids.forEach(b => {
+      if (!b.opener) return;
+      if (b.result !== '大砲' && b.result !== 'ケツ' && b.result !== '落ち') return;
+      stats[b.opener] = stats[b.opener] || { '大砲': 0, 'ケツ': 0, '落ち': 0 };
+      stats[b.opener][b.result]++;
+    }));
+
+    const roundRows = rounds.map(r => {
+      const names = res => [...new Set(r.bids.filter(b => b.result === res && b.opener).map(b => b.opener))];
+      return `
+      <tr style="border-bottom:1px solid #eee;">
+        <td style="padding:5px 4px;font-size:12px;text-align:center;font-weight:700;color:#0d1b3e;white-space:nowrap;">第${r.num}回<div style="font-size:10px;font-weight:400;color:#888;">${r.month}月</div></td>
+        <td style="padding:5px 4px;text-align:center;">${pillOf(names('大砲'), '#bf360c')}</td>
+        <td style="padding:5px 4px;text-align:center;">${pillOf(names('ケツ'), '#1565c0')}</td>
+        <td style="padding:5px 4px;text-align:center;">${pillOf(names('落ち'), '#e65100')}</td>
+      </tr>`;
+    }).join('');
+
+    // メンバー行: 登録順、記録のある人のみ
+    const statMembers = app.members.filter(m => stats[m]);
+    Object.keys(stats).forEach(n => { if (!statMembers.includes(n)) statMembers.push(n); });
+    const statRows = statMembers.map(m => {
+      const s = stats[m];
+      const cell = (v, color) => v ? `<strong style="color:${color};">${v}</strong>` : '<span style="color:#ccc;">0</span>';
+      return `
+      <tr style="border-bottom:1px solid #eee;">
+        <td style="padding:5px 6px;font-size:12px;font-weight:600;">${esc(m)}</td>
+        <td style="padding:5px 4px;font-size:13px;text-align:center;">${cell(s['大砲'], '#bf360c')}</td>
+        <td style="padding:5px 4px;font-size:13px;text-align:center;">${cell(s['ケツ'], '#1565c0')}</td>
+        <td style="padding:5px 4px;font-size:13px;text-align:center;">${cell(s['落ち'], '#e65100')}</td>
+      </tr>`;
+    }).join('');
+
+    html += `
+    <div class="card">
+      <div class="card-h">📅 ${y}年 回ごとの結果（全${rounds.length}回）</div>
+      <table style="width:100%;border-collapse:collapse;">
+        <thead>
+          <tr style="background:#0d1b3e;color:#fff;">
+            <th style="padding:5px;font-size:11px;">回</th>
+            <th style="padding:5px;font-size:11px;">大砲</th>
+            <th style="padding:5px;font-size:11px;">ケツ</th>
+            <th style="padding:5px;font-size:11px;">落ち</th>
+          </tr>
+        </thead>
+        <tbody>${roundRows}</tbody>
+      </table>
+    </div>
+    <div class="card">
+      <div class="card-h">👥 ${y}年 メンバー別成績</div>
+      ${statMembers.length ? `
+      <table style="width:100%;border-collapse:collapse;">
+        <thead>
+          <tr style="background:#0d1b3e;color:#fff;">
+            <th style="padding:5px;font-size:11px;text-align:left;padding-left:6px;">名前</th>
+            <th style="padding:5px;font-size:11px;">大砲</th>
+            <th style="padding:5px;font-size:11px;">ケツ</th>
+            <th style="padding:5px;font-size:11px;">落ち</th>
+          </tr>
+        </thead>
+        <tbody>${statRows}</tbody>
+      </table>` : '<div style="font-size:13px;color:#999;text-align:center;padding:10px;">まだ結果の記録がありません</div>'}
+    </div>`;
+  });
+  el.innerHTML = html || '<div class="card"><div style="font-size:13px;color:#999;text-align:center;padding:10px;">データがありません</div></div>';
 }
 
 function renderAttendance() {
