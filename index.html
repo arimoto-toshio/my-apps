@@ -368,7 +368,9 @@ function loadApp() {
 }
 
 // トーストなしの保存（編集操作から呼ぶ）
+let dirty = false;   // この画面でユーザーが編集したかどうか
 function persist() {
+  dirty = true;
   app.curIdx = curIdx;
   app.savedAt = Date.now();
   localStorage.setItem(STORAGE_KEY, JSON.stringify(app));
@@ -1623,7 +1625,8 @@ async function pushCloudSilent(){
     if (j && j.success) toast('☁ 自動保存しました');
   }catch(e){ /* オフライン等は端末内に保存済み */ }
 }
-function flushCloudSave(){    // 閉じる瞬間に確実に送る
+function flushCloudSave(){    // 閉じる瞬間に確実に送る（編集していない画面からは送らない）
+  if (!dirty) return;
   try{ app.curIdx = curIdx; navigator.sendBeacon(SYNC_URL + '?action=save&key=rakuseikai_data', JSON.stringify(app)); }catch(e){}
 }
 async function autoRestore(){  // 開いたらクラウドから自動読込（手動☁↓と同じ処理）
