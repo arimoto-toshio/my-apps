@@ -1,0 +1,543 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>仕入帳｜焼肉ありもと</title>
+<style>
+  :root{ --line:#d8cfbf; --bg:#f3efe7; --card:#fff; --txt:#2b2520; --shiire:#1a7a3a; --shiharai:#c0392b; --head:#7a4a2b; }
+  *{box-sizing:border-box;}
+  body{margin:0;font-family:"Hiragino Kaku Gothic ProN","Yu Gothic",Arial,sans-serif;background:var(--bg);color:var(--txt);-webkit-text-size-adjust:100%;}
+  header{background:linear-gradient(135deg,#8a5a36,#b07b3f);color:#fff;padding:10px 14px;display:flex;align-items:center;gap:12px;flex-wrap:wrap;box-shadow:0 2px 6px rgba(0,0,0,.15);}
+  header h1{font-size:17px;margin:0;white-space:nowrap;}
+  header h1 small{font-weight:500;font-size:12px;opacity:.85;}
+  .tools{display:flex;gap:8px;flex-wrap:wrap;margin-left:auto;}
+  .btn{border:none;border-radius:8px;padding:7px 12px;cursor:pointer;font-size:13px;background:rgba(255,255,255,.18);color:#fff;font-weight:600;}
+  .btn:hover{background:rgba(255,255,255,.3);}
+  .btn.cl1{background:#3a8a4a;} .btn.cl2{background:#2f6fb0;} .btn.csv{background:#1d7a44;}
+  .wrap{max-width:1080px;margin:0 auto;padding:12px;}
+  .tabs{background:var(--card);border-radius:12px;box-shadow:0 1px 4px rgba(0,0,0,.08);padding:10px;margin-bottom:12px;display:flex;gap:8px;flex-wrap:wrap;align-items:center;}
+  .tab{border:2px solid #e2dccf;background:#f6f1e7;border-radius:18px;padding:6px 14px;cursor:pointer;font-size:14px;max-width:200px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+  .tab.active{background:#fff;border-color:#8a5a36;font-weight:700;}
+  .tab.add{background:#eaf3ea;border-color:#cfe3cf;color:#3a7a2a;font-weight:600;}
+  .meta{background:var(--card);border-radius:12px;box-shadow:0 1px 4px rgba(0,0,0,.08);padding:10px 14px;margin-bottom:12px;display:flex;gap:16px;flex-wrap:wrap;align-items:center;}
+  .meta label{font-size:13px;color:var(--head);font-weight:700;display:flex;align-items:center;gap:6px;}
+  .meta input{border:1px solid var(--line);border-radius:6px;padding:5px 9px;font-size:14px;font-family:inherit;}
+  .meta input.nm{width:180px;font-weight:700;} .meta input.ad{width:200px;} .meta input.op{width:130px;text-align:right;font-variant-numeric:tabular-nums;}
+  .meta .del{margin-left:auto;background:#fbeaea;color:#c0392b;border:none;border-radius:8px;padding:6px 12px;cursor:pointer;font-size:13px;}
+  .card{background:var(--card);border-radius:12px;box-shadow:0 1px 4px rgba(0,0,0,.08);padding:8px;}
+  .scroll{overflow-x:auto;-webkit-overflow-scrolling:touch;}
+  table{border-collapse:collapse;width:100%;min-width:760px;font-size:13px;}
+  caption{font-size:20px;font-weight:700;letter-spacing:.3em;padding:8px 0 10px;color:#5a3a17;}
+  th,td{border:1px solid var(--line);padding:0;text-align:center;}
+  thead th{background:#f6efe0;color:var(--head);font-weight:700;padding:6px 4px;position:sticky;top:0;z-index:3;}
+  th.col-y,td.col-y{position:sticky;left:0;z-index:2;background:var(--card);}
+  th.col-m,td.col-m{position:sticky;left:40px;z-index:2;background:var(--card);}
+  th.col-d,td.col-d{position:sticky;left:80px;z-index:2;background:var(--card);}
+  thead th.col-y,thead th.col-m,thead th.col-d{z-index:4;background:#f6efe0;}
+  td input{width:100%;border:none;background:transparent;font-size:13px;padding:6px 4px;text-align:center;font-family:inherit;color:var(--txt);}
+  td input:focus{outline:2px solid #f2c14e;outline-offset:-2px;background:#fffdf5;}
+  td.num input{text-align:right;padding-right:6px;font-variant-numeric:tabular-nums;}
+  td.hinmei input{text-align:left;padding-left:6px;}
+  td.bal{text-align:right;padding-right:2px;font-variant-numeric:tabular-nums;background:#faf7f0;font-weight:700;}
+  td.bal input{text-align:right;font-weight:700;font-variant-numeric:tabular-nums;color:var(--txt);}
+  td.bal.bal-manual{background:#eaf2fb;} td.bal.bal-manual input{color:#1a5fb4;}
+  td.shiire input{color:var(--shiire);} td.shiharai input{color:var(--shiharai);}
+  .col-y,.col-m,.col-d{width:40px;} .col-qty{width:56px;} .col-price{width:70px;}
+  .col-si,.col-sh,.col-bal{width:104px;} .col-del{width:30px;}
+  .delbtn{border:none;background:none;color:#c0392b;cursor:pointer;font-size:15px;width:100%;padding:6px 0;}
+  .delbtn:hover{background:#fbeaea;}
+  td.cell-sel{background:#cfe0ff !important;}
+  td.cell-sel input{background:transparent !important;}
+  body.selmode{ -webkit-user-select:none; user-select:none; }
+  #copyFab{position:fixed;right:16px;bottom:16px;z-index:1100;background:#2f6fb0;color:#fff;border:none;border-radius:26px;padding:13px 20px;font-size:15px;font-weight:700;box-shadow:0 3px 10px rgba(0,0,0,.3);cursor:pointer;display:none;}
+  #copyFab.show{display:block;}
+  #copyFab:active{transform:scale(.97);}
+  tfoot td{background:#f6efe0;font-weight:700;padding:8px 4px;font-variant-numeric:tabular-nums;}
+  tfoot .lbl{text-align:right;padding-right:8px;color:var(--head);}
+  tfoot .si{color:var(--shiire);} tfoot .sh{color:var(--shiharai);}
+  tr.memo-row td{background:#efe6d2;}
+  tr.memo-row .hinmei input{font-weight:700;color:#7a4a2b;}
+  tr.memo-row .col-si input{color:#8a6a3a;font-weight:700;}
+  tr.memo-row .bal input{color:#8a7a5a;}
+  tr.pay-row .hinmei input{color:var(--shiharai);font-weight:700;}
+  .addrow{margin-top:10px;text-align:center;}
+  .addrow button{border:1px dashed #c2a86a;background:#fbf6ea;color:#8a5a2a;border-radius:8px;padding:8px 18px;cursor:pointer;font-size:14px;font-weight:600;}
+  .hint{font-size:12px;color:#998;margin:10px 2px;text-align:center;}
+  #toast{position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);background:rgba(0,0,0,.85);color:#fff;padding:12px 20px;border-radius:10px;font-size:14px;opacity:0;pointer-events:none;transition:opacity .2s;z-index:1000;}
+  #toast.show{opacity:1;}
+  .filterbar{display:flex;gap:8px;align-items:center;padding:4px 6px 10px;flex-wrap:wrap;}
+  .filterbar input{border:1px solid var(--line);border-radius:8px;padding:7px 10px;font-size:14px;flex:1;min-width:170px;font-family:inherit;}
+  .filterbar .clr{border:none;background:#efe9dc;color:#7a5a36;border-radius:8px;padding:7px 12px;cursor:pointer;font-size:13px;}
+  #filterInfo{color:#8a5a36;font-weight:700;font-size:13px;white-space:nowrap;}
+  .modal{position:fixed;inset:0;background:rgba(0,0,0,.45);display:none;z-index:1200;overflow:auto;padding:18px 12px;}
+  .modal.show{display:block;}
+  .modal .box{background:#fff;max-width:660px;margin:0 auto;border-radius:14px;padding:16px 18px;box-shadow:0 6px 24px rgba(0,0,0,.3);}
+  .modal h2{margin:2px 0 10px;font-size:17px;color:var(--head);}
+  .modal h3{margin:14px 0 6px;font-size:14px;color:var(--head);}
+  .modal table{width:100%;border-collapse:collapse;font-size:13px;margin:4px 0 8px;min-width:0;}
+  .modal th,.modal td{border:1px solid var(--line);padding:6px 8px;text-align:center;}
+  .modal th{background:#f6efe0;color:var(--head);}
+  .modal td.r{text-align:right;font-variant-numeric:tabular-nums;}
+  .modal td.si2{color:var(--shiire);} .modal td.sh2{color:var(--shiharai);}
+  .modal tr.ttl td{background:#f6efe0;font-weight:700;}
+  .modal .close-x{background:#efe9dc;color:#7a5a36;border:none;border-radius:8px;padding:8px 18px;cursor:pointer;font-size:14px;font-weight:600;}
+  .hist-item{display:flex;align-items:center;gap:10px;border:1px solid var(--line);border-radius:10px;padding:9px 12px;margin:7px 0;font-size:13px;}
+  .hist-item .when{font-weight:700;color:var(--head);}
+  .hist-item .info{color:#887;}
+  .hist-item button{margin-left:auto;border:none;background:#2f6fb0;color:#fff;border-radius:8px;padding:7px 14px;cursor:pointer;font-size:13px;font-weight:600;white-space:nowrap;}
+  @media (max-width:700px){
+    td input,.meta input,.filterbar input{font-size:16px;}
+    td input{padding:8px 3px;}
+    header h1{font-size:15px;}
+  }
+  @media (pointer:coarse){ .delbtn{padding:9px 0;} .btn{padding:9px 13px;} }
+  @media print{ header .tools,.tab.add,.meta .del,.col-del,.addrow,.hint,#copyFab,.filterbar,.modal{display:none !important;} td.cell-sel{background:transparent !important;} body{background:#fff;} header{background:#fff;color:#000;box-shadow:none;} .tabs,.meta,.card{box-shadow:none;} table{min-width:0;font-size:10px;} td,th{padding:2px 4px;} }
+  /* 月別集計だけを印刷するモード */
+  @media print{
+    body.print-sum header, body.print-sum .wrap, body.print-sum #histModal{display:none !important;}
+    body.print-sum #sumModal{display:block !important;position:static;background:none;padding:0;overflow:visible;}
+    body.print-sum #sumModal .box{box-shadow:none;max-width:none;border-radius:0;padding:0;}
+    body.print-sum #sumModal .close-x{display:none !important;}
+  }
+</style>
+</head>
+<body>
+<div id="toast"></div>
+<button id="copyFab" title="選択した範囲をコピー">📋 選択範囲をコピー</button>
+<div class="modal" id="sumModal" onclick="if(event.target===this)this.classList.remove('show')">
+  <div class="box">
+    <h2>📅 月別集計 <small style="font-weight:500;font-size:12px;color:#887;">焼肉ありもと 仕入帳</small></h2>
+    <div id="sumBody"></div>
+    <div style="text-align:right;margin-top:8px;display:flex;gap:8px;justify-content:flex-end;">
+      <button class="close-x" style="background:#2f6fb0;color:#fff;" onclick="printSummary()">🖨 これを印刷</button>
+      <button class="close-x" onclick="document.getElementById('sumModal').classList.remove('show')">閉じる</button>
+    </div>
+  </div>
+</div>
+<div class="modal" id="histModal" onclick="if(event.target===this)this.classList.remove('show')">
+  <div class="box">
+    <h2>🕘 保存履歴（バックアップ）</h2>
+    <div style="font-size:12px;color:#887;margin-bottom:6px;">入力のたびに自動で履歴が残ります（最大15世代）。間違って消したときはここから復元できます。</div>
+    <div id="histBody"></div>
+    <div style="text-align:right;margin-top:8px;"><button class="close-x" onclick="document.getElementById('histModal').classList.remove('show')">閉じる</button></div>
+  </div>
+</div>
+<header>
+  <h1>🐮 焼肉ありもと <small>仕入帳（買掛帳）</small> <small style="opacity:.7;font-size:11px;">v7・月別集計/検索/履歴</small></h1>
+  <div class="tools">
+    <button class="btn" onclick="openSummary()">📅 月別集計</button>
+    <button class="btn" onclick="openHistory()">🕘 履歴</button>
+    <button class="btn" onclick="window.print()">🖨 印刷</button>
+    <button class="btn csv" onclick="exportCSV()">📊 Excel（税理士用）</button>
+    <button class="btn" onclick="exportData()">⬇ 書出</button>
+    <label class="btn" style="cursor:pointer;">⬆ 読込<input type="file" accept=".json" onchange="importData(event)" style="display:none"></label>
+    <button class="btn cl1" onclick="cloudUpload()">☁️↑ クラウド保存</button>
+    <button class="btn cl2" onclick="cloudDownload()">☁️↓ クラウド読込</button>
+  </div>
+</header>
+<div class="wrap">
+  <div class="tabs" id="tabs"></div>
+  <div class="meta">
+    <label>仕入先 <input class="nm" id="supName" oninput="onMeta('name',this.value)" placeholder="仕入先名"></label>
+    <label>住所 <input class="ad" id="supAddr" oninput="onMeta('addr',this.value)" placeholder="住所など"></label>
+    <label>前回繰越 <input class="op" id="opening" inputmode="numeric" oninput="onOpening(this)" onblur="refmt(this)"></label>
+    <button class="del" onclick="delSupplier()">この仕入先を削除</button>
+  </div>
+  <div class="card">
+    <div class="filterbar">
+      🔍 <input id="filterQ" placeholder="品名や月で絞り込み（例: ロース、5）" oninput="onFilter(this.value)">
+      <button class="clr" onclick="clearFilter()">✕ クリア</button>
+      <span id="filterInfo"></span>
+    </div>
+    <div class="scroll">
+      <table>
+        <caption>仕　入　帳</caption>
+        <thead><tr>
+          <th class="col-y">年</th><th class="col-m">月</th><th class="col-d">日</th>
+          <th>品名</th><th class="col-qty">数量</th><th class="col-price">単価</th>
+          <th class="col-si">仕入金額</th><th class="col-sh">支払金額</th><th class="col-bal">差引残高</th><th class="col-del"></th>
+        </tr></thead>
+        <tbody id="tbody"></tbody>
+        <tfoot><tr>
+          <td class="lbl" colspan="6">合計</td>
+          <td class="si" id="sumSi">0</td><td class="sh" id="sumSh">0</td><td id="endBal">0</td><td></td>
+        </tr></tfoot>
+      </table>
+    </div>
+    <div class="addrow"><button onclick="addRows(5)">＋ 5行追加</button> <button onclick="addBreakdown()">＋ 10%・8%内訳</button></div>
+    <div class="hint">差引残高 = 前残高 ＋ 仕入金額 − 支払金額（自動計算）／入力すると自動でクラウド保存</div>
+  </div>
+</div>
+<script>
+const STORAGE_KEY='yakiniku_shiire_v1';
+const SYNC_URL='https://script.google.com/macros/s/AKfycbxwL19mAenATUMILRsQYrDL0ThjU2C583Cj729OfzNHEH3drMcZCExYULRp4VGOZ11J/exec';
+const SYNC_KEY='shiire_data';
+
+const toNum=v=>{ if(typeof v==='number') return v; const n=parseFloat(String(v==null?'':v).replace(/[^0-9.\-]/g,'')); return isNaN(n)?0:n; };
+const fmt=n=>(Math.round(n)||0).toLocaleString('ja-JP');
+const blankRow=()=>({y:8,m:'',d:'',hinmei:'',qty:'',price:'',shiire:'',shiharai:'',bal:''});
+
+function defData(){
+  const id='minagawa';
+  const rows=[
+    {y:8,m:4,d:30,hinmei:'バラ他',shiire:324570},{y:8,m:5,d:1,hinmei:'ロース他',shiire:95740},
+    {y:8,m:5,d:2,hinmei:'ロース他',shiire:119320},{y:8,m:5,d:2,hinmei:'レバー他',shiire:22960},
+    {y:8,m:5,d:6,hinmei:'バラ他',shiire:18840},{y:8,m:5,d:7,hinmei:'センマイ',shiire:2560},
+    {y:8,m:5,d:8,hinmei:'ミノ他',shiire:109162},{y:8,m:5,d:9,hinmei:'バラ他',shiire:21240},
+    {y:8,m:5,d:12,hinmei:'ミノ他',shiire:37562},{y:8,m:5,d:15,hinmei:'ロース他',shiire:108468},
+    {y:8,m:5,d:16,hinmei:'タン',shiire:22720},{y:8,m:5,d:19,hinmei:'地鶏他',shiire:124215},
+    {y:8,m:5,d:23,hinmei:'アウト他',shiire:168413},{y:8,m:5,d:'',hinmei:'消費税',shiire:102630},
+    {y:8,m:6,d:10,hinmei:'支払',shiharai:1385510},{y:8,m:5,d:26,hinmei:'地鶏他',shiire:75144},
+    {y:8,m:5,d:30,hinmei:'ロース他',shiire:101972},{y:8,m:6,d:2,hinmei:'地鶏',shiire:4600}
+  ].map(r=>Object.assign(blankRow(),r));
+  return { suppliers:[{id,name:'皆川畜産',addr:'東温市南野田386-5'}], cur:id, pages:{[id]:{opening:107110,rows}} };
+}
+let data;
+function load(){ try{ const s=localStorage.getItem(STORAGE_KEY); if(s) return JSON.parse(s); }catch(e){} return defData(); }
+function save(){ localStorage.setItem(STORAGE_KEY, JSON.stringify(data)); snapshot(); cloudAutoSave(); }
+
+function sup(){ return data.suppliers.find(s=>s.id===data.cur) || data.suppliers[0]; }
+function page(){ if(!data.pages[data.cur]) data.pages[data.cur]={opening:0,rows:[blankRow()]}; const p=data.pages[data.cur]; if(!p.rows||!p.rows.length) p.rows=[blankRow()]; return p; }
+
+function renderTabs(){
+  let h='';
+  data.suppliers.forEach(s=>{ h+=`<div class="tab${s.id===data.cur?' active':''}" onclick="switchSup('${s.id}')">${esc(s.name||'(無名)')}</div>`; });
+  h+=`<div class="tab add" onclick="addSupplier()">＋ 仕入先を追加</div>`;
+  document.getElementById('tabs').innerHTML=h;
+}
+function esc(s){ return String(s==null?'':s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c])); }
+
+function render(){
+  renderTabs();
+  const s=sup(), p=page();
+  document.getElementById('supName').value=s.name||'';
+  document.getElementById('supAddr').value=s.addr||'';
+  const oi=document.getElementById('opening'); if(document.activeElement!==oi) oi.value=fmt(toNum(p.opening));
+  let bal=toNum(p.opening), sumSi=0, sumSh=0, html='';
+  p.rows.forEach((r,i)=>{
+    const si=toNum(r.shiire), sh=toNum(r.shiharai); const memo=!!r.memo;
+    const manual=(r.bal!==''&&r.bal!=null);
+    if(manual){ bal=toNum(r.bal); } else if(!memo){ bal+=si-sh; }
+    if(!memo){ sumSi+=si; sumSh+=sh; }
+    const rowCls=[memo?'memo-row':'', (r.hinmei==='支払')?'pay-row':''].filter(Boolean).join(' ');
+    html+=`<tr data-i="${i}" class="${rowCls}">
+      <td class="col-y" data-c="0"><input value="${r.y??''}" inputmode="numeric" oninput="upd(${i},'y',this.value)"></td>
+      <td class="col-m" data-c="1"><input value="${r.m??''}" inputmode="numeric" oninput="upd(${i},'m',this.value)"></td>
+      <td class="col-d" data-c="2"><input value="${r.d??''}" inputmode="numeric" oninput="upd(${i},'d',this.value)"></td>
+      <td class="hinmei" data-c="3"><input value="${esc(r.hinmei)}" oninput="upd(${i},'hinmei',this.value)"></td>
+      <td class="num col-qty" data-c="4"><input value="${esc(r.qty)}" inputmode="numeric" oninput="upd(${i},'qty',this.value)"></td>
+      <td class="num col-price" data-c="5"><input value="${r.price!==''&&r.price!=null?fmt(toNum(r.price)):''}" inputmode="numeric" oninput="updN(${i},'price',this.value)" onblur="refmt(this)"></td>
+      <td class="num shiire col-si" data-c="6"><input value="${r.shiire!==''&&r.shiire!=null?fmt(si):''}" inputmode="numeric" oninput="updN(${i},'shiire',this.value)" onblur="refmt(this)"></td>
+      <td class="num shiharai col-sh" data-c="7"><input value="${r.shiharai!==''&&r.shiharai!=null?fmt(sh):''}" inputmode="numeric" oninput="updN(${i},'shiharai',this.value)" onblur="refmt(this)"></td>
+      <td class="bal col-bal${manual?' bal-manual':''}" data-c="8"><input value="${(memo&&!manual)?'':fmt(bal)}" inputmode="numeric" oninput="updBal(${i},this.value)" onblur="refmt(this)"></td>
+      <td class="col-del"><button class="delbtn" onclick="delRow(${i})">✕</button></td></tr>`;
+  });
+  document.getElementById('tbody').innerHTML=html;
+  document.getElementById('sumSi').textContent=fmt(sumSi);
+  document.getElementById('sumSh').textContent=fmt(sumSh);
+  document.getElementById('endBal').textContent=fmt(bal);
+  applyFilter();
+}
+function liveRecalc(){
+  const p=page(); let bal=toNum(p.opening), sumSi=0, sumSh=0;
+  const trs=document.querySelectorAll('#tbody tr');
+  p.rows.forEach((r,i)=>{ const si=toNum(r.shiire),sh=toNum(r.shiharai); const manual=(r.bal!==''&&r.bal!=null); if(manual){ bal=toNum(r.bal); } else if(!r.memo){ bal+=si-sh; } if(!r.memo){ sumSi+=si; sumSh+=sh; } const tr=trs[i]; if(tr){ tr.querySelector('.bal')?.classList.toggle('bal-manual',manual); const b=tr.querySelector('.bal input'); if(b && document.activeElement!==b) b.value=(r.memo&&!manual)?'':fmt(bal);} });
+  document.getElementById('sumSi').textContent=fmt(sumSi);
+  document.getElementById('sumSh').textContent=fmt(sumSh);
+  document.getElementById('endBal').textContent=fmt(bal);
+}
+function upd(i,k,v){ page().rows[i][k]=v; if(k==='hinmei'){ const tr=document.querySelector(`#tbody tr[data-i="${i}"]`); if(tr) tr.classList.toggle('pay-row', String(v).trim()==='支払'); } save(); }
+function updBal(i,v){ page().rows[i].bal=(String(v).trim()===''?'':toNum(v)); liveRecalc(); save(); }
+function updN(i,k,v){ page().rows[i][k]=toNum(v); liveRecalc(); save(); }
+function refmt(el){ const n=toNum(el.value); el.value=(el.value.trim()==='')?'':fmt(n); }
+function onOpening(el){ page().opening=toNum(el.value); liveRecalc(); save(); }
+function onMeta(k,v){ sup()[k]=v; if(k==='name') renderTabs(); save(); }
+
+function addRow(){ const p=page(); const last=p.rows[p.rows.length-1]; const nr=blankRow(); if(last){ nr.y=last.y; nr.m=last.m; } p.rows.push(nr); save(); render(); const trs=document.querySelectorAll('#tbody tr'); const di=trs[trs.length-1]?.querySelector('.col-d input'); if(di) di.focus(); }
+function addRows(n){ const p=page(); const last=p.rows[p.rows.length-1]; for(let k=0;k<n;k++){ const nr=blankRow(); if(last){ nr.y=last.y; nr.m=last.m; } p.rows.push(nr); } save(); render(); const trs=document.querySelectorAll('#tbody tr'); const di=trs[trs.length-n]?.querySelector('.col-d input'); if(di) di.focus(); }
+function delRow(i){ const p=page(); if(p.rows.length<=1) p.rows[0]=blankRow(); else p.rows.splice(i,1); save(); render(); }
+function addBreakdown(){ const p=page(); const last=p.rows[p.rows.length-1]; const y=last?last.y:8, m=last?last.m:''; p.rows.push({y,m,d:'',hinmei:'10%',qty:'',price:'',shiire:'',shiharai:'',bal:'',memo:true}); p.rows.push({y,m,d:'',hinmei:'8%',qty:'',price:'',shiire:'',shiharai:'',bal:'',memo:true}); save(); render(); const trs=document.querySelectorAll('#tbody tr'); const si=trs[trs.length-2]?.querySelector('.col-si input'); if(si){ si.focus(); si.select&&si.select(); } toast('内訳行(10%/8%)を追加'); }
+function switchSup(id){ data.cur=id; save(); render(); }
+function addSupplier(){ const id='s'+Date.now(); data.suppliers.push({id,name:'',addr:''}); data.pages[id]={opening:0,rows:[blankRow()]}; data.cur=id; save(); render(); document.getElementById('supName').focus(); }
+function delSupplier(){ const s=sup(); if(!confirm(`「${s.name||'この仕入先'}」を削除しますか？\n（この仕入先の全データが消えます）`)) return; delete data.pages[data.cur]; data.suppliers=data.suppliers.filter(x=>x.id!==data.cur); if(!data.suppliers.length){ data=defData(); } else data.cur=data.suppliers[0].id; save(); render(); }
+
+function exportData(){ const b=new Blob([JSON.stringify(data,null,2)],{type:'application/json'}); const a=document.createElement('a'); a.href=URL.createObjectURL(b); a.download='仕入帳_'+(sup().name||'')+'.json'; a.click(); toast('⬇ 書き出しました'); }
+function exportCSV(){
+  const esc2=s=>{ s=String(s==null?'':s); return /[",\n]/.test(s)?'"'+s.replace(/"/g,'""')+'"':s; };
+  let csv='﻿仕入先,年,月,日,品名,数量,単価,仕入金額,支払金額,差引残高\n';
+  data.suppliers.forEach(s=>{ const p=data.pages[s.id]; if(!p) return; let bal=toNum(p.opening);
+    csv+=`${esc2(s.name)},,,,前回繰越,,,,,${bal}\n`;
+    (p.rows||[]).forEach(r=>{ const si=toNum(r.shiire),sh=toNum(r.shiharai); if(r.bal!==''&&r.bal!=null) bal=toNum(r.bal); else if(!r.memo) bal+=si-sh;
+      csv+=[esc2(s.name),r.y??'',r.m??'',r.d??'',esc2(r.hinmei),esc2(r.qty),(r.price||''),(si||''),(sh||''),bal].join(',')+'\n'; });
+  });
+  const b=new Blob([csv],{type:'text/csv;charset=utf-8'}); const a=document.createElement('a'); a.href=URL.createObjectURL(b); a.download='仕入帳_税理士提出_'+new Date().toISOString().slice(0,10)+'.csv'; a.click(); toast('📊 Excel(CSV)で書き出しました');
+}
+function importData(e){ const f=e.target.files[0]; if(!f) return; const r=new FileReader(); r.onload=ev=>{ try{ snapshot(true); data=JSON.parse(ev.target.result); localStorage.setItem(STORAGE_KEY,JSON.stringify(data)); render(); toast('⬆ 読み込みました'); }catch(err){ toast('❌ 読込エラー'); } }; r.readAsText(f); e.target.value=''; }
+function toast(m){ const t=document.getElementById('toast'); t.textContent=m; t.classList.add('show'); clearTimeout(toast._t); toast._t=setTimeout(()=>t.classList.remove('show'),2000); }
+
+// ============ 検索・絞り込み ============
+let filterQ='';
+function onFilter(v){ filterQ=v.trim(); applyFilter(); }
+function clearFilter(){ filterQ=''; document.getElementById('filterQ').value=''; applyFilter(); }
+function applyFilter(){
+  const q=filterQ, p=page(), trs=document.querySelectorAll('#tbody tr'); let shown=0;
+  p.rows.forEach((r,i)=>{ const tr=trs[i]; if(!tr) return;
+    let ok=true;
+    if(q){
+      const empty=!String(r.hinmei||'').trim() && !toNum(r.shiire) && !toNum(r.shiharai);
+      const qn=q.replace(/月$/,''); const isNum=/^\d+$/.test(qn);
+      ok = empty || String(r.hinmei||'').includes(q) || (isNum && String(r.m)===qn);
+    }
+    tr.style.display=ok?'':'none'; if(ok) shown++;
+  });
+  document.getElementById('filterInfo').textContent = q?(shown+'件表示'):'';
+}
+
+// ============ 月別集計 ============
+function calcMonthly(p){
+  let bal=toNum(p.opening); const order=[], map={}; let prev=null;
+  (p.rows||[]).forEach(r=>{
+    const si=toNum(r.shiire), sh=toNum(r.shiharai), manual=(r.bal!==''&&r.bal!=null);
+    if(manual){ bal=toNum(r.bal); } else if(!r.memo){ bal+=si-sh; }
+    const empty=!String(r.hinmei||'').trim() && !si && !sh;
+    if(empty) return;
+    let k=(String(r.m??'').trim()==='') ? prev : (String(r.y??'').trim()+'-'+String(r.m).trim());
+    if(k==null) k='(月不明)';
+    prev=k;
+    if(!map[k]){ map[k]={si:0,sh:0,bal:bal}; order.push(k); }
+    if(!r.memo){ map[k].si+=si; map[k].sh+=sh; }
+    map[k].bal=bal;
+  });
+  return order.map(k=>({key:k, si:map[k].si, sh:map[k].sh, bal:map[k].bal}));
+}
+function mLabel(k){ if(k==='(月不明)') return k; const a=String(k).split('-'); return (a[0]?('R'+a[0]+'年'):'')+a[1]+'月'; }
+function openSummary(){
+  const s=sup(), p=page();
+  const cur=calcMonthly(p);
+  let h='<h3>'+esc(s.name||'(無名)')+'</h3>';
+  h+='<table><tr><th>月</th><th>仕入合計</th><th>支払合計</th><th>月末残高</th></tr>';
+  let tsi=0,tsh=0;
+  cur.forEach(m=>{ tsi+=m.si; tsh+=m.sh; h+='<tr><td>'+esc(mLabel(m.key))+'</td><td class="r si2">'+fmt(m.si)+'</td><td class="r sh2">'+fmt(m.sh)+'</td><td class="r">'+fmt(m.bal)+'</td></tr>'; });
+  h+='<tr class="ttl"><td>合計</td><td class="r si2">'+fmt(tsi)+'</td><td class="r sh2">'+fmt(tsh)+'</td><td class="r">'+(cur.length?fmt(cur[cur.length-1].bal):'0')+'</td></tr></table>';
+  if(data.suppliers.length>1){
+    const agg={}, order=[];
+    data.suppliers.forEach(su=>{ const pg=data.pages[su.id]; if(!pg) return;
+      calcMonthly(pg).forEach(m=>{ if(!agg[m.key]){ agg[m.key]={si:0,sh:0}; order.push(m.key); } agg[m.key].si+=m.si; agg[m.key].sh+=m.sh; });
+    });
+    order.sort((a,b)=>{ if(a==='(月不明)') return 1; if(b==='(月不明)') return -1; const pa=a.split('-'),pb=b.split('-'); return (toNum(pa[0])-toNum(pb[0]))||(toNum(pa[1])-toNum(pb[1])); });
+    let gsi=0,gsh=0;
+    h+='<h3>全仕入先の合計</h3><table><tr><th>月</th><th>仕入合計</th><th>支払合計</th></tr>';
+    order.forEach(k=>{ gsi+=agg[k].si; gsh+=agg[k].sh; h+='<tr><td>'+esc(mLabel(k))+'</td><td class="r si2">'+fmt(agg[k].si)+'</td><td class="r sh2">'+fmt(agg[k].sh)+'</td></tr>'; });
+    h+='<tr class="ttl"><td>合計</td><td class="r si2">'+fmt(gsi)+'</td><td class="r sh2">'+fmt(gsh)+'</td></tr></table>';
+  }
+  h+='<div style="font-size:11px;color:#887;text-align:right;margin-top:6px;">'+new Date().toLocaleDateString('ja-JP',{year:'numeric',month:'long',day:'numeric'})+' 現在</div>';
+  document.getElementById('sumBody').innerHTML=h;
+  document.getElementById('sumModal').classList.add('show');
+}
+function printSummary(){
+  document.body.classList.add('print-sum');
+  const done=()=>{ document.body.classList.remove('print-sum'); window.removeEventListener('afterprint',done); };
+  window.addEventListener('afterprint',done);
+  setTimeout(done,3000); // afterprintが来ない環境の保険
+  window.print();
+}
+
+// ============ 保存履歴（バックアップ世代） ============
+const HIST_KEY='yakiniku_shiire_hist_v1';
+function histList(){ try{ return JSON.parse(localStorage.getItem(HIST_KEY))||[]; }catch(e){ return []; } }
+function snapshot(force){
+  try{
+    const h=histList(), now=Date.now(), s=JSON.stringify(data);
+    if(h.length && h[0].d===s) return;
+    if(!force && h.length && now-h[0].t < 10*60*1000) return; // 10分間隔で世代を残す
+    h.unshift({t:now,d:s}); if(h.length>15) h.length=15;
+    localStorage.setItem(HIST_KEY, JSON.stringify(h));
+  }catch(e){}
+}
+function openHistory(){
+  const h=histList();
+  let html='';
+  if(!h.length) html='<div style="color:#887;padding:10px 2px;">まだ履歴がありません（入力すると自動で貯まります）</div>';
+  h.forEach((e,i)=>{
+    let info='';
+    try{ const d=JSON.parse(e.d); const nSup=(d.suppliers||[]).length; let nRow=0; Object.values(d.pages||{}).forEach(p=>{ nRow+=(p.rows||[]).length; }); info='仕入先'+nSup+'件・'+nRow+'行'; }catch(_){}
+    const when=new Date(e.t).toLocaleString('ja-JP',{month:'numeric',day:'numeric',hour:'2-digit',minute:'2-digit'});
+    html+='<div class="hist-item"><span class="when">'+when+'</span><span class="info">'+info+'</span><button onclick="restoreHist('+i+')">この時点に戻す</button></div>';
+  });
+  document.getElementById('histBody').innerHTML=html;
+  document.getElementById('histModal').classList.add('show');
+}
+function restoreHist(i){
+  const h=histList(); const e=h[i]; if(!e) return;
+  if(!confirm('この時点のデータに戻しますか？\n（今の内容も履歴に残るので、あとで戻せます）')) return;
+  snapshot(true);
+  data=JSON.parse(e.d);
+  localStorage.setItem(STORAGE_KEY, e.d);
+  render();
+  document.getElementById('histModal').classList.remove('show');
+  cloudAutoSave();
+  toast('🕘 復元しました');
+}
+
+let autoCloudTimer=null;
+function cloudAutoSave(){ clearTimeout(autoCloudTimer); autoCloudTimer=setTimeout(()=>pushCloud(true),2500); }
+async function pushCloud(silent){ if(!silent) toast('☁️ アップロード中...'); try{ const res=await fetch(SYNC_URL+'?action=save&key='+SYNC_KEY,{method:'POST',body:JSON.stringify(data)}); const j=await res.json(); if(j.success){ if(!silent) toast('☁️ クラウドに保存しました'); return true;} if(!silent) toast('エラー: '+(j.message||'')); }catch(e){ if(!silent) toast('通信エラー: '+e.message);} return false; }
+async function cloudUpload(){ await pushCloud(false); }
+function applyCloud(j){ if(!j||!j.success||!j.data) return false; let d=j.data; if(typeof d==='string'){ try{ d=JSON.parse(d);}catch(e){ return false; } } if(!d||!d.suppliers) return false; snapshot(true); data=d; localStorage.setItem(STORAGE_KEY,JSON.stringify(data)); render(); return true; }
+async function cloudDownload(){ toast('☁️ ダウンロード中...'); try{ const res=await fetch(SYNC_URL+'?action=load&key='+SYNC_KEY); const j=await res.json(); let d=j&&j.data; if(typeof d==='string'){ try{ d=JSON.parse(d);}catch(e){} } if(!d||!d.suppliers){ toast('クラウドにデータがありません'); return; } if(!confirm('クラウドのデータを読み込みますか？\n今の内容は上書きされます。')) return; if(applyCloud(j)) toast('☁️ クラウドから読み込みました'); }catch(e){ toast('エラー'); } }
+
+// セルをクリック/移動したら中の文字を自動選択（Command+Cでコピーしやすく）
+document.getElementById('tbody').addEventListener('focusin', e=>{
+  if(e.target && e.target.tagName==='INPUT') setTimeout(()=>{ try{ e.target.select(); }catch(_){} },0);
+});
+// Enterキー：下のセルへ移動（最後の行なら新しい行を追加）
+document.getElementById('tbody').addEventListener('keydown', e=>{
+  if(e.key!=='Enter') return;
+  const inp=e.target; if(!inp || inp.tagName!=='INPUT') return;
+  e.preventDefault();
+  const td=inp.closest('td'); const tr=td.closest('tr');
+  const colIdx=[...tr.children].indexOf(td);
+  let nxt=tr.nextElementSibling;
+  while(nxt && nxt.style.display==='none') nxt=nxt.nextElementSibling; // 絞り込み中は非表示行を飛ばす
+  if(nxt){
+    const ni=nxt.children[colIdx]?.querySelector('input');
+    if(ni){ ni.focus(); ni.select&&ni.select(); }
+  }else{
+    addRow();  // 再描画される
+    const trs=document.querySelectorAll('#tbody tr');
+    const ni=trs[trs.length-1]?.children[colIdx]?.querySelector('input');
+    if(ni){ ni.focus(); ni.select&&ni.select(); }
+  }
+});
+
+// 開いたとき・読込んだときに、最新（一番下）の行まで自動でスクロール
+function scrollToLatest(){
+  requestAnimationFrame(()=>requestAnimationFrame(()=>{
+    const trs=document.querySelectorAll('#tbody tr');
+    const last=trs[trs.length-1];
+    if(last) last.scrollIntoView({block:'center'}); else window.scrollTo(0, document.body.scrollHeight);
+  }));
+}
+data=load(); render(); scrollToLatest();
+(async()=>{ if(localStorage.getItem(STORAGE_KEY)!==null) return; try{ const res=await fetch(SYNC_URL+'?action=load&key='+SYNC_KEY); const j=await res.json(); let d=j&&j.data; if(typeof d==='string'){ try{ d=JSON.parse(d);}catch(e){} } if(d&&d.suppliers){ data=d; localStorage.setItem(STORAGE_KEY,JSON.stringify(data)); render(); scrollToLatest(); toast('☁️ クラウドから自動復元しました'); } }catch(e){} })();
+
+// ============================================================
+// セル範囲選択 → コピー（Excelのように選んで Command+C）
+// ============================================================
+(function(){
+  const tbody=document.getElementById('tbody');
+  const fab=document.getElementById('copyFab');
+  let anchor=null, focusCell=null, hasSel=false;
+  let mouseDown=false, dragging=false, lpTimer=null, moved=false, startXY=null;
+
+  const tdOf = el => el ? el.closest('td[data-c]') : null;
+  const rcOf = td => { if(!td) return null; const tr=td.closest('tr'); if(!tr) return null; return { r:+tr.getAttribute('data-i'), c:+td.getAttribute('data-c') }; };
+  const cellEl = (r,c) => tbody.querySelector('tr[data-i="'+r+'"] td[data-c="'+c+'"]');
+  const cellFromPoint = (x,y) => tdOf(document.elementFromPoint(x,y));
+
+  function clearSel(){ tbody.querySelectorAll('td.cell-sel').forEach(td=>td.classList.remove('cell-sel')); hasSel=false; fab.classList.remove('show'); document.body.classList.remove('selmode'); }
+  function range(){ if(!anchor||!focusCell) return null; return { r1:Math.min(anchor.r,focusCell.r), r2:Math.max(anchor.r,focusCell.r), c1:Math.min(anchor.c,focusCell.c), c2:Math.max(anchor.c,focusCell.c) }; }
+  function paint(){
+    tbody.querySelectorAll('td.cell-sel').forEach(td=>td.classList.remove('cell-sel'));
+    const g=range(); if(!g) return; let n=0;
+    for(let r=g.r1;r<=g.r2;r++) for(let c=g.c1;c<=g.c2;c++){ const td=cellEl(r,c); if(td){ td.classList.add('cell-sel'); n++; } }
+    hasSel = n>0;
+    fab.classList.toggle('show', n>0);
+  }
+  function buildTSV(){
+    const g=range(); if(!g) return '';
+    const lines=[];
+    for(let r=g.r1;r<=g.r2;r++){ const cells=[]; for(let c=g.c1;c<=g.c2;c++){ const td=cellEl(r,c); const inp=td&&td.querySelector('input'); cells.push(inp?inp.value:''); } lines.push(cells.join('\t')); }
+    return lines.join('\n');
+  }
+  async function doCopy(){
+    const tsv=buildTSV(); if(!tsv) return;
+    try{ await navigator.clipboard.writeText(tsv); }
+    catch(e){ const ta=document.createElement('textarea'); ta.value=tsv; ta.style.position='fixed'; ta.style.opacity='0'; document.body.appendChild(ta); ta.focus(); ta.select(); try{document.execCommand('copy');}catch(_){} ta.remove(); }
+    toast('📋 コピーしました（'+tsv.split('\n').length+'行）');
+  }
+  function startSel(rc){ anchor=rc; focusCell=rc; if(document.activeElement&&document.activeElement.blur) document.activeElement.blur(); document.body.classList.add('selmode'); paint(); }
+
+  tbody.addEventListener('pointerdown', e=>{
+    const td=tdOf(e.target); if(!td) return; const rc=rcOf(td); if(!rc) return;
+    if(e.shiftKey && anchor){ focusCell=rc; paint(); e.preventDefault(); return; }
+    if(e.pointerType==='mouse'){
+      mouseDown=true; dragging=false; moved=false; startXY={x:e.clientX,y:e.clientY};
+      anchor=rc; focusCell=rc; clearSel();   // クリックは編集、ドラッグで選択
+    }else{
+      // タッチ：長押しで範囲選択を開始（短いタップは通常編集／スクロール可）
+      startXY={x:e.clientX,y:e.clientY}; moved=false;
+      lpTimer=setTimeout(()=>{ lpTimer=null; dragging=true; startSel(rc); toast('範囲選択モード：指でなぞって広げてください'); }, 420);
+    }
+  });
+
+  tbody.addEventListener('pointermove', e=>{
+    if(e.pointerType==='mouse'){
+      if(!mouseDown) return;
+      if(!dragging){ if(startXY && Math.hypot(e.clientX-startXY.x,e.clientY-startXY.y)<5) return; const td0=cellFromPoint(e.clientX,e.clientY); const rc0=rcOf(td0); if(rc0 && (rc0.r!==anchor.r||rc0.c!==anchor.c)){ dragging=true; if(document.activeElement&&document.activeElement.blur) document.activeElement.blur(); document.body.classList.add('selmode'); } else return; }
+      const td=cellFromPoint(e.clientX,e.clientY); const rc=rcOf(td); if(rc){ focusCell=rc; paint(); } e.preventDefault();
+    }else{
+      if(lpTimer){ if(startXY && Math.hypot(e.clientX-startXY.x,e.clientY-startXY.y)>8){ clearTimeout(lpTimer); lpTimer=null; } } // 動いたら長押し扱いにせずスクロール優先
+      if(dragging){ const td=cellFromPoint(e.clientX,e.clientY); const rc=rcOf(td); if(rc){ focusCell=rc; paint(); } e.preventDefault(); }
+    }
+  }, {passive:false});
+
+  document.addEventListener('pointerup', ()=>{ mouseDown=false; dragging=false; if(lpTimer){ clearTimeout(lpTimer); lpTimer=null; } });
+
+  // 直近に触れたセル（貼り付け開始位置）を記録
+  let activeCell=null;
+  tbody.addEventListener('focusin', e=>{ const td=tdOf(e.target); if(td){ activeCell=rcOf(td); } });
+
+  const COLKEY=['y','m','d','hinmei','qty','price','shiire','shiharai','bal'];
+  function pasteStart(){
+    if(hasSel){ const g=range(); if(g) return { r:g.r1, c:g.c1 }; }
+    if(document.activeElement){ const td=tdOf(document.activeElement); if(td) return rcOf(td); }
+    return activeCell;
+  }
+  function applyPaste(start, text){
+    if(!start || text==null) return;
+    const matrix = text.replace(/\r/g,'').replace(/\n$/,'').split('\n').map(line=>line.split('\t'));
+    if(!matrix.length) return;
+    const p=page();
+    for(let dr=0; dr<matrix.length; dr++){
+      const tr=start.r+dr;
+      while(p.rows.length<=tr) p.rows.push(blankRow());
+      const row=p.rows[tr];
+      const cols=matrix[dr];
+      for(let dc=0; dc<cols.length; dc++){
+        const c=start.c+dc; if(c<0||c>8) continue;
+        const key=COLKEY[c];
+        if(key==='bal') continue;                 // 差引残高は自動計算を優先（上書きしない）
+        let v=cols[dc];
+        if(key==='price'||key==='shiire'||key==='shiharai'){ row[key]=(String(v).trim()==='')?'':toNum(v); }
+        else { row[key]=v; }
+      }
+    }
+    save(); render();
+    toast('📋 貼り付けました（'+matrix.length+'行）');
+  }
+
+  // 入力欄にフォーカスがある状態での Command+V（クリップボードを直接取得）
+  document.addEventListener('paste', e=>{
+    const start=pasteStart(); if(!start) return;
+    const text=(e.clipboardData||window.clipboardData)?.getData('text/plain');
+    if(text && text.indexOf('\t')<0 && text.indexOf('\n')<0) return; // 単一値はふつうの貼り付けに任せる
+    if(text){ e.preventDefault(); applyPaste(start, text); }
+  });
+
+  document.addEventListener('keydown', async e=>{
+    if((e.metaKey||e.ctrlKey) && (e.key==='c'||e.key==='C')){ if(hasSel){ e.preventDefault(); doCopy(); } }
+    else if((e.metaKey||e.ctrlKey) && (e.key==='v'||e.key==='V')){
+      // フォーカスが無い等で paste イベントが出ない場合の保険
+      const focusedInput = document.activeElement && document.activeElement.tagName==='INPUT';
+      if(!focusedInput){ const start=pasteStart(); if(start){ e.preventDefault(); try{ const t=await navigator.clipboard.readText(); if(t) applyPaste(start,t); }catch(_){ toast('貼り付け先のセルをタップしてから Command+V してください'); } } }
+    }
+    else if(e.key==='Escape'){ clearSel(); document.querySelectorAll('.modal.show').forEach(m=>m.classList.remove('show')); }
+  });
+
+  fab.addEventListener('click', doCopy);
+})();
+</script>
+</body>
+</html>
