@@ -107,6 +107,11 @@
   .wallbar i{display:block; height:100%; background:var(--c1);}
   .wall.warn .wallbar i{background:#e6a23c;}
   .wall.over .wallbar i{background:#c0392b;}
+  .modal input.actin{width:92px; border:1px solid #d5dae0; border-radius:6px; padding:4px 6px; font-size:13px; text-align:right; font-variant-numeric:tabular-nums;}
+  .modal input.actin:focus{outline:2px solid #9cc3e8;}
+  .impbar{display:flex; align-items:center; gap:10px; flex-wrap:wrap; margin:4px 0 8px;}
+  .impbar .imp{border:none; background:#e7f3e1; color:#3d7a2a; border-radius:8px; padding:8px 14px; cursor:pointer; font-size:13px; font-weight:600;}
+  .impbar .note{font-size:11px; color:#888;}
 
   .grid-scroll{overflow-x:auto;}
   table{border-collapse:collapse; margin:0 auto; font-size:13px;}
@@ -274,7 +279,8 @@ let dragging = false, dragMode = null;
 
 // ---- 人(ページ)の管理 ----
 function normPerson(p){
-  return { id:p.id, name:p.name||"", w1:(p.w1!=null?p.w1:(p.wage!=null?p.wage:1700)), w2:(p.w2!=null?p.w2:1500) };
+  return { id:p.id, name:p.name||"", w1:(p.w1!=null?p.w1:(p.wage!=null?p.wage:1700)), w2:(p.w2!=null?p.w2:1500),
+           actual:(p.actual && typeof p.actual==="object") ? p.actual : {} };  // 月ごとの実績給料 {"2026-1":129500}
 }
 function loadPeople(){
   try{ var p = JSON.parse(localStorage.getItem("shift-people")); }catch(e){}
@@ -622,20 +628,29 @@ function monthStats(pid, y, m, w1, w2){
   Object.values(d).forEach(v=>{ if(v===2) c2++; else if(v) c1++; });
   return { c1, c2, hours:(c1+c2)*0.5, pay: Math.round(c1*0.5*(+w1||0) + c2*0.5*(+w2||0)) };
 }
+// その月の「有効給料」＝実績があれば実績、なければシフトから計算した給料
+function effPay(p, y, m){
+  const act = p.actual ? p.actual[`${y}-${m}`] : null;
+  const s = monthStats(p.id, y, m, p.w1, p.w2);
+  return { hours:s.hours, calc:s.pay, act:(act!=null && act!=="") ? +act : null,
+           eff:(act!=null && act!=="") ? +act : s.pay };
+}
 function renderYear(){
   const y = yearView;
   $("yearTitle").textContent = `${y}年`;
   const p = person();
   const nm = (p.name && p.name.trim()) ? p.name : "名前なし";
-  let html = `<h3>${escapeHtml(nm)}</h3><table><tr><th>月</th><th>勤務時間</th><th>給料</th></tr>`;
+  let html = `<h3>${escapeHtml(nm)}</h3><table><tr><th>月</th><th>勤務時間</th><th>計算給料</th><th>実績給料</th></tr>`;
   let th=0, tp=0;
   for(let m=1; m<=12; m++){
-    const s = monthStats(p.id, y, m, p.w1, p.w2);
-    th += s.hours; tp += s.pay;
-    html += `<tr><td>${m}月</td><td class="r">${s.hours ? fmtH(s.hours)+" h" : ""}</td><td class="r">${s.pay ? "¥"+s.pay.toLocaleString() : ""}</td></tr>`;
+    const e = effPay(p, y, m);
+    th += e.hours; tp += e.eff;
+    html += `<tr><td>${m}月</td><td class="r">${e.hours ? fmtH(e.hours)+" h" : ""}</td><td class="r">${e.calc ? "¥"+e.calc.toLocaleString() : ""}</td>
+      <td class="r"><input class="actin" data-mkey="${y}-${m}" inputmode="numeric" value="${e.act!=null ? e.act : ""}" placeholder="—"></td></tr>`;
   }
-  html += `<tr class="ttl"><td>年間合計</td><td class="r">${fmtH(th)} h</td><td class="r">¥${tp.toLocaleString()}</td></tr></table>`;
-  // 103万円の壁チェック（この年のこのバイト先の給料ベース）
+  html += `<tr class="ttl"><td>年間合計</td><td class="r">${fmtH(th)} h</td><td class="r" colspan="2">¥${tp.toLocaleString()}</td></tr></table>`;
+  html += `<div class="impbar"><button class="imp" id="impBtn">📒 出納帳から実績取込</button><span class="note">実績がある月は実績を優先して合計します（手入力もできます）</span></div>`;
+  // 103万円の壁チェック（実績優先の年間合計ベース）
   const WALL = 1030000;
   const pct = Math.min(100, Math.round(tp / WALL * 100));
   const rest = WALL - tp;
@@ -649,13 +664,59 @@ function renderYear(){
     let gh=0, gp=0;
     for(let m=1; m<=12; m++){
       let mh=0, mp=0;
-      people.forEach(pp=>{ const s=monthStats(pp.id, y, m, pp.w1, pp.w2); mh+=s.hours; mp+=s.pay; });
+      people.forEach(pp=>{ const e=effPay(pp, y, m); mh+=e.hours; mp+=e.eff; });
       gh += mh; gp += mp;
       html += `<tr><td>${m}月</td><td class="r">${mh ? fmtH(mh)+" h" : ""}</td><td class="r">${mp ? "¥"+mp.toLocaleString() : ""}</td></tr>`;
     }
     html += `<tr class="ttl"><td>年間合計</td><td class="r">${fmtH(gh)} h</td><td class="r">¥${gp.toLocaleString()}</td></tr></table>`;
   }
   $("yearBody").innerHTML = html;
+  const ib = $("impBtn"); if(ib) ib.addEventListener("click", importFromSuitou);
+}
+// 実績給料の手入力
+document.getElementById("yearBody").addEventListener("change", e=>{
+  const inp = e.target.closest("input[data-mkey]"); if(!inp) return;
+  const p = person();
+  const v = inp.value.replace(/[^0-9]/g, "");
+  if(v === "") delete p.actual[inp.dataset.mkey];
+  else p.actual[inp.dataset.mkey] = +v;
+  savePeople(); renderYear();
+});
+// 出納帳（現金出納帳アプリ）のクラウドデータから、名前が一致する給料を月別に取り込む
+async function importFromSuitou(){
+  toast("出納帳を読み込み中...");
+  try{
+    const res = await fetch(SYNC_URL + "?action=load&key=genkin_suitou_data");
+    const json = await res.json();
+    let d = json && json.data;
+    if(typeof d === "string"){ try{ d = JSON.parse(d); }catch(e){} }
+    const all = (d && d.allData) || d;
+    if(!all || typeof all !== "object"){ toast("出納帳のデータが見つかりません"); return; }
+    let count = 0;
+    people.forEach(p=>{
+      const nm = (p.name||"").trim(); if(!nm) return;
+      const sums = {};
+      Object.keys(all).forEach(mk=>{
+        const mm = mk.match(/^R(\d+)-(\d+)$/); if(!mm) return;
+        const wy = 2018 + +mm[1], wm = +mm[2];   // R7-10 → 2025年10月
+        ((all[mk]&&all[mk].rows)||[]).forEach(r=>{
+          const kam = String(r.kamoku||""), tek = String(r.tekiyo||"");
+          if(kam.indexOf("給") < 0) return;                     // 科目が給料/雑給など
+          if(tek.indexOf(nm) < 0) return;                       // 摘要に名前
+          const amt = +String(r.shu==null?"":r.shu).replace(/[^0-9.]/g,"");
+          if(!amt) return;
+          let m = wm, yy = wy;
+          const t = tek.replace(/[０-９]/g,c=>String.fromCharCode(c.charCodeAt(0)-0xFEE0)).match(/(\d{1,2})\s*月\s*分/);
+          if(t){ m = +t[1]; if(m===12 && wm===1) yy = wy-1; else if(m===1 && wm===12) yy = wy+1; }
+          const key = yy + "-" + m;
+          sums[key] = (sums[key]||0) + amt;
+        });
+      });
+      Object.keys(sums).forEach(k=>{ p.actual[k] = sums[k]; count++; });
+    });
+    if(count){ savePeople(); renderYear(); toast(`📒 ${count}か月分の実績を取り込みました`); }
+    else toast("該当する給料が見つかりません（出納帳の摘要の名前と一致している必要があります）");
+  }catch(e){ toast("エラー: " + (e&&e.message?e.message:e)); }
 }
 $("yearBtn").addEventListener("click", ()=>{ yearView = cur.getFullYear(); renderYear(); $("yearModal").classList.add("show"); });
 $("yearPrev").addEventListener("click", ()=>{ yearView--; renderYear(); });
