@@ -174,7 +174,8 @@ const STORAGE_KEY='yakiniku_shiire_v1';
 const SYNC_URL='https://script.google.com/macros/s/AKfycbxwL19mAenATUMILRsQYrDL0ThjU2C583Cj729OfzNHEH3drMcZCExYULRp4VGOZ11J/exec';
 const SYNC_KEY='shiire_data';
 
-const toNum=v=>{ if(typeof v==='number') return v; const n=parseFloat(String(v==null?'':v).replace(/[^0-9.\-]/g,'')); return isNaN(n)?0:n; };
+const z2h=s=>String(s==null?'':s).replace(/[０-９]/g,c=>String.fromCharCode(c.charCodeAt(0)-0xFEE0)); // 全角数字→半角
+const toNum=v=>{ if(typeof v==='number') return v; const n=parseFloat(z2h(v).replace(/[^0-9.\-]/g,'')); return isNaN(n)?0:n; };
 const fmt=n=>(Math.round(n)||0).toLocaleString('ja-JP');
 const blankRow=()=>({y:8,m:'',d:'',hinmei:'',qty:'',price:'',shiire:'',shiharai:'',bal:''});
 
@@ -194,7 +195,12 @@ function defData(){
   return { suppliers:[{id,name:'皆川畜産',addr:'東温市南野田386-5'}], cur:id, pages:{[id]:{opening:107110,rows}} };
 }
 let data;
-function load(){ try{ const s=localStorage.getItem(STORAGE_KEY); if(s) return JSON.parse(s); }catch(e){} return defData(); }
+let migrated=false;
+function normalizeData(d){ // 年月日の全角数字を半角に直す（過去データの修復）
+  try{ Object.values(d.pages||{}).forEach(p=>{ (p.rows||[]).forEach(r=>{ ['y','m','d'].forEach(k=>{ const v=r[k]; if(typeof v==='string'){ const nv=z2h(v).trim(); if(nv!==v){ r[k]=nv; migrated=true; } } }); }); }); }catch(e){}
+  return d;
+}
+function load(){ try{ const s=localStorage.getItem(STORAGE_KEY); if(s) return normalizeData(JSON.parse(s)); }catch(e){} return defData(); }
 function save(){ localStorage.setItem(STORAGE_KEY, JSON.stringify(data)); snapshot(); cloudAutoSave(); }
 
 function sup(){ return data.suppliers.find(s=>s.id===data.cur) || data.suppliers[0]; }
@@ -247,7 +253,7 @@ function liveRecalc(){
   document.getElementById('sumSh').textContent=fmt(sumSh);
   document.getElementById('endBal').textContent=fmt(bal);
 }
-function upd(i,k,v){ page().rows[i][k]=v; if(k==='hinmei'){ const tr=document.querySelector(`#tbody tr[data-i="${i}"]`); if(tr) tr.classList.toggle('pay-row', String(v).trim()==='支払'); } save(); }
+function upd(i,k,v){ if(k==='y'||k==='m'||k==='d') v=z2h(v).trim(); page().rows[i][k]=v; if(k==='hinmei'){ const tr=document.querySelector(`#tbody tr[data-i="${i}"]`); if(tr) tr.classList.toggle('pay-row', String(v).trim()==='支払'); } save(); }
 function updBal(i,v){ page().rows[i].bal=(String(v).trim()===''?'':toNum(v)); liveRecalc(); save(); }
 function updN(i,k,v){ page().rows[i][k]=toNum(v); liveRecalc(); save(); }
 function refmt(el){ const n=toNum(el.value); el.value=(el.value.trim()==='')?'':fmt(n); }
@@ -273,7 +279,7 @@ function exportCSV(){
   });
   const b=new Blob([csv],{type:'text/csv;charset=utf-8'}); const a=document.createElement('a'); a.href=URL.createObjectURL(b); a.download='仕入帳_税理士提出_'+new Date().toISOString().slice(0,10)+'.csv'; a.click(); toast('📊 Excel(CSV)で書き出しました');
 }
-function importData(e){ const f=e.target.files[0]; if(!f) return; const r=new FileReader(); r.onload=ev=>{ try{ snapshot(true); data=JSON.parse(ev.target.result); localStorage.setItem(STORAGE_KEY,JSON.stringify(data)); render(); toast('⬆ 読み込みました'); }catch(err){ toast('❌ 読込エラー'); } }; r.readAsText(f); e.target.value=''; }
+function importData(e){ const f=e.target.files[0]; if(!f) return; const r=new FileReader(); r.onload=ev=>{ try{ snapshot(true); data=normalizeData(JSON.parse(ev.target.result)); localStorage.setItem(STORAGE_KEY,JSON.stringify(data)); render(); toast('⬆ 読み込みました'); }catch(err){ toast('❌ 読込エラー'); } }; r.readAsText(f); e.target.value=''; }
 function toast(m){ const t=document.getElementById('toast'); t.textContent=m; t.classList.add('show'); clearTimeout(toast._t); toast._t=setTimeout(()=>t.classList.remove('show'),2000); }
 
 // ============ 検索・絞り込み ============
@@ -286,8 +292,8 @@ function applyFilter(){
     let ok=true;
     if(q){
       const empty=!String(r.hinmei||'').trim() && !toNum(r.shiire) && !toNum(r.shiharai);
-      const qn=q.replace(/月$/,''); const isNum=/^\d+$/.test(qn);
-      ok = empty || String(r.hinmei||'').includes(q) || (isNum && String(r.m)===qn);
+      const qn=z2h(q).replace(/月$/,''); const isNum=/^\d+$/.test(qn);
+      ok = empty || String(r.hinmei||'').includes(q) || (isNum && z2h(String(r.m??'')).trim()===qn);
     }
     tr.style.display=ok?'':'none'; if(ok) shown++;
   });
@@ -302,7 +308,8 @@ function calcMonthly(p){
     if(manual){ bal=toNum(r.bal); } else if(!r.memo){ bal+=si-sh; }
     const empty=!String(r.hinmei||'').trim() && !si && !sh;
     if(empty) return;
-    let k=(String(r.m??'').trim()==='') ? prev : (String(r.y??'').trim()+'-'+String(r.m).trim());
+    const mm=z2h(String(r.m??'')).replace(/月$/,'').trim(), yy=z2h(String(r.y??'')).trim();
+    let k=(mm==='') ? prev : (yy+'-'+mm);
     if(k==null) k='(月不明)';
     prev=k;
     if(!map[k]){ map[k]={si:0,sh:0,bal:bal}; order.push(k); }
@@ -384,7 +391,7 @@ let autoCloudTimer=null;
 function cloudAutoSave(){ clearTimeout(autoCloudTimer); autoCloudTimer=setTimeout(()=>pushCloud(true),2500); }
 async function pushCloud(silent){ if(!silent) toast('☁️ アップロード中...'); try{ const res=await fetch(SYNC_URL+'?action=save&key='+SYNC_KEY,{method:'POST',body:JSON.stringify(data)}); const j=await res.json(); if(j.success){ if(!silent) toast('☁️ クラウドに保存しました'); return true;} if(!silent) toast('エラー: '+(j.message||'')); }catch(e){ if(!silent) toast('通信エラー: '+e.message);} return false; }
 async function cloudUpload(){ await pushCloud(false); }
-function applyCloud(j){ if(!j||!j.success||!j.data) return false; let d=j.data; if(typeof d==='string'){ try{ d=JSON.parse(d);}catch(e){ return false; } } if(!d||!d.suppliers) return false; snapshot(true); data=d; localStorage.setItem(STORAGE_KEY,JSON.stringify(data)); render(); return true; }
+function applyCloud(j){ if(!j||!j.success||!j.data) return false; let d=j.data; if(typeof d==='string'){ try{ d=JSON.parse(d);}catch(e){ return false; } } if(!d||!d.suppliers) return false; snapshot(true); data=normalizeData(d); localStorage.setItem(STORAGE_KEY,JSON.stringify(data)); render(); return true; }
 async function cloudDownload(){ toast('☁️ ダウンロード中...'); try{ const res=await fetch(SYNC_URL+'?action=load&key='+SYNC_KEY); const j=await res.json(); let d=j&&j.data; if(typeof d==='string'){ try{ d=JSON.parse(d);}catch(e){} } if(!d||!d.suppliers){ toast('クラウドにデータがありません'); return; } if(!confirm('クラウドのデータを読み込みますか？\n今の内容は上書きされます。')) return; if(applyCloud(j)) toast('☁️ クラウドから読み込みました'); }catch(e){ toast('エラー'); } }
 
 // セルをクリック/移動したら中の文字を自動選択（Command+Cでコピーしやすく）
@@ -420,7 +427,8 @@ function scrollToLatest(){
   }));
 }
 data=load(); render(); scrollToLatest();
-(async()=>{ if(localStorage.getItem(STORAGE_KEY)!==null) return; try{ const res=await fetch(SYNC_URL+'?action=load&key='+SYNC_KEY); const j=await res.json(); let d=j&&j.data; if(typeof d==='string'){ try{ d=JSON.parse(d);}catch(e){} } if(d&&d.suppliers){ data=d; localStorage.setItem(STORAGE_KEY,JSON.stringify(data)); render(); scrollToLatest(); toast('☁️ クラウドから自動復元しました'); } }catch(e){} })();
+if(migrated){ migrated=false; save(); } // 全角→半角の修復があればクラウドにも反映
+(async()=>{ if(localStorage.getItem(STORAGE_KEY)!==null) return; try{ const res=await fetch(SYNC_URL+'?action=load&key='+SYNC_KEY); const j=await res.json(); let d=j&&j.data; if(typeof d==='string'){ try{ d=JSON.parse(d);}catch(e){} } if(d&&d.suppliers){ data=normalizeData(d); localStorage.setItem(STORAGE_KEY,JSON.stringify(data)); render(); scrollToLatest(); if(migrated){ migrated=false; save(); } toast('☁️ クラウドから自動復元しました'); } }catch(e){} })();
 
 // ============================================================
 // セル範囲選択 → コピー（Excelのように選んで Command+C）
