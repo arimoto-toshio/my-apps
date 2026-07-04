@@ -1,0 +1,624 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>🥩 HACCP 肉入荷記録</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ctext y='.9em' font-size='90'%3E🥩%3C/text%3E%3C/svg%3E">
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: 'Hiragino Sans', 'Meiryo', sans-serif; background: #f5f5f0; color: #2a1a0e; padding: 14px; font-size: 15px; }
+  .wrap { max-width: 900px; margin: 0 auto; }
+  .header { background: linear-gradient(135deg, #8b1a00, #c62828); color: white; padding: 14px 18px; border-radius: 12px; box-shadow: 0 3px 10px rgba(0,0,0,0.2); margin-bottom: 14px; }
+  .header h1 { font-size: 1.2rem; }
+  .header .sub { font-size: 0.82rem; opacity: 0.9; margin-top: 3px; }
+
+  .card { background: white; border-radius: 10px; padding: 14px; margin-bottom: 12px; box-shadow: 0 2px 6px rgba(0,0,0,0.08); }
+  .card-title { font-size: 1rem; font-weight: bold; color: #8b1a00; margin-bottom: 10px; padding-bottom: 6px; border-bottom: 2px solid #d4a017; }
+
+  .btn { padding: 9px 16px; border: none; border-radius: 8px; cursor: pointer; font-size: 0.95rem; font-weight: bold; font-family: inherit; transition: all 0.15s; }
+  .btn:active { transform: scale(0.97); }
+  .btn-red { background: #c62828; color: white; }
+  .btn-gold { background: #d4a017; color: white; }
+  .btn-teal { background: #006064; color: white; }
+  .btn-gray { background: #888; color: white; }
+  .btn-sm { padding: 6px 10px; font-size: 0.85rem; }
+
+  .form-row { display: flex; gap: 10px; flex-wrap: wrap; margin-bottom: 10px; }
+  .form-group { display: flex; flex-direction: column; gap: 4px; flex: 1; min-width: 110px; }
+  .form-group label { font-size: 0.78rem; color: #666; font-weight: bold; }
+  .form-group input, .form-group select { padding: 10px 10px; border: 1.5px solid #ccc; border-radius: 6px; font-size: 1rem; font-family: inherit; outline: none; background: white; }
+  .form-group input:focus, .form-group select:focus { border-color: #d4a017; background: #fffbea; }
+
+  .quick-btns { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 10px; }
+  .quick-btn { background: #fff3c0; border: 1.5px solid #d4a017; border-radius: 20px; padding: 8px 14px; font-size: 0.95rem; color: #8b1a00; cursor: pointer; font-weight: bold; }
+  .quick-btn:hover { background: #d4a017; color: white; }
+  .quick-btn.active { background: #8b1a00; color: white; border-color: #8b1a00; }
+
+  table { width: 100%; border-collapse: collapse; font-size: 0.88rem; }
+  thead tr { background: #8b1a00; color: white; }
+  thead th { padding: 8px 5px; text-align: center; font-weight: normal; font-size: 0.82rem; }
+  tbody tr { border-bottom: 1px solid #f0e0d0; }
+  tbody tr:nth-child(even) { background: #fafaf5; }
+  tbody td { padding: 7px 5px; vertical-align: middle; text-align: center; }
+  tbody td.name { text-align: left; font-weight: bold; padding-left: 10px; }
+  tbody td.amt { text-align: right; }
+  .del-btn { background: none; border: none; color: #c62828; cursor: pointer; font-size: 1rem; padding: 4px 8px; border-radius: 4px; }
+  .del-btn:hover { background: #fce4ec; }
+
+  .date-header { background: #fff8e1; padding: 10px 14px; border-left: 5px solid #d4a017; font-weight: bold; margin: 14px 0 8px 0; border-radius: 0 6px 6px 0; display: flex; justify-content: space-between; align-items: center; }
+  .date-header .confirm { font-size: 0.85rem; color: #8b1a00; }
+
+  .big-input { font-size: 1.5rem !important; text-align: center; font-weight: bold; padding: 12px !important; }
+  .expiry-input { font-size: 1.3rem !important; text-align: center; font-weight: bold; }
+
+  .empty { text-align: center; color: #aaa; padding: 30px; font-size: 0.9rem; }
+
+  @media (max-width: 600px) {
+    .form-group { min-width: 100%; }
+    thead th, tbody td { padding: 5px 3px; font-size: 0.78rem; }
+    .quick-btn { padding: 7px 11px; font-size: 0.88rem; }
+  }
+
+  /* ===== 保健所提出用の印刷シート ===== */
+  #printSheet { display: none; background: white; color: #000; }
+  #printSheet h1 { font-size: 18px; text-align: center; letter-spacing: 6px; margin-bottom: 8px; }
+  #printSheet .ps-sub { display: flex; justify-content: space-between; font-size: 12px; margin-bottom: 10px; flex-wrap: wrap; gap: 6px; }
+  #printSheet .ps-table { width: 100%; border-collapse: collapse; font-size: 11px; }
+  #printSheet .ps-table th, #printSheet .ps-table td { border: 1px solid #333; padding: 4px 6px; text-align: center; }
+  #printSheet .ps-table td.l { text-align: left; }
+  #printSheet .ps-table td.r { text-align: right; }
+  #printSheet .ps-table thead th { background: #eee !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; font-weight: bold; color: #000; }
+  #printSheet .ps-foot { display: flex; justify-content: space-between; align-items: flex-end; margin-top: 12px; }
+  #printSheet .ps-note { font-size: 10px; color: #333; max-width: 65%; }
+  #printSheet .ps-sign { display: flex; align-items: center; gap: 8px; font-size: 11px; }
+  #printSheet .ps-sign .box { display: inline-block; width: 56px; height: 56px; border: 1px solid #333; }
+  @page { size: A4 portrait; margin: 12mm; }
+  @media print {
+    body { background: #fff; padding: 0; }
+    body.printing-sheet .wrap { display: none !important; }
+    body.printing-sheet #printSheet { display: block !important; }
+  }
+
+  /* ===== 履歴モーダル ===== */
+  #histModal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 1000; align-items: center; justify-content: center; padding: 20px; }
+  #histModal .box2 { background: white; border-radius: 12px; padding: 20px; max-width: 520px; width: 100%; max-height: 85vh; overflow-y: auto; box-shadow: 0 8px 32px rgba(0,0,0,0.3); }
+  .hist-item { display: flex; align-items: center; gap: 10px; border: 1px solid #eee; border-radius: 10px; padding: 9px 12px; margin: 7px 0; font-size: 0.85rem; }
+  .hist-item .when { font-weight: bold; color: #8b1a00; }
+  .hist-item .info { color: #888; }
+  .hist-item button { margin-left: auto; white-space: nowrap; }
+</style>
+</head>
+<body>
+
+<div class="wrap">
+
+<div class="header" style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px;">
+  <div>
+    <h1>🥩 HACCP 肉入荷記録</h1>
+    <div class="sub">焼肉ありもと｜仕入れ記録帳</div>
+  </div>
+  <div style="display:flex;gap:8px;">
+    <button onclick="syncUpload()" style="background:rgba(255,255,255,0.2);border:1.5px solid rgba(255,255,255,0.6);color:white;padding:8px 14px;border-radius:8px;font-size:0.9rem;font-weight:bold;cursor:pointer;">☁︎↑</button>
+    <button onclick="syncDownload()" style="background:rgba(255,255,255,0.2);border:1.5px solid rgba(255,255,255,0.6);color:white;padding:8px 14px;border-radius:8px;font-size:0.9rem;font-weight:bold;cursor:pointer;">☁︎↓</button>
+  </div>
+</div>
+
+<!-- 入力 -->
+<div class="card">
+  <div class="card-title">📝 入荷を記録</div>
+
+  <div class="form-row">
+    <div class="form-group" style="flex:0 0 auto;min-width:160px;">
+      <label>日付</label>
+      <input type="date" id="inputDate">
+    </div>
+    <div class="form-group" style="flex:0 0 auto;min-width:140px;">
+      <label>仕入先</label>
+      <select id="inputSupplier">
+        <option value="皆川畜産">皆川畜産</option>
+        <option value="元永食品">元永食品</option>
+      </select>
+    </div>
+    <div class="form-group" style="flex:0 0 auto;min-width:110px;">
+      <label>確認者</label>
+      <input type="text" id="inputChecker" value="有本">
+    </div>
+  </div>
+
+  <div style="font-size:0.82rem;color:#666;font-weight:bold;margin-top:10px;margin-bottom:6px;">🥩 原料名（タップで選択）</div>
+  <div class="quick-btns" id="quickBtns"></div>
+
+  <div class="form-row" style="align-items:flex-end;">
+    <div class="form-group">
+      <label>🥩 原料名</label>
+      <input type="text" id="inputName" placeholder="例: レバー" class="big-input" style="font-size:1.1rem !important;">
+    </div>
+    <div class="form-group" style="flex:0 0 auto;min-width:130px;">
+      <label>⚖️ 数量 (kg / p)</label>
+      <input type="text" id="inputAmount" placeholder="2.4" class="big-input" inputmode="decimal">
+    </div>
+    <div class="form-group" style="flex:0 0 auto;min-width:160px;">
+      <label>📅 賞味期限</label>
+      <input type="date" id="inputExpiry" class="big-input">
+    </div>
+  </div>
+
+  <div style="text-align:center;margin-top:14px;">
+    <button class="btn btn-red" onclick="addEntry()" style="width:100%;padding:14px;font-size:1.05rem;">＋ 追加して保存</button>
+  </div>
+</div>
+
+<!-- 記録一覧 -->
+<div class="card">
+  <div class="card-title">📋 記録一覧</div>
+  <div class="form-row" style="margin-bottom:10px;">
+    <div class="form-group" style="flex:0 0 auto;min-width:120px;">
+      <label>表示月</label>
+      <select id="filterMonth" onchange="renderEntries()">
+        <option value="">すべて</option>
+      </select>
+    </div>
+    <div class="form-group" style="flex:1;justify-content:flex-end;align-self:flex-end;">
+      <div style="display:flex;gap:6px;flex-wrap:wrap;justify-content:flex-end;">
+        <button class="btn btn-teal btn-sm" onclick="exportJSON()">💾 保存</button>
+        <button class="btn btn-teal btn-sm" onclick="document.getElementById('importFile').click()">📂 読込</button>
+        <input type="file" id="importFile" accept=".json" style="display:none;" onchange="importJSON(event)">
+        <button class="btn btn-teal btn-sm" onclick="exportCSV()">📥 CSVで出力</button>
+        <button class="btn btn-gray btn-sm" onclick="openHist()">🕘 履歴</button>
+        <button class="btn btn-gold btn-sm" onclick="printList()">🖨 記録表を印刷</button>
+      </div>
+    </div>
+  </div>
+  <div id="entriesList"></div>
+</div>
+
+</div>
+
+<!-- 履歴（バックアップ）モーダル -->
+<div id="histModal" onclick="if(event.target===this)closeHist()">
+  <div class="box2">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;padding-bottom:8px;border-bottom:2px solid #d4a017;">
+      <div style="font-size:1.05rem;font-weight:bold;color:#8b1a00;">🕘 保存履歴（バックアップ）</div>
+      <button class="btn btn-red btn-sm" onclick="closeHist()">✕ 閉じる</button>
+    </div>
+    <div style="font-size:0.8rem;color:#666;margin-bottom:10px;">記録のたびに自動で履歴が残ります（最大15世代）。間違って消したときはここから復元できます。</div>
+    <div id="histBody"></div>
+  </div>
+</div>
+
+<!-- 保健所提出用の印刷シート（印刷時のみ表示） -->
+<div id="printSheet"></div>
+
+<script>
+// ============ DATA ============
+const MEAT_NAMES = [
+  'レバー', 'タン', 'ロース', 'バラ', 'ハラミ', 'ホルモン',
+  'ミノ', 'センマイ', 'アウト', 'ウインナー',
+  '地鶏', 'かしわ', '骨付きカルビ', 'ブタ'
+];
+
+function getData() {
+  try { return JSON.parse(localStorage.getItem('haccp_meat') || '[]'); }
+  catch(e) { return []; }
+}
+function setData(d) {
+  localStorage.setItem('haccp_meat', JSON.stringify(d));
+  autoBackup(d);
+  scheduleCloudSave();
+}
+
+// ============ クラウド同期 ============
+const SYNC_URL = 'https://script.google.com/macros/s/AKfycbxwL19mAenATUMILRsQYrDL0ThjU2C583Cj729OfzNHEH3drMcZCExYULRp4VGOZ11J/exec';
+
+// ---- 自動クラウド保存＋自動復元 ----
+let cloudReady = false, cloudTimer = null;
+function scheduleCloudSave() {
+  if (!cloudReady) return;               // 起動直後の誤上書き防止
+  clearTimeout(cloudTimer);
+  cloudTimer = setTimeout(pushCloudSilent, 1500);
+}
+async function pushCloudSilent() {
+  try {
+    await fetch(SYNC_URL + '?action=save&key=haccp_meat_data', {
+      method: 'POST', body: JSON.stringify(getData())
+    });
+  } catch (e) { /* オフライン等は無視（端末内には保存済み） */ }
+}
+async function autoRestore() {
+  try {
+    const local = localStorage.getItem('haccp_meat');
+    let hasLocal = false;
+    try { hasLocal = !!(local && JSON.parse(local).length > 0); } catch (e) {}
+    if (!hasLocal) {                       // 端末にデータが無い時だけクラウドから取得
+      const res = await fetch(SYNC_URL + '?action=load&key=haccp_meat_data');
+      const json = await res.json();
+      let d = json && json.data;
+      if (typeof d === 'string') { try { d = JSON.parse(d); } catch (e) {} }
+      if (Array.isArray(d) && d.length) {
+        localStorage.setItem('haccp_meat', JSON.stringify(d));
+        autoBackup(d);
+        renderEntries(); renderMonthFilter();
+      }
+    }
+  } catch (e) {}
+  cloudReady = true;                       // 以降の編集は自動でクラウド保存
+}
+
+async function syncUpload() {
+  if (!confirm('現在のデータをクラウドへ保存しますか？\n（クラウドの内容は上書きされます）')) return;
+  const data = getData();
+  try {
+    const res = await fetch(SYNC_URL + '?action=save&key=haccp_meat_data', {
+      method: 'POST',
+      body: JSON.stringify(data)
+    });
+    const json = await res.json();
+    if (json.success) alert('☁︎↑ クラウドに保存しました（' + data.length + '件）');
+    else alert('エラー: ' + (json.message || '不明'));
+  } catch(e) { alert('通信エラー: ' + e.message); }
+}
+
+async function syncDownload() {
+  if (!confirm('クラウドからデータを読み込みますか？\n（現在のデータは上書きされます）')) return;
+  try {
+    const res = await fetch(SYNC_URL + '?action=load&key=haccp_meat_data');
+    const json = await res.json();
+    if (!json.success || !json.data) { alert('クラウドにデータがありません'); return; }
+    let d = json.data;
+    if (typeof d === 'string') {
+      try { d = JSON.parse(d); } catch(e) { alert('データ形式エラー'); return; }
+    }
+    if (!Array.isArray(d)) { alert('データ不正: 配列形式ではありません'); return; }
+    autoBackup(getData(), true);   // 上書き前に現状を履歴へ
+    localStorage.setItem('haccp_meat', JSON.stringify(d));
+    autoBackup(d);
+    alert('☁︎↓ クラウドから読み込みました（' + d.length + '件）');
+    location.reload();
+  } catch(e) { alert('通信エラー: ' + e.message); }
+}
+
+// 自動バックアップ（最大15世代・10分間隔で世代を残す）
+function autoBackup(d, force) {
+  try {
+    if (!d || d.length === 0) return;
+    let backups = [];
+    try { backups = JSON.parse(localStorage.getItem('haccp_meat_backups') || '[]'); } catch(e) {}
+    const s = JSON.stringify(d);
+    if (backups.length && JSON.stringify(backups[0].data) === s) return;  // 同一内容は保存しない
+    if (!force && backups.length && Date.now() - new Date(backups[0].savedAt).getTime() < 10*60*1000) return;  // 10分間隔で世代を残す
+    backups.unshift({ data: d, savedAt: new Date().toISOString() });
+    backups = backups.slice(0, 15);
+    localStorage.setItem('haccp_meat_backups', JSON.stringify(backups));
+  } catch(e) {}
+}
+
+// ============ 履歴（バックアップ）UI ============
+function openHist() {
+  let backups = [];
+  try { backups = JSON.parse(localStorage.getItem('haccp_meat_backups') || '[]'); } catch(e) {}
+  let html = '';
+  if (!backups.length) html = '<div style="color:#888;padding:10px 2px;">まだ履歴がありません（記録すると自動で貯まります）</div>';
+  backups.forEach((b, i) => {
+    const when = new Date(b.savedAt).toLocaleString('ja-JP', { month:'numeric', day:'numeric', hour:'2-digit', minute:'2-digit' });
+    html += `<div class="hist-item"><span class="when">${when}</span><span class="info">${(b.data||[]).length}件</span>
+      <button class="btn btn-teal btn-sm" onclick="restoreHist(${i})">この時点に戻す</button></div>`;
+  });
+  document.getElementById('histBody').innerHTML = html;
+  document.getElementById('histModal').style.display = 'flex';
+}
+function closeHist() { document.getElementById('histModal').style.display = 'none'; }
+function restoreHist(i) {
+  let backups = [];
+  try { backups = JSON.parse(localStorage.getItem('haccp_meat_backups') || '[]'); } catch(e) {}
+  const b = backups[i];
+  if (!b || !b.data) return;
+  if (!confirm(`この時点のデータ（${b.data.length}件）に戻しますか？\n（今の内容も履歴に残るので、あとで戻せます）`)) return;
+  autoBackup(getData(), true);
+  localStorage.setItem('haccp_meat', JSON.stringify(b.data));
+  renderEntries(); renderMonthFilter();
+  scheduleCloudSave();
+  closeHist();
+  alert('🕘 復元しました（' + b.data.length + '件）');
+}
+
+// 起動時に空ならバックアップから復元を提案
+function checkRestore() {
+  try {
+    const current = getData();
+    if (current.length > 0) return;
+    const backups = JSON.parse(localStorage.getItem('haccp_meat_backups') || '[]');
+    if (backups.length === 0) return;
+    const latest = backups[0];
+    if (!latest.data || latest.data.length === 0) return;
+    const savedAt = new Date(latest.savedAt).toLocaleString('ja-JP');
+    if (confirm(`データが空です。\n${savedAt} のバックアップ（${latest.data.length}件）から復元しますか？`)) {
+      localStorage.setItem('haccp_meat', JSON.stringify(latest.data));
+      location.reload();
+    }
+  } catch(e) {}
+}
+
+// ============ UI ============
+function renderQuickBtns() {
+  const container = document.getElementById('quickBtns');
+  container.innerHTML = MEAT_NAMES.map(n =>
+    `<button class="quick-btn" onclick="selectName('${n}', this)">${n}</button>`
+  ).join('');
+}
+function selectName(n, btn) {
+  document.getElementById('inputName').value = n;
+  document.querySelectorAll('.quick-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  // 数量欄にフォーカス
+  setTimeout(() => document.getElementById('inputAmount').focus(), 50);
+}
+
+function addEntry() {
+  const date = document.getElementById('inputDate').value;
+  const supplier = document.getElementById('inputSupplier').value;
+  const checker = document.getElementById('inputChecker').value;
+  const name = document.getElementById('inputName').value.trim();
+  const amount = document.getElementById('inputAmount').value.trim();
+  const expiry = document.getElementById('inputExpiry').value.trim();
+
+  if (!date) { alert('日付を選択してください'); return; }
+  if (!name) { alert('原料名を入力してください'); return; }
+  if (!amount) { alert('数量を入力してください'); return; }
+
+  const entry = {
+    id: Date.now() + Math.random(),
+    date, supplier, checker, name, amount, expiry,
+    provided: '',
+    savedAt: new Date().toISOString(),
+  };
+
+  const data = getData();
+  data.push(entry);
+  setData(data);
+
+  // 入力欄クリア（日付・確認者・仕入先は残す）
+  document.getElementById('inputName').value = '';
+  document.getElementById('inputAmount').value = '';
+  document.getElementById('inputExpiry').value = '';
+  document.querySelectorAll('.quick-btn').forEach(b => b.classList.remove('active'));
+
+  renderEntries();
+  renderMonthFilter();
+
+  // スクロール＆通知
+  const list = document.getElementById('entriesList');
+  list.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+
+  // 原料名欄にフォーカス戻す
+  setTimeout(() => document.getElementById('inputName').focus(), 300);
+}
+
+function deleteEntry(id) {
+  if (!confirm('この記録を削除しますか？')) return;
+  autoBackup(getData(), true);   // 削除前の状態を必ず履歴に残す
+  const data = getData().filter(e => e.id !== id);
+  setData(data);
+  renderEntries();
+  renderMonthFilter();
+}
+
+function updateProvided(id, val) {
+  const data = getData();
+  const e = data.find(x => x.id === id);
+  if (e) { e.provided = val; setData(data); }
+}
+
+function renderEntries() {
+  const all = getData();
+  const filterMonth = document.getElementById('filterMonth').value;
+  const filtered = filterMonth ? all.filter(e => e.date.startsWith(filterMonth)) : all;
+
+  const list = document.getElementById('entriesList');
+  if (filtered.length === 0) {
+    list.innerHTML = '<div class="empty">まだ記録がありません。上のフォームから追加してください。</div>';
+    return;
+  }
+
+  // 日付＋仕入先でグループ化（新しい順）
+  const grouped = {};
+  filtered.forEach(e => {
+    const key = `${e.date}__${e.supplier || ''}`;
+    if (!grouped[key]) grouped[key] = [];
+    grouped[key].push(e);
+  });
+  const keys = Object.keys(grouped).sort().reverse();
+
+  list.innerHTML = keys.map(key => {
+    const entries = grouped[key];
+    const date = entries[0].date;
+    const checker = entries[0].checker || '';
+    const supplier = entries[0].supplier || '';
+    return `
+      <div class="date-header">
+        <div>📅 ${fmtDate(date)}（${supplier}）</div>
+        <div class="confirm">確認者: ${checker}</div>
+      </div>
+      <table>
+        <thead>
+          <tr>
+            <th style="width:30%;text-align:left;padding-left:10px;">原料名</th>
+            <th style="width:18%;">数量</th>
+            <th style="width:18%;">賞味期限(日)</th>
+            <th style="width:20%;">提供済</th>
+            <th style="width:14%;"></th>
+          </tr>
+        </thead>
+        <tbody>
+          ${entries.map(e => `
+            <tr>
+              <td class="name">${esc(e.name)}</td>
+              <td class="amt">${esc(e.amount)}</td>
+              <td>${esc(e.expiry)}</td>
+              <td><input type="date" value="${esc(e.provided)}" min="${esc(e.date)}" max="${esc(e.expiry)}" onchange="updateProvided(${e.id}, this.value)" style="padding:4px;border:1px solid #ddd;border-radius:4px;text-align:center;font-size:0.82rem;"></td>
+              <td><button class="del-btn" onclick="deleteEntry(${e.id})">✕</button></td>
+            </tr>
+          `).join('')}
+        </tbody>
+      </table>
+    `;
+  }).join('');
+}
+
+function renderMonthFilter() {
+  const data = getData();
+  const months = [...new Set(data.map(e => e.date.substring(0, 7)))].sort().reverse();
+  const sel = document.getElementById('filterMonth');
+  const current = sel.value;
+  sel.innerHTML = '<option value="">すべての月</option>' +
+    months.map(m => `<option value="${m}" ${current === m ? 'selected' : ''}>${m.replace('-', '年')}月</option>`).join('');
+}
+
+function fmtDate(s) {
+  if (!s) return '';
+  const d = new Date(s);
+  const wd = ['日','月','火','水','木','金','土'][d.getDay()];
+  return `${d.getMonth()+1}月${d.getDate()}日(${wd})`;
+}
+function esc(s) { return String(s||'').replace(/"/g, '&quot;').replace(/</g, '&lt;'); }
+
+// ============ EXPORT ============
+function exportCSV() {
+  const data = getData();
+  const filterMonth = document.getElementById('filterMonth').value;
+  const rows = filterMonth ? data.filter(e => e.date.startsWith(filterMonth)) : data;
+  if (rows.length === 0) { alert('データがありません'); return; }
+
+  const header = ['日付','仕入先','原料名','数量','賞味期限(日)','提供済','確認者'];
+  const csv = [header.join(',')].concat(
+    rows.map(e => [e.date, e.supplier, e.name, e.amount, e.expiry, e.provided, e.checker].join(','))
+  ).join('\n');
+
+  const bom = '\uFEFF';
+  const blob = new Blob([bom + csv], { type: 'text/csv;charset=utf-8' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = `HACCP_肉入荷_${filterMonth || 'all'}.csv`;
+  a.click();
+  URL.revokeObjectURL(url);
+}
+
+function exportJSON() {
+  const data = getData();
+  if (data.length === 0) { alert('データがありません'); return; }
+  const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  const ts = new Date().toISOString().slice(0,16).replace(/[:T]/g, '-');
+  a.download = `HACCP肉記録_${ts}.json`;
+  a.click();
+  URL.revokeObjectURL(url);
+}
+
+function importJSON(ev) {
+  const file = ev.target.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = e => {
+    try {
+      const imported = JSON.parse(e.target.result);
+      if (!Array.isArray(imported)) { alert('無効なファイルです'); return; }
+      const choice = confirm('OK: 現在のデータに追加\nキャンセル: 現在のデータを削除して置き換え');
+      const current = getData();
+      autoBackup(current, true);   // 上書き前に現状を履歴へ
+      const merged = choice ? current.concat(imported) : imported;
+      setData(merged);
+      renderEntries();
+      renderMonthFilter();
+      alert(`読み込みました（${imported.length}件）`);
+    } catch(err) {
+      alert('読み込み失敗: ' + err.message);
+    }
+  };
+  reader.readAsText(file);
+  ev.target.value = '';
+}
+
+function printList() {
+  const all = getData();
+  const fm = document.getElementById('filterMonth').value;
+  const rows = (fm ? all.filter(e => e.date.startsWith(fm)) : all)
+    .slice().sort((a, b) => (a.date < b.date ? -1 : a.date > b.date ? 1 : 0));
+  if (!rows.length) { alert('印刷するデータがありません'); return; }
+  const md = s => s ? `${+s.slice(5,7)}/${+s.slice(8,10)}` : '';
+  const title = fm ? fm.replace('-', '年') + '月分' : '全期間';
+  let h = `<h1>原材料（肉類）入荷・使用記録表</h1>
+    <div class="ps-sub">
+      <span>有限会社 焼肉ありもと</span>
+      <span>対象: ${esc(title)}</span>
+      <span>出力日: ${fmtDate(todayStr())}</span>
+    </div>
+    <table class="ps-table"><thead><tr>
+      <th style="width:10%;">入荷日</th><th style="width:15%;">仕入先</th><th style="width:23%;">原料名</th>
+      <th style="width:13%;">数量(kg/p)</th><th style="width:13%;">賞味期限</th><th style="width:13%;">提供日</th><th style="width:13%;">確認者</th>
+    </tr></thead><tbody>`;
+  rows.forEach(e => {
+    h += `<tr><td>${md(e.date)}</td><td>${esc(e.supplier)}</td><td class="l">${esc(e.name)}</td><td class="r">${esc(e.amount)}</td><td>${md(e.expiry)}</td><td>${md(e.provided)}</td><td>${esc(e.checker)}</td></tr>`;
+  });
+  h += `</tbody></table>
+    <div class="ps-foot">
+      <div class="ps-note">HACCPの考え方を取り入れた衛生管理：原材料の入荷時に賞味期限・状態を確認し記録する（重要管理点）。本表はアプリ「HACCP肉記録」より出力。</div>
+      <div class="ps-sign"><span>責任者確認</span><span class="box"></span></div>
+    </div>`;
+  document.getElementById('printSheet').innerHTML = h;
+  document.body.classList.add('printing-sheet');
+  const done = () => { document.body.classList.remove('printing-sheet'); window.removeEventListener('afterprint', done); };
+  window.addEventListener('afterprint', done);
+  setTimeout(done, 3000);
+  window.print();
+}
+
+// ============ INIT ============
+function todayStr() {
+  const d = new Date();
+  const y = d.getFullYear();
+  const m = String(d.getMonth()+1).padStart(2,'0');
+  const dd = String(d.getDate()).padStart(2,'0');
+  return `${y}-${m}-${dd}`;
+}
+document.getElementById('inputDate').value = todayStr();
+renderQuickBtns();
+checkRestore();
+renderEntries();
+renderMonthFilter();
+updateExpiryRange();
+autoRestore();
+
+// 賞味期限の選択範囲を仕入日の当月＋翌月末に制限
+function updateExpiryRange() {
+  const dateVal = document.getElementById('inputDate').value;
+  if (!dateVal) return;
+  const [y, m] = dateVal.split('-').map(Number);
+  const minDate = `${y}-${String(m).padStart(2, '0')}-01`;
+  // 翌月末日
+  const nextMonth = m === 12 ? 1 : m + 1;
+  const nextYear = m === 12 ? y + 1 : y;
+  const lastDay = new Date(nextYear, nextMonth, 0).getDate();
+  const maxDate = `${nextYear}-${String(nextMonth).padStart(2, '0')}-${String(lastDay).padStart(2, '0')}`;
+  const expiry = document.getElementById('inputExpiry');
+  expiry.min = minDate;
+  expiry.max = maxDate;
+}
+document.getElementById('inputDate').addEventListener('change', updateExpiryRange);
+
+// Enterキーで次の欄へ
+document.getElementById('inputName').addEventListener('keydown', e => {
+  if (e.key === 'Enter') { e.preventDefault(); document.getElementById('inputAmount').focus(); }
+});
+document.getElementById('inputAmount').addEventListener('keydown', e => {
+  if (e.key === 'Enter') { e.preventDefault(); document.getElementById('inputExpiry').focus(); }
+});
+document.getElementById('inputExpiry').addEventListener('keydown', e => {
+  if (e.key === 'Enter') { e.preventDefault(); addEntry(); }
+});
+</script>
+
+</body>
+</html>
