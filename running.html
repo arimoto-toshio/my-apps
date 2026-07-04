@@ -1,0 +1,931 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>🏃 ランニング記録</title>
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' rx='22' fill='%23ff7a93'/><g stroke='%23ffffff' stroke-width='3.4' stroke-linecap='round' opacity='0.9'><line x1='9' y1='45' x2='22' y2='45'/><line x1='7' y1='55' x2='24' y2='55'/><line x1='11' y1='65' x2='21' y2='65'/></g><rect x='26' y='62' width='56' height='10' rx='5' fill='%23ffffff'/><path d='M34 62 L34 47 Q34 40 41 40 L51 40 Q56 40 58 44 L66 58 Q68 62 73 62 Z' fill='%232ec4b6'/><circle cx='40' cy='50' r='2.5' fill='%2322343a'/><circle cx='47' cy='50' r='2.5' fill='%2322343a'/><path d='M39 55 Q43.5 59 48 55' stroke='%2322343a' stroke-width='2' fill='none' stroke-linecap='round'/><circle cx='36.5' cy='54' r='2' fill='%23ff8fa3'/><circle cx='50.5' cy='54' r='2' fill='%23ff8fa3'/></svg>">
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: 'Meiryo','メイリオ',sans-serif; background: #f0f4f8; color: #1a1a2e; font-size: 13px; }
+
+  .header {
+    background: linear-gradient(135deg, #ff9a8b 0%, #ff6b8b 45%, #ffa6c9 100%);
+    color: white; padding: 18px 22px;
+    display: flex; align-items: center; justify-content: space-between;
+    box-shadow: 0 3px 12px rgba(255,107,139,0.35); flex-wrap: wrap; gap: 8px;
+    position: sticky; top: 0; z-index: 100;
+  }
+  .header h1 { font-size: 22px; text-shadow: 0 1px 3px rgba(0,0,0,0.15); }
+  .header-btns { display: flex; gap: 8px; flex-wrap: wrap; }
+  .btn {
+    padding: 6px 14px; border: none; border-radius: 6px; cursor: pointer;
+    font-size: 12px; font-weight: 600; font-family: inherit;
+  }
+  .btn-gold { background: #fff3c4; color: #b45309; }
+  .btn-outline { background: rgba(255,255,255,0.22); color: white; border: 1px solid rgba(255,255,255,0.55); }
+
+  .main { padding: 16px; max-width: 1100px; margin: 0 auto; }
+
+  /* Summary cards */
+  .summary { display: flex; gap: 12px; margin-bottom: 20px; flex-wrap: wrap; }
+  .sum-card {
+    background: white; border-radius: 10px; padding: 14px 20px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.07); flex: 1; min-width: 150px; text-align: center;
+  }
+  .sum-label { font-size: 11px; color: #888; margin-bottom: 4px; }
+  .sum-value { font-size: 22px; font-weight: 700; color: #1a3a6e; font-variant-numeric: tabular-nums; }
+  .sum-unit  { font-size: 11px; color: #888; margin-top: 2px; }
+  .sum-delta { display: inline-block; font-size: 10.5px; font-weight: 700; border-radius: 999px; padding: 1px 8px; margin-top: 4px; }
+  .sum-delta.up   { background: #dcfce7; color: #15803d; }
+  .sum-delta.down { background: #fee2e2; color: #b91c1c; }
+  .sum-delta.flat { background: #f1f5f9; color: #64748b; }
+
+  /* Charts */
+  .charts-flex { display: flex; gap: 20px; flex-wrap: wrap; }
+  .chart-box { flex: 1; min-width: 280px; }
+  .chart-label { font-size: 12px; font-weight: 700; color: #1a3a6e; margin-bottom: 6px; }
+  .chart-box canvas { display: block; max-width: 100%; }
+
+  /* Tables */
+  .table-section { background: white; border-radius: 10px; padding: 16px; margin-bottom: 20px; box-shadow: 0 2px 8px rgba(0,0,0,0.07); overflow-x: auto; }
+  .section-title { font-size: 15px; font-weight: 700; color: #1a3a6e; margin-bottom: 12px; display: flex; align-items: center; gap: 8px; }
+
+  /* sticky列を効かせるため separate + 右下ボーダー方式 */
+  table { border-collapse: separate; border-spacing: 0; min-width: 100%; border: 1px solid #d1d9e6; }
+  th, td { border-right: 1px solid #d1d9e6; border-bottom: 1px solid #d1d9e6; text-align: center; padding: 5px 4px; white-space: nowrap; font-variant-numeric: tabular-nums; background: white; }
+  th:last-child, td:last-child { border-right: none; }
+  tfoot tr:last-child td { border-bottom: none; }
+  tbody tr:nth-child(even) td { background: #f6f9fc; }
+  th { background: #1a3a6e; color: white; font-weight: 600; font-size: 12px; padding: 7px 6px; }
+  th.year-col { background: #1e40af; }
+  th.cur-month-col { background: #16a34a; }
+  td.year-cell { background: #e8edf8 !important; font-weight: 700; color: #1a3a6e; }
+  td.total-cell { background: #fef08a !important; font-weight: 700; color: #92400e; }
+  td.grand-total { background: #ef4444 !important; color: white; font-weight: 700; }
+  /* 年の列を左に固定（横スクロールしても見える） */
+  th.year-col, td.year-cell, td.grand-total:first-child { position: sticky; left: 0; z-index: 2; box-shadow: 2px 0 4px rgba(0,0,0,0.08); }
+
+  /* Editable input */
+  .ci {
+    width: 54px; border: none; background: transparent;
+    text-align: center; font-size: 12px; font-family: inherit;
+    padding: 2px; outline: none;
+  }
+  .ci:focus { background: #dbeafe; border-radius: 3px; }
+  .ci::-webkit-inner-spin-button { opacity: 0.4; }
+
+  /* Current month highlight（枠線方式：ヒートマップ色と共存） */
+  .cur-month { box-shadow: inset 0 0 0 2.5px #16a34a !important; }
+  .cur-month .ci { background: transparent; }
+  .cur-month .ci:focus { background: #bbf7d0; }
+
+  /* Best month highlight（距離表は枠線、回数表は背景） */
+  .best-dist { box-shadow: inset 0 0 0 2px #f59e0b; }
+  .best-cnt  { background: #fff7ed !important; }
+
+  /* 距離ヒートマップ（km帯ごとの色分け） */
+  td.h1 { background: #e0f2fe !important; }  /* 〜99km */
+  td.h2 { background: #dcfce7 !important; }  /* 100〜149km */
+  td.h3 { background: #fde68a !important; }  /* 150〜199km */
+  td.h4 { background: #fdba74 !important; }  /* 200km〜 */
+  .heat-legend { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; font-size: 11px; color: #64748b; margin-bottom: 10px; }
+  .hl { display: inline-block; border-radius: 5px; padding: 2px 9px; font-weight: 700; color: #334155; border: 1px solid rgba(0,0,0,0.08); }
+  .hl.h1 { background: #e0f2fe; }
+  .hl.h2 { background: #dcfce7; }
+  .hl.h3 { background: #fde68a; }
+  .hl.h4 { background: #fdba74; }
+  .hl.hb { background: white; box-shadow: inset 0 0 0 2px #f59e0b; }
+
+  /* Year add */
+  .year-controls { display: flex; gap: 8px; align-items: center; margin-top: 12px; flex-wrap: wrap; }
+  .year-controls input { padding: 6px 10px; border: 1px solid #ccc; border-radius: 6px; font-size: 13px; width: 90px; }
+
+  /* Toast */
+  #toast { position: fixed; bottom: 20px; right: 20px; background: #1a1a2e; color: white; padding: 10px 18px; border-radius: 8px; font-size: 13px; z-index: 9999; opacity: 0; transition: opacity 0.3s; pointer-events: none; }
+  #toast.show { opacity: 1; }
+
+  /* 愛媛一周チャレンジ */
+  .ehime-card {
+    background: linear-gradient(135deg, #0b1f4d 0%, #1e40af 60%, #2563eb 100%);
+    border-radius: 14px; padding: 18px 22px; margin-bottom: 20px;
+    color: #fff; box-shadow: 0 6px 20px rgba(20,40,110,0.25);
+    position: relative; overflow: hidden;
+  }
+  .ehime-card::after {
+    content: ''; position: absolute; top: -40px; right: -40px;
+    width: 160px; height: 160px; border-radius: 50%;
+    background: radial-gradient(circle, rgba(253,224,71,0.18), transparent 70%);
+  }
+  .ehime-title { font-size: 15px; font-weight: 700; margin-bottom: 14px; letter-spacing: 1px; display:flex; align-items:center; gap:7px; }
+  .ehime-flex { display: flex; gap: 24px; align-items: center; flex-wrap: wrap; position: relative; z-index: 1; }
+  .ehime-map { flex: 0 0 auto; }
+  .ehime-map svg { width: 350px; height: 344px; display: block; filter: drop-shadow(0 3px 6px rgba(0,0,0,0.3)); overflow: visible; }
+  .ehime-stats { flex: 1; min-width: 180px; }
+  .lap-big { font-size: 52px; font-weight: 800; line-height: 0.95; color: #fde047; text-shadow: 0 2px 8px rgba(0,0,0,0.25); }
+  .lap-big span { font-size: 22px; margin-left: 4px; color: #fff; font-weight: 700; }
+  .lap-cheer { font-size: 14px; font-weight: 700; color: #fff; margin: 4px 0 12px; }
+  .lap-bar-wrap { background: rgba(255,255,255,0.18); border-radius: 20px; height: 14px; overflow: hidden; margin-bottom: 6px; }
+  .lap-bar { height: 100%; background: linear-gradient(90deg, #fde047, #fb923c); border-radius: 20px; transition: width 1s ease; }
+  .lap-prog-txt { font-size: 12px; color: #cbd5e1; margin-bottom: 12px; }
+  .lap-prog-txt b { color: #fde047; font-size: 13px; }
+  .lap-detail { font-size: 11.5px; color: #c7d2fe; line-height: 1.7; border-top: 1px solid rgba(255,255,255,0.15); padding-top: 10px; }
+  .lap-detail b { color: #fff; }
+  @keyframes runnerBob { 0%,100% { transform: translateY(0); } 50% { transform: translateY(-2px); } }
+  #ehimeRunner .runner-bob { animation: runnerBob 0.8s ease-in-out infinite; }
+
+  /* 🎯 月間目標 */
+  .goal-bar-wrap { background: #e2e8f0; border-radius: 20px; height: 16px; overflow: hidden; margin: 10px 0 8px; }
+  .goal-bar { height: 100%; background: linear-gradient(90deg, #2ec4b6, #16a34a); border-radius: 20px; transition: width 0.8s ease; }
+  .goal-bar.done { background: linear-gradient(90deg, #fde047, #fb923c); }
+  .goal-text { font-size: 13px; color: #334155; line-height: 1.7; }
+  .goal-text b { color: #1a3a6e; }
+  #goalInput { width: 80px; padding: 4px 8px; border: 1.5px solid #cbd5e1; border-radius: 6px; font-size: 14px; font-weight: 700; text-align: right; color: #1a3a6e; }
+  .goal-done-msg { font-size: 15px; font-weight: 800; color: #d97706; }
+
+  /* 🏅 ベスト記録・バッジ */
+  .best-flex { display: flex; gap: 12px; flex-wrap: wrap; margin-bottom: 12px; }
+  .best-chip { flex: 1; min-width: 140px; background: #f7f9fb; border-radius: 10px; padding: 10px 14px; text-align: center; }
+  .best-chip .bc-label { font-size: 11px; color: #888; }
+  .best-chip .bc-value { font-size: 19px; font-weight: 800; color: #1a3a6e; margin-top: 2px; font-variant-numeric: tabular-nums; }
+  .best-chip .bc-sub { font-size: 11px; color: #64748b; margin-top: 2px; }
+  .badge-row { display: flex; gap: 10px; flex-wrap: wrap; margin-bottom: 12px; }
+  .badge { display: flex; flex-direction: column; align-items: center; gap: 3px; width: 86px; text-align: center; }
+  .badge .b-icon { width: 52px; height: 52px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 24px;
+    background: radial-gradient(circle at 35% 30%, #fef3c7, #f59e0b); box-shadow: 0 2px 6px rgba(245,158,11,0.4); }
+  .badge.locked .b-icon { background: #e2e8f0; box-shadow: none; filter: grayscale(1); opacity: 0.55; }
+  .badge .b-label { font-size: 10.5px; font-weight: 700; color: #92400e; line-height: 1.3; }
+  .badge.locked .b-label { color: #94a3b8; }
+  .next-milestone { font-size: 12.5px; color: #334155; }
+  .next-milestone b { color: #b45309; }
+
+  /* 🕘 履歴モーダル */
+  #histModal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 1000; align-items: center; justify-content: center; padding: 20px; }
+  #histModal .box { background: white; border-radius: 12px; padding: 20px; max-width: 520px; width: 100%; max-height: 85vh; overflow-y: auto; box-shadow: 0 8px 32px rgba(0,0,0,0.3); }
+  .hist-item { display: flex; align-items: center; gap: 10px; border: 1px solid #e2e8f0; border-radius: 10px; padding: 9px 12px; margin: 7px 0; font-size: 12.5px; }
+  .hist-item .when { font-weight: 700; color: #1a3a6e; }
+  .hist-item .info { color: #888; }
+  .hist-item button { margin-left: auto; border: none; background: #2f6fb0; color: #fff; border-radius: 8px; padding: 7px 14px; cursor: pointer; font-size: 12px; font-weight: 600; white-space: nowrap; }
+
+  @media (max-width: 600px) {
+    .main { padding: 10px; }
+    .ci { width: 42px; font-size: 11px; }
+    th, td { padding: 4px 2px; font-size: 11px; }
+    .ehime-flex { gap: 14px; justify-content: center; }
+    .ehime-map svg { width: 270px; height: 265px; max-width: 100%; }
+    .lap-big { font-size: 44px; }
+  }
+</style>
+</head>
+<body>
+
+<div class="header">
+  <h1 style="display:flex;align-items:center;gap:9px;">
+    <svg width="56" height="56" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="ランニング" style="flex:none;filter:drop-shadow(0 2px 5px rgba(0,0,0,0.22));">
+      <defs>
+        <linearGradient id="rgBg" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0" stop-color="#ffb199"/>
+          <stop offset="1" stop-color="#ff6b8b"/>
+        </linearGradient>
+      </defs>
+      <circle cx="50" cy="50" r="48" fill="#ffffff"/>
+      <g stroke="#ff9aae" stroke-width="3.4" stroke-linecap="round" opacity="0.95">
+        <line x1="9" y1="45" x2="22" y2="45"/>
+        <line x1="7" y1="55" x2="24" y2="55"/>
+        <line x1="11" y1="65" x2="21" y2="65"/>
+      </g>
+      <rect x="26" y="62" width="56" height="10" rx="5" fill="#5eead4"/>
+      <path d="M34 62 L34 47 Q34 40 41 40 L51 40 Q56 40 58 44 L66 58 Q68 62 73 62 Z" fill="#2ec4b6"/>
+      <g stroke="#ffffff" stroke-width="2.4" stroke-linecap="round">
+        <line x1="54" y1="46" x2="60" y2="50"/>
+        <line x1="57" y1="50" x2="63" y2="54"/>
+      </g>
+      <circle cx="40" cy="50" r="2.5" fill="#22343a"/>
+      <circle cx="47" cy="50" r="2.5" fill="#22343a"/>
+      <path d="M39 55 Q43.5 59 48 55" stroke="#22343a" stroke-width="2" fill="none" stroke-linecap="round"/>
+      <circle cx="36.5" cy="54" r="2" fill="#ff8fa3"/>
+      <circle cx="50.5" cy="54" r="2" fill="#ff8fa3"/>
+    </svg>
+    ランニング記録
+  </h1>
+  <div class="header-btns">
+    <button class="btn btn-outline" onclick="exportData()">⬇ 書き出し</button>
+    <label class="btn btn-outline" style="cursor:pointer;">⬆ 読み込み<input type="file" accept=".json" onchange="importData(event)" style="display:none"></label>
+    <button class="btn btn-gold" onclick="saveAll()">💾 保存</button>
+    <button class="btn" style="background:#3a8a4a;color:#fff;" onclick="cloudUpload()">☁️↑ クラウド保存</button>
+    <button class="btn" style="background:#2f6fb0;color:#fff;" onclick="cloudDownload()">☁️↓ クラウド読込</button>
+    <button class="btn btn-outline" onclick="openHist()">🕘 履歴</button>
+  </div>
+</div>
+
+<!-- 履歴（バックアップ）モーダル -->
+<div id="histModal" onclick="if(event.target===this)closeHist()">
+  <div class="box">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;padding-bottom:8px;border-bottom:2px solid #ff6b8b;">
+      <div style="font-size:15px;font-weight:700;color:#1a3a6e;">🕘 保存履歴（バックアップ）</div>
+      <button class="btn" style="background:#fee2e2;color:#b91c1c;" onclick="closeHist()">✕ 閉じる</button>
+    </div>
+    <div style="font-size:11.5px;color:#888;margin-bottom:10px;">記録のたびに自動で履歴が残ります（最大15世代）。間違って消したときはここから復元できます。</div>
+    <div id="histBody"></div>
+  </div>
+</div>
+
+<div class="main">
+  <!-- Summary -->
+  <div class="summary">
+    <div class="sum-card">
+      <div class="sum-label">累計距離</div>
+      <div class="sum-value" id="s-dist">0</div>
+      <div class="sum-unit">km</div>
+    </div>
+    <div class="sum-card">
+      <div class="sum-label">累計回数</div>
+      <div class="sum-value" id="s-cnt">0</div>
+      <div class="sum-unit">回</div>
+    </div>
+    <div class="sum-card">
+      <div class="sum-label">平均距離</div>
+      <div class="sum-value" id="s-avg">0</div>
+      <div class="sum-unit">km / 回</div>
+    </div>
+    <div class="sum-card">
+      <div class="sum-label">今年の距離</div>
+      <div class="sum-value" id="s-year">0</div>
+      <div class="sum-unit">km</div>
+      <div id="s-year-delta"></div>
+    </div>
+    <div class="sum-card">
+      <div class="sum-label">今月の距離</div>
+      <div class="sum-value" id="s-month">0</div>
+      <div class="sum-unit">km</div>
+      <div id="s-month-delta"></div>
+    </div>
+    <div class="sum-card">
+      <div class="sum-label">活動年数</div>
+      <div class="sum-value" id="s-years">0</div>
+      <div class="sum-unit">年</div>
+    </div>
+  </div>
+
+  <!-- 🎯 今月の目標 -->
+  <div class="table-section">
+    <div class="section-title">🎯 今月の目標　<input type="number" id="goalInput" min="0" step="10" onchange="onGoalChange(this)"> km</div>
+    <div class="goal-bar-wrap"><div class="goal-bar" id="goalBar" style="width:0%"></div></div>
+    <div class="goal-text" id="goalText"></div>
+  </div>
+
+  <!-- 🏅 ベスト記録・バッジ -->
+  <div class="table-section">
+    <div class="section-title">🏅 ベスト記録・バッジ</div>
+    <div id="bestBody"></div>
+  </div>
+
+  <!-- 愛媛一周チャレンジ -->
+  <div class="ehime-card">
+    <div class="ehime-title">🗾 愛媛県一周チャレンジ〈内子スタート〉</div>
+    <div class="ehime-flex">
+      <div class="ehime-map">
+        <!-- 実際の緯度経度を投影した愛媛県の形（スタート＝内子の最寄り海岸・長浜） -->
+        <svg id="ehimeSvg" viewBox="0 0 228 224" xmlns="http://www.w3.org/2000/svg">
+          <path id="ehimeBg" d="M70,84
+            Q76,76 83,70 Q90,57 98,45 L107,28 Q117,12 130,7 Q137,12 142,14
+            L146,25 Q152,33 161,37 Q168,33 174,29 L199,25 L213,20 L221,35
+            L199,51 L180,55 L161,58 L142,67 L133,82 L123,101 L115,125
+            L108,143 L97,165 L92,180 L80,205 L77,219
+            L69,189 L79,181 L73,184 L60,180 L72,176 L73,161 L79,143
+            L78,128 L66,122 L63,107
+            L50,108 L26,120 L11,125 L25,117 L37,110 L54,102 L60,99 L66,93 Z"
+            fill="rgba(255,255,255,0.10)" stroke="rgba(255,255,255,0.35)" stroke-width="2.5"
+            stroke-linecap="round" stroke-linejoin="round"/>
+          <path id="ehimeProg" d=""
+            fill="none" stroke="#fde047" stroke-width="3.5"
+            stroke-linecap="round" stroke-linejoin="round"/>
+          <!-- 都市ラベル -->
+          <g font-family="-apple-system, sans-serif" font-size="9" font-weight="700" fill="rgba(255,255,255,0.85)">
+            <circle cx="104" cy="47" r="2" fill="rgba(255,255,255,0.8)"/><text x="109" y="50">松山</text>
+            <circle cx="140" cy="16" r="2" fill="rgba(255,255,255,0.8)"/><text x="145" y="19">今治</text>
+            <circle cx="79" cy="143" r="2" fill="rgba(255,255,255,0.8)"/><text x="84" y="147">宇和島</text>
+            <text x="8" y="138" font-size="8.5">佐田岬</text>
+          </g>
+          <!-- スタート（内子の最寄り海岸・長浜） -->
+          <g id="startGroup" font-family="-apple-system, sans-serif">
+            <line x1="70" y1="84" x2="92" y2="93" stroke="#fb7185" stroke-width="1.6" stroke-dasharray="3 2"/>
+            <circle cx="70" cy="84" r="4" fill="#fde047" stroke="#0b1f4d" stroke-width="1.4"/>
+            <text x="64" y="76" font-size="9.5" font-weight="700" fill="#fde047" text-anchor="end">🚩スタート/ゴール</text>
+          </g>
+          <!-- 内子⇄大洲 区間 -->
+          <g id="ucozGroup" font-family="-apple-system, sans-serif">
+            <line x1="79" y1="101" x2="92" y2="93" stroke="#fb7185" stroke-width="1.6" stroke-dasharray="3 2"/>
+            <circle cx="79" cy="101" r="3" fill="#fb7185" stroke="#fff" stroke-width="1.2"/>
+            <circle cx="92" cy="93" r="3" fill="#fb7185" stroke="#fff" stroke-width="1.2"/>
+            <text x="75" y="112" font-size="8.5" font-weight="700" fill="#fff" text-anchor="end">大洲</text>
+            <text x="97" y="91" font-size="8.5" font-weight="700" fill="#fff" text-anchor="start">内子</text>
+            <text x="93" y="104" font-size="7.5" font-weight="700" fill="#fecdd3" text-anchor="start">約10km</text>
+          </g>
+          <!-- かわいいランナーちゃん（ハチマキ＋ティールのシューズ） -->
+          <g id="ehimeRunner">
+            <g class="runner-bob">
+              <g stroke="#fde047" stroke-width="1.6" stroke-linecap="round" opacity="0.9">
+                <line x1="-14" y1="-2" x2="-9" y2="-2"/>
+                <line x1="-16" y1="2" x2="-10" y2="2"/>
+              </g>
+              <line x1="-2" y1="6" x2="-6" y2="11" stroke="#0b1f4d" stroke-width="2" stroke-linecap="round"/>
+              <line x1="2" y1="6" x2="6" y2="10" stroke="#0b1f4d" stroke-width="2" stroke-linecap="round"/>
+              <ellipse cx="-6.5" cy="11.5" rx="2.2" ry="1.6" fill="#5eead4" stroke="#0b1f4d" stroke-width="0.8"/>
+              <ellipse cx="6.5" cy="10.5" rx="2.2" ry="1.6" fill="#5eead4" stroke="#0b1f4d" stroke-width="0.8"/>
+              <circle cx="0" cy="0" r="7.5" fill="#ffffff" stroke="#0b1f4d" stroke-width="1.2"/>
+              <path d="M-7.2 -3.2 A7.5 7.5 0 0 1 7.2 -3.2 L7 -0.8 A7.5 7.5 0 0 0 -7 -0.8 Z" fill="#fde047"/>
+              <path d="M7 -2 L11 -4 L10 -0.5 Z" fill="#fde047"/>
+              <circle cx="-2.4" cy="1" r="1.1" fill="#22343a"/>
+              <circle cx="2.4" cy="1" r="1.1" fill="#22343a"/>
+              <circle cx="-4.7" cy="3.2" r="1.4" fill="#ff8fa3"/>
+              <circle cx="4.7" cy="3.2" r="1.4" fill="#ff8fa3"/>
+              <path d="M-1.6 3.6 Q0 5.4 1.6 3.6" stroke="#22343a" stroke-width="1" fill="none" stroke-linecap="round"/>
+            </g>
+          </g>
+        </svg>
+      </div>
+      <div class="ehime-stats">
+        <div class="lap-big" id="lapBig">0<span>周目</span></div>
+        <div class="lap-cheer" id="lapCheer">スタート地点</div>
+        <div class="lap-bar-wrap"><div class="lap-bar" id="lapBar" style="width:0%"></div></div>
+        <div class="lap-prog-txt" id="lapProg"></div>
+        <div class="lap-detail" id="lapDetail"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 推移グラフ -->
+  <div class="table-section">
+    <div class="section-title">📈 推移グラフ</div>
+    <div class="charts-flex">
+      <div class="chart-box">
+        <div class="chart-label">年間距離（km）</div>
+        <canvas id="yearChart"></canvas>
+      </div>
+      <div class="chart-box">
+        <div class="chart-label">直近12ヶ月の距離（km）</div>
+        <canvas id="monthChart"></canvas>
+      </div>
+    </div>
+  </div>
+
+  <!-- 距離 table -->
+  <div class="table-section">
+    <div class="section-title">📏 距離（km）</div>
+    <div class="heat-legend">
+      色分け：
+      <span class="hl h1">〜99</span>
+      <span class="hl h2">100〜149</span>
+      <span class="hl h3">150〜199</span>
+      <span class="hl h4">200km〜</span>
+      <span class="hl hb">年間ベスト月</span>
+    </div>
+    <table id="distTable"></table>
+    <div class="year-controls">
+      <input type="number" id="addYearDist" placeholder="例: 2026" min="2000" max="2099">
+      <button class="btn btn-gold" onclick="addYear()">＋ 年を追加</button>
+    </div>
+  </div>
+
+  <!-- 回数 table -->
+  <div class="table-section">
+    <div class="section-title">🔢 回数</div>
+    <table id="cntTable"></table>
+  </div>
+</div>
+
+<div id="toast"></div>
+
+<script>
+const STORAGE_KEY = 'running_log_v1';
+const MONTHS = [1,2,3,4,5,6,7,8,9,10,11,12];
+const now = new Date();
+const CUR_YEAR  = now.getFullYear();
+const CUR_MONTH = now.getMonth() + 1;
+
+let data = load();
+
+// --- Data structure: { years: [2015,...], dist: {"2015-3": 102.99, ...}, cnt: {"2015-3": 14, ...} }
+function load() {
+  try {
+    const s = localStorage.getItem(STORAGE_KEY);
+    if (s) return JSON.parse(s);
+  } catch(e) {}
+  return {
+    years: [2015,2016,2017,2018,2019,2020,2021,2022,2023,2024,2025,2026],
+    dist: {
+      "2015-3":102.99,"2015-4":110.45,"2015-5":95.88,"2015-6":101.26,"2015-7":71.89,"2015-8":87.96,"2015-9":141.55,"2015-10":108.15,"2015-11":106.13,"2015-12":127.19,
+      "2016-1":96.62,"2016-2":167.59,"2016-3":161.02,"2016-4":140.88,"2016-5":134.99,"2016-6":105.61,"2016-7":114.86,"2016-8":133,"2016-9":137.34,"2016-10":109.48,"2016-11":122.47,"2016-12":116.12,
+      "2017-1":82.81,"2017-2":101.18,"2017-3":122.99,"2017-4":122.22,"2017-5":125.89,"2017-6":113.68,"2017-7":123.21,"2017-8":101.32,"2017-9":123.9,"2017-10":83.18,"2017-11":82.16,"2017-12":114.51,
+      "2018-1":91.14,"2018-2":82.9,"2018-3":160.27,"2018-4":103.36,"2018-5":132.07,"2018-6":111.62,"2018-7":74.4,"2018-8":85.16,"2018-9":142.44,"2018-10":169.07,"2018-11":145.19,"2018-12":155.45,
+      "2019-1":150.04,"2019-2":117.64,"2019-3":95.72,"2019-4":106.98,"2019-5":135.9,"2019-6":114.17,"2019-7":88.2,"2019-8":103.78,"2019-9":157.73,"2019-10":214.1,"2019-11":168.44,"2019-12":178.27,
+      "2020-1":118.23,"2020-2":90.48,"2020-3":114.25,"2020-4":178.27,"2020-5":174.41,"2020-6":178.72,"2020-7":203.65,"2020-8":207.2,"2020-9":191.68,"2020-10":173.93,"2020-11":179.59,"2020-12":223.61,
+      "2021-1":192.59,"2021-2":143.68,"2021-3":180.03,"2021-4":186.66,"2021-5":177.84,"2021-6":171.63,"2021-7":157.02,"2021-8":145.44,"2021-9":109.79,"2021-10":184.02,"2021-11":216.3,"2021-12":205.07,
+      "2022-1":211.3,"2022-2":216.85,"2022-3":122.2,"2022-4":216.05,"2022-5":196.43,"2022-6":193.17,"2022-7":165.53,"2022-8":90.24,"2022-9":168.28,"2022-10":207.51,"2022-11":219.57,"2022-12":200.56,
+      "2023-1":167.24,"2023-2":121.33,"2023-3":52.36,"2023-4":163.43,"2023-5":181.08,"2023-6":161.99,"2023-7":147.57,"2023-8":133.8,"2023-9":192.96,"2023-10":161.1,"2023-11":176.53,"2023-12":166.82,
+      "2024-1":165.05,"2024-2":185.95,"2024-3":146.06,"2024-4":146.2,"2024-5":171.38,"2024-6":130.78,"2024-7":75.8,"2024-8":105.69,"2024-9":133.72,"2024-10":140.45,"2024-11":117.99,"2024-12":146.62,
+      "2025-1":139.76,"2025-2":173.84,"2025-3":125.94,"2025-4":218.74,"2025-5":164.31,"2025-6":109.8,"2025-7":95.51,"2025-8":101.49,"2025-9":150.36,"2025-10":130.23,"2025-11":116.39
+    },
+    cnt: {
+      "2015-3":14,"2015-4":15,"2015-5":14,"2015-6":17,"2015-7":13,"2015-8":15,"2015-9":19,"2015-10":16,"2015-11":15,"2015-12":21,
+      "2016-1":19,"2016-2":21,"2016-3":23,"2016-4":20,"2016-5":18,"2016-6":17,"2016-7":19,"2016-8":22,"2016-9":20,"2016-10":15,"2016-11":16,"2016-12":17,
+      "2017-1":15,"2017-2":14,"2017-3":17,"2017-4":17,"2017-5":16,"2017-6":16,"2017-7":20,"2017-8":19,"2017-9":18,"2017-10":12,"2017-11":12,"2017-12":15,
+      "2018-1":15,"2018-2":12,"2018-3":21,"2018-4":13,"2018-5":18,"2018-6":15,"2018-7":12,"2018-8":15,"2018-9":20,"2018-10":22,"2018-11":19,"2018-12":21,
+      "2019-1":20,"2019-2":16,"2019-3":14,"2019-4":14,"2019-5":18,"2019-6":15,"2019-7":13,"2019-8":19,"2019-9":24,"2019-10":28,"2019-11":24,"2019-12":24,
+      "2020-1":17,"2020-2":12,"2020-3":15,"2020-4":23,"2020-5":23,"2020-6":25,"2020-7":28,"2020-8":30,"2020-9":26,"2020-10":27,"2020-11":24,"2020-12":29,
+      "2021-1":24,"2021-2":19,"2021-3":24,"2021-4":24,"2021-5":24,"2021-6":24,"2021-7":22,"2021-8":21,"2021-9":14,"2021-10":25,"2021-11":28,"2021-12":27,
+      "2022-1":27,"2022-2":26,"2022-3":15,"2022-4":28,"2022-5":25,"2022-6":27,"2022-7":23,"2022-8":14,"2022-9":24,"2022-10":28,"2022-11":27,"2022-12":25,
+      "2023-1":24,"2023-2":18,"2023-3":8,"2023-4":24,"2023-5":25,"2023-6":23,"2023-7":26,"2023-8":23,"2023-9":29,"2023-10":23,"2023-11":24,"2023-12":24,
+      "2024-1":24,"2024-2":24,"2024-3":19,"2024-4":20,"2024-5":23,"2024-6":18,"2024-7":12,"2024-8":17,"2024-9":21,"2024-10":18,"2024-11":16,"2024-12":20,
+      "2025-1":19,"2025-2":22,"2025-3":16,"2025-4":21,"2025-5":22,"2025-6":16,"2025-7":17,"2025-8":21,"2025-9":24,"2025-10":21,"2025-11":18
+    }
+  };
+}
+
+function save() { localStorage.setItem(STORAGE_KEY, JSON.stringify(data)); snapshot(); cloudAutoSave(); }
+
+// ===== 保存履歴（最大15世代・10分間隔） =====
+function histList() { try { return JSON.parse(localStorage.getItem('running_hist_v1')) || []; } catch(e) { return []; } }
+function snapshot(force) {
+  try {
+    const h = histList(), now2 = Date.now(), s = JSON.stringify(data);
+    if (h.length && h[0].d === s) return;
+    if (!force && h.length && now2 - h[0].t < 10*60*1000) return;
+    h.unshift({ t: now2, d: s });
+    if (h.length > 15) h.length = 15;
+    localStorage.setItem('running_hist_v1', JSON.stringify(h));
+  } catch(e) {}
+}
+function openHist() {
+  const h = histList();
+  let html = '';
+  if (!h.length) html = '<div style="color:#888;padding:10px 2px;">まだ履歴がありません（記録すると自動で貯まります）</div>';
+  h.forEach((e, i) => {
+    let info = '';
+    try { const d = JSON.parse(e.d); info = `${round2(grandTotal2(d.dist)).toLocaleString()} km・${(d.years||[]).length}年分`; } catch(_) {}
+    const when = new Date(e.t).toLocaleString('ja-JP', { month:'numeric', day:'numeric', hour:'2-digit', minute:'2-digit' });
+    html += `<div class="hist-item"><span class="when">${when}</span><span class="info">${info}</span><button onclick="restoreHist(${i})">この時点に戻す</button></div>`;
+  });
+  document.getElementById('histBody').innerHTML = html;
+  document.getElementById('histModal').style.display = 'flex';
+}
+function grandTotal2(obj) { return Object.values(obj||{}).reduce((s,v)=>s+(+v||0),0); }
+function closeHist() { document.getElementById('histModal').style.display = 'none'; }
+function restoreHist(i) {
+  const h = histList(), e = h[i];
+  if (!e) return;
+  if (!confirm('この時点のデータに戻しますか？\n（今の内容も履歴に残るので、あとで戻せます）')) return;
+  snapshot(true);
+  data = JSON.parse(e.d);
+  localStorage.setItem(STORAGE_KEY, e.d);
+  render();
+  closeHist();
+  cloudAutoSave();
+  toast('🕘 復元しました');
+}
+document.addEventListener('keydown', e => { if (e.key === 'Escape') closeHist(); });
+function saveAll() { save(); pushCloud(false); }
+
+// ===== クラウド同期（Google）— 自動保存＋自動復元 =====
+const SYNC_URL = 'https://script.google.com/macros/s/AKfycbxwL19mAenATUMILRsQYrDL0ThjU2C583Cj729OfzNHEH3drMcZCExYULRp4VGOZ11J/exec';
+const SYNC_KEY = 'running_log_data';
+let autoCloudTimer = null;
+function cloudAutoSave() { clearTimeout(autoCloudTimer); autoCloudTimer = setTimeout(() => pushCloud(true), 2500); }
+async function pushCloud(silent) {
+  if (!silent) toast('☁️ アップロード中...');
+  try {
+    const res = await fetch(SYNC_URL + '?action=save&key=' + SYNC_KEY, { method:'POST', body: JSON.stringify(data) });
+    const j = await res.json();
+    if (j.success) { if (!silent) toast('☁️ クラウドに保存しました'); return true; }
+    if (!silent) toast('エラー: ' + (j.message||''));
+  } catch(e) { if (!silent) toast('通信エラー: ' + e.message); }
+  return false;
+}
+function applyCloud(j) {
+  if (!j || !j.success || !j.data) return false;
+  let d = j.data;
+  if (typeof d === 'string') { try { d = JSON.parse(d); } catch(e) { return false; } }
+  if (!d || !d.dist) return false;
+  snapshot(true);   // 上書き前に現状を履歴へ
+  data = d;
+  localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
+  render();
+  return true;
+}
+async function cloudUpload() { await pushCloud(false); }
+async function cloudDownload() {
+  toast('☁️ ダウンロード中...');
+  try {
+    const res = await fetch(SYNC_URL + '?action=load&key=' + SYNC_KEY);
+    const j = await res.json();
+    let d = j && j.data; if (typeof d === 'string') { try { d = JSON.parse(d); } catch(e) {} }
+    if (!d || !d.dist) { toast('クラウドにデータがありません'); return; }
+    if (!confirm('クラウドのデータを読み込みますか？\n今の記録は上書きされます。')) return;
+    if (applyCloud(j)) toast('☁️ クラウドから読み込みました');
+  } catch(e) { toast('エラー: ' + (e&&e.message?e.message:e)); }
+}
+
+function key(y, m) { return `${y}-${m}`; }
+function getD(y, m) { return data.dist[key(y,m)] ?? ''; }
+function getC(y, m) { return data.cnt[key(y,m)]  ?? ''; }
+
+function rowTotal(obj, y) {
+  return MONTHS.reduce((s, m) => { const v = obj[key(y,m)]; return v ? s + +v : s; }, 0);
+}
+function grandTotal(obj) {
+  return data.years.reduce((s, y) => s + rowTotal(obj, y), 0);
+}
+
+function render() {
+  renderTable('distTable', data.dist, true);
+  renderTable('cntTable',  data.cnt,  false);
+  renderSummary();
+  renderGoal();
+  renderBest();
+  renderEhime();
+  renderCharts();
+}
+
+// ============================================================
+// 🎯 今月の目標＆ペース
+// ============================================================
+function onGoalChange(el) {
+  const v = +el.value || 0;
+  data.goalMonthly = v > 0 ? v : undefined;
+  save();
+  renderGoal();
+}
+function renderGoal() {
+  const goal = +data.goalMonthly || 0;
+  const inp = document.getElementById('goalInput');
+  if (document.activeElement !== inp) inp.value = goal || '';
+  const done = +data.dist[key(CUR_YEAR, CUR_MONTH)] || 0;
+  const bar = document.getElementById('goalBar');
+  const txt = document.getElementById('goalText');
+  if (!goal) {
+    bar.style.width = '0%'; bar.classList.remove('done');
+    txt.innerHTML = '目標のkm数を入れると、今月の進捗と「1日あと何km走ればいいか」が出ます（例: 150）';
+    return;
+  }
+  const pct = Math.min(100, done / goal * 100);
+  bar.style.width = pct.toFixed(1) + '%';
+  bar.classList.toggle('done', done >= goal);
+  const daysInMonth = new Date(CUR_YEAR, CUR_MONTH, 0).getDate();
+  const remainDays = daysInMonth - now.getDate() + 1;   // 今日を含む残り日数
+  if (done >= goal) {
+    txt.innerHTML = `<span class="goal-done-msg">🎉 目標達成！ ${round2(done).toLocaleString()} km / ${goal.toLocaleString()} km（+${round2(done-goal).toLocaleString()} km 上乗せ中）</span>`;
+  } else {
+    const remain = goal - done;
+    const perDay = remain / remainDays;
+    txt.innerHTML = `今月 <b>${round2(done).toLocaleString()} km</b> / ${goal.toLocaleString()} km（${pct.toFixed(0)}%）　`
+      + `残り <b>${remainDays}日</b> で あと <b>${round2(remain).toLocaleString()} km</b> → 1日 <b>${round2(perDay)} km</b> ペースで達成！`;
+  }
+}
+
+// ============================================================
+// 🏅 ベスト記録・バッジ
+// ============================================================
+const MILESTONES = [
+  { km: 1000,  icon: '🏃', label: '1,000km' },
+  { km: 3000,  icon: '🗾', label: '日本縦断\n3,000km' },
+  { km: 5000,  icon: '⭐', label: '5,000km' },
+  { km: 10000, icon: '🏆', label: '10,000km' },
+  { km: 20000, icon: '👑', label: '20,000km' },
+  { km: 30000, icon: '💎', label: '30,000km' },
+  { km: 40075, icon: '🌏', label: '地球一周\n40,075km' },
+];
+function calcStreak() {
+  let y = CUR_YEAR, m = CUR_MONTH;
+  if (!(+data.dist[key(y, m)] > 0)) { m--; if (m === 0) { m = 12; y--; } }  // 今月未入力なら先月から
+  let streak = 0;
+  while (+data.dist[key(y, m)] > 0 && streak < 1200) { streak++; m--; if (m === 0) { m = 12; y--; } }
+  return streak;
+}
+function renderBest() {
+  const total = grandTotal(data.dist);
+  // 歴代ベスト月
+  let bmK = '', bmV = 0;
+  Object.keys(data.dist).forEach(k => { const v = +data.dist[k]; if (v > bmV) { bmV = v; bmK = k; } });
+  const bmLabel = bmK ? bmK.replace('-', '年') + '月' : '—';
+  // 歴代ベスト年
+  let byY = 0, byV = 0;
+  data.years.forEach(y => { const v = rowTotal(data.dist, y); if (v > byV) { byV = v; byY = y; } });
+  const streak = calcStreak();
+
+  let html = `<div class="best-flex">
+    <div class="best-chip"><div class="bc-label">歴代ベスト月</div><div class="bc-value">${round2(bmV).toLocaleString()} km</div><div class="bc-sub">${bmLabel}</div></div>
+    <div class="best-chip"><div class="bc-label">歴代ベスト年</div><div class="bc-value">${round2(byV).toLocaleString()} km</div><div class="bc-sub">${byY || '—'}年</div></div>
+    <div class="best-chip"><div class="bc-label">連続記録</div><div class="bc-value">${streak} か月</div><div class="bc-sub">毎月走り続けています</div></div>
+  </div>`;
+
+  html += `<div class="badge-row">` + MILESTONES.map(ms => {
+    const got = total >= ms.km;
+    return `<div class="badge ${got ? '' : 'locked'}"><div class="b-icon">${ms.icon}</div><div class="b-label">${ms.label.replace('\n','<br>')}${got ? '' : ''}</div></div>`;
+  }).join('') + `</div>`;
+
+  const next = MILESTONES.find(ms => total < ms.km);
+  if (next) {
+    html += `<div class="next-milestone">次のバッジ「${next.label.replace('\n','')}」まで あと <b>${round2(next.km - total).toLocaleString()} km</b>（現在 ${round2(total).toLocaleString()} km）</div>`;
+  } else {
+    html += `<div class="next-milestone">🌏 全バッジ制覇！地球を一周しました！</div>`;
+  }
+  document.getElementById('bestBody').innerHTML = html;
+}
+
+// ============================================================
+// 推移グラフ（年間・直近12ヶ月）
+// ============================================================
+function renderCharts() {
+  // 年間距離：今年はピンク、過去最高の年はゴールド
+  const yearTotals = data.years.map(y => ({ y, total: rowTotal(data.dist, y) }));
+  const bestYear = yearTotals.reduce((b, c) => c.total > b.total ? c : b, { total: 0 }).y;
+  drawBars('yearChart', yearTotals.map(({ y, total }) => ({
+    label: `'${String(y).slice(2)}`,
+    value: total,
+    color: y === CUR_YEAR ? '#fb7185' : (y === bestYear ? '#f59e0b' : '#2ec4b6'),
+    cur: y === CUR_YEAR,
+  })));
+
+  // 直近12ヶ月（今月を含む）
+  const items = [];
+  let y = CUR_YEAR, m = CUR_MONTH;
+  for (let i = 0; i < 12; i++) {
+    items.unshift({
+      label: (m === 1 ? `${String(y).slice(2)}/1` : `${m}月`),
+      value: +data.dist[key(y, m)] || 0,
+      color: (y === CUR_YEAR && m === CUR_MONTH) ? '#fb7185' : '#60a5fa',
+      cur: (y === CUR_YEAR && m === CUR_MONTH),
+    });
+    m--; if (m === 0) { m = 12; y--; }
+  }
+  drawBars('monthChart', items);
+}
+
+function drawBars(canvasId, items) {
+  const canvas = document.getElementById(canvasId);
+  if (!canvas) return;
+  const W = Math.max(300, canvas.parentElement.clientWidth || 500);
+  const H = 190;
+  const dpr = window.devicePixelRatio || 1;
+  canvas.width = W * dpr; canvas.height = H * dpr;
+  canvas.style.width = W + 'px'; canvas.style.height = H + 'px';
+  const ctx = canvas.getContext('2d');
+  ctx.scale(dpr, dpr);
+  ctx.clearRect(0, 0, W, H);
+
+  const max = Math.max(...items.map(i => i.value), 1);
+  const padT = 18, padB = 22, padX = 6;
+  const innerW = W - padX * 2;
+  const bw = innerW / items.length;
+
+  items.forEach((it, i) => {
+    const h = (it.value / max) * (H - padT - padB);
+    const x = padX + i * bw + bw * 0.15;
+    const w = bw * 0.7;
+    const yPos = H - padB - h;
+    ctx.fillStyle = it.color;
+    ctx.beginPath();
+    if (ctx.roundRect) ctx.roundRect(x, yPos, w, Math.max(h, 1), 3);
+    else ctx.rect(x, yPos, w, Math.max(h, 1));
+    ctx.fill();
+    ctx.textAlign = 'center';
+    if (it.value > 0) {
+      ctx.fillStyle = '#475569';
+      ctx.font = '9px sans-serif';
+      ctx.fillText(Math.round(it.value).toLocaleString(), x + w / 2, yPos - 4);
+    }
+    ctx.fillStyle = it.cur ? '#be185d' : '#64748b';
+    ctx.font = (it.cur ? 'bold ' : '') + '10px sans-serif';
+    ctx.fillText(it.label, x + w / 2, H - 7);
+  });
+}
+
+let chartResizeTimer = null;
+window.addEventListener('resize', () => {
+  clearTimeout(chartResizeTimer);
+  chartResizeTimer = setTimeout(renderCharts, 200);
+});
+
+// 愛媛県一周 ≒ 1,704 km（海岸線）
+const EHIME_PERIMETER = 1704;
+function renderEhime() {
+  const total = grandTotal(data.dist);
+  const laps = Math.floor(total / EHIME_PERIMETER);
+  const remain = total - laps * EHIME_PERIMETER;
+  const frac = remain / EHIME_PERIMETER;            // 現在の周の進捗 0〜1
+  const toNext = EHIME_PERIMETER - remain;
+
+  document.getElementById('lapBig').innerHTML = `${laps + 1}<span>周目</span>`;
+  document.getElementById('lapBar').style.width = (frac * 100).toFixed(1) + '%';
+  document.getElementById('lapProg').innerHTML =
+    `今の周：<b>${round2(remain).toLocaleString()} km</b> / 1,704 km（${(frac*100).toFixed(1)}%）`;
+  document.getElementById('lapDetail').innerHTML =
+    `累計 <b>${round2(total).toLocaleString()} km</b> ＝ 愛媛県を <b>${laps}周</b> 完走！<br>` +
+    `次の${laps+1}周目まで あと <b>${round2(toNext).toLocaleString()} km</b>`;
+
+  const cheers = ['さあ出発！🏃','いい調子！','県境を快走中！','海岸線を制覇！','もう一周いこう！','止まらない走り！🔥'];
+  document.getElementById('lapCheer').textContent = cheers[Math.min(laps, cheers.length - 1)];
+
+  // SVG 進捗トレース＆ランナー配置（パスの起点＝内子の最寄り海岸・長浜）
+  const bg = document.getElementById('ehimeBg');
+  const prog = document.getElementById('ehimeProg');
+  const runner = document.getElementById('ehimeRunner');
+  if (!prog.getAttribute('d')) prog.setAttribute('d', bg.getAttribute('d'));
+  const len = bg.getTotalLength();
+  prog.style.strokeDasharray = len;
+  prog.style.strokeDashoffset = len * (1 - frac);
+  prog.style.transition = 'stroke-dashoffset 1.2s ease';
+  const pt = bg.getPointAtLength(len * frac);
+  runner.setAttribute('transform', `translate(${pt.x}, ${pt.y - 4})`);
+}
+
+function renderTable(id, obj, isDist) {
+  const tbl = document.getElementById(id);
+  const thead = `<thead><tr>
+    <th class="year-col" style="min-width:46px;">年</th>
+    ${MONTHS.map(m => `<th style="min-width:56px;" class="${m === CUR_MONTH ? 'cur-month-col' : ''}">${m}月</th>`).join('')}
+    <th style="min-width:70px; background:#ca8a04;">合計</th>
+  </tr></thead>`;
+
+  const rows = data.years.map(y => {
+    const total = rowTotal(obj, y);
+    // その年のベスト月（最大値）をハイライト
+    let bestM = 0, bestV = 0;
+    MONTHS.forEach(m => { const v = +obj[key(y,m)] || 0; if (v > bestV) { bestV = v; bestM = m; } });
+    const cells = MONTHS.map(m => {
+      const v = obj[key(y,m)] ?? '';
+      const isCur = (y === CUR_YEAR && m === CUR_MONTH);
+      const isBest = (m === bestM && bestV > 0);
+      const cls = (isCur ? 'cur-month ' : '')
+        + (isBest ? (isDist ? 'best-dist ' : 'best-cnt ') : '')
+        + (isDist ? heatClass(+v || 0) : '');
+      return `<td class="${cls}" ${isBest ? `title="この年のベスト月"` : ''}><input class="ci" type="number" step="${isDist ? 0.01 : 1}" min="0"
+        data-y="${y}" data-m="${m}" data-type="${isDist ? 'd' : 'c'}"
+        value="${v}" onchange="onInput(this)" placeholder=""></td>`;
+    }).join('');
+    const totalStr = total > 0 ? (isDist ? round2(total) : total) : '';
+    return `<tr>
+      <td class="year-cell">${y}</td>
+      ${cells}
+      <td class="total-cell" id="${isDist?'dt':'ct'}-${y}">${totalStr}</td>
+    </tr>`;
+  }).join('');
+
+  const gt = grandTotal(obj);
+  const gtStr = isDist ? round2(gt) : gt;
+  const foot = `<tfoot><tr>
+    <td class="grand-total">合計</td>
+    ${MONTHS.map(() => '<td></td>').join('')}
+    <td class="grand-total" id="${isDist?'d':'c'}-grand">${gt > 0 ? gtStr : ''}</td>
+  </tr></tfoot>`;
+
+  tbl.innerHTML = thead + `<tbody>${rows}</tbody>` + foot;
+}
+
+function renderSummary() {
+  const totalDist = round2(grandTotal(data.dist));
+  const totalCnt  = grandTotal(data.cnt);
+  const avg = totalCnt > 0 ? round2(totalDist / totalCnt) : 0;
+  document.getElementById('s-dist').textContent  = totalDist.toLocaleString();
+  document.getElementById('s-cnt').textContent   = totalCnt.toLocaleString();
+  document.getElementById('s-avg').textContent   = avg;
+  document.getElementById('s-years').textContent = data.years.length;
+
+  // 今年の距離（前年の同時期 1〜今月 と比較）
+  const sumPeriod = (y, mEnd) => MONTHS.filter(m => m <= mEnd)
+    .reduce((s, m) => s + (+data.dist[key(y,m)] || 0), 0);
+  const thisYear = sumPeriod(CUR_YEAR, 12);
+  const lastYearSame = sumPeriod(CUR_YEAR - 1, CUR_MONTH);
+  document.getElementById('s-year').textContent = round2(thisYear).toLocaleString();
+  document.getElementById('s-year-delta').innerHTML = sumDelta(thisYear - lastYearSame, '前年同期比');
+
+  // 今月の距離（先月と比較）
+  const prevY = CUR_MONTH === 1 ? CUR_YEAR - 1 : CUR_YEAR;
+  const prevM = CUR_MONTH === 1 ? 12 : CUR_MONTH - 1;
+  const thisMonth = +data.dist[key(CUR_YEAR, CUR_MONTH)] || 0;
+  const prevMonth = +data.dist[key(prevY, prevM)] || 0;
+  document.getElementById('s-month').textContent = round2(thisMonth).toLocaleString();
+  document.getElementById('s-month-delta').innerHTML = sumDelta(thisMonth - prevMonth, '先月比');
+}
+
+function sumDelta(diff, label) {
+  diff = round2(diff);
+  if (diff === 0) return `<span class="sum-delta flat" title="${label}">±0</span>`;
+  const cls = diff > 0 ? 'up' : 'down';
+  const arrow = diff > 0 ? '▲' : '▼';
+  return `<span class="sum-delta ${cls}" title="${label}">${arrow} ${Math.abs(diff).toLocaleString()} km</span>`;
+}
+
+// km帯ごとのヒートマップ色
+function heatClass(v) {
+  if (!v || v <= 0) return '';
+  if (v >= 200) return 'h4';
+  if (v >= 150) return 'h3';
+  if (v >= 100) return 'h2';
+  return 'h1';
+}
+
+function onInput(el) {
+  const y = +el.dataset.y, m = +el.dataset.m, t = el.dataset.type;
+  const v = el.value === '' ? undefined : +el.value;
+  const k = key(y, m);
+  if (v === undefined) { delete (t==='d' ? data.dist : data.cnt)[k]; }
+  else { (t==='d' ? data.dist : data.cnt)[k] = v; }
+
+  // ヒートマップ色を即時更新
+  if (t === 'd') {
+    const td = el.closest('td');
+    td.classList.remove('h1','h2','h3','h4');
+    const hc = heatClass(v || 0);
+    if (hc) td.classList.add(hc);
+  }
+
+  // 行合計更新
+  if (t === 'd') {
+    const total = rowTotal(data.dist, y);
+    document.getElementById(`dt-${y}`).textContent = total > 0 ? round2(total) : '';
+    document.getElementById('d-grand').textContent = round2(grandTotal(data.dist));
+  } else {
+    const total = rowTotal(data.cnt, y);
+    document.getElementById(`ct-${y}`).textContent = total > 0 ? total : '';
+    document.getElementById('c-grand').textContent = grandTotal(data.cnt) || '';
+  }
+  renderSummary();
+  renderGoal();
+  renderBest();
+  renderEhime();
+  renderCharts();
+  save();
+}
+
+function addYear() {
+  const inp = document.getElementById('addYearDist');
+  const y = +inp.value;
+  if (!y || y < 2000 || y > 2099) { toast('正しい年を入力してください'); return; }
+  if (data.years.includes(y)) { toast('既に存在します'); return; }
+  data.years.push(y);
+  data.years.sort((a,b) => a-b);
+  inp.value = '';
+  save();
+  render();
+  toast(`${y}年を追加しました`);
+}
+
+function round2(v) { return Math.round(v * 100) / 100; }
+
+async function exportData() {
+  save();
+  const json = JSON.stringify(data, null, 2);
+  const fileName = 'ランニング記録_' + new Date().toISOString().slice(0,10) + '.json';
+  if (navigator.share && navigator.canShare) {
+    try {
+      const file = new File([json], fileName, { type: 'application/json' });
+      if (navigator.canShare({ files: [file] })) { await navigator.share({ files: [file], title: 'ランニング記録' }); return; }
+    } catch(e) {}
+  }
+  const blob = new Blob([json], { type: 'application/octet-stream' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url; a.download = fileName;
+  document.body.appendChild(a); a.click();
+  setTimeout(() => { document.body.removeChild(a); URL.revokeObjectURL(url); }, 100);
+  toast('書き出しました');
+}
+
+function importData(event) {
+  const file = event.target.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = e => {
+    try {
+      snapshot(true);   // 上書き前に現状を履歴へ
+      data = JSON.parse(e.target.result);
+      save(); render(); toast('読み込みました');
+    } catch(e) { toast('読み込み失敗'); }
+  };
+  reader.readAsText(file);
+  event.target.value = '';
+}
+
+function toast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg; t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), 2000);
+}
+
+render();
+
+// 起動時：ローカルに保存が無い（Mac更新等で消えた／初回）ならクラウドから自動復元
+(async () => {
+  if (localStorage.getItem(STORAGE_KEY) !== null) return;   // ローカルに保存あり → 何もしない
+  try {
+    const res = await fetch(SYNC_URL + '?action=load&key=' + SYNC_KEY);
+    const j = await res.json();
+    let d = j && j.data; if (typeof d === 'string') { try { d = JSON.parse(d); } catch(e) {} }
+    if (d && d.dist) { data = d; localStorage.setItem(STORAGE_KEY, JSON.stringify(data)); render(); toast('☁️ クラウドから自動復元しました'); }
+  } catch(e) {}
+})();
+</script>
+</body>
+</html>
