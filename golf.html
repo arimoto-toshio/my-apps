@@ -58,6 +58,18 @@
   .vs-mark.lose { color: #c62828; }
   .vs-mark.tie { color: #666; }
 
+  /* 📊 メンバー別プラス・マイナス表（スマホ1画面に収まるコンパクト表） */
+  .pm-table { width: 100%; border-collapse: collapse; font-size: 13px; }
+  .pm-table th { background: #2a4a2a; color: white; font-weight: 700; padding: 6px 4px; font-size: 11.5px; }
+  .pm-table td { padding: 5px 6px; border-bottom: 1px solid #eef3ee; text-align: right; font-weight: 700; font-variant-numeric: tabular-nums; white-space: nowrap; }
+  .pm-table td.nm { text-align: left; font-weight: 700; color: #1a3322; }
+  .pm-table tbody tr { cursor: pointer; }
+  .pm-table tbody tr:active { background: #f0f7f0; }
+  .pm-table .pm-plus { color: #1b5e20; }
+  .pm-table .pm-minus { color: #c62828; }
+  .pm-table .pm-zero { color: #aaa; font-weight: 400; }
+  .pm-table tfoot td { border-top: 2px solid #2a4a2a; border-bottom: none; background: #fffbea; font-size: 14px; padding: 7px 6px; }
+
   .money { text-align: center; padding: 10px; border-radius: 8px; font-size: 18px; font-weight: 900; margin-top: 8px; }
   .money.plus { background: #e8f5e9; color: #1b5e20; border: 2px solid #2e7d32; }
   .money.minus { background: #ffebee; color: #c62828; border: 2px solid #c62828; }
@@ -174,6 +186,16 @@
     <div class="total-row"><span>勝ち合計</span><span id="totalWin">¥0</span></div>
     <div class="total-row"><span>負け合計</span><span id="totalLose">¥0</span></div>
     <div class="total-row grand" id="totalGrand">¥0</div>
+  </div>
+
+  <!-- 📊 メンバー別プラス・マイナス -->
+  <div class="card">
+    <div class="card-h">📊 メンバー別 プラス・マイナス<span style="margin-left:auto;font-size:10.5px;color:#888;font-weight:400;">行タップでその人へ移動</span></div>
+    <table class="pm-table">
+      <thead><tr><th style="text-align:left;">メンバー</th><th>今回</th><th>今年</th><th>通算</th></tr></thead>
+      <tbody id="pmBody"></tbody>
+      <tfoot id="pmFoot"></tfoot>
+    </table>
   </div>
 
   <!-- メンバー一覧 -->
@@ -455,6 +477,45 @@ function gameNets(g) {
   return { net, cum: extras };
 }
 
+// 1試合・1メンバー分の収支（有本目線）
+function memberGameMoney(g, m) {
+  const aHalf = (+g.arimotoHandi || 0) / 2;
+  const aAmRes = (g.arimotoAm === '' || g.arimotoAm == null) ? null : +g.arimotoAm - aHalf;
+  const aPmRes = (g.arimotoPm === '' || g.arimotoPm == null) ? null : +g.arimotoPm - aHalf;
+  const sc = (g.scores && g.scores[m.name]) || { am: '', pm: '' };
+  const half = (+m.handi || 0) / 2;
+  const amRes = (sc.am === '' || sc.am == null) ? null : +sc.am - half;
+  const pmRes = (sc.pm === '' || sc.pm == null) ? null : +sc.pm - half;
+  return calcMoney(compare(aAmRes, amRes), compare(aPmRes, pmRes));
+}
+
+// 📊 メンバー別プラス・マイナス表（今回／今年／通算）
+function renderPM() {
+  const body = document.getElementById('pmBody');
+  const foot = document.getElementById('pmFoot');
+  if (!body) return;
+  const c = app.current;
+  const fmt = v => {
+    if (!v) return '<span class="pm-zero">±0</span>';
+    const cls = v > 0 ? 'pm-plus' : 'pm-minus';
+    return `<span class="${cls}">${v > 0 ? '+' : '-'}¥${Math.abs(v).toLocaleString()}</span>`;
+  };
+  let tNow = 0, tYear = 0, tAll = 0;
+  body.innerHTML = app.members.map((m, i) => {
+    const now = memberGameMoney(c, m);
+    let year = 0, all = 0;
+    app.games.forEach(g => {
+      const v = memberGameMoney(g, m);
+      all += v;
+      if (g.year === c.year) year += v;
+    });
+    tNow += now; tYear += year; tAll += all;
+    return `<tr onclick="document.getElementById('card-${i}')?.scrollIntoView({behavior:'smooth',block:'center'})">
+      <td class="nm">${esc(m.name)}</td><td>${fmt(now)}</td><td>${fmt(year)}</td><td>${fmt(all)}</td></tr>`;
+  }).join('');
+  foot.innerHTML = `<tr><td class="nm">合計</td><td>${fmt(tNow)}</td><td>${fmt(tYear)}</td><td>${fmt(tAll)}</td></tr>`;
+}
+
 function renderHistory() {
   const body = document.getElementById('historyBody');
   // 年ごとにグループ化（元のindexを保持）
@@ -579,6 +640,7 @@ function recalc() {
   });
 
   recalcExtras();
+  renderPM();
 
   document.getElementById('totalWin').textContent = '¥' + totalWin.toLocaleString();
   document.getElementById('totalLose').textContent = '¥' + totalLose.toLocaleString();
