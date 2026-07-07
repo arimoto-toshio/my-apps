@@ -17,6 +17,7 @@
   .btn.cl1{background:#3a8a4a;} .btn.cl2{background:#2f6fb0;} .btn.csv{background:#1d7a44;}
   .wrap{max-width:1080px;margin:0 auto;padding:12px;}
   .tabs{background:var(--card);border-radius:12px;box-shadow:0 1px 4px rgba(0,0,0,.08);padding:10px;margin-bottom:12px;display:flex;gap:8px;flex-wrap:wrap;align-items:center;}
+  #tabsBottom{margin-top:12px;margin-bottom:0;}
   .tab{border:2px solid #e2dccf;background:#f6f1e7;border-radius:18px;padding:6px 14px;cursor:pointer;font-size:14px;max-width:200px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
   .tab.active{background:#fff;border-color:#8a5a36;font-weight:700;}
   .tab.add{background:#eaf3ea;border-color:#cfe3cf;color:#3a7a2a;font-weight:600;}
@@ -92,7 +93,7 @@
     header h1{font-size:15px;}
   }
   @media (pointer:coarse){ .delbtn{padding:9px 0;} .btn{padding:9px 13px;} }
-  @media print{ header .tools,.tab.add,.meta .del,.col-del,.addrow,.hint,#copyFab,.filterbar,.modal{display:none !important;} td.cell-sel{background:transparent !important;} body{background:#fff;} header{background:#fff;color:#000;box-shadow:none;} .tabs,.meta,.card{box-shadow:none;} table{min-width:0;font-size:10px;} td,th{padding:2px 4px;} }
+  @media print{ header .tools,.tab.add,.meta .del,.col-del,.addrow,.hint,#copyFab,.filterbar,.modal,#tabsBottom{display:none !important;} td.cell-sel{background:transparent !important;} body{background:#fff;} header{background:#fff;color:#000;box-shadow:none;} .tabs,.meta,.card{box-shadow:none;} table{min-width:0;font-size:10px;} td,th{padding:2px 4px;} }
   /* 月別集計だけを印刷するモード */
   @media print{
     body.print-sum header, body.print-sum .wrap, body.print-sum #histModal{display:none !important;}
@@ -168,6 +169,8 @@
     <div class="addrow"><button onclick="addRows(5)">＋ 5行追加</button> <button onclick="addBreakdown()">＋ 10%・8%内訳</button></div>
     <div class="hint">差引残高 = 前残高 ＋ 仕入金額 − 支払金額（自動計算）／入力すると自動でクラウド保存</div>
   </div>
+  <!-- 下側にも仕入先タブ（下まで入力した後に上へ戻らず切り替えられる） -->
+  <div class="tabs" id="tabsBottom"></div>
 </div>
 <script>
 const STORAGE_KEY='yakiniku_shiire_v1';
@@ -211,6 +214,7 @@ function renderTabs(){
   data.suppliers.forEach(s=>{ h+=`<div class="tab${s.id===data.cur?' active':''}" onclick="switchSup('${s.id}')">${esc(s.name||'(無名)')}</div>`; });
   h+=`<div class="tab add" onclick="addSupplier()">＋ 仕入先を追加</div>`;
   document.getElementById('tabs').innerHTML=h;
+  const b=document.getElementById('tabsBottom'); if(b) b.innerHTML=h;   // 下側にも同じタブ
 }
 function esc(s){ return String(s==null?'':s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c])); }
 
