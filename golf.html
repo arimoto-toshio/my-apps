@@ -128,17 +128,8 @@
     <input type="date" id="gameDate" />
     <input type="text" id="gameMemo" placeholder="メモ（コース名など）" />
   </div>
-  <!-- 試合ナビ -->
-  <div style="display:flex;align-items:center;gap:8px;margin-top:10px;background:rgba(0,0,0,0.2);padding:8px;border-radius:8px;">
-    <button onclick="navGame(-1)" style="background:rgba(255,255,255,0.15);border:1px solid rgba(255,255,255,0.3);color:white;padding:8px 12px;border-radius:6px;cursor:pointer;font-size:14px;font-weight:700;">◀</button>
-    <div style="flex:1;display:flex;align-items:center;justify-content:center;gap:4px;font-size:13px;color:white;">
-      <input id="navYear" type="number" onchange="updateGameMeta()" style="width:60px;background:rgba(255,255,255,0.2);border:1px solid rgba(255,255,255,0.4);color:white;padding:5px;border-radius:5px;text-align:center;font-size:14px;font-weight:700;">年
-      <input id="navMonth" type="number" min="1" max="12" onchange="updateGameMeta()" style="width:42px;background:rgba(255,255,255,0.2);border:1px solid rgba(255,255,255,0.4);color:white;padding:5px;border-radius:5px;text-align:center;font-size:14px;font-weight:700;">月
-      <input id="navNum" type="number" min="1" onchange="updateGameMeta()" style="width:42px;background:rgba(255,255,255,0.2);border:1px solid rgba(255,255,255,0.4);color:white;padding:5px;border-radius:5px;text-align:center;font-size:14px;font-weight:700;">回
-    </div>
-    <button onclick="navGame(1)" style="background:rgba(255,255,255,0.15);border:1px solid rgba(255,255,255,0.3);color:white;padding:8px 12px;border-radius:6px;cursor:pointer;font-size:14px;font-weight:700;">▶</button>
-    <button onclick="deleteCurrentGame()" style="background:rgba(192,57,43,0.6);border:1px solid rgba(192,57,43,0.8);color:white;padding:8px 10px;border-radius:6px;cursor:pointer;font-size:12px;font-weight:700;" title="この試合を削除">🗑</button>
-  </div>
+  <!-- 試合ナビ（gameNavHTML で生成・上段） -->
+  <div id="gameNavTop"></div>
 </div>
 
 <div class="tabs">
@@ -149,6 +140,15 @@
 
 <!-- スコアページ -->
 <div id="page-game" class="page">
+
+  <!-- 🏆 この回の優勝者（手入力） -->
+  <div class="card" style="border-left:5px solid #d4a017;display:flex;align-items:center;gap:10px;">
+    <div style="font-weight:700;white-space:nowrap;">🏆 優勝者</div>
+    <input type="text" id="gameWinner" list="memberNames" placeholder="名前を入力（一覧から選択も可）"
+           onchange="updateWinner(this.value)"
+           style="flex:1;padding:10px;border:1.5px solid #ddd;border-radius:6px;font-size:15px;">
+    <datalist id="memberNames"></datalist>
+  </div>
 
   <!-- 有本（基準） -->
   <div class="card arimoto-card">
@@ -222,6 +222,9 @@
     </div>
     <div style="font-size:11px;color:#888;margin-top:6px;">※ 新規試合を作ると前回の累計を引き継ぎます。その日の分を足し引きしてください</div>
   </div>
+
+  <!-- 試合ナビ（gameNavHTML で生成・下段） -->
+  <div id="gameNavBottom"></div>
 </div>
 
 <!-- 履歴・集計ページ -->
@@ -326,6 +329,7 @@ function loadApp() {
         if (g.arimotoPm == null) g.arimotoPm = '';
         if (!g.date) g.date = new Date().toISOString().slice(0, 10);
         if (g.memo == null) g.memo = '';
+        if (g.winner == null) g.winner = '';
         if (g.extraPrize == null) g.extraPrize = '';
         if (g.extraUma == null) g.extraUma = '';
         if (g.extraNigiri == null) g.extraNigiri = '';
@@ -372,6 +376,7 @@ function newGameData(year, month, num) {
     arimotoAm: '',
     arimotoPm: '',
     scores: {},
+    winner: '',
     extraPrize: '',
     extraUma: '',
     extraNigiri: ''
@@ -407,8 +412,19 @@ function render() {
   document.getElementById('navYear').value  = c.year;
   document.getElementById('navMonth').value = c.month;
   document.getElementById('navNum').value   = c.num;
+  // 下段ナビ欄（存在すれば同期）
+  const ny2 = document.getElementById('navYear2');
+  if (ny2) {
+    ny2.value = c.year;
+    document.getElementById('navMonth2').value = c.month;
+    document.getElementById('navNum2').value   = c.num;
+  }
   document.getElementById('gameDate').value = c.date;
   document.getElementById('gameMemo').value = c.memo || '';
+  document.getElementById('gameWinner').value = c.winner || '';
+  // 優勝者の候補にメンバー名を出す
+  document.getElementById('memberNames').innerHTML =
+    app.members.map(m => `<option value="${esc(m.name)}">`).join('');
   document.getElementById('arimoto-am').value = c.arimotoAm;
   document.getElementById('arimoto-pm').value = c.arimotoPm;
   document.getElementById('arimoto-handi-input').value = c.arimotoHandi;
@@ -541,7 +557,7 @@ function renderHistory() {
       html += `
       <div class="history-item" onclick="openGame(${idx})" style="display:flex;justify-content:space-between;align-items:center;gap:8px;${isCur ? 'background:#f0f7f0;' : ''}">
         <div>
-          <div style="font-weight:700;">${g.month}月 第${g.num}回${isCur ? ' <span style="font-size:10px;color:#2e7d32;">（表示中）</span>' : ''}</div>
+          <div style="font-weight:700;">${g.month}月 第${g.num}回${g.winner ? ` <span style="font-size:12px;color:#8b6914;">🏆${esc(g.winner)}</span>` : ''}${isCur ? ' <span style="font-size:10px;color:#2e7d32;">（表示中）</span>' : ''}</div>
           <div class="history-meta">${esc(g.date || '')}${g.memo ? '　' + esc(g.memo) : ''}　<span style="color:#888;">追加収支の累計 ¥${n.cum.toLocaleString()}</span></div>
         </div>
         <div style="text-align:right;white-space:nowrap;">
@@ -775,10 +791,10 @@ function navGame(dir) {
   render();
 }
 
-function updateGameMeta() {
-  const y = parseInt(document.getElementById('navYear').value) || app.current.year;
-  const m = parseInt(document.getElementById('navMonth').value) || app.current.month;
-  const n = parseInt(document.getElementById('navNum').value) || app.current.num;
+function updateGameMeta(sfx = '') {
+  const y = parseInt(document.getElementById('navYear' + sfx).value) || app.current.year;
+  const m = parseInt(document.getElementById('navMonth' + sfx).value) || app.current.month;
+  const n = parseInt(document.getElementById('navNum' + sfx).value) || app.current.num;
   app.current.year = y;
   app.current.month = m;
   app.current.num = n;
@@ -788,6 +804,11 @@ function updateGameMeta() {
   app.current.date = `${y}-${String(m).padStart(2,'0')}-${day}`;
   save();
   render();
+}
+
+function updateWinner(val) {
+  app.current.winner = (val || '').trim();
+  save();
 }
 
 function deleteCurrentGame() {
@@ -912,6 +933,25 @@ function importBackup(ev) {
   r.readAsText(f);
   ev.target.value = '';
 }
+
+// 試合ナビ（回の切り替えUI）を1か所で生成 → 上段・下段の両方に流し込む
+function gameNavHTML(sfx, wrapStyle) {
+  const btn   = 'background:rgba(255,255,255,0.15);border:1px solid rgba(255,255,255,0.3);color:white;padding:8px 12px;border-radius:6px;cursor:pointer;font-size:14px;font-weight:700;';
+  const inp   = 'background:rgba(255,255,255,0.2);border:1px solid rgba(255,255,255,0.4);color:white;padding:5px;border-radius:5px;text-align:center;font-size:14px;font-weight:700;';
+  const delBtn= 'background:rgba(192,57,43,0.6);border:1px solid rgba(192,57,43,0.8);color:white;padding:8px 10px;border-radius:6px;cursor:pointer;font-size:12px;font-weight:700;';
+  return `<div style="display:flex;align-items:center;gap:8px;${wrapStyle}">
+    <button onclick="navGame(-1)" style="${btn}">◀</button>
+    <div style="flex:1;display:flex;align-items:center;justify-content:center;gap:4px;font-size:13px;color:white;">
+      <input id="navYear${sfx}"  type="number"              onchange="updateGameMeta('${sfx}')" style="width:60px;${inp}">年
+      <input id="navMonth${sfx}" type="number" min="1" max="12" onchange="updateGameMeta('${sfx}')" style="width:42px;${inp}">月
+      <input id="navNum${sfx}"   type="number" min="1"          onchange="updateGameMeta('${sfx}')" style="width:42px;${inp}">回
+    </div>
+    <button onclick="navGame(1)" style="${btn}">▶</button>
+    <button onclick="deleteCurrentGame()" style="${delBtn}" title="この試合を削除">🗑</button>
+  </div>`;
+}
+document.getElementById('gameNavTop').innerHTML    = gameNavHTML('',  'margin-top:10px;background:rgba(0,0,0,0.2);padding:8px;border-radius:8px;');
+document.getElementById('gameNavBottom').innerHTML = gameNavHTML('2', 'margin-top:12px;background:linear-gradient(135deg,#2e7d32,#1b5e20);padding:10px;border-radius:10px;box-shadow:0 1px 4px rgba(0,0,0,0.1);');
 
 // 初期描画 → クラウドから自動読込 → 以後は編集のたび自動保存
 render();
