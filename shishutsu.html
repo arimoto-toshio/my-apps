@@ -1,0 +1,836 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>🏮 2026うちこ夏祭り 支出管理・決算書</title>
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' rx='22' fill='%23c0392b'/><ellipse cx='50' cy='52' rx='28' ry='32' fill='%23ffd9a0'/><rect x='42' y='14' width='16' height='8' rx='2' fill='%237a1f14'/><rect x='42' y='80' width='16' height='7' rx='2' fill='%237a1f14'/><g stroke='%23c0392b' stroke-width='3'><line x1='24' y1='40' x2='76' y2='40'/><line x1='22' y1='52' x2='78' y2='52'/><line x1='24' y1='64' x2='76' y2='64'/></g><text x='50' y='60' font-size='26' text-anchor='middle' fill='%23a63324' font-weight='bold'>祭</text></svg>">
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  :root {
+    --red: #c0392b;
+    --red-dark: #8e2418;
+    --navy: #4a2018;
+    --gold: #f5a623;
+    --gold-soft: #ffe9c7;
+    --cream: #fff8ef;
+    --green: #1f9e6f;
+    --green-bg: #dcf4e8;
+    --gray: #93756a;
+    --line: #eed9c4;
+  }
+  body {
+    font-family: 'Hiragino Maru Gothic ProN','Hiragino Sans','Meiryo',sans-serif;
+    background:
+      radial-gradient(circle at 12% 8%, rgba(255,255,255,0.25), transparent 40%),
+      radial-gradient(circle at 88% 92%, rgba(255,255,255,0.20), transparent 42%),
+      linear-gradient(160deg, #1b8fc4 0%, #56c2e6 45%, #aee6f5 100%);
+    color: var(--navy);
+    min-height: 100vh;
+    padding-bottom: 40px;
+  }
+
+  /* ===== 提灯の飾り ===== */
+  .lantern-row { display:flex; justify-content:space-around; align-items:flex-start; padding:8px 10px 0; max-width:980px; margin:0 auto; }
+  .lantern { width:38px; height:52px; filter:drop-shadow(0 4px 8px rgba(0,0,0,0.25)); animation:floaty 4s ease-in-out infinite; }
+  .lantern svg { display:block; width:100%; height:100%; }
+  .lantern:nth-child(even){ width:32px; height:44px; animation-delay:-2s; opacity:.95; }
+  .lantern:nth-child(3n){ animation-delay:-1s; }
+  @keyframes floaty { 0%,100%{transform:translateY(0);} 50%{transform:translateY(6px);} }
+
+  /* ===== ヘッダー ===== */
+  .header { max-width:980px; margin:4px auto 0; padding:12px 22px 16px; text-align:center; color:#fff; }
+  .header h1 { font-size:27px; font-weight:800; letter-spacing:.05em; text-shadow:0 2px 0 var(--red-dark), 0 4px 12px rgba(0,0,0,.35); }
+  .header .sub { margin-top:6px; font-size:13px; color:var(--gold-soft); letter-spacing:.14em; }
+
+  /* 回セレクタ */
+  .ed-bar { max-width:980px; margin:0 auto 12px; padding:0 14px; display:flex; gap:8px; justify-content:center; align-items:center; flex-wrap:wrap; }
+  .ed-bar select { padding:8px 12px; border-radius:10px; border:2px solid rgba(255,255,255,.7); font-size:16px; font-weight:800; font-family:inherit; background:#fff; color:var(--red-dark); }
+  .ed-btn { padding:8px 12px; border:none; border-radius:10px; cursor:pointer; font-size:12px; font-weight:800; font-family:inherit; background:rgba(255,255,255,.9); color:var(--navy); box-shadow:0 2px 6px rgba(0,0,0,.2); }
+
+  /* ===== 集計バー ===== */
+  .summary { max-width:980px; margin:0 auto; padding:0 14px; display:grid; grid-template-columns:repeat(4,1fr); gap:10px; }
+  .sum-card { background:var(--cream); border-radius:14px; padding:12px 8px; text-align:center; box-shadow:0 4px 14px rgba(0,0,0,.18); border:2px solid rgba(245,166,35,.5); cursor:default; }
+  .sum-card .label { font-size:11px; color:var(--gray); margin-bottom:3px; font-weight:700; }
+  .sum-card .value { font-size:20px; font-weight:800; color:var(--red); line-height:1.1; }
+  .sum-card .value small { font-size:12px; font-weight:700; }
+  .sum-card .subcount { font-size:11px; color:var(--gray); font-weight:700; margin-top:3px; }
+  .sum-card.income .value { color:var(--green); }
+  .sum-card.balance .value { color:#1a6fa8; }
+  .sum-card.balance.minus .value { color:#c0271f; }
+  .sum-card.income { cursor:pointer; }
+  .sum-card.income:hover { filter:brightness(1.03); }
+
+  /* ===== ツールバー ===== */
+  .toolbar { max-width:980px; margin:16px auto 10px; padding:0 14px; display:flex; gap:8px; flex-wrap:wrap; align-items:center; }
+  .toolbar .spacer { flex:1; }
+  .btn { padding:9px 16px; border:none; border-radius:10px; cursor:pointer; font-size:13px; font-weight:800; font-family:inherit; box-shadow:0 3px 8px rgba(0,0,0,.2); transition:transform .08s, filter .15s; }
+  .btn:active { transform:translateY(1px); }
+  .btn:hover { filter:brightness(1.05); }
+  .btn-add   { background:linear-gradient(180deg,#ffd27a,var(--gold)); color:#6b3a00; font-size:14px; padding:10px 20px; }
+  .btn-ghost { background:rgba(255,255,255,.92); color:var(--navy); }
+  .btn-print { background:linear-gradient(180deg,#fff,#ffeede); color:var(--red-dark); }
+  .btn-cloud { background:linear-gradient(180deg,#5ad1a8,#1f9e8f); color:#fff; }
+  .btn-kessan{ background:linear-gradient(180deg,#8ecdf0,#1a6fa8); color:#fff; font-size:14px; padding:10px 20px; }
+
+  .search { flex:1; min-width:130px; padding:9px 14px; border-radius:10px; border:2px solid rgba(255,255,255,.6); font-size:16px; font-family:inherit; background:rgba(255,255,255,.95); outline:none; }
+  select.catfilter { padding:9px 10px; border-radius:10px; border:2px solid rgba(255,255,255,.6); font-size:13px; font-weight:700; font-family:inherit; background:rgba(255,255,255,.95); color:var(--navy); }
+
+  /* ===== 支出テーブル ===== */
+  .table-wrap { max-width:980px; margin:0 auto; padding:0 14px; overflow-x:auto; -webkit-overflow-scrolling:touch; }
+  table.exp { width:100%; min-width:640px; border-collapse:separate; border-spacing:0; background:var(--cream); border-radius:14px; overflow:hidden; box-shadow:0 4px 14px rgba(0,0,0,.18); }
+  table.exp th { background:var(--red-dark); color:#fff; font-size:12px; padding:9px 8px; white-space:nowrap; position:sticky; top:0; }
+  table.exp td { padding:9px 8px; border-bottom:1px solid var(--line); font-size:13px; vertical-align:middle; }
+  table.exp tr:last-child td { border-bottom:none; }
+  table.exp tr.exp-row { cursor:pointer; }
+  table.exp tr.exp-row:hover td { background:#fff2e0; }
+  td.amt { text-align:right; font-weight:800; white-space:nowrap; }
+  td.date-c { white-space:nowrap; font-weight:700; color:var(--red-dark); }
+  .cat-badge { display:inline-block; padding:3px 9px; border-radius:999px; background:var(--gold-soft); color:#8a5200; font-size:11px; font-weight:800; white-space:nowrap; }
+  .rcpt { font-size:15px; }
+  .rcpt.no { opacity:.25; }
+  td.item-c { max-width:220px; }
+  .payee-sub { font-size:11px; color:var(--gray); margin-top:2px; }
+  tfoot td { background:#ffeacb; font-weight:800; font-size:14px; color:var(--red-dark); }
+  .empty-msg { text-align:center; padding:36px 10px; color:var(--gray); font-weight:700; }
+
+  /* ===== モーダル ===== */
+  .modal-bg { position:fixed; inset:0; background:rgba(40,15,8,.55); display:none; z-index:100; overflow-y:auto; padding:24px 12px; }
+  .modal-bg.show { display:block; }
+  .modal { max-width:520px; margin:0 auto; background:#fffdf8; border-radius:18px; padding:22px 20px; box-shadow:0 12px 40px rgba(0,0,0,.4); }
+  .modal h2 { font-size:18px; color:var(--red-dark); margin-bottom:14px; }
+  .field { margin-bottom:12px; }
+  .field label { display:block; font-size:12px; font-weight:800; color:var(--gray); margin-bottom:4px; }
+  .field input[type=text], .field input[type=number], .field input[type=date], .field textarea, .field select {
+    width:100%; padding:10px 12px; border-radius:10px; border:2px solid var(--line); font-size:16px; font-family:inherit; outline:none; background:#fff;
+  }
+  .field input:focus, .field textarea:focus, .field select:focus { border-color:var(--gold); }
+  .field textarea { min-height:56px; resize:vertical; }
+  .field-row { display:flex; gap:10px; }
+  .field-row .field { flex:1; }
+  .pay-choice { display:flex; gap:8px; }
+  .pay-choice label { flex:1; display:flex; align-items:center; justify-content:center; gap:6px; padding:9px 6px; border:2px solid var(--line); border-radius:10px; cursor:pointer; font-size:13px; font-weight:800; }
+  .pay-choice input { accent-color:var(--red); }
+  .pay-choice label:has(input:checked) { border-color:var(--gold); background:var(--gold-soft); }
+  .chk-line { display:flex; align-items:center; gap:8px; font-size:14px; font-weight:800; color:var(--navy); padding:6px 2px; cursor:pointer; }
+  .chk-line input { width:20px; height:20px; accent-color:var(--green); }
+  .modal-actions { display:flex; gap:10px; margin-top:16px; }
+  .modal-actions .btn { flex:1; padding:12px; font-size:15px; }
+  .btn-cancel { background:#eee2d5; color:var(--navy); }
+  .btn-save { background:linear-gradient(180deg,#ffb35c,var(--red)); color:#fff; }
+  .btn-del-text { display:block; margin:14px auto 0; background:none; border:none; color:#c0271f; font-size:13px; font-weight:800; cursor:pointer; text-decoration:underline; font-family:inherit; }
+
+  /* 収入モーダル */
+  .inc-row { display:flex; gap:8px; margin-bottom:8px; align-items:center; }
+  .inc-row input[type=text] { flex:1.4; padding:9px 10px; border-radius:8px; border:2px solid var(--line); font-size:16px; font-family:inherit; }
+  .inc-row input[type=number] { flex:1; padding:9px 10px; border-radius:8px; border:2px solid var(--line); font-size:16px; font-family:inherit; text-align:right; }
+  .inc-row .rm { background:none; border:none; color:#c0271f; font-size:17px; cursor:pointer; padding:2px 6px; }
+  .mini-btn { background:var(--gold-soft); border:none; border-radius:8px; padding:7px 12px; font-size:12px; font-weight:800; color:#8a5200; cursor:pointer; font-family:inherit; }
+  .imp-note { font-size:11px; color:var(--gray); margin-top:4px; line-height:1.5; }
+
+  /* 履歴モーダル */
+  .hist-item { display:flex; justify-content:space-between; align-items:center; padding:10px 6px; border-bottom:1px solid var(--line); font-size:13px; font-weight:700; }
+  .hist-item button { background:var(--green-bg); color:var(--green); border:none; border-radius:8px; padding:6px 12px; font-weight:800; cursor:pointer; font-family:inherit; }
+
+  /* ===== 決算書プレビュー ===== */
+  .kessan-modal { max-width:760px; }
+  #kessan-sheet { background:#fff; border:1px solid #ccc; padding:28px 32px; font-family:'Hiragino Mincho ProN','Yu Mincho',serif; color:#111; }
+  #kessan-sheet h1 { text-align:center; font-size:22px; letter-spacing:.2em; margin-bottom:4px; font-weight:700; }
+  #kessan-sheet .k-date { text-align:center; font-size:12px; margin-bottom:18px; }
+  #kessan-sheet h2 { font-size:15px; margin:16px 0 6px; border-left:5px solid #b03020; padding-left:8px; letter-spacing:.1em; }
+  table.ktbl { width:100%; border-collapse:collapse; font-size:13px; }
+  table.ktbl th, table.ktbl td { border:1px solid #333; padding:6px 8px; }
+  table.ktbl th { background:#f2ece2; font-weight:700; text-align:center; }
+  table.ktbl td.r { text-align:right; font-variant-numeric:tabular-nums; white-space:nowrap; }
+  table.ktbl td.c { text-align:center; }
+  table.ktbl tr.total td { font-weight:700; background:#faf5ea; }
+  .k-summary { margin-top:18px; border:2px solid #333; padding:12px 16px; font-size:14px; }
+  .k-summary table { width:100%; border-collapse:collapse; }
+  .k-summary td { padding:4px 6px; font-size:14px; }
+  .k-summary td.r { text-align:right; font-weight:700; font-variant-numeric:tabular-nums; }
+  .k-summary tr.grand td { font-size:16px; font-weight:700; border-top:1px solid #333; padding-top:8px; }
+  .k-sign { margin-top:26px; font-size:13px; }
+  .k-sign .audit { margin-bottom:18px; }
+  .k-sign .names { display:flex; justify-content:flex-end; gap:34px; margin-top:14px; }
+  .k-sign .names span { border-bottom:1px solid #333; padding:0 8px 3px 4px; min-width:150px; display:inline-block; }
+
+  /* ===== 印刷 ===== */
+  #print-area { display:none; }
+  @media print {
+    body > *:not(#print-area) { display:none !important; }
+    body { background:#fff !important; padding:0 !important; }
+    #print-area { display:block !important; }
+    #print-area #kessan-sheet, #print-area .list-print { border:none; padding:10mm 6mm; }
+    @page { size:A4 portrait; margin:12mm; }
+  }
+  .list-print { font-family:'Hiragino Mincho ProN','Yu Mincho',serif; color:#111; background:#fff; }
+  .list-print h1 { text-align:center; font-size:19px; letter-spacing:.15em; margin-bottom:12px; }
+  .list-print table { width:100%; border-collapse:collapse; font-size:12px; }
+  .list-print th, .list-print td { border:1px solid #333; padding:5px 6px; }
+  .list-print th { background:#f2ece2; }
+  .list-print td.r { text-align:right; white-space:nowrap; }
+
+  #toast { position:fixed; left:50%; bottom:28px; transform:translateX(-50%) translateY(20px); background:rgba(60,20,10,.95); color:#fff; padding:12px 22px; border-radius:999px; font-size:14px; font-weight:700; box-shadow:0 6px 20px rgba(0,0,0,.3); opacity:0; pointer-events:none; transition:opacity .25s, transform .25s; z-index:500; }
+  #toast.show { opacity:1; transform:translateX(-50%) translateY(0); }
+
+  @media (max-width:640px) {
+    .summary { grid-template-columns:repeat(2,1fr); }
+    .header h1 { font-size:21px; }
+    table.exp { min-width:560px; }
+  }
+</style>
+</head>
+<body>
+
+<div class="lantern-row" id="lanterns"></div>
+
+<div class="header">
+  <h1 id="app-title">🏮 2026 うちこ夏祭り 支出管理 🏮</h1>
+  <div class="sub">UCHIKO SUMMER FESTIVAL — 支出管理表・収支決算書</div>
+</div>
+
+<div class="ed-bar">
+  <select id="ed-select" onchange="switchEdition(this.value)"></select>
+  <button class="ed-btn" onclick="newEdition()">＋新規回</button>
+  <button class="ed-btn" onclick="renameEdition()">✎名前変更</button>
+  <button class="ed-btn ed-del" onclick="deleteEdition()">🗑削除</button>
+</div>
+
+<div class="summary">
+  <div class="sum-card income" onclick="openIncome()" title="タップで収入を編集">
+    <div class="label">収入合計（タップで編集）</div>
+    <div class="value" id="sum-income">0<small>円</small></div>
+    <div class="subcount" id="sum-income-sub"></div>
+  </div>
+  <div class="sum-card">
+    <div class="label">支出合計</div>
+    <div class="value" id="sum-exp">0<small>円</small></div>
+    <div class="subcount" id="sum-exp-sub"></div>
+  </div>
+  <div class="sum-card balance" id="card-balance">
+    <div class="label">差引残高</div>
+    <div class="value" id="sum-balance">0<small>円</small></div>
+    <div class="subcount">収入 − 支出</div>
+  </div>
+  <div class="sum-card">
+    <div class="label">領収書</div>
+    <div class="value" id="sum-rcpt">0<small>/0</small></div>
+    <div class="subcount">受領済み / 件数</div>
+  </div>
+</div>
+
+<div class="toolbar">
+  <button class="btn btn-add" onclick="openModal()">＋ 支出を追加</button>
+  <button class="btn btn-kessan" onclick="openKessan()">📋 決算書</button>
+  <button class="btn btn-ghost" onclick="gotoSponsor()" title="スポンサー集金アプリを開く">🎆 集金アプリへ</button>
+  <input class="search" id="search" placeholder="🔍 内容・支払先で検索" oninput="render()">
+  <select class="catfilter" id="catfilter" onchange="render()"><option value="">全科目</option></select>
+  <div class="spacer"></div>
+  <button class="btn btn-print" onclick="printList()">🖨 一覧印刷</button>
+  <button class="btn btn-ghost" onclick="exportCSV()">📄 CSV</button>
+  <button class="btn btn-ghost" onclick="openHistory()">🕘 履歴</button>
+  <button class="btn btn-cloud" onclick="pushCloud()">☁️↑ 保存</button>
+  <button class="btn btn-cloud" onclick="pullCloud()">☁️↓ 復元</button>
+</div>
+
+<div class="table-wrap">
+  <table class="exp">
+    <thead>
+      <tr><th>月/日</th><th>科目</th><th>内容・支払先</th><th>金額</th><th>支払</th><th>領収書</th></tr>
+    </thead>
+    <tbody id="exp-body"></tbody>
+    <tfoot id="exp-foot"></tfoot>
+  </table>
+</div>
+
+<!-- ===== 支出モーダル ===== -->
+<div class="modal-bg" id="modal-bg" onclick="if(event.target===this)closeModal()">
+  <div class="modal">
+    <h2 id="modal-title">支出を追加</h2>
+    <div class="field-row">
+      <div class="field"><label>日付</label><input type="date" id="f-date"></div>
+      <div class="field"><label>金額（円）</label><input type="number" id="f-amount" inputmode="numeric" placeholder="0"></div>
+    </div>
+    <div class="field">
+      <label>科目</label>
+      <input type="text" id="f-cat" list="cat-list" placeholder="例：会場設営費">
+      <datalist id="cat-list"></datalist>
+    </div>
+    <div class="field"><label>内容（摘要）</label><input type="text" id="f-item" placeholder="例：テント10張レンタル"></div>
+    <div class="field"><label>支払先</label><input type="text" id="f-payee" placeholder="例：○○リース"></div>
+    <div class="field">
+      <label>支払い方法</label>
+      <div class="pay-choice">
+        <label><input type="radio" name="pay" value="cash" checked><span>💴 現金</span></label>
+        <label><input type="radio" name="pay" value="bank"><span>🏦 振込</span></label>
+      </div>
+    </div>
+    <label class="chk-line"><input type="checkbox" id="f-receipt"> 領収書を受け取った</label>
+    <div class="field"><label>メモ</label><textarea id="f-note" placeholder="任意"></textarea></div>
+    <div class="modal-actions">
+      <button class="btn btn-cancel" onclick="closeModal()">キャンセル</button>
+      <button class="btn btn-save" onclick="saveExpense()">保存</button>
+    </div>
+    <button class="btn-del-text" id="del-btn" onclick="deleteExpense()" style="display:none">この支出を削除</button>
+  </div>
+</div>
+
+<!-- ===== 収入モーダル ===== -->
+<div class="modal-bg" id="income-bg" onclick="if(event.target===this)closeIncome()">
+  <div class="modal">
+    <h2>💰 収入の部</h2>
+    <div class="field"><label>前年度繰越金（円）</label><input type="number" id="i-carry" inputmode="numeric" placeholder="0"></div>
+    <div class="field">
+      <label>協賛金（円）</label>
+      <input type="number" id="i-sponsor" inputmode="numeric" placeholder="0">
+      <button class="mini-btn" style="margin-top:6px" onclick="importSponsor()">⬇ スポンサー集金アプリから取込</button>
+      <div class="imp-note">クラウドに保存されている集金データから「集金済み」の合計を取り込みます。</div>
+    </div>
+    <div class="field">
+      <label>その他の収入</label>
+      <div id="inc-others"></div>
+      <button class="mini-btn" onclick="addIncomeRow()">＋ 行を追加</button>
+    </div>
+    <div class="modal-actions">
+      <button class="btn btn-cancel" onclick="closeIncome()">キャンセル</button>
+      <button class="btn btn-save" onclick="saveIncome()">保存</button>
+    </div>
+  </div>
+</div>
+
+<!-- ===== 決算書モーダル ===== -->
+<div class="modal-bg" id="kessan-bg" onclick="if(event.target===this)closeKessan()">
+  <div class="modal kessan-modal">
+    <div id="kessan-sheet"></div>
+    <div class="modal-actions">
+      <button class="btn btn-cancel" onclick="closeKessan()">閉じる</button>
+      <button class="btn btn-save" onclick="printKessan()">🖨 決算書を印刷</button>
+    </div>
+  </div>
+</div>
+
+<!-- ===== 履歴モーダル ===== -->
+<div class="modal-bg" id="hist-bg" onclick="if(event.target===this)closeHistory()">
+  <div class="modal">
+    <h2>🕘 保存履歴（この端末内）</h2>
+    <div id="hist-list"></div>
+    <div class="modal-actions">
+      <button class="btn btn-cancel" onclick="closeHistory()">閉じる</button>
+    </div>
+  </div>
+</div>
+
+<div id="print-area"></div>
+<div id="toast"></div>
+
+<script>
+  const KEY  = 'natsumatsuri_shishutsu_v1';
+  const HKEY = 'natsumatsuri_shishutsu_hist_v1';   // ※KEYで始めない（バックアップの再帰混入防止）
+  const SYNC_URL = 'https://script.google.com/macros/s/AKfycbxwL19mAenATUMILRsQYrDL0ThjU2C583Cj729OfzNHEH3drMcZCExYULRp4VGOZ11J/exec';
+  const SYNC_KEY = 'natsumatsuri_shishutsu';
+  const SPONSOR_KEY = 'natsumatsuri_sponsors';
+
+  const DEFAULT_CATS = ['会場設営費','舞台・音響費','花火代','印刷費','広告宣伝費','景品・賞品代','保険料','謝礼金','飲食費','消耗品費','通信費','雑費'];
+
+  let store = { editions: [], curId: null, updated: 0 };
+  let editId = null;   // 編集中の支出id
+  let cloudReady = false, cloudTimer = null;
+
+  const yen = n => (n||0).toLocaleString('ja-JP');
+  const esc = s => String(s==null?'':s).replace(/[&<>"']/g, c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+  function genId(){ return 'x'+Date.now().toString(36)+Math.random().toString(36).slice(2,6); }
+  function curEdition(){ return store.editions.find(e=>e.id===store.curId) || null; }
+  function blankEdition(label){
+    return { id:genId(), label:label, expenses:[], income:{ carry:0, sponsor:0, others:[] } };
+  }
+  function toast(msg){
+    const t = document.getElementById('toast');
+    t.textContent = msg; t.classList.add('show');
+    clearTimeout(t._tm); t._tm = setTimeout(()=>t.classList.remove('show'), 2200);
+  }
+
+  /* ===== 読込・保存 ===== */
+  function load(){
+    try { const d = JSON.parse(localStorage.getItem(KEY)); if (d && Array.isArray(d.editions)) store = d; } catch(e){}
+    if (!store.editions.length){
+      store.editions = [ blankEdition('2026年') ];
+      store.curId = store.editions[0].id;
+    }
+    if (!store.editions.some(e=>e.id===store.curId)) store.curId = store.editions[0].id;
+    store.editions.forEach(e=>{
+      if (!e.income) e.income = { carry:0, sponsor:0, others:[] };
+      if (!Array.isArray(e.expenses)) e.expenses = [];
+    });
+  }
+  function save(){
+    store.updated = Date.now();
+    localStorage.setItem(KEY, JSON.stringify(store));
+    snapshotHistory();
+    scheduleCloudSave();
+  }
+
+  /* ===== 保存履歴（15世代・10分スロットル、削除時は強制） ===== */
+  function snapshotHistory(force){
+    let hist = [];
+    try { hist = JSON.parse(localStorage.getItem(HKEY)) || []; } catch(e){}
+    const now = Date.now();
+    if (!force && hist.length && now - hist[0].t < 10*60*1000) return;
+    hist.unshift({ t: now, data: JSON.parse(JSON.stringify(store)) });
+    if (hist.length > 15) hist = hist.slice(0,15);
+    try { localStorage.setItem(HKEY, JSON.stringify(hist)); } catch(e){}
+  }
+  function openHistory(){
+    let hist = [];
+    try { hist = JSON.parse(localStorage.getItem(HKEY)) || []; } catch(e){}
+    const box = document.getElementById('hist-list');
+    if (!hist.length) box.innerHTML = '<div class="empty-msg">履歴はまだありません</div>';
+    else box.innerHTML = hist.map((h,i)=>{
+      const d = new Date(h.t);
+      const label = d.getMonth()+1+'/'+d.getDate()+' '+String(d.getHours()).padStart(2,'0')+':'+String(d.getMinutes()).padStart(2,'0');
+      const cnt = (h.data.editions||[]).reduce((s,e)=>s+(e.expenses||[]).length,0);
+      return `<div class="hist-item"><span>${label}　支出${cnt}件</span><button onclick="restoreHistory(${i})">復元</button></div>`;
+    }).join('');
+    document.getElementById('hist-bg').classList.add('show');
+  }
+  function closeHistory(){ document.getElementById('hist-bg').classList.remove('show'); }
+  function restoreHistory(i){
+    let hist = [];
+    try { hist = JSON.parse(localStorage.getItem(HKEY)) || []; } catch(e){}
+    const h = hist[i]; if (!h) return;
+    if (!confirm('この時点のデータに戻しますか？（現在の状態も履歴に残ります）')) return;
+    snapshotHistory(true);
+    store = h.data;
+    if (!store.editions.some(e=>e.id===store.curId)) store.curId = store.editions[0].id;
+    save(); renderEditionBar(); render(); closeHistory();
+    toast('履歴から復元しました');
+  }
+
+  /* ===== クラウド同期 ===== */
+  function scheduleCloudSave(){
+    if (!cloudReady) return;
+    clearTimeout(cloudTimer);
+    cloudTimer = setTimeout(pushCloudSilent, 1500);
+  }
+  async function pushCloudSilent(){
+    try {
+      const res = await fetch(SYNC_URL + '?action=save&key=' + SYNC_KEY, { method:'POST', body: JSON.stringify(store) });
+      const json = await res.json();
+      if (json && json.success) toast('☁ 自動保存しました');
+    } catch(e){ /* オフライン時は端末内保存のみ */ }
+  }
+  async function pushCloud(){
+    try {
+      const res = await fetch(SYNC_URL + '?action=save&key=' + SYNC_KEY, { method:'POST', body: JSON.stringify(store) });
+      const json = await res.json();
+      toast(json && json.success ? '☁ クラウドに保存しました' : '保存に失敗しました');
+    } catch(e){ toast('通信エラー：保存できませんでした'); }
+  }
+  function parseCloud(d){
+    if (d == null) return null;
+    if (typeof d === 'string'){ try { d = JSON.parse(d); } catch(e){ return null; } }
+    if (d && d.data !== undefined && d.editions === undefined) d = d.data;
+    if (typeof d === 'string'){ try { d = JSON.parse(d); } catch(e){ return null; } }
+    if (d && Array.isArray(d.editions)) return d;
+    return null;
+  }
+  async function pullCloud(){
+    try {
+      const res = await fetch(SYNC_URL + '?action=load&key=' + SYNC_KEY);
+      const json = await res.json();
+      const d = parseCloud(json);
+      if (!d){ toast('クラウドにデータがありません'); return; }
+      if (!confirm('クラウドのデータで置き換えますか？（現在の状態は履歴に残ります）')) return;
+      snapshotHistory(true);
+      store = d;
+      if (!store.editions.some(e=>e.id===store.curId)) store.curId = store.editions[0].id;
+      store.editions.forEach(e=>{ if(!e.income) e.income={carry:0,sponsor:0,others:[]}; if(!Array.isArray(e.expenses)) e.expenses=[]; });
+      localStorage.setItem(KEY, JSON.stringify(store));
+      renderEditionBar(); render();
+      toast('☁ クラウドから復元しました');
+    } catch(e){ toast('通信エラー：復元できませんでした'); }
+  }
+  // 起動時：クラウドの方が新しければ自動で取り込む
+  async function autoRestore(){
+    try {
+      const res = await fetch(SYNC_URL + '?action=load&key=' + SYNC_KEY);
+      const json = await res.json();
+      const d = parseCloud(json);
+      if (d && (d.updated||0) > (store.updated||0)){
+        store = d;
+        if (!store.editions.some(e=>e.id===store.curId)) store.curId = store.editions[0].id;
+        store.editions.forEach(e=>{ if(!e.income) e.income={carry:0,sponsor:0,others:[]}; if(!Array.isArray(e.expenses)) e.expenses=[]; });
+        localStorage.setItem(KEY, JSON.stringify(store));
+        renderEditionBar(); render();
+        toast('☁ クラウドの最新データを読み込みました');
+      }
+    } catch(e){ /* オフラインなら端末内データのまま */ }
+    cloudReady = true;
+  }
+
+  /* ===== 回（年度）管理 ===== */
+  function renderEditionBar(){
+    const sel = document.getElementById('ed-select');
+    sel.innerHTML = store.editions.map(e=>`<option value="${e.id}" ${e.id===store.curId?'selected':''}>${esc(e.label)}</option>`).join('');
+    const ed = curEdition();
+    document.getElementById('app-title').textContent = '🏮 '+(ed?ed.label:'')+' うちこ夏祭り 支出管理 🏮';
+    document.querySelector('.ed-del').style.display = store.editions.length>1 ? '' : 'none';
+  }
+  function switchEdition(id){ store.curId = id; save(); renderEditionBar(); render(); }
+  function newEdition(){
+    const label = prompt('新しい回の名前を入力してください（例：2027年）','');
+    if (label === null) return;
+    const name = label.trim();
+    if (!name){ alert('名前を入力してください'); return; }
+    const ne = blankEdition(name);
+    const ed = curEdition();
+    if (ed) ne.income.carry = calcTotals(ed).balance;  // 残高を繰越金として引き継ぐ
+    store.editions.push(ne);
+    store.curId = ne.id;
+    save(); renderEditionBar(); render();
+    toast('新規回「'+name+'」を作成しました（残高を繰越金に設定）');
+  }
+  function renameEdition(){
+    const ed = curEdition(); if (!ed) return;
+    const label = prompt('回の名前を変更', ed.label);
+    if (label === null) return;
+    const name = label.trim();
+    if (!name){ alert('名前を入力してください'); return; }
+    ed.label = name; save(); renderEditionBar();
+    toast('名前を変更しました');
+  }
+  function deleteEdition(){
+    if (store.editions.length <= 1){ alert('最後の回は削除できません'); return; }
+    const ed = curEdition(); if (!ed) return;
+    if (!confirm('「'+ed.label+'」の回を削除しますか？\nこの回の支出・収入データも削除されます。')) return;
+    snapshotHistory(true);
+    store.editions = store.editions.filter(e=>e.id!==store.curId);
+    store.curId = store.editions[0].id;
+    save(); renderEditionBar(); render();
+    toast('回を削除しました');
+  }
+
+  /* ===== 集計 ===== */
+  function calcTotals(ed){
+    const inc = ed.income || {carry:0,sponsor:0,others:[]};
+    const otherSum = (inc.others||[]).reduce((s,o)=>s+(+o.amount||0),0);
+    const income = (+inc.carry||0) + (+inc.sponsor||0) + otherSum;
+    const expense = ed.expenses.reduce((s,x)=>s+(+x.amount||0),0);
+    return { income, expense, balance: income - expense, otherSum };
+  }
+  function catList(ed){
+    const set = new Set(DEFAULT_CATS);
+    ed.expenses.forEach(x=>{ if (x.cat) set.add(x.cat); });
+    return [...set];
+  }
+
+  /* ===== 一覧表示 ===== */
+  function sortedExpenses(ed){
+    return ed.expenses.slice().sort((a,b)=> (a.date||'9999') < (b.date||'9999') ? -1 : 1);
+  }
+  function fmtDate(d){
+    if (!d) return '—';
+    const p = d.split('-');
+    return p.length===3 ? (+p[1])+'/'+(+p[2]) : d;
+  }
+  function render(){
+    const ed = curEdition(); if (!ed) return;
+    const t = calcTotals(ed);
+    document.getElementById('sum-income').innerHTML = yen(t.income)+'<small>円</small>';
+    document.getElementById('sum-income-sub').textContent = '繰越'+yen(ed.income.carry)+' / 協賛'+yen(ed.income.sponsor);
+    document.getElementById('sum-exp').innerHTML = yen(t.expense)+'<small>円</small>';
+    document.getElementById('sum-exp-sub').textContent = ed.expenses.length+'件';
+    document.getElementById('sum-balance').innerHTML = yen(t.balance)+'<small>円</small>';
+    document.getElementById('card-balance').classList.toggle('minus', t.balance < 0);
+    const rc = ed.expenses.filter(x=>x.receipt).length;
+    document.getElementById('sum-rcpt').innerHTML = rc+'<small>/'+ed.expenses.length+'</small>';
+
+    // 科目フィルタ・datalist
+    const cf = document.getElementById('catfilter');
+    const cur = cf.value;
+    cf.innerHTML = '<option value="">全科目</option>' + catList(ed).map(c=>`<option ${c===cur?'selected':''}>${esc(c)}</option>`).join('');
+    document.getElementById('cat-list').innerHTML = catList(ed).map(c=>`<option value="${esc(c)}">`).join('');
+
+    const q = document.getElementById('search').value.trim().toLowerCase();
+    const fcat = cf.value;
+    const rows = sortedExpenses(ed).filter(x=>{
+      if (fcat && x.cat !== fcat) return false;
+      if (q && !((x.item||'')+(x.payee||'')+(x.cat||'')+(x.note||'')).toLowerCase().includes(q)) return false;
+      return true;
+    });
+
+    const body = document.getElementById('exp-body');
+    if (!rows.length){
+      body.innerHTML = '<tr><td colspan="6"><div class="empty-msg">'+(ed.expenses.length?'条件に合う支出がありません':'まだ支出がありません。「＋ 支出を追加」から入力してください')+'</div></td></tr>';
+    } else {
+      body.innerHTML = rows.map(x=>`
+        <tr class="exp-row" onclick="openModal('${x.id}')">
+          <td class="date-c">${fmtDate(x.date)}</td>
+          <td><span class="cat-badge">${esc(x.cat||'未分類')}</span></td>
+          <td class="item-c">${esc(x.item||'')}${x.payee?`<div class="payee-sub">→ ${esc(x.payee)}</div>`:''}</td>
+          <td class="amt">${yen(x.amount)}円</td>
+          <td class="c" style="text-align:center">${x.pay==='bank'?'🏦':'💴'}</td>
+          <td style="text-align:center"><span class="rcpt ${x.receipt?'':'no'}">🧾</span></td>
+        </tr>`).join('');
+    }
+    const shown = rows.reduce((s,x)=>s+(+x.amount||0),0);
+    document.getElementById('exp-foot').innerHTML =
+      `<tr><td colspan="3" style="text-align:right">表示中 ${rows.length}件 合計</td><td class="amt">${yen(shown)}円</td><td colspan="2"></td></tr>`;
+  }
+
+  /* ===== 支出モーダル ===== */
+  function openModal(id){
+    editId = id || null;
+    const ed = curEdition();
+    const x = id ? ed.expenses.find(e=>e.id===id) : null;
+    document.getElementById('modal-title').textContent = x ? '支出を編集' : '支出を追加';
+    document.getElementById('f-date').value = x ? (x.date||'') : defaultDate();
+    document.getElementById('f-amount').value = x ? (x.amount||'') : '';
+    document.getElementById('f-cat').value = x ? (x.cat||'') : '';
+    document.getElementById('f-item').value = x ? (x.item||'') : '';
+    document.getElementById('f-payee').value = x ? (x.payee||'') : '';
+    document.getElementById('f-note').value = x ? (x.note||'') : '';
+    document.getElementById('f-receipt').checked = x ? !!x.receipt : false;
+    document.querySelectorAll('input[name=pay]').forEach(r=>{ r.checked = r.value === ((x&&x.pay)||'cash'); });
+    document.getElementById('del-btn').style.display = x ? '' : 'none';
+    document.getElementById('modal-bg').classList.add('show');
+    if (!x) setTimeout(()=>document.getElementById('f-amount').focus(), 100);
+  }
+  function defaultDate(){
+    const ed = curEdition();
+    const last = ed.expenses.length ? sortedExpenses(ed)[ed.expenses.length-1].date : '';
+    if (last) return last;
+    const m = (ed.label||'').match(/(20\d\d)/);
+    return m ? m[1]+'-07-01' : new Date().toISOString().slice(0,10);
+  }
+  function closeModal(){ document.getElementById('modal-bg').classList.remove('show'); }
+  function saveExpense(){
+    const amount = +document.getElementById('f-amount').value || 0;
+    const item = document.getElementById('f-item').value.trim();
+    if (!amount && !item){ alert('金額または内容を入力してください'); return; }
+    const rec = {
+      id: editId || genId(),
+      date: document.getElementById('f-date').value,
+      amount,
+      cat: document.getElementById('f-cat').value.trim(),
+      item,
+      payee: document.getElementById('f-payee').value.trim(),
+      pay: document.querySelector('input[name=pay]:checked').value,
+      receipt: document.getElementById('f-receipt').checked,
+      note: document.getElementById('f-note').value.trim()
+    };
+    const ed = curEdition();
+    const i = ed.expenses.findIndex(e=>e.id===rec.id);
+    if (i >= 0) ed.expenses[i] = rec; else ed.expenses.push(rec);
+    save(); render(); closeModal();
+    toast(i>=0 ? '更新しました' : '追加しました');
+  }
+  function deleteExpense(){
+    if (!editId) return;
+    if (!confirm('この支出を削除しますか？')) return;
+    const ed = curEdition();
+    snapshotHistory(true);
+    ed.expenses = ed.expenses.filter(e=>e.id!==editId);
+    save(); render(); closeModal();
+    toast('削除しました');
+  }
+
+  /* ===== 収入モーダル ===== */
+  function openIncome(){
+    const ed = curEdition();
+    document.getElementById('i-carry').value = ed.income.carry || '';
+    document.getElementById('i-sponsor').value = ed.income.sponsor || '';
+    renderIncomeRows(ed.income.others||[]);
+    document.getElementById('income-bg').classList.add('show');
+  }
+  function renderIncomeRows(others){
+    const box = document.getElementById('inc-others');
+    box.innerHTML = others.map((o,i)=>`
+      <div class="inc-row">
+        <input type="text" placeholder="名目（例：出店料）" value="${esc(o.name)}" data-i="${i}" data-f="name">
+        <input type="number" inputmode="numeric" placeholder="0" value="${o.amount||''}" data-i="${i}" data-f="amount">
+        <button class="rm" onclick="removeIncomeRow(${i})">✕</button>
+      </div>`).join('');
+  }
+  function collectIncomeRows(){
+    const rows = [];
+    document.querySelectorAll('#inc-others .inc-row').forEach(div=>{
+      const name = div.querySelector('[data-f=name]').value.trim();
+      const amount = +div.querySelector('[data-f=amount]').value || 0;
+      if (name || amount) rows.push({name, amount});
+    });
+    return rows;
+  }
+  function addIncomeRow(){
+    const rows = collectIncomeRows();
+    rows.push({name:'', amount:0});
+    renderIncomeRows(rows);
+  }
+  function removeIncomeRow(i){
+    const rows = collectIncomeRows();
+    rows.splice(i,1);
+    renderIncomeRows(rows);
+  }
+  function closeIncome(){ document.getElementById('income-bg').classList.remove('show'); }
+  function saveIncome(){
+    const ed = curEdition();
+    ed.income.carry = +document.getElementById('i-carry').value || 0;
+    ed.income.sponsor = +document.getElementById('i-sponsor').value || 0;
+    ed.income.others = collectIncomeRows();
+    save(); render(); closeIncome();
+    toast('収入を保存しました');
+  }
+  async function importSponsor(){
+    toast('スポンサーデータを取得中…');
+    try {
+      const res = await fetch(SYNC_URL + '?action=load&key=' + SPONSOR_KEY);
+      let d = await res.json();
+      if (typeof d === 'string'){ try{ d = JSON.parse(d); }catch(e){} }
+      if (d && d.data !== undefined && d.sponsors === undefined) d = typeof d.data==='string' ? JSON.parse(d.data) : d.data;
+      let list = null;
+      if (Array.isArray(d)) list = d;
+      else if (d && Array.isArray(d.sponsors)) list = d.sponsors;
+      if (!list){ toast('集金データが見つかりませんでした'); return; }
+      const done = list.filter(s=>s.done);
+      const sum = done.reduce((s,x)=>s+(+x.amount||0),0);
+      document.getElementById('i-sponsor').value = sum;
+      const label = (d && d.label) ? '（'+d.label+'）' : '';
+      toast('集金済み '+done.length+'社'+label+' 合計 '+yen(sum)+'円 を取込みました');
+    } catch(e){ toast('通信エラー：取込できませんでした'); }
+  }
+
+  /* ===== 決算書 ===== */
+  function kessanHTML(ed){
+    const t = calcTotals(ed);
+    const inc = ed.income;
+    // 収入の部
+    let incRows = '';
+    incRows += `<tr><td class="c">前年度繰越金</td><td class="r">${yen(inc.carry)}円</td><td></td></tr>`;
+    incRows += `<tr><td class="c">協賛金</td><td class="r">${yen(inc.sponsor)}円</td><td></td></tr>`;
+    (inc.others||[]).forEach(o=>{
+      incRows += `<tr><td class="c">${esc(o.name||'その他収入')}</td><td class="r">${yen(o.amount)}円</td><td></td></tr>`;
+    });
+    incRows += `<tr class="total"><td class="c">収入合計</td><td class="r">${yen(t.income)}円</td><td></td></tr>`;
+    // 支出の部（科目別集計、備考＝主な内容）
+    const byCat = {};
+    sortedExpenses(ed).forEach(x=>{
+      const c = x.cat || '未分類';
+      if (!byCat[c]) byCat[c] = { sum:0, items:[] };
+      byCat[c].sum += (+x.amount||0);
+      if (x.item) byCat[c].items.push(x.item);
+    });
+    let expRows = '';
+    Object.entries(byCat).sort((a,b)=>b[1].sum-a[1].sum).forEach(([c,v])=>{
+      let note = v.items.slice(0,4).join('、');
+      if (v.items.length > 4) note += ' ほか';
+      expRows += `<tr><td class="c">${esc(c)}</td><td class="r">${yen(v.sum)}円</td><td style="font-size:11px">${esc(note)}</td></tr>`;
+    });
+    if (!expRows) expRows = '<tr><td class="c">—</td><td class="r">0円</td><td></td></tr>';
+    expRows += `<tr class="total"><td class="c">支出合計</td><td class="r">${yen(t.expense)}円</td><td></td></tr>`;
+
+    const today = new Date();
+    const dateStr = today.getFullYear()+'年'+(today.getMonth()+1)+'月'+today.getDate()+'日';
+    return `
+      <h1>${esc(ed.label)}　うちこ夏祭り　収支決算書</h1>
+      <div class="k-date">${dateStr} 現在</div>
+      <h2>収入の部</h2>
+      <table class="ktbl"><tr><th style="width:32%">科目</th><th style="width:26%">金額</th><th>備考</th></tr>${incRows}</table>
+      <h2>支出の部</h2>
+      <table class="ktbl"><tr><th style="width:32%">科目</th><th style="width:26%">金額</th><th>備考</th></tr>${expRows}</table>
+      <div class="k-summary"><table>
+        <tr><td>収入合計</td><td class="r">${yen(t.income)}円</td></tr>
+        <tr><td>支出合計</td><td class="r">${yen(t.expense)}円</td></tr>
+        <tr class="grand"><td>差引残高（次年度繰越金）</td><td class="r">${yen(t.balance)}円</td></tr>
+      </table></div>
+      <div class="k-sign">
+        <div class="audit">上記のとおり報告いたします。</div>
+        <div class="names">
+          <span>会長　　　　　　　　　　㊞</span>
+          <span>会計　　　　　　　　　　㊞</span>
+        </div>
+        <div class="names" style="margin-top:22px">
+          <span>監事　　　　　　　　　　㊞</span>
+        </div>
+      </div>`;
+  }
+  function openKessan(){
+    const ed = curEdition(); if (!ed) return;
+    document.getElementById('kessan-sheet').innerHTML = kessanHTML(ed);
+    document.getElementById('kessan-bg').classList.add('show');
+  }
+  function closeKessan(){ document.getElementById('kessan-bg').classList.remove('show'); }
+  function printKessan(){
+    const ed = curEdition(); if (!ed) return;
+    document.getElementById('print-area').innerHTML = '<div id="kessan-sheet">'+kessanHTML(ed)+'</div>';
+    window.print();
+  }
+
+  /* ===== 一覧印刷 ===== */
+  function printList(){
+    const ed = curEdition(); if (!ed) return;
+    const t = calcTotals(ed);
+    const rows = sortedExpenses(ed).map(x=>`
+      <tr><td>${fmtDate(x.date)}</td><td>${esc(x.cat||'')}</td><td>${esc(x.item||'')}</td><td>${esc(x.payee||'')}</td>
+      <td class="r">${yen(x.amount)}</td><td style="text-align:center">${x.pay==='bank'?'振込':'現金'}</td><td style="text-align:center">${x.receipt?'○':''}</td></tr>`).join('');
+    document.getElementById('print-area').innerHTML = `
+      <div class="list-print">
+        <h1>${esc(ed.label)}　うちこ夏祭り　支出一覧表</h1>
+        <table>
+          <tr><th>月/日</th><th>科目</th><th>内容</th><th>支払先</th><th>金額(円)</th><th>支払</th><th>領収書</th></tr>
+          ${rows || '<tr><td colspan="7" style="text-align:center">支出なし</td></tr>'}
+          <tr><td colspan="4" style="text-align:right;font-weight:700">支出合計</td><td class="r" style="font-weight:700">${yen(t.expense)}</td><td colspan="2"></td></tr>
+        </table>
+      </div>`;
+    window.print();
+  }
+
+  /* ===== CSV ===== */
+  function exportCSV(){
+    const ed = curEdition(); if (!ed) return;
+    const q = s => '"'+String(s==null?'':s).replace(/"/g,'""')+'"';
+    let csv = '日付,科目,内容,支払先,金額,支払方法,領収書,メモ\n';
+    sortedExpenses(ed).forEach(x=>{
+      csv += [x.date, x.cat, x.item, x.payee, x.amount||0, x.pay==='bank'?'振込':'現金', x.receipt?'○':'', x.note].map(q).join(',')+'\n';
+    });
+    const blob = new Blob(['﻿'+csv], {type:'text/csv'});
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(blob);
+    a.download = (ed.label||'')+'夏祭り支出.csv';
+    a.click();
+    URL.revokeObjectURL(a.href);
+    toast('CSVを書き出しました');
+  }
+
+  /* ===== 提灯の飾り ===== */
+  (function(){
+    const row = document.getElementById('lanterns');
+    const lantern = `<svg viewBox="0 0 60 84" xmlns="http://www.w3.org/2000/svg">
+      <line x1="30" y1="0" x2="30" y2="8" stroke="#5b2a20" stroke-width="2"/>
+      <rect x="21" y="7" width="18" height="7" rx="2" fill="#5b2a20"/>
+      <ellipse cx="30" cy="44" rx="22" ry="31" fill="#e8482f"/>
+      <ellipse cx="24" cy="38" rx="10" ry="20" fill="rgba(255,220,150,.35)"/>
+      <g stroke="#a52a16" stroke-width="1.6" fill="none">
+        <path d="M9,32 Q30,38 51,32"/><path d="M8,44 Q30,50 52,44"/><path d="M9,56 Q30,62 51,56"/>
+      </g>
+      <rect x="21" y="70" width="18" height="6" rx="2" fill="#5b2a20"/>
+      <line x1="30" y1="76" x2="30" y2="84" stroke="#d4a017" stroke-width="2"/>
+    </svg>`;
+    let html = '';
+    for (let i=0; i<8; i++) html += '<div class="lantern">'+lantern+'</div>';
+    row.innerHTML = html;
+  })();
+
+  // 集金アプリへ（GitHub Pages上ではsponsor.html、Desktop上では日本語ファイル名）
+  function gotoSponsor(){
+    location.href = location.hostname.endsWith('github.io') ? 'sponsor.html' : encodeURI('夏祭りスポンサー集金.html');
+  }
+
+  document.addEventListener('keydown', e=>{ if (e.key==='Escape'){ closeModal(); closeIncome(); closeKessan(); closeHistory(); } });
+  window.addEventListener('afterprint', ()=>{ document.getElementById('print-area').innerHTML=''; });
+
+  load();
+  renderEditionBar();
+  render();
+  autoRestore();
+</script>
+</body>
+</html>

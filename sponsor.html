@@ -1,0 +1,986 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>🎆 2025うちこ夏祭りスポンサー集金</title>
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' rx='22' fill='%231184bf'/><ellipse cx='50' cy='52' rx='30' ry='34' fill='%23d6f1fb'/><rect x='44' y='12' width='12' height='8' rx='2' fill='%230a5d8a'/><rect x='44' y='80' width='12' height='8' rx='2' fill='%230a5d8a'/><g stroke='%231184bf' stroke-width='3'><line x1='22' y1='38' x2='78' y2='38'/><line x1='20' y1='52' x2='80' y2='52'/><line x1='22' y1='66' x2='78' y2='66'/></g></svg>">
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  :root {
+    --red: #1184bf;          /* メインの水色アクセント */
+    --red-dark: #0a5d8a;
+    --navy: #123a52;
+    --gold: #56c2e6;         /* 明るい水色（ボタン等） */
+    --gold-soft: #d6f1fb;
+    --cream: #f3fbff;
+    --green: #1f9e8f;        /* 集金済み（ティール） */
+    --green-bg: #dcf4f0;
+    --gray: #6f8794;
+    --line: #cfe5ef;
+  }
+  body {
+    font-family: 'Hiragino Maru Gothic ProN','Hiragino Sans','Meiryo',sans-serif;
+    background:
+      radial-gradient(circle at 12% 8%, rgba(255,255,255,0.22), transparent 40%),
+      radial-gradient(circle at 88% 92%, rgba(255,255,255,0.18), transparent 42%),
+      linear-gradient(160deg, #0a4f7a 0%, #1b8fc4 45%, #6fd0e0 100%);
+    color: var(--navy);
+    min-height: 100vh;
+    padding-bottom: 40px;
+  }
+
+  /* ===== みきゃん気球の飾り ===== */
+  .lantern-row {
+    display: flex; justify-content: space-around; align-items: flex-start;
+    padding: 8px 10px 0; max-width: 980px; margin: 0 auto;
+  }
+  .lantern {
+    width: 46px; height: 58px;
+    filter: drop-shadow(0 4px 8px rgba(0,0,0,0.2));
+    animation: floaty 4s ease-in-out infinite;
+  }
+  .lantern svg { display: block; width: 100%; height: 100%; }
+  .lantern:nth-child(even){ width: 40px; height: 50px; animation-delay: -2s; opacity: 0.96; }
+  .lantern:nth-child(3n){ animation-delay: -1s; }
+  @keyframes floaty {
+    0%,100% { transform: translateY(0); }
+    50% { transform: translateY(6px); }
+  }
+
+  /* ===== ヘッダー ===== */
+  .header {
+    max-width: 980px; margin: 4px auto 0; padding: 16px 22px 20px;
+    text-align: center; color: #fff;
+  }
+  .header h1 {
+    font-size: 30px; font-weight: 800; letter-spacing: 0.06em;
+    text-shadow: 0 2px 0 var(--red-dark), 0 4px 12px rgba(0,0,0,0.35);
+  }
+  .header .sub {
+    margin-top: 6px; font-size: 13px; color: var(--gold-soft);
+    letter-spacing: 0.14em;
+  }
+
+  /* ===== 集計バー ===== */
+  .summary {
+    max-width: 980px; margin: 0 auto; padding: 0 14px;
+    display: grid; grid-template-columns: repeat(4,1fr); gap: 10px;
+  }
+  .sum-card {
+    background: var(--cream); border-radius: 14px; padding: 12px 8px;
+    text-align: center; box-shadow: 0 4px 14px rgba(0,0,0,0.18);
+    border: 2px solid rgba(245,197,66,0.5);
+  }
+  .sum-card .label { font-size: 11px; color: var(--gray); margin-bottom: 3px; font-weight: 700; }
+  .sum-card .value { font-size: 21px; font-weight: 800; color: var(--red); line-height: 1.1; }
+  .sum-card .value small { font-size: 12px; font-weight: 700; }
+  .sum-card .subcount { font-size: 12px; color: var(--gray); font-weight: 700; margin-top: 3px; }
+  .sum-card.pending .subcount { color: #c0271f; }
+  .sum-card.collected .value { color: var(--green); }
+  .sum-card.pending .value { color: #3f6480; }
+  .sum-card .bar { margin-top: 6px; height: 6px; background: #d3e7f0; border-radius: 4px; overflow: hidden; }
+  .sum-card .bar > span { display:block; height:100%; background: linear-gradient(90deg,var(--gold),var(--green)); }
+
+  /* ===== ツールバー ===== */
+  .toolbar {
+    max-width: 980px; margin: 16px auto 10px; padding: 0 14px;
+    display: flex; gap: 8px; flex-wrap: wrap; align-items: center;
+  }
+  .toolbar .spacer { flex: 1; }
+  .btn {
+    padding: 9px 16px; border: none; border-radius: 10px; cursor: pointer;
+    font-size: 13px; font-weight: 800; font-family: inherit;
+    box-shadow: 0 3px 8px rgba(0,0,0,0.2); transition: transform .08s, filter .15s;
+  }
+  .btn:active { transform: translateY(1px); }
+  .btn-gold { background: linear-gradient(180deg,var(--gold),#2a9fd0); color: #06384f; }
+  .btn-add  { background: linear-gradient(180deg,#7fe0f0,#1184bf); color:#fff; font-size:14px; padding:10px 20px; }
+  .btn-ghost{ background: rgba(255,255,255,0.92); color: var(--navy); }
+  .btn-print{ background: linear-gradient(180deg,#fff,#e7f4fb); color: var(--red-dark); }
+  .btn-cloud{ background: linear-gradient(180deg,#5ad1a8,#1f9e8f); color:#fff; }
+  .btn:hover { filter: brightness(1.05); }
+  .muted { color:#aaa; }
+
+  /* トースト通知 */
+  #toast {
+    position: fixed; left: 50%; bottom: 28px; transform: translateX(-50%) translateY(20px);
+    background: rgba(18,58,82,0.95); color:#fff; padding: 12px 22px; border-radius: 999px;
+    font-size: 14px; font-weight: 700; box-shadow: 0 6px 20px rgba(0,0,0,0.3);
+    opacity: 0; pointer-events: none; transition: opacity .25s, transform .25s; z-index: 500;
+  }
+  #toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+
+  .search {
+    flex: 1; min-width: 140px; padding: 9px 14px; border-radius: 10px;
+    border: 2px solid rgba(255,255,255,0.6); font-size: 13px; font-family: inherit;
+    background: rgba(255,255,255,0.95); outline: none;
+  }
+  .filter-tabs { display:flex; gap:6px; }
+  .ftab {
+    padding: 7px 12px; border-radius: 999px; border: 2px solid rgba(255,255,255,0.55);
+    background: rgba(255,255,255,0.12); color:#fff; font-size:12px; font-weight:800;
+    cursor:pointer; font-family:inherit;
+  }
+  .ftab.active { background: var(--gold); color: var(--red-dark); border-color: var(--gold); }
+
+  .view-toggle { display:flex; gap:6px; }
+  .vbtn {
+    padding: 7px 12px; border-radius: 999px; border: 2px solid rgba(255,255,255,0.55);
+    background: rgba(255,255,255,0.12); color:#fff; font-size:12px; font-weight:800;
+    cursor:pointer; font-family:inherit;
+  }
+  .vbtn.active { background: #fff; color: var(--red-dark); border-color:#fff; }
+
+  /* ===== 一覧表（テーブル） ===== */
+  .table-wrap {
+    max-width: 980px; margin: 4px auto 0; padding: 0 14px;
+  }
+  .table-card {
+    background: var(--cream); border-radius: 16px; padding: 6px;
+    box-shadow: 0 4px 14px rgba(0,0,0,0.16); overflow-x: auto;
+  }
+  table.sp-table { width: 100%; border-collapse: collapse; font-size: 13px; }
+  table.sp-table th, table.sp-table td { padding: 9px 10px; text-align: left; white-space: nowrap; }
+  table.sp-table thead th {
+    background: var(--red); color:#fff; font-weight: 800; font-size: 12px;
+    position: sticky; top: 0;
+  }
+  table.sp-table thead th:first-child { border-top-left-radius: 10px; }
+  table.sp-table thead th:last-child { border-top-right-radius: 10px; }
+  table.sp-table tbody tr { border-bottom: 1px solid var(--line); cursor: pointer; }
+  table.sp-table tbody tr:last-child { border-bottom: none; }
+  table.sp-table tbody tr:hover { background: #e8f5fc; }
+  table.sp-table tbody tr.done { background: #eafaf7; }
+  table.sp-table tbody tr.done:hover { background: #ddf3ee; }
+  table.sp-table td.amt-col { text-align: right; font-weight: 800; color: var(--red); }
+  table.sp-table td.center { text-align: center; }
+  table.sp-table tfoot td {
+    background: #e3f1f9; font-weight: 800; color: var(--navy);
+    padding: 11px 10px; border-top: 2px solid var(--red);
+  }
+  table.sp-table tfoot td.amt-col { color: var(--red); }
+  .mini-toggle {
+    border:none; border-radius: 8px; padding: 4px 10px; font-size: 12px; font-weight: 800;
+    cursor:pointer; font-family: inherit;
+  }
+  .mini-toggle.done { background: var(--green); color:#fff; }
+  .mini-toggle.pend { background: var(--gold); color: var(--red-dark); }
+
+  /* ===== リスト ===== */
+  .list { max-width: 980px; margin: 4px auto 0; padding: 0 14px; }
+  .card {
+    background: var(--cream); border-radius: 16px; padding: 14px 16px; margin-bottom: 12px;
+    box-shadow: 0 4px 14px rgba(0,0,0,0.16);
+    border-left: 8px solid var(--gold);
+    display: flex; align-items: center; gap: 14px; flex-wrap: wrap;
+  }
+  .card.done { border-left-color: var(--green); background: #eafaf7; }
+  .card .main { flex: 1; min-width: 180px; }
+  .card .cname { font-size: 17px; font-weight: 800; color: var(--navy); display:flex; align-items:center; gap:8px; flex-wrap:wrap; }
+  .card .person { font-size: 12px; color: var(--gray); margin-top: 3px; }
+  .card .note { font-size: 12px; color: var(--gray); margin-top: 4px; white-space: pre-wrap; }
+  .amount-box { text-align: right; min-width: 110px; }
+  .amount-box .amt { font-size: 20px; font-weight: 800; color: var(--red); }
+  .amount-box .amt small { font-size: 12px; }
+  .pay-tag {
+    display:inline-block; font-size: 11px; font-weight: 800; padding: 2px 9px;
+    border-radius: 999px; margin-top: 4px;
+  }
+  .pay-cash { background: #cdeede; color: #0f7a6b; }
+  .pay-bank { background: #d6e4ff; color: #234a9e; }
+
+  .status-tag {
+    font-size: 11px; font-weight: 800; padding: 3px 10px; border-radius: 999px;
+  }
+  .st-pending { background: #dbe9f2; color: #3f6480; }
+  .st-done { background: var(--green-bg); color: var(--green); }
+
+  .card-actions { display:flex; gap:6px; }
+  .icon-btn {
+    border:none; background:#fff; width:36px; height:36px; border-radius:10px; cursor:pointer;
+    font-size:15px; box-shadow: 0 2px 5px rgba(0,0,0,0.12);
+  }
+  .icon-btn.toggle.done { background: var(--green); color:#fff; }
+  .icon-btn.toggle.pend { background: var(--gold); }
+
+  .empty {
+    text-align:center; color: #fff; padding: 50px 20px; opacity: 0.92;
+  }
+  .empty .e-ico { font-size: 56px; margin-bottom: 10px; }
+
+  /* ===== モーダル ===== */
+  .overlay {
+    position: fixed; inset: 0; background: rgba(20,8,6,0.55);
+    display: none; align-items: center; justify-content: center; padding: 16px; z-index: 200;
+  }
+  .overlay.show { display: flex; }
+  .modal {
+    background: var(--cream); border-radius: 20px; width: 100%; max-width: 420px;
+    padding: 22px; box-shadow: 0 16px 50px rgba(0,0,0,0.4);
+    max-height: 90vh; overflow-y: auto;
+    border-top: 8px solid var(--gold);
+  }
+  .modal h2 { font-size: 19px; color: var(--red); margin-bottom: 16px; text-align:center; }
+  .field { margin-bottom: 14px; }
+  .field label { display:block; font-size: 12px; font-weight: 800; color: var(--navy); margin-bottom: 5px; }
+  .field input, .field textarea {
+    width: 100%; padding: 10px 12px; border-radius: 10px; border: 2px solid var(--line);
+    font-size: 14px; font-family: inherit; outline: none; background:#fff;
+  }
+  .field input:focus, .field textarea:focus { border-color: var(--gold); }
+  .field textarea { resize: vertical; min-height: 54px; }
+  .pay-choice { display:flex; gap:8px; }
+  .pay-choice label {
+    flex:1; text-align:center; padding: 9px; border-radius: 10px; border: 2px solid var(--line);
+    cursor:pointer; font-weight:800; font-size:13px; margin:0;
+  }
+  .pay-choice input { display:none; }
+  .pay-choice input:checked + span { display:block; }
+  .pay-choice label:has(input:checked) { border-color: var(--red); background: #d9f0fb; color: var(--red); }
+  .modal-actions { display:flex; gap:10px; margin-top: 8px; }
+  .modal-actions .btn { flex:1; padding: 12px; }
+  .btn-save { background: linear-gradient(180deg,var(--gold),#2a9fd0); color:#06384f; }
+  .btn-cancel { background: #ece2d0; color: var(--gray); }
+  .btn-del-text { background:none; border:none; color:#c0271f; font-size:12px; font-weight:800; cursor:pointer; margin-top:12px; width:100%; text-decoration:underline; }
+
+  .footer-note { text-align:center; color: rgba(255,255,255,0.7); font-size: 11px; margin-top: 20px; padding: 0 16px; }
+
+  .edition-bar {
+    max-width: 980px; margin: 0 auto; padding: 6px 14px 0;
+    display: flex; align-items: center; gap: 8px; flex-wrap: wrap;
+  }
+  .edition-bar .ed-label { color:#fff; font-weight:800; font-size:13px; opacity:0.95; }
+  #ed-select {
+    padding: 8px 12px; border-radius: 10px; border: 2px solid rgba(255,255,255,0.55);
+    background: var(--cream); color:#3a2410; font-weight:800; font-size:14px; cursor:pointer; min-width:130px;
+  }
+  .ed-btn {
+    border:none; border-radius: 10px; padding: 8px 12px; font-size: 13px; font-weight: 800; cursor:pointer;
+    background: rgba(255,255,255,0.85); color:#123a52;
+  }
+  .ed-btn.ed-new { background: linear-gradient(180deg,#7fe0f0,#1184bf); color:#fff; }
+  .ed-btn.ed-del { background: rgba(255,255,255,0.85); color:#c0271f; }
+
+  @media (max-width: 560px) {
+    .summary { grid-template-columns: repeat(2,1fr); }
+    .header h1 { font-size: 24px; }
+    .lantern { width: 24px; height: 30px; }
+  }
+
+  /* ===== 印刷専用エリア（画面では隠す） ===== */
+  #print-area { display: none; }
+  #print-area h2 { font-size: 18px; margin-bottom: 4px; }
+  #print-area .p-sub { font-size: 12px; color:#555; margin-bottom: 12px; }
+  #print-area table { width: 100%; border-collapse: collapse; font-size: 12px; }
+  #print-area th, #print-area td { border: 1px solid #333; padding: 6px 8px; text-align: left; }
+  #print-area th { background: #eee; font-weight: 700; }
+  #print-area td.r { text-align: right; }
+  #print-area td.c { text-align: center; }
+  #print-area tfoot td { font-weight: 700; background: #f3f3f3; }
+
+  /* ===== 印刷時のルール ===== */
+  @media print {
+    body { background: #fff !important; padding: 0; }
+    .lantern-row, .header, .summary, .toolbar, .footer-note,
+    .list, .table-wrap, .overlay { display: none !important; }
+    #print-area { display: block !important; padding: 8px; color:#000; }
+  }
+</style>
+</head>
+<body>
+
+<div class="lantern-row" id="lanterns"></div>
+
+<div class="header">
+  <h1 id="app-title">🎆 2025うちこ夏祭りスポンサー集金 🎆</h1>
+  <div class="sub">協賛金の集金状況をまとめて管理</div>
+</div>
+
+<div class="edition-bar">
+  <span class="ed-label">🎆 回</span>
+  <select id="ed-select" onchange="switchEdition(this.value)"></select>
+  <button class="ed-btn ed-new" onclick="newEdition()">＋ 新規回</button>
+  <button class="ed-btn" onclick="renameEdition()">✎ 名前変更</button>
+  <button class="ed-btn ed-del" onclick="deleteEdition()">🗑 この回を削除</button>
+</div>
+
+<div class="summary">
+  <div class="sum-card">
+    <div class="label">スポンサー数</div>
+    <div class="value" id="s-count">0<small>件</small></div>
+  </div>
+  <div class="sum-card collected">
+    <div class="label">集金済み</div>
+    <div class="value" id="s-collected">0<small>円</small></div>
+    <div class="subcount" id="s-collected-n"></div>
+    <div class="bar"><span id="s-bar" style="width:0%"></span></div>
+  </div>
+  <div class="sum-card pending">
+    <div class="label">未集金</div>
+    <div class="value" id="s-pending">0<small>円</small></div>
+    <div class="subcount" id="s-pending-n"></div>
+  </div>
+  <div class="sum-card">
+    <div class="label">協賛金 合計</div>
+    <div class="value" id="s-total">0<small>円</small></div>
+  </div>
+</div>
+
+<div class="toolbar">
+  <input class="search" id="search" placeholder="🔍 会社名・担当者で検索" oninput="render()">
+  <div class="filter-tabs">
+    <button class="ftab active" data-f="all" onclick="setFilter('all')">すべて</button>
+    <button class="ftab" data-f="pending" onclick="setFilter('pending')">未集金</button>
+    <button class="ftab" data-f="done" onclick="setFilter('done')">集金済</button>
+  </div>
+  <div class="view-toggle">
+    <button class="vbtn active" data-v="card" onclick="setView('card')">🗂 カード</button>
+    <button class="vbtn" data-v="table" onclick="setView('table')">📋 一覧表</button>
+  </div>
+  <div class="spacer"></div>
+  <button class="btn btn-add" onclick="openModal()">＋ スポンサー追加</button>
+  <button class="btn btn-cloud" onclick="syncUpload()" title="クラウドに保存">☁↑ クラウド保存</button>
+  <button class="btn btn-cloud" onclick="syncDownload()" title="クラウドから読込">☁↓ 読込</button>
+  <button class="btn btn-print" onclick="printList()" title="今表示しているもの（すべて／未集金／集金済）を印刷">🖨 印刷</button>
+  <button class="btn btn-print" onclick="printDone()" title="集金済みのお店だけを印刷" style="background:var(--green);color:#fff;">🖨 集金済だけ印刷</button>
+  <button class="btn" onclick="lineShareList()" title="今表示中の一覧をLINEで送る" style="background:#06C755;color:#fff;">💬 LINEで送る</button>
+  <button class="btn btn-ghost" onclick="copyListText()" title="今表示中の一覧をコピー">📋 コピー</button>
+  <button class="btn btn-ghost" onclick="exportData()">⬇ 書き出し</button>
+  <label class="btn btn-ghost" style="cursor:pointer;">⬆ 読み込み<input type="file" accept=".json" onchange="importData(event)" style="display:none"></label>
+  <button class="btn" onclick="gotoShishutsu()" title="支出管理・決算書アプリを開く" style="background:linear-gradient(180deg,#ffd27a,#f5a623);color:#6b3a00;">📊 支出管理へ</button>
+</div>
+
+<div class="list" id="list"></div>
+<div class="table-wrap" id="table-wrap" style="display:none"></div>
+
+<!-- 印刷専用エリア（画面では非表示） -->
+<div id="print-area"></div>
+
+<div id="toast"></div>
+
+<div class="footer-note">データはこの端末のブラウザに自動保存されます。バックアップは「書き出し」から。</div>
+
+<!-- モーダル -->
+<div class="overlay" id="overlay">
+  <div class="modal">
+    <h2 id="modal-title">スポンサーを追加</h2>
+    <input type="hidden" id="f-id">
+    <div class="field">
+      <label>会社名・店名 <span style="color:#c0271f">*</span></label>
+      <input id="f-name" placeholder="例：山田商店">
+    </div>
+    <div class="field">
+      <label>担当者</label>
+      <input id="f-person" placeholder="例：山田 太郎">
+    </div>
+    <div class="field">
+      <label>協賛金額（円）</label>
+      <input id="f-amount" type="number" inputmode="numeric" placeholder="例：10000">
+    </div>
+    <div class="field">
+      <label>支払い方法</label>
+      <div class="pay-choice">
+        <label><input type="radio" name="pay" value="cash" checked><span>💴 現金</span></label>
+        <label><input type="radio" name="pay" value="bank"><span>🏦 振込</span></label>
+      </div>
+    </div>
+    <div class="field">
+      <label>メモ（連絡先・住所など）</label>
+      <textarea id="f-note" placeholder="任意"></textarea>
+    </div>
+    <div class="modal-actions">
+      <button class="btn btn-cancel" onclick="closeModal()">キャンセル</button>
+      <button class="btn btn-save" onclick="saveSponsor()">保存</button>
+    </div>
+    <button class="btn-del-text" id="del-btn" onclick="deleteSponsor()" style="display:none">このスポンサーを削除</button>
+  </div>
+</div>
+
+<script>
+  const KEY = 'natsumatsuri_sponsors_v1';
+  const EKEY = 'natsumatsuri_editions_v1';
+  let sponsors = [];
+  let editions = [];   // [{id, label, sponsors:[...]}]
+  let curId = null;
+  let filter = 'all';
+  let view = 'card';
+  const SEED_SPONSORS = [{"name": "内子町商工会", "person": "", "amount": 15000, "pay": "cash", "note": "", "done": false}, {"name": "内子町長（役場）", "person": "", "amount": 109333, "pay": "cash", "note": "", "done": false}, {"name": "内子町観光協会", "person": "大森　大本", "amount": 5000, "pay": "cash", "note": "", "done": false}, {"name": "内子町教育委員会", "person": "城戸司", "amount": 5000, "pay": "cash", "note": "", "done": false}, {"name": "内子町議会", "person": "城戸司", "amount": 10000, "pay": "cash", "note": "", "done": false}, {"name": "内子自治センター", "person": "奥長", "amount": 5000, "pay": "cash", "note": "", "done": false}, {"name": "久保興業 株式会社", "person": "城戸司", "amount": 15000, "pay": "cash", "note": "", "done": false}, {"name": "入江工研（株）", "person": "本川", "amount": 10000, "pay": "cash", "note": "", "done": false}, {"name": "（株）山彦", "person": "ミート", "amount": 50000, "pay": "cash", "note": "", "done": false}, {"name": "株式会社 高原観光", "person": "大本裕也", "amount": 15000, "pay": "cash", "note": "", "done": false}, {"name": "内山建材（有）", "person": "大森　大本", "amount": 5000, "pay": "cash", "note": "", "done": false}, {"name": "愛六ゴルフ倶楽部", "person": "奥長", "amount": 15000, "pay": "cash", "note": "", "done": false}, {"name": "酒六酒造 株式会社", "person": "大本裕也", "amount": 15000, "pay": "cash", "note": "", "done": false}, {"name": "株式会社 藤岡製作所", "person": "大本裕也", "amount": 20000, "pay": "cash", "note": "", "done": false}, {"name": "内子金融協会", "person": "和気", "amount": 15000, "pay": "cash", "note": "", "done": false}, {"name": "（株）大同製作所", "person": "城戸司", "amount": 15000, "pay": "cash", "note": "", "done": false}, {"name": "松浦商販（株）", "person": "山本", "amount": 15000, "pay": "cash", "note": "", "done": false}, {"name": "株式会社 中田建設", "person": "城戸司", "amount": 5000, "pay": "cash", "note": "", "done": false}, {"name": "フレッシュパークからり", "person": "大本裕也", "amount": 10000, "pay": "cash", "note": "", "done": false}, {"name": "（有）イヨカナ", "person": "福岡イッセイ", "amount": 10000, "pay": "cash", "note": "", "done": false}, {"name": "株式会社 森本", "person": "大森　大本", "amount": 10000, "pay": "cash", "note": "", "done": false}, {"name": "森文醸造 株式会社", "person": "大森", "amount": 10000, "pay": "cash", "note": "", "done": false}, {"name": "（株）山本建設", "person": "山本", "amount": 15000, "pay": "cash", "note": "", "done": false}, {"name": "石団建設 株式会社", "person": "城戸司", "amount": 5000, "pay": "cash", "note": "", "done": false}, {"name": "森岡造園", "person": "有本", "amount": 5000, "pay": "cash", "note": "", "done": false}, {"name": "居酒屋どんどん", "person": "矢野", "amount": 3000, "pay": "cash", "note": "", "done": false}, {"name": "（株）オキデン", "person": "矢野", "amount": 5000, "pay": "cash", "note": "", "done": false}, {"name": "ホンダカーズ内子（株）沼井商会", "person": "矢野", "amount": 10000, "pay": "cash", "note": "", "done": false}, {"name": "（有）徳田自動車", "person": "矢野", "amount": 10000, "pay": "cash", "note": "", "done": false}, {"name": "三原産業㈱DD内子", "person": "矢野", "amount": 3000, "pay": "cash", "note": "", "done": false}, {"name": "丸協重機 有限会社", "person": "城戸司", "amount": 10000, "pay": "cash", "note": "", "done": false}, {"name": "曽根プロパン（有）", "person": "森脇", "amount": 15000, "pay": "cash", "note": "", "done": false}, {"name": "（有）鎌田商店", "person": "森脇", "amount": 10000, "pay": "cash", "note": "", "done": false}, {"name": "亀井自動車", "person": "森脇", "amount": 5000, "pay": "cash", "note": "", "done": false}, {"name": "（株）西渕工務店", "person": "森脇", "amount": 10000, "pay": "cash", "note": "", "done": false}, {"name": "（有）田丸電気水道設備", "person": "森脇", "amount": 15000, "pay": "cash", "note": "", "done": false}, {"name": "有限会社 慎栄建設", "person": "城戸司", "amount": 5000, "pay": "cash", "note": "", "done": false}, {"name": "（有）福岡ガス", "person": "宮瀬", "amount": 5000, "pay": "cash", "note": "", "done": false}, {"name": "洋食マザー", "person": "宮瀬", "amount": 5000, "pay": "cash", "note": "", "done": false}, {"name": "下芳我邸", "person": "宮瀬", "amount": 5000, "pay": "cash", "note": "", "done": false}, {"name": "古川医院", "person": "上田", "amount": 30000, "pay": "cash", "note": "", "done": false}, {"name": "（株）ウエダオート", "person": "上田", "amount": 10000, "pay": "cash", "note": "", "done": false}, {"name": "宮内無線", "person": "森脇", "amount": 5000, "pay": "cash", "note": "", "done": false}, {"name": "（有）宮栄商事", "person": "宇都宮", "amount": 5000, "pay": "cash", "note": "", "done": false}, {"name": "藤友巨峰園", "person": "矢野", "amount": 3000, "pay": "cash", "note": "", "done": false}, {"name": "泉田石材工業", "person": "泉田", "amount": 5000, "pay": "cash", "note": "", "done": false}, {"name": "（株）山本木工所", "person": "山本", "amount": 15000, "pay": "cash", "note": "", "done": false}, {"name": "中岡酒店", "person": "上田", "amount": 5000, "pay": "cash", "note": "", "done": false}, {"name": "カーズショップ佐川", "person": "上田", "amount": 5000, "pay": "cash", "note": "", "done": false}, {"name": "ファミリーマート内子店", "person": "上田", "amount": 5000, "pay": "cash", "note": "", "done": false}, {"name": "（株）ジェイジェイ旅行センター", "person": "宮瀬", "amount": 10000, "pay": "cash", "note": "", "done": false}, {"name": "平田酒店", "person": "有本", "amount": 5000, "pay": "cash", "note": "", "done": false}, {"name": "八久茂", "person": "宮瀬", "amount": 5000, "pay": "cash", "note": "", "done": false}, {"name": "成岡板金（有）", "person": "山本", "amount": 15000, "pay": "cash", "note": "", "done": false}, {"name": "あさひ堂薬局", "person": "宇都宮", "amount": 10000, "pay": "cash", "note": "", "done": false}, {"name": "魚林", "person": "宇都宮", "amount": 5000, "pay": "cash", "note": "", "done": false}, {"name": "横田酒店", "person": "有本", "amount": 3000, "pay": "cash", "note": "", "done": false}, {"name": "（有）インテリアにしおか", "person": "有本", "amount": 10000, "pay": "cash", "note": "", "done": false}, {"name": "いなほ", "person": "有本", "amount": 5000, "pay": "cash", "note": "", "done": false}, {"name": "（有）坂見輝月堂", "person": "上田", "amount": 5000, "pay": "cash", "note": "", "done": false}, {"name": "かば忠", "person": "上田", "amount": 5000, "pay": "cash", "note": "", "done": false}, {"name": "武岡歯科", "person": "上田", "amount": 5000, "pay": "cash", "note": "", "done": false}, {"name": "りぼん", "person": "宇都宮", "amount": 5000, "pay": "cash", "note": "", "done": false}, {"name": "IMAMIYA", "person": "宇都宮", "amount": 3000, "pay": "cash", "note": "", "done": false}, {"name": "皷南書学院", "person": "森脇", "amount": 5000, "pay": "cash", "note": "", "done": false}, {"name": "伍＋食屋こころ", "person": "酒井", "amount": 5000, "pay": "cash", "note": "", "done": false}, {"name": "株式会社 新風会", "person": "大森　大本", "amount": 5000, "pay": "cash", "note": "", "done": false}, {"name": "オーベルジュ内子", "person": "森脇", "amount": 10000, "pay": "cash", "note": "", "done": false}, {"name": "がっちゃん家", "person": "矢野", "amount": 3000, "pay": "cash", "note": "", "done": false}, {"name": "（有）オガタ技研", "person": "矢野", "amount": 5000, "pay": "cash", "note": "", "done": false}, {"name": "なごみ", "person": "森脇", "amount": 5000, "pay": "cash", "note": "", "done": false}, {"name": "（有）中塚鉄工所", "person": "森脇", "amount": 5000, "pay": "cash", "note": "", "done": false}, {"name": "キドフーズ", "person": "ミート", "amount": 5000, "pay": "cash", "note": "", "done": false}, {"name": "内藤鋼業㈲", "person": "宇都宮", "amount": 5000, "pay": "cash", "note": "", "done": false}, {"name": "愛明電化", "person": "宇都宮", "amount": 5000, "pay": "cash", "note": "", "done": false}, {"name": "ろまん", "person": "宇都宮", "amount": 5000, "pay": "cash", "note": "", "done": false}, {"name": "空豆", "person": "酒井", "amount": 5000, "pay": "cash", "note": "", "done": false}, {"name": "内子の宿", "person": "大西", "amount": 10000, "pay": "cash", "note": "", "done": false}, {"name": "フローリストやまおか", "person": "山岡", "amount": 5000, "pay": "cash", "note": "", "done": false}, {"name": "かつ盛鮮魚店", "person": "酒井", "amount": 10000, "pay": "cash", "note": "", "done": false}, {"name": "（有）焼肉ありもと", "person": "有本", "amount": 5000, "pay": "cash", "note": "", "done": false}, {"name": "まちの駅カフェ金木犀", "person": "宇都宮", "amount": 5000, "pay": "cash", "note": "", "done": false}, {"name": "みやせ", "person": "宮瀬", "amount": 5000, "pay": "cash", "note": "", "done": false}, {"name": "新興車輛（株）", "person": "矢野", "amount": 10000, "pay": "cash", "note": "", "done": false}];
+
+  function genId(){ return 'e'+Date.now().toString(36)+Math.random().toString(36).slice(2,6); }
+  function curEdition(){ return editions.find(e=>e.id===curId) || null; }
+
+  function load() {
+    // ===== 旧データ（単一一覧）の読込＋移行（2025回として扱う）=====
+    try { sponsors = JSON.parse(localStorage.getItem(KEY)) || []; }
+    catch(e){ sponsors = []; }
+    if (sponsors.length === 0 && typeof SEED_SPONSORS !== 'undefined' && SEED_SPONSORS.length) {
+      sponsors = SEED_SPONSORS.slice();
+      save();
+    }
+    if (localStorage.getItem(KEY+'_allpaid') !== '1') {
+      sponsors.forEach(s=>{ s.done = true; });
+      save();
+      localStorage.setItem(KEY+'_allpaid','1');
+    }
+    const NAME_FIX = [['阪見輝月堂','坂見輝月堂'],['中堅鉄工所','中塚鉄工所']];
+    const FIX_VER = '2';
+    if (localStorage.getItem(KEY+'_fixver') !== FIX_VER) {
+      sponsors.forEach(s=>{ if(s.name) NAME_FIX.forEach(([a,b])=>{ s.name = s.name.split(a).join(b); }); });
+      save();
+      localStorage.setItem(KEY+'_fixver', FIX_VER);
+    }
+
+    // ===== 回（年度版）の読込／初回移行 =====
+    let estore = null;
+    try { estore = JSON.parse(localStorage.getItem(EKEY)); } catch(e){ estore = null; }
+    if (estore && Array.isArray(estore.list) && estore.list.length) {
+      editions = estore.list;
+      curId = estore.curId;
+      if (!editions.some(e=>e.id===curId)) curId = editions[0].id;
+      sponsors = curEdition().sponsors;   // 選択中の回を表示
+    } else {
+      // 初回：既存の一覧を「2025年」の回として包む
+      editions = [{ id: genId(), label: '2025年', sponsors: sponsors }];
+      curId = editions[0].id;
+    }
+    save();
+  }
+
+  function saveEditions(){
+    if (editions.length) localStorage.setItem(EKEY, JSON.stringify({ list: editions, curId }));
+  }
+  // 自動クラウド保存（編集のたびに少し待ってからまとめて1回アップロード）
+  let cloudReady = false, cloudTimer = null;
+  function scheduleCloudSave(){
+    if (!cloudReady) return;            // 起動直後の誤上書きを防止
+    clearTimeout(cloudTimer);
+    cloudTimer = setTimeout(pushCloudSilent, 1500);
+  }
+  // クラウドに送る形：回の名前（label）＋スポンサー一覧
+  function cloudPayload(){
+    const ed = curEdition();
+    return { label: (ed && ed.label) || '', sponsors: sponsors };
+  }
+  // クラウドから受け取ったものを {sponsors, label} に正規化（旧形式=配列にも対応）
+  function parseCloud(d){
+    if (d == null) return null;
+    if (typeof d === 'string'){ try{ d = JSON.parse(d); }catch(e){ return null; } }
+    if (Array.isArray(d)) return { sponsors: d, label: null };
+    if (d.sponsors && Array.isArray(d.sponsors)) return { sponsors: d.sponsors, label: d.label || null };
+    if (Array.isArray(d.data)) return { sponsors: d.data, label: null };
+    if (Array.isArray(d.value)) return { sponsors: d.value, label: null };
+    return null;
+  }
+  // クラウドの内容を現在の回に反映（名前も復元）
+  function applyCloud(p){
+    if (!p || !Array.isArray(p.sponsors)) return false;
+    sponsors = p.sponsors;
+    const ed = curEdition();
+    if (ed){ ed.sponsors = sponsors; if (p.label) ed.label = p.label; }
+    localStorage.setItem(KEY, JSON.stringify(sponsors));
+    saveEditions();
+    return true;
+  }
+  async function pushCloudSilent(){
+    try{
+      const res = await fetch(SYNC_URL + '?action=save&key=' + SYNC_KEY, {
+        method: 'POST', body: JSON.stringify(cloudPayload())
+      });
+      const json = await res.json();
+      if (json && json.success) toast('☁ 自動保存しました');
+    }catch(e){ /* オフライン等は無視（端末内には保存済み） */ }
+  }
+
+  function save() {
+    const ed = curEdition();
+    if (ed) ed.sponsors = sponsors;
+    localStorage.setItem(KEY, JSON.stringify(sponsors));
+    saveEditions();
+    scheduleCloudSave();               // ← 変更のたびに自動でクラウドへ
+  }
+
+  function renderEditionBar(){
+    const sel = document.getElementById('ed-select');
+    if (!sel) return;
+    sel.innerHTML = editions.map(e=>
+      `<option value="${e.id}" ${e.id===curId?'selected':''}>${esc(e.label)}</option>`).join('');
+    const ed = curEdition();
+    const title = document.getElementById('app-title');
+    if (ed && title) title.textContent = '🎆 '+ed.label+' うちこ夏祭りスポンサー集金 🎆';
+    document.querySelector('.ed-del').style.display = editions.length>1 ? '' : 'none';
+  }
+
+  function switchEdition(id){
+    save();
+    curId = id;
+    sponsors = curEdition().sponsors;
+    saveEditions();
+    renderEditionBar();
+    render();
+  }
+
+  function newEdition(){
+    save();
+    const label = prompt('新しい回の名前を入力してください（例：2026年）', '');
+    if (label === null) return;
+    const name = label.trim();
+    if (!name) { alert('名前を入力してください'); return; }
+    let list = [];
+    if (sponsors.length && confirm('現在の回のスポンサー一覧を引き継ぎますか？\n\nOK＝引き継ぐ（集金状況は未集金にリセット）\nキャンセル＝空の状態で作成')) {
+      list = sponsors.map(s=>({ name:s.name, person:s.person, amount:s.amount, pay:s.pay, note:s.note, done:false }));
+    }
+    const ne = { id: genId(), label: name, sponsors: list };
+    editions.push(ne);
+    curId = ne.id;
+    sponsors = ne.sponsors;
+    save();
+    renderEditionBar();
+    render();
+    toast('新規回「'+name+'」を作成しました');
+  }
+
+  function renameEdition(){
+    const ed = curEdition(); if (!ed) return;
+    const label = prompt('回の名前を変更', ed.label);
+    if (label === null) return;
+    const name = label.trim();
+    if (!name) { alert('名前を入力してください'); return; }
+    ed.label = name;
+    saveEditions();
+    renderEditionBar();
+    toast('名前を変更しました');
+  }
+
+  function deleteEdition(){
+    if (editions.length <= 1) { alert('最後の回は削除できません'); return; }
+    const ed = curEdition(); if (!ed) return;
+    if (!confirm('「'+ed.label+'」の回を削除しますか？\nこの回のスポンサー一覧も削除されます。')) return;
+    editions = editions.filter(e=>e.id!==curId);
+    curId = editions[0].id;
+    sponsors = curEdition().sponsors;
+    save();
+    renderEditionBar();
+    render();
+    toast('回を削除しました');
+  }
+
+  const yen = n => (n||0).toLocaleString('ja-JP');
+
+  // 提灯飾り
+  (function(){
+    const row = document.getElementById('lanterns');
+    const balloon = `<svg viewBox="0 0 60 78" xmlns="http://www.w3.org/2000/svg">
+      <defs>
+        <radialGradient id="bg" cx="38%" cy="30%" r="75%">
+          <stop offset="0" stop-color="#ffd089"/>
+          <stop offset="60%" stop-color="#ff9d2e"/>
+          <stop offset="100%" stop-color="#f47a14"/>
+        </radialGradient>
+      </defs>
+      <!-- ロープ -->
+      <line x1="20" y1="55" x2="24" y2="64" stroke="#b97a2a" stroke-width="1.4"/>
+      <line x1="40" y1="55" x2="36" y2="64" stroke="#b97a2a" stroke-width="1.4"/>
+      <!-- 気球本体（みかん色） -->
+      <path d="M30 6 C13 6 6 20 6 32 C6 46 18 54 30 58 C42 54 54 46 54 32 C54 20 47 6 30 6 Z" fill="url(#bg)"/>
+      <!-- みかんの筋 -->
+      <g stroke="#e07b12" stroke-width="1.3" opacity="0.55" fill="none">
+        <path d="M30 6 C24 24 24 44 30 58"/>
+        <path d="M30 6 C36 24 36 44 30 58"/>
+        <path d="M11 20 C24 30 36 30 49 20"/>
+      </g>
+      <!-- ヘタの葉 -->
+      <path d="M30 7 q-8 -7 -2 -7 q4 0 2 7" fill="#5bb14a"/>
+      <!-- みきゃんの顔 -->
+      <circle cx="23" cy="34" r="2.6" fill="#3a2410"/>
+      <circle cx="37" cy="34" r="2.6" fill="#3a2410"/>
+      <circle cx="22" cy="33" r="0.9" fill="#fff"/>
+      <circle cx="36" cy="33" r="0.9" fill="#fff"/>
+      <path d="M25 40 Q30 45 35 40" stroke="#3a2410" stroke-width="2" fill="none" stroke-linecap="round"/>
+      <circle cx="18" cy="39" r="2.6" fill="#ff7a7a" opacity="0.75"/>
+      <circle cx="42" cy="39" r="2.6" fill="#ff7a7a" opacity="0.75"/>
+      <!-- カゴ -->
+      <rect x="23" y="64" width="14" height="9" rx="2" fill="#9c6b32"/>
+      <line x1="23" y1="67" x2="37" y2="67" stroke="#7a521f" stroke-width="1"/>
+    </svg>`;
+    for(let i=0;i<14;i++){ const d=document.createElement('div'); d.className='lantern'; d.innerHTML=balloon; row.appendChild(d); }
+  })();
+
+  function setFilter(f){
+    filter = f;
+    document.querySelectorAll('.ftab').forEach(t=>t.classList.toggle('active', t.dataset.f===f));
+    render();
+  }
+
+  function setView(v){
+    view = v;
+    document.querySelectorAll('.vbtn').forEach(t=>t.classList.toggle('active', t.dataset.v===v));
+    document.getElementById('list').style.display = v==='card' ? '' : 'none';
+    document.getElementById('table-wrap').style.display = v==='table' ? '' : 'none';
+    render();
+  }
+
+  function render(){
+    const q = document.getElementById('search').value.trim().toLowerCase();
+    const list = document.getElementById('list');
+
+    let total=0, collected=0, pendingAmt=0, doneN=0, pendN=0;
+    sponsors.forEach(s=>{
+      const a = Number(s.amount)||0;
+      total += a;
+      if(s.done){ collected += a; doneN++; } else { pendingAmt += a; pendN++; }
+    });
+    document.getElementById('s-count').innerHTML = sponsors.length + '<small>件</small>';
+    document.getElementById('s-total').innerHTML = yen(total) + '<small>円</small>';
+    document.getElementById('s-collected').innerHTML = yen(collected) + '<small>円</small>';
+    document.getElementById('s-pending').innerHTML = yen(pendingAmt) + '<small>円</small>';
+    document.getElementById('s-bar').style.width = total? (collected/total*100)+'%' : '0%';
+    document.getElementById('s-collected-n').textContent = '済 ' + doneN + ' 件';
+    document.getElementById('s-pending-n').textContent = '残り ' + pendN + ' 件';
+
+    let items = sponsors.map((s,i)=>({s,i}));
+    if(filter==='pending') items = items.filter(x=>!x.s.done);
+    if(filter==='done') items = items.filter(x=>x.s.done);
+    if(q) items = items.filter(x=>
+      (x.s.name||'').toLowerCase().includes(q) ||
+      (x.s.person||'').toLowerCase().includes(q));
+    if(filter==='done'){
+      // 集金済は金額の大きい順
+      items.sort((a,b)=> (Number(b.s.amount)||0) - (Number(a.s.amount)||0)
+        || yomiKey(a.s.person).localeCompare(yomiKey(b.s.person),'ja'));
+    } else {
+      items.sort((a,b)=> yomiKey(a.s.person).localeCompare(yomiKey(b.s.person),'ja')
+        || (a.s.name||'').localeCompare(b.s.name||'','ja'));
+    }
+
+    if(view==='table') renderTable(items);
+    else renderCards(items);
+  }
+
+  function renderCards(items){
+    const list = document.getElementById('list');
+    if(!items.length){
+      list.innerHTML = '<div class="empty"><div class="e-ico">🎆</div><p>'+
+        (sponsors.length? '該当するスポンサーがありません' : 'まだスポンサーが登録されていません')+
+        '</p></div>';
+      return;
+    }
+    list.innerHTML = items.map(({s,i})=>{
+      const pay = s.pay==='bank'
+        ? '<span class="pay-tag pay-bank">🏦 振込</span>'
+        : '<span class="pay-tag pay-cash">💴 現金</span>';
+      const status = s.done
+        ? '<span class="status-tag st-done">✓ 集金済</span>'
+        : '<span class="status-tag st-pending">未集金</span>';
+      return `<div class="card ${s.done?'done':''}">
+        <div class="card-actions">
+          <button class="icon-btn toggle ${s.done?'done':'pend'}" title="集金済みに切替" onclick="toggleDone(${i})">${s.done?'✓':'○'}</button>
+        </div>
+        <div class="main">
+          <div class="cname">${esc(s.name)||'(名称未設定)'} ${status}</div>
+          ${s.person?`<div class="person">👤 ${esc(s.person)}</div>`:''}
+          ${s.note?`<div class="note">📝 ${esc(s.note)}</div>`:''}
+        </div>
+        <div class="amount-box">
+          <div class="amt">${yen(Number(s.amount)||0)}<small>円</small></div>
+          ${pay}
+        </div>
+        <div class="card-actions">
+          <button class="icon-btn" title="編集" onclick="openModal(${i})">✏️</button>
+        </div>
+      </div>`;
+    }).join('');
+  }
+
+  function renderTable(items){
+    const wrap = document.getElementById('table-wrap');
+    if(!items.length){
+      wrap.innerHTML = '<div class="empty"><div class="e-ico">🎆</div><p>'+
+        (sponsors.length? '該当するスポンサーがありません' : 'まだスポンサーが登録されていません')+
+        '</p></div>';
+      return;
+    }
+    let tTotal=0, tCash=0, tBank=0;
+    const rows = items.map(({s,i})=>{
+      const a = Number(s.amount)||0;
+      tTotal += a;
+      if(s.pay==='bank') tBank += a; else tCash += a;
+      const pay = s.pay==='bank'
+        ? '<span class="pay-tag pay-bank">🏦 振込</span>'
+        : '<span class="pay-tag pay-cash">💴 現金</span>';
+      const status = s.done
+        ? '<button class="mini-toggle done" title="クリックで未集金に" onclick="event.stopPropagation();toggleDone('+i+')">✓ 集金済</button>'
+        : '<button class="mini-toggle pend" title="クリックで集金済に" onclick="event.stopPropagation();toggleDone('+i+')">未集金</button>';
+      return `<tr class="${s.done?'done':''}" onclick="openModal(${i})">
+        <td>${esc(s.name)||'(名称未設定)'}</td>
+        <td>${esc(s.person)||'<span class="muted">—</span>'}</td>
+        <td class="amt-col">${yen(a)} 円</td>
+        <td class="center">${pay}</td>
+        <td class="center">${status}</td>
+        <td>${s.note?esc(s.note):'<span class="muted">—</span>'}</td>
+      </tr>`;
+    }).join('');
+    wrap.innerHTML = `<div class="table-card">
+      <table class="sp-table">
+        <thead><tr>
+          <th>会社名・店名</th><th>担当者</th><th style="text-align:right">協賛金額</th>
+          <th style="text-align:center">支払方法</th><th style="text-align:center">集金状況</th><th>メモ</th>
+        </tr></thead>
+        <tbody>${rows}</tbody>
+        <tfoot><tr>
+          <td colspan="2">合計 ${items.length}件</td>
+          <td class="amt-col">${yen(tTotal)} 円</td>
+          <td colspan="3" style="font-size:12px;color:var(--gray)">💴現金 ${yen(tCash)}円 ／ 🏦振込 ${yen(tBank)}円</td>
+        </tr></tfoot>
+      </table>
+    </div>`;
+  }
+
+  function esc(s){ return (s||'').replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c])); }
+
+  function toggleDone(i){ sponsors[i].done = !sponsors[i].done; save(); render(); }
+
+  function openModal(i){
+    const isEdit = (i!==undefined);
+    document.getElementById('modal-title').textContent = isEdit? 'スポンサーを編集' : 'スポンサーを追加';
+    document.getElementById('del-btn').style.display = isEdit? 'block':'none';
+    if(isEdit){
+      const s = sponsors[i];
+      document.getElementById('f-id').value = i;
+      document.getElementById('f-name').value = s.name||'';
+      document.getElementById('f-person').value = s.person||'';
+      document.getElementById('f-amount').value = s.amount||'';
+      document.getElementById('f-note').value = s.note||'';
+      document.querySelector(`input[name="pay"][value="${s.pay||'cash'}"]`).checked = true;
+    } else {
+      document.getElementById('f-id').value = '';
+      document.getElementById('f-name').value = '';
+      document.getElementById('f-person').value = '';
+      document.getElementById('f-amount').value = '';
+      document.getElementById('f-note').value = '';
+      document.querySelector('input[name="pay"][value="cash"]').checked = true;
+    }
+    document.getElementById('overlay').classList.add('show');
+    setTimeout(()=>document.getElementById('f-name').focus(),50);
+  }
+  function closeModal(){ document.getElementById('overlay').classList.remove('show'); }
+
+  function saveSponsor(){
+    const name = document.getElementById('f-name').value.trim();
+    if(!name){ alert('会社名・店名を入力してください'); return; }
+    const data = {
+      name,
+      person: document.getElementById('f-person').value.trim(),
+      amount: Number(document.getElementById('f-amount').value)||0,
+      pay: document.querySelector('input[name="pay"]:checked').value,
+      note: document.getElementById('f-note').value.trim(),
+    };
+    const idv = document.getElementById('f-id').value;
+    if(idv===''){ data.done=false; sponsors.push(data); }
+    else { data.done = sponsors[idv].done; sponsors[idv] = data; }
+    save(); closeModal(); render();
+  }
+
+  function deleteSponsor(){
+    const i = document.getElementById('f-id').value;
+    if(i==='') return;
+    if(confirm('「'+(sponsors[i].name||'このスポンサー')+'」を削除しますか？')){
+      sponsors.splice(i,1); save(); closeModal(); render();
+    }
+  }
+
+  function exportData(){
+    const blob = new Blob([JSON.stringify(sponsors,null,2)], {type:'application/json'});
+    const a = document.createElement('a');
+    const d = new Date();
+    const ds = d.getFullYear()+('0'+(d.getMonth()+1)).slice(-2)+('0'+d.getDate()).slice(-2);
+    a.href = URL.createObjectURL(blob);
+    a.download = '夏祭りスポンサー_'+ds+'.json';
+    a.click();
+  }
+  function importData(e){
+    const file = e.target.files[0]; if(!file) return;
+    const reader = new FileReader();
+    reader.onload = ev=>{
+      try{
+        const data = JSON.parse(ev.target.result);
+        if(!Array.isArray(data)) throw 0;
+        if(confirm('現在のデータを読み込んだ内容で置き換えますか？')){
+          sponsors = data; save(); render();
+        }
+      }catch(err){ alert('読み込みに失敗しました。正しいファイルか確認してください。'); }
+      e.target.value='';
+    };
+    reader.readAsText(file);
+  }
+
+  const YOMI = {
+    "有本":"ありもと","泉田":"いずみだ","上田":"うえだ","宇都宮":"うつのみや",
+    "大西":"おおにし","大本裕也":"おおもとゆうや","大森":"おおもり","大森　大本":"おおもりおおもと",
+    "奥長":"おくなが","城戸司":"きどつかさ","酒井":"さかい","福岡イッセイ":"ふくおかいっせい",
+    "本川":"ほんかわ","ミート":"みいと","宮瀬":"みやせ","森脇":"もりわき",
+    "矢野":"やの","山岡":"やまおか","山本":"やまもと","和気":"わき"
+  };
+  function yomiKey(p){ p=(p||'').trim(); if(!p) return '\uFFFF'; return YOMI[p]||p; }
+  function getFilteredItems(){
+    const q = document.getElementById('search').value.trim().toLowerCase();
+    let items = sponsors.map((s,i)=>({s,i}));
+    if(filter==='pending') items = items.filter(x=>!x.s.done);
+    if(filter==='done') items = items.filter(x=>x.s.done);
+    if(q) items = items.filter(x=>
+      (x.s.name||'').toLowerCase().includes(q) ||
+      (x.s.person||'').toLowerCase().includes(q));
+    if(filter==='done'){
+      items.sort((a,b)=> (Number(b.s.amount)||0) - (Number(a.s.amount)||0)
+        || yomiKey(a.s.person).localeCompare(yomiKey(b.s.person),'ja'));
+    } else {
+      items.sort((a,b)=> yomiKey(a.s.person).localeCompare(yomiKey(b.s.person),'ja')
+        || (a.s.name||'').localeCompare(b.s.name||'','ja'));
+    }
+    return items;
+  }
+
+  function printList(){
+    const items = getFilteredItems();
+    const area = document.getElementById('print-area');
+    if(!items.length){ alert('印刷できるスポンサーがありません。'); return; }
+
+    const fname = {all:'全て',pending:'未集金',done:'集金済'}[filter] || '全て';
+    const edLabel = (curEdition() && curEdition().label) || '2025年';
+    const d = new Date();
+    const ds = d.getFullYear()+'年'+(d.getMonth()+1)+'月'+d.getDate()+'日';
+
+    let total=0, cash=0, bank=0;
+    const rows = items.map(({s})=>{
+      const a = Number(s.amount)||0; total+=a;
+      if(s.pay==='bank') bank+=a; else cash+=a;
+      return `<tr>
+        <td>${esc(s.name)||'(名称未設定)'}</td>
+        <td>${esc(s.person)||''}</td>
+        <td class="r">${yen(a)} 円</td>
+        <td class="c">${s.pay==='bank'?'振込':'現金'}</td>
+        <td class="c">${s.done?'✓ 集金済':'未集金'}</td>
+        <td>${esc(s.note)||''}</td>
+      </tr>`;
+    }).join('');
+
+    area.innerHTML = `
+      <h2>${edLabel} うちこ夏祭り 協賛金 集金一覧（${fname}）</h2>
+      <div class="p-sub">印刷日：${ds} ／ 件数：${items.length}件</div>
+      <table>
+        <thead><tr>
+          <th>会社名・店名</th><th>担当者</th><th>協賛金額</th><th>支払方法</th><th>集金状況</th><th>メモ</th>
+        </tr></thead>
+        <tbody>${rows}</tbody>
+        <tfoot>
+          <tr><td colspan="2">合計 ${items.length}件</td><td class="r">${yen(total)} 円</td><td colspan="3">現金 ${yen(cash)}円／振込 ${yen(bank)}円</td></tr>
+        </tfoot>
+      </table>`;
+    window.print();
+  }
+
+  // 集金済みだけを印刷（画面の表示状態は変えない）
+  function printDone(){
+    const prev = filter;
+    filter = 'done';
+    try { printList(); }
+    finally { filter = prev; }
+  }
+
+  // 今表示中の絞り込み（すべて／未集金／集金済）を文章にする
+  function buildShareText(){
+    const ed = (curEdition() && curEdition().label) || '';
+    let total=0, collected=0, pendingAmt=0, dN=0, pN=0;
+    sponsors.forEach(s=>{ const a=Number(s.amount)||0; total+=a; if(s.done){collected+=a;dN++;}else{pendingAmt+=a;pN++;} });
+    const items = getFilteredItems();
+    const fname = {all:'全て',pending:'未集金',done:'集金済'}[filter] || '全て';
+    const L = [];
+    L.push(`【${ed} うちこ夏祭り 協賛金】`);
+    L.push(`スポンサー ${sponsors.length}件 / 合計 ${yen(total)}円`);
+    L.push(`集金済 ${dN}件 ${yen(collected)}円 ／ 未集金 ${pN}件 ${yen(pendingAmt)}円`);
+    L.push('──────────');
+    L.push(`■ ${fname}（${items.length}件）`);
+    items.forEach(({s})=>{ L.push(`${s.done?'✓':'・'}${s.name} ${yen(Number(s.amount)||0)}円${s.person?'（'+s.person+'）':''}`); });
+    return L.join('\n');
+  }
+  function lineShareList(){
+    const t = buildShareText();
+    window.open('https://line.me/R/share?text=' + encodeURIComponent(t), '_blank');
+  }
+  function copyListText(){
+    const t = buildShareText();
+    if(navigator.clipboard && navigator.clipboard.writeText){
+      navigator.clipboard.writeText(t).then(()=>toast('📋 コピーしました（LINEに貼り付け）')).catch(()=>_fallbackCopy(t));
+    } else { _fallbackCopy(t); }
+  }
+  function _fallbackCopy(t){
+    try{ const ta=document.createElement('textarea'); ta.value=t; ta.style.position='fixed'; ta.style.opacity='0'; document.body.appendChild(ta); ta.focus(); ta.select(); document.execCommand('copy'); document.body.removeChild(ta); toast('📋 コピーしました'); }catch(e){ toast('コピーできませんでした'); }
+  }
+
+  // ===== クラウド同期（Google Apps Script）=====
+  const SYNC_URL = 'https://script.google.com/macros/s/AKfycbxwL19mAenATUMILRsQYrDL0ThjU2C583Cj729OfzNHEH3drMcZCExYULRp4VGOZ11J/exec';
+  const SYNC_KEY = 'natsumatsuri_sponsors';
+
+  let toastTimer;
+  function toast(msg){
+    const t = document.getElementById('toast');
+    t.textContent = msg;
+    t.classList.add('show');
+    clearTimeout(toastTimer);
+    toastTimer = setTimeout(()=>t.classList.remove('show'), 2600);
+  }
+
+  async function syncUpload(){
+    toast('☁ アップロード中...');
+    try{
+      const res = await fetch(SYNC_URL + '?action=save&key=' + SYNC_KEY, {
+        method: 'POST',
+        body: JSON.stringify(cloudPayload())
+      });
+      const json = await res.json();
+      if(json.success) toast('✅ クラウドに保存しました');
+      else toast('エラー: ' + (json.message||'不明'));
+    }catch(e){ toast('通信エラー: ' + e.message); }
+  }
+
+  async function syncDownload(){
+    toast('☁ ダウンロード中...');
+    try{
+      const res = await fetch(SYNC_URL + '?action=load&key=' + SYNC_KEY);
+      const json = await res.json();
+      if(!json.success || json.data==null){ toast('クラウドにデータがありません'); return; }
+      const p = parseCloud(json.data);
+      if(!p){ toast('データ形式エラー'); return; }
+      if(!confirm('クラウドのデータ（'+p.sponsors.length+'件'+(p.label?'／'+p.label:'')+'）で現在の内容を置き換えますか？')) return;
+      applyCloud(p); render(); renderEditionBar();
+      toast('✅ クラウドから読み込みました');
+    }catch(e){ toast('エラー: ' + (e&&e.message?e.message:e)); }
+  }
+
+  // 起動時：クラウドに最新があれば自動で復元（回の名前も）。失敗時は端末内データのまま。
+  async function autoRestore(){
+    try{
+      const res = await fetch(SYNC_URL + '?action=load&key=' + SYNC_KEY);
+      const json = await res.json();
+      if(!json || !json.success) return;
+      const p = parseCloud(json.data);
+      if(p && p.sponsors.length){ applyCloud(p); render(); renderEditionBar(); }
+    }catch(e){ /* オフライン等は端末内データのまま */ }
+  }
+
+  document.getElementById('overlay').addEventListener('click', e=>{
+    if(e.target.id==='overlay') closeModal();
+  });
+  // 支出管理アプリへ（GitHub Pages上ではshishutsu.html、Desktop上では日本語ファイル名）
+  function gotoShishutsu(){
+    location.href = location.hostname.endsWith('github.io') ? 'shishutsu.html' : encodeURI('夏祭り支出管理.html');
+  }
+
+  document.addEventListener('keydown', e=>{ if(e.key==='Escape') closeModal(); });
+
+  load(); renderEditionBar(); render();
+  // クラウドから最新を自動復元 → その後ユーザー操作の自動保存を有効化
+  autoRestore().finally(()=>{ cloudReady = true; });
+</script>
+</body>
+</html>
