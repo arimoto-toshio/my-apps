@@ -89,6 +89,8 @@
   .cat-badge { display:inline-block; padding:3px 9px; border-radius:999px; background:var(--gold-soft); color:#8a5200; font-size:11px; font-weight:800; white-space:nowrap; }
   .rcpt { font-size:15px; }
   .rcpt.no { opacity:.25; }
+  .adv-badge { display:inline-block; padding:3px 9px; border-radius:999px; background:#ffe1dc; color:#c0271f; font-size:11px; font-weight:800; white-space:nowrap; border:1px solid #f3b8ad; }
+  .btn-adv.on { background:linear-gradient(180deg,#ffd7cf,#ffb3a3); color:#8e2418; }
   td.item-c { max-width:220px; }
   .payee-sub { font-size:11px; color:var(--gray); margin-top:2px; }
   tfoot td { background:#ffeacb; font-weight:800; font-size:14px; color:var(--red-dark); }
@@ -223,6 +225,7 @@
   <button class="btn btn-add" onclick="openModal()">＋ 支出を追加</button>
   <button class="btn btn-kessan" onclick="openKessan()">📋 決算書</button>
   <button class="btn btn-ghost" onclick="gotoSponsor()" title="スポンサー集金アプリを開く">🎆 集金アプリへ</button>
+  <button class="btn btn-ghost btn-adv" id="adv-filter" onclick="toggleAdvFilter()" title="立替中（未精算）の支出だけを表示">💳 立替中のみ</button>
   <input class="search" id="search" placeholder="🔍 内容・支払先で検索" oninput="render()">
   <select class="catfilter" id="catfilter" onchange="render()"><option value="">全科目</option></select>
   <div class="spacer"></div>
@@ -236,7 +239,7 @@
 <div class="table-wrap">
   <table class="exp">
     <thead>
-      <tr><th>月/日</th><th>科目</th><th>内容・支払先</th><th>金額</th><th>支払</th><th>領収書</th></tr>
+      <tr><th>月/日</th><th>科目</th><th>内容・支払先</th><th>金額</th><th>支払</th><th>立替</th><th>領収書</th></tr>
     </thead>
     <tbody id="exp-body"></tbody>
     <tfoot id="exp-foot"></tfoot>
@@ -266,6 +269,7 @@
       </div>
     </div>
     <label class="chk-line"><input type="checkbox" id="f-receipt"> 領収書を受け取った</label>
+    <label class="chk-line"><input type="checkbox" id="f-advance" style="accent-color:#c0271f"> 💳 立替中（あとで精算する）</label>
     <div class="field"><label>メモ</label><textarea id="f-note" placeholder="任意"></textarea></div>
     <div class="modal-actions">
       <button class="btn btn-cancel" onclick="closeModal()">キャンセル</button>
@@ -335,6 +339,13 @@
   let store = { editions: [], curId: null, updated: 0 };
   let editId = null;   // 編集中の支出id
   let cloudReady = false, cloudTimer = null;
+  let advOnly = false; // 立替中のみ表示
+
+  function toggleAdvFilter(){
+    advOnly = !advOnly;
+    document.getElementById('adv-filter').classList.toggle('on', advOnly);
+    render();
+  }
 
   const yen = n => (n||0).toLocaleString('ja-JP');
   const esc = s => String(s==null?'':s).replace(/[&<>"']/g, c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
@@ -538,7 +549,9 @@
     document.getElementById('sum-income').innerHTML = yen(t.income)+'<small>円</small>';
     document.getElementById('sum-income-sub').textContent = '繰越'+yen(ed.income.carry)+' / 協賛'+yen(ed.income.sponsor);
     document.getElementById('sum-exp').innerHTML = yen(t.expense)+'<small>円</small>';
-    document.getElementById('sum-exp-sub').textContent = ed.expenses.length+'件';
+    const advList = ed.expenses.filter(x=>x.advance);
+    const advSum = advList.reduce((s,x)=>s+(+x.amount||0),0);
+    document.getElementById('sum-exp-sub').textContent = ed.expenses.length+'件' + (advList.length ? '・立替中'+advList.length+'件 '+yen(advSum)+'円' : '');
     document.getElementById('sum-balance').innerHTML = yen(t.balance)+'<small>円</small>';
     document.getElementById('card-balance').classList.toggle('minus', t.balance < 0);
     const rc = ed.expenses.filter(x=>x.receipt).length;
@@ -553,6 +566,7 @@
     const q = document.getElementById('search').value.trim().toLowerCase();
     const fcat = cf.value;
     const rows = sortedExpenses(ed).filter(x=>{
+      if (advOnly && !x.advance) return false;
       if (fcat && x.cat !== fcat) return false;
       if (q && !((x.item||'')+(x.payee||'')+(x.cat||'')+(x.note||'')).toLowerCase().includes(q)) return false;
       return true;
@@ -560,7 +574,7 @@
 
     const body = document.getElementById('exp-body');
     if (!rows.length){
-      body.innerHTML = '<tr><td colspan="6"><div class="empty-msg">'+(ed.expenses.length?'条件に合う支出がありません':'まだ支出がありません。「＋ 支出を追加」から入力してください')+'</div></td></tr>';
+      body.innerHTML = '<tr><td colspan="7"><div class="empty-msg">'+(ed.expenses.length?'条件に合う支出がありません':'まだ支出がありません。「＋ 支出を追加」から入力してください')+'</div></td></tr>';
     } else {
       body.innerHTML = rows.map(x=>`
         <tr class="exp-row" onclick="openModal('${x.id}')">
@@ -569,12 +583,13 @@
           <td class="item-c">${esc(x.item||'')}${x.payee?`<div class="payee-sub">→ ${esc(x.payee)}</div>`:''}</td>
           <td class="amt">${yen(x.amount)}円</td>
           <td class="c" style="text-align:center">${x.pay==='bank'?'🏦':'💴'}</td>
+          <td style="text-align:center">${x.advance?'<span class="adv-badge">立替中</span>':''}</td>
           <td style="text-align:center"><span class="rcpt ${x.receipt?'':'no'}">🧾</span></td>
         </tr>`).join('');
     }
     const shown = rows.reduce((s,x)=>s+(+x.amount||0),0);
     document.getElementById('exp-foot').innerHTML =
-      `<tr><td colspan="3" style="text-align:right">表示中 ${rows.length}件 合計</td><td class="amt">${yen(shown)}円</td><td colspan="2"></td></tr>`;
+      `<tr><td colspan="3" style="text-align:right">表示中 ${rows.length}件 合計</td><td class="amt">${yen(shown)}円</td><td colspan="3"></td></tr>`;
   }
 
   /* ===== 支出モーダル ===== */
@@ -590,6 +605,7 @@
     document.getElementById('f-payee').value = x ? (x.payee||'') : '';
     document.getElementById('f-note').value = x ? (x.note||'') : '';
     document.getElementById('f-receipt').checked = x ? !!x.receipt : false;
+    document.getElementById('f-advance').checked = x ? !!x.advance : false;
     document.querySelectorAll('input[name=pay]').forEach(r=>{ r.checked = r.value === ((x&&x.pay)||'cash'); });
     document.getElementById('del-btn').style.display = x ? '' : 'none';
     document.getElementById('modal-bg').classList.add('show');
@@ -616,6 +632,7 @@
       payee: document.getElementById('f-payee').value.trim(),
       pay: document.querySelector('input[name=pay]:checked').value,
       receipt: document.getElementById('f-receipt').checked,
+      advance: document.getElementById('f-advance').checked,
       note: document.getElementById('f-note').value.trim()
     };
     const ed = curEdition();
@@ -770,14 +787,14 @@
     const t = calcTotals(ed);
     const rows = sortedExpenses(ed).map(x=>`
       <tr><td>${fmtDate(x.date)}</td><td>${esc(x.cat||'')}</td><td>${esc(x.item||'')}</td><td>${esc(x.payee||'')}</td>
-      <td class="r">${yen(x.amount)}</td><td style="text-align:center">${x.pay==='bank'?'振込':'現金'}</td><td style="text-align:center">${x.receipt?'○':''}</td></tr>`).join('');
+      <td class="r">${yen(x.amount)}</td><td style="text-align:center">${x.pay==='bank'?'振込':'現金'}</td><td style="text-align:center">${x.advance?'○':''}</td><td style="text-align:center">${x.receipt?'○':''}</td></tr>`).join('');
     document.getElementById('print-area').innerHTML = `
       <div class="list-print">
         <h1>${esc(ed.label)}　うちこ夏祭り　支出一覧表</h1>
         <table>
-          <tr><th>月/日</th><th>科目</th><th>内容</th><th>支払先</th><th>金額(円)</th><th>支払</th><th>領収書</th></tr>
-          ${rows || '<tr><td colspan="7" style="text-align:center">支出なし</td></tr>'}
-          <tr><td colspan="4" style="text-align:right;font-weight:700">支出合計</td><td class="r" style="font-weight:700">${yen(t.expense)}</td><td colspan="2"></td></tr>
+          <tr><th>月/日</th><th>科目</th><th>内容</th><th>支払先</th><th>金額(円)</th><th>支払</th><th>立替中</th><th>領収書</th></tr>
+          ${rows || '<tr><td colspan="8" style="text-align:center">支出なし</td></tr>'}
+          <tr><td colspan="4" style="text-align:right;font-weight:700">支出合計</td><td class="r" style="font-weight:700">${yen(t.expense)}</td><td colspan="3"></td></tr>
         </table>
       </div>`;
     window.print();
@@ -787,9 +804,9 @@
   function exportCSV(){
     const ed = curEdition(); if (!ed) return;
     const q = s => '"'+String(s==null?'':s).replace(/"/g,'""')+'"';
-    let csv = '日付,科目,内容,支払先,金額,支払方法,領収書,メモ\n';
+    let csv = '日付,科目,内容,支払先,金額,支払方法,立替中,領収書,メモ\n';
     sortedExpenses(ed).forEach(x=>{
-      csv += [x.date, x.cat, x.item, x.payee, x.amount||0, x.pay==='bank'?'振込':'現金', x.receipt?'○':'', x.note].map(q).join(',')+'\n';
+      csv += [x.date, x.cat, x.item, x.payee, x.amount||0, x.pay==='bank'?'振込':'現金', x.advance?'○':'', x.receipt?'○':'', x.note].map(q).join(',')+'\n';
     });
     const blob = new Blob(['﻿'+csv], {type:'text/csv'});
     const a = document.createElement('a');
