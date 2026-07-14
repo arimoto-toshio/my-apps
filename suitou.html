@@ -1,0 +1,392 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>🐮 焼肉ありもと｜現金出納帳</title>
+<style>
+  :root{
+    --gold:#c89b3c; --gold-d:#a87f2a; --brown:#7a4a2b; --bg:#f3efe7; --card:#fff;
+    --line:#d8cfbf; --txt:#2b2520; --in:#1a7a3a; --out:#c0392b;
+  }
+  *{box-sizing:border-box;}
+  body{
+    margin:0; font-family:"Hiragino Kaku Gothic ProN","Yu Gothic",Arial,sans-serif;
+    background:var(--bg); color:var(--txt); -webkit-text-size-adjust:100%;
+  }
+  header{
+    background:linear-gradient(135deg,#8a5a36,#b07b3f); color:#fff; padding:10px 14px;
+    display:flex; align-items:center; gap:14px; flex-wrap:wrap; box-shadow:0 2px 6px rgba(0,0,0,.15);
+  }
+  header h1{font-size:18px; margin:0; white-space:nowrap;}
+  header h1 small{font-weight:500; font-size:12px; opacity:.85;}
+  .tools{display:flex; gap:8px; flex-wrap:wrap; margin-left:auto;}
+  .btn{
+    border:none; border-radius:8px; padding:7px 12px; cursor:pointer; font-size:13px;
+    background:rgba(255,255,255,.18); color:#fff; font-weight:600;
+  }
+  .btn:hover{background:rgba(255,255,255,.3);}
+  .btn.gold{background:#f2c14e; color:#5a3a17;}
+  .btn.cl1{background:#3a8a4a;} .btn.cl2{background:#2f6fb0;}
+
+  .wrap{max-width:1100px; margin:0 auto; padding:12px;}
+  .topcard{
+    background:var(--card); border-radius:12px; box-shadow:0 1px 4px rgba(0,0,0,.08);
+    padding:12px 14px; margin-bottom:12px; display:flex; align-items:center; gap:14px; flex-wrap:wrap;
+  }
+  .monthnav{display:flex; align-items:center; gap:8px;}
+  .monthnav button{border:none; background:#eee3cf; width:34px; height:34px; border-radius:8px; font-size:16px; cursor:pointer;}
+  .monthnav button:hover{background:#e3d4b8;}
+  .monthnav .lbl{font-size:18px; font-weight:700; min-width:130px; text-align:center;}
+  .opening{display:flex; align-items:center; gap:8px; margin-left:auto; font-size:14px;}
+  .opening input{
+    width:130px; text-align:right; font-size:16px; padding:6px 10px; border:1px solid var(--line);
+    border-radius:8px; font-variant-numeric:tabular-nums;
+  }
+
+  .tablecard{background:var(--card); border-radius:12px; box-shadow:0 1px 4px rgba(0,0,0,.08); padding:8px;}
+  .scroll{overflow-x:auto; -webkit-overflow-scrolling:touch;}
+  table{border-collapse:collapse; width:100%; min-width:760px; font-size:13px;}
+  th,td{border:1px solid var(--line); padding:0; text-align:center;}
+  thead th{background:#f6efe0; color:#6b4a26; font-weight:700; padding:6px 4px; position:sticky; top:0;}
+  caption{font-size:20px; font-weight:700; letter-spacing:.4em; padding:8px 0 10px; color:#5a3a17;}
+  td input, td select{
+    width:100%; border:none; background:transparent; font-size:13px; padding:6px 4px; text-align:center;
+    font-family:inherit; color:var(--txt);
+  }
+  td input:focus, td select:focus{outline:2px solid #f2c14e; outline-offset:-2px; background:#fffdf5;}
+  td.num input{text-align:right; font-variant-numeric:tabular-nums; padding-right:6px;}
+  td.tekiyo input{text-align:left; padding-left:6px;}
+  td.bal{text-align:right; padding-right:8px; font-variant-numeric:tabular-nums; background:#faf7f0; font-weight:600;}
+  td.in input{color:var(--in);} td.out input{color:var(--out);}
+  .col-y,.col-m,.col-d{width:38px;} .col-tax{width:66px;} .col-inv{width:52px;}
+  .col-kamoku{width:120px;} .col-in,.col-out,.col-bal{width:92px;} .col-del{width:30px;}
+  .delbtn{border:none; background:none; color:#c0392b; cursor:pointer; font-size:15px; width:100%; padding:6px 0;}
+  .delbtn:hover{background:#fbeaea;}
+  .invchk{transform:scale(1.25); cursor:pointer; width:auto;}
+  tr.teikyu td{background:#f3f0ea; color:#999;}
+  tfoot td{background:#f6efe0; font-weight:700; padding:8px 4px; font-variant-numeric:tabular-nums;}
+  tfoot .lbl{text-align:right; padding-right:8px; color:#6b4a26;}
+  tfoot .in{color:var(--in);} tfoot .out{color:var(--out);}
+
+  .addrow{margin-top:10px; text-align:center;}
+  .addrow button{
+    border:1px dashed #c2a86a; background:#fbf6ea; color:#8a5a2a; border-radius:8px;
+    padding:8px 18px; cursor:pointer; font-size:14px; font-weight:600;
+  }
+  .addrow button:hover{background:#f5ecd6;}
+  .hint{font-size:12px; color:#998; margin:10px 2px; text-align:center;}
+
+  #toast{
+    position:fixed; top:50%; left:50%; transform:translate(-50%,-50%);
+    background:rgba(0,0,0,.85); color:#fff; padding:12px 20px; border-radius:10px;
+    font-size:14px; opacity:0; pointer-events:none; transition:opacity .2s; z-index:1000;
+  }
+  #toast.show{opacity:1;}
+
+  @media (max-width:600px){
+    header h1{font-size:15px;}
+    .btn{padding:8px 10px; font-size:12px;}
+    .wrap{padding:8px;}
+    .opening{margin-left:0; width:100%;}
+    .opening input{flex:1; width:auto;}
+  }
+  @media print{
+    header .tools, .monthnav button, .col-del, .addrow, .hint{display:none !important;}
+    body{background:#fff;} header{background:#fff; color:#000; box-shadow:none;}
+    .topcard,.tablecard{box-shadow:none;}
+    table{min-width:0; font-size:11px;}
+  }
+</style>
+</head>
+<body>
+<div id="toast"></div>
+
+<header>
+  <h1>🐮 焼肉ありもと <small>現金出納帳</small></h1>
+  <div class="tools">
+    <button class="btn" onclick="window.print()">🖨 印刷</button>
+    <button class="btn" onclick="exportData()">⬇ 書出</button>
+    <button class="btn" style="background:#1d7a44;color:#fff;" onclick="exportCSV()">📊 Excel（税理士用）</button>
+    <label class="btn" style="cursor:pointer;">⬆ 読込<input type="file" accept=".json" onchange="importData(event)" style="display:none"></label>
+    <button class="btn cl1" onclick="cloudUpload()">☁️↑ クラウド保存</button>
+    <button class="btn cl2" onclick="cloudDownload()">☁️↓ クラウド読込</button>
+  </div>
+</header>
+
+<div class="wrap">
+  <div class="topcard">
+    <div class="monthnav">
+      <button onclick="changeMonth(-1)" title="前の月">◀</button>
+      <span class="lbl" id="monthLbl">令和8年 3月</span>
+      <button onclick="changeMonth(1)" title="次の月">▶</button>
+    </div>
+    <label class="opening">前月末残高
+      <input type="text" inputmode="numeric" id="openingInp" oninput="onOpening(this)" onblur="reformat(this)">
+    </label>
+  </div>
+
+  <div class="tablecard">
+    <div class="scroll">
+      <table>
+        <caption>現　金　出　納　帳</caption>
+        <thead>
+          <tr>
+            <th class="col-y">年</th><th class="col-m">月</th><th class="col-d">日</th>
+            <th class="col-kamoku">相手勘定科目</th><th>摘要</th>
+            <th class="col-tax">税率</th><th class="col-inv">インボイス</th>
+            <th class="col-in">入金</th><th class="col-out">出金</th><th class="col-bal">残高</th>
+            <th class="col-del"></th>
+          </tr>
+        </thead>
+        <tbody id="tbody"></tbody>
+        <tfoot>
+          <tr>
+            <td class="lbl" colspan="7">合計</td>
+            <td class="in" id="sumIn">0</td>
+            <td class="out" id="sumOut">0</td>
+            <td id="endBal">0</td>
+            <td></td>
+          </tr>
+        </tfoot>
+      </table>
+    </div>
+    <div class="addrow"><button onclick="addRow()">＋ 行を追加</button></div>
+    <div class="hint">残高は自動計算されます／入力すると自動でクラウド保存されます</div>
+  </div>
+</div>
+
+<datalist id="kamokuList">
+  <option>売上</option><option>売掛金</option><option>仕入</option><option>定休日</option>
+  <option>修繕費</option><option>支払手数料</option><option>接待交際費</option><option>寄付金</option>
+  <option>諸会費</option><option>当座/伊予</option><option>普通/伊予</option><option>現金</option>
+  <option>水道光熱費</option><option>通信費</option><option>消耗品費</option><option>租税公課</option>
+  <option>福利厚生費</option><option>給料</option><option>地代家賃</option><option>雑費</option>
+</datalist>
+
+<script>
+// ============================================================
+// 状態
+// ============================================================
+const STORAGE_KEY = 'yakiniku_kinsen_v1';
+const SYNC_URL = 'https://script.google.com/macros/s/AKfycbxwL19mAenATUMILRsQYrDL0ThjU2C583Cj729OfzNHEH3drMcZCExYULRp4VGOZ11J/exec';
+const SYNC_KEY = 'genkin_suitou_data';
+
+let allData = {};
+const now = new Date();
+let curYear = now.getFullYear() - 2018;   // 令和
+let curMonth = now.getMonth() + 1;
+
+const pageKey = () => `R${curYear}-${curMonth}`;
+const toNum = s => { if(typeof s==='number') return s; const n = parseFloat(String(s).replace(/[^0-9.\-]/g,'')); return isNaN(n)?0:n; };
+const fmt = n => (n||0).toLocaleString('ja-JP');
+const blankRow = () => ({ y:curYear, m:curMonth, d:'', kamoku:'', tekiyo:'', tax:'', invoice:false, nyu:'', shu:'' });
+
+function page(){
+  if(!allData[pageKey()]) allData[pageKey()] = { opening:null, rows:[ blankRow() ] };
+  const p = allData[pageKey()];
+  if(p.opening == null){
+    // 前月末残高を前の月の末残高から自動引き継ぎ
+    const py = curMonth===1 ? curYear-1 : curYear;
+    const pm = curMonth===1 ? 12 : curMonth-1;
+    const prev = allData[`R${py}-${pm}`];
+    p.opening = prev ? endBalanceOf(prev) : 0;
+  }
+  if(!p.rows || !p.rows.length) p.rows = [ blankRow() ];
+  return p;
+}
+function endBalanceOf(p){
+  let b = toNum(p.opening||0);
+  (p.rows||[]).forEach(r => b += toNum(r.nyu) - toNum(r.shu));
+  return b;
+}
+
+// ============================================================
+// 保存・クラウド
+// ============================================================
+function persist(){ localStorage.setItem(STORAGE_KEY, JSON.stringify(allData)); cloudAutoSave(); }
+function loadStorage(){ try{ const r=localStorage.getItem(STORAGE_KEY); if(r) allData=JSON.parse(r); }catch(e){ allData={}; } }
+
+var autoCloudTimer=null;
+function cloudAutoSave(){ clearTimeout(autoCloudTimer); autoCloudTimer=setTimeout(()=>pushCloud(true),2500); }
+async function pushCloud(silent){
+  if(!silent) toast('☁️ アップロード中...');
+  try{
+    const res=await fetch(SYNC_URL+'?action=save&key='+SYNC_KEY,{method:'POST',body:JSON.stringify(allData)});
+    const j=await res.json();
+    if(j.success){ if(!silent) toast('☁️ クラウドに保存しました'); return true; }
+    if(!silent) toast('エラー: '+(j.message||''));
+  }catch(e){ if(!silent) toast('通信エラー: '+e.message); }
+  return false;
+}
+function applyCloud(j){
+  if(!j||!j.success||!j.data) return false;
+  let d=j.data; if(typeof d==='string'){ try{ d=JSON.parse(d); }catch(e){ return false; } }
+  if(!d||typeof d!=='object'||!Object.keys(d).length) return false;
+  allData=d; localStorage.setItem(STORAGE_KEY, JSON.stringify(allData)); render();
+  return true;
+}
+async function cloudUpload(){ await pushCloud(false); }
+async function cloudDownload(){
+  toast('☁️ ダウンロード中...');
+  try{
+    const res=await fetch(SYNC_URL+'?action=load&key='+SYNC_KEY);
+    const j=await res.json();
+    let d=j&&j.data; if(typeof d==='string'){ try{ d=JSON.parse(d); }catch(e){} }
+    if(!d||!Object.keys(d).length){ toast('クラウドにデータがありません'); return; }
+    if(!confirm('クラウドのデータを読み込みますか？\n今の出納帳データは上書きされます。')) return;
+    if(applyCloud(j)) toast('☁️ クラウドから読み込みました');
+  }catch(e){ toast('エラー: '+(e&&e.message?e.message:e)); }
+}
+
+// ============================================================
+// 描画
+// ============================================================
+function render(){
+  document.getElementById('monthLbl').textContent = `令和${curYear}年 ${curMonth}月`;
+  const p = page();
+  const oi = document.getElementById('openingInp');
+  if(document.activeElement !== oi) oi.value = fmt(toNum(p.opening));
+
+  let bal = toNum(p.opening);
+  let sumIn=0, sumOut=0, html='';
+  p.rows.forEach((r,i)=>{
+    const nyu=toNum(r.nyu), shu=toNum(r.shu);
+    bal += nyu - shu; sumIn+=nyu; sumOut+=shu;
+    const teikyu = (r.kamoku==='定休日') ? ' teikyu' : '';
+    html += `<tr class="row${teikyu}" data-i="${i}">
+      <td class="col-y"><input value="${r.y??curYear}" oninput="upd(${i},'y',this.value)"></td>
+      <td class="col-m"><input value="${r.m??curMonth}" oninput="upd(${i},'m',this.value)"></td>
+      <td class="col-d"><input value="${r.d??''}" inputmode="numeric" oninput="upd(${i},'d',this.value)"></td>
+      <td class="col-kamoku"><input list="kamokuList" value="${esc(r.kamoku)}" oninput="upd(${i},'kamoku',this.value)"></td>
+      <td class="tekiyo"><input value="${esc(r.tekiyo)}" oninput="upd(${i},'tekiyo',this.value)"></td>
+      <td class="col-tax"><select onchange="upd(${i},'tax',this.value)">
+        <option value=""${r.tax===''?' selected':''}></option>
+        <option value="10"${String(r.tax)==='10'?' selected':''}>10</option>
+        <option value="8"${String(r.tax)==='8'?' selected':''}>8</option>
+      </select></td>
+      <td class="col-inv"><input type="checkbox" class="invchk" ${r.invoice?'checked':''} onchange="upd(${i},'invoice',this.checked)"></td>
+      <td class="num in col-in"><input value="${r.nyu!==''&&r.nyu!=null?fmt(nyu):''}" inputmode="numeric" oninput="updNum(${i},'nyu',this.value)" onblur="reformat(this)"></td>
+      <td class="num out col-out"><input value="${r.shu!==''&&r.shu!=null?fmt(shu):''}" inputmode="numeric" oninput="updNum(${i},'shu',this.value)" onblur="reformat(this)"></td>
+      <td class="bal col-bal">${fmt(bal)}</td>
+      <td class="col-del"><button class="delbtn" onclick="delRow(${i})" title="削除">✕</button></td>
+    </tr>`;
+  });
+  document.getElementById('tbody').innerHTML = html;
+  document.getElementById('sumIn').textContent = fmt(sumIn);
+  document.getElementById('sumOut').textContent = fmt(sumOut);
+  document.getElementById('endBal').textContent = fmt(bal);
+}
+function esc(s){ return String(s==null?'':s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c])); }
+
+// ============================================================
+// 編集
+// ============================================================
+function upd(i,k,v){
+  const r = page().rows[i]; if(!r) return;
+  r[k] = v;
+  persist();
+  if(k==='nyu'||k==='shu'||k==='kamoku') render();   // 残高・定休日色を更新
+}
+function updNum(i,k,v){
+  const r = page().rows[i]; if(!r) return;
+  r[k] = toNum(v);
+  // 残高・合計だけ即時更新（入力欄は再描画しないでカーソル維持）
+  liveRecalc();
+  persist();
+}
+function liveRecalc(){
+  const p = page(); let bal=toNum(p.opening), sumIn=0, sumOut=0;
+  const rows = document.querySelectorAll('#tbody tr');
+  p.rows.forEach((r,i)=>{
+    const nyu=toNum(r.nyu), shu=toNum(r.shu);
+    bal += nyu - shu; sumIn+=nyu; sumOut+=shu;
+    const tr = rows[i]; if(tr){ const bc=tr.querySelector('.bal'); if(bc) bc.textContent=fmt(bal); }
+  });
+  document.getElementById('sumIn').textContent=fmt(sumIn);
+  document.getElementById('sumOut').textContent=fmt(sumOut);
+  document.getElementById('endBal').textContent=fmt(bal);
+}
+function onOpening(el){ page().opening = toNum(el.value); liveRecalc(); persist(); }
+function reformat(el){ const n=toNum(el.value); el.value = (el.value.trim()==='')?'':fmt(n); }
+
+function addRow(){
+  const p = page();
+  const last = p.rows[p.rows.length-1];
+  const nr = blankRow();
+  if(last){ nr.y=last.y; nr.m=last.m; }   // 年月は引き継ぎ
+  p.rows.push(nr); persist(); render();
+  // 末尾の日付欄にフォーカス
+  const rows = document.querySelectorAll('#tbody tr');
+  const lastRow = rows[rows.length-1];
+  if(lastRow){ const di=lastRow.querySelector('.col-d input'); if(di) di.focus(); }
+}
+function delRow(i){
+  const p = page();
+  if(p.rows.length<=1){ p.rows[0]=blankRow(); } else { p.rows.splice(i,1); }
+  persist(); render();
+}
+function changeMonth(dir){
+  curMonth += dir;
+  if(curMonth>12){ curMonth=1; curYear++; }
+  if(curMonth<1){ curMonth=12; curYear--; }
+  render();
+}
+
+// ============================================================
+// 入出力
+// ============================================================
+function exportData(){
+  const blob=new Blob([JSON.stringify(allData,null,2)],{type:'application/json'});
+  const a=document.createElement('a'); a.href=URL.createObjectURL(blob);
+  a.download=`現金出納帳_${pageKey()}.json`; a.click(); toast('⬇ 書き出しました');
+}
+// 税理士提出用：Excel(CSV)で全月まとめて書き出し
+function exportCSV(){
+  const keys=Object.keys(allData).filter(k=>/^R\d+-\d+$/.test(k)).sort((a,b)=>{
+    const[ay,am]=a.slice(1).split('-').map(Number),[by,bm]=b.slice(1).split('-').map(Number);
+    return ay-by || am-bm;
+  });
+  const esc=s=>{ s=String(s==null?'':s); return /[",\n]/.test(s)?'"'+s.replace(/"/g,'""')+'"':s; };
+  let csv='﻿年,月,日,相手勘定科目,摘要,税率,インボイス,入金,出金,残高\n';
+  keys.forEach(k=>{
+    const p=allData[k]; let bal=toNum(p.opening);
+    const[yy,mm]=k.slice(1).split('-');
+    csv+=`${yy},${mm},,前月末残高,,,,,,${bal}\n`;
+    (p.rows||[]).forEach(r=>{
+      const nyu=toNum(r.nyu), shu=toNum(r.shu); bal+=nyu-shu;
+      csv+=[r.y??yy,r.m??mm,r.d??'',esc(r.kamoku),esc(r.tekiyo),(r.tax===''||r.tax==null?'':r.tax),(r.invoice?'✓':''),(nyu||''),(shu||''),bal].join(',')+'\n';
+    });
+  });
+  const blob=new Blob([csv],{type:'text/csv;charset=utf-8'});
+  const a=document.createElement('a'); a.href=URL.createObjectURL(blob);
+  a.download=`現金出納帳_税理士提出_${new Date().toISOString().slice(0,10)}.csv`; a.click();
+  toast('📊 Excel(CSV)で書き出しました');
+}
+function importData(e){
+  const f=e.target.files[0]; if(!f) return;
+  const r=new FileReader();
+  r.onload=ev=>{ try{ allData=JSON.parse(ev.target.result); localStorage.setItem(STORAGE_KEY,JSON.stringify(allData)); render(); toast('⬆ 読み込みました'); }catch(err){ toast('❌ 読込エラー'); } };
+  r.readAsText(f); e.target.value='';
+}
+function toast(m){ const t=document.getElementById('toast'); t.textContent=m; t.classList.add('show'); clearTimeout(toast._t); toast._t=setTimeout(()=>t.classList.remove('show'),2000); }
+
+// ============================================================
+// 起動
+// ============================================================
+(async ()=>{
+  loadStorage();
+  if(!Object.keys(allData).length){
+    // ローカルが空ならクラウドから自動復元
+    try{
+      const res=await fetch(SYNC_URL+'?action=load&key='+SYNC_KEY);
+      const j=await res.json();
+      let d=j&&j.data; if(typeof d==='string'){ try{ d=JSON.parse(d); }catch(e){} }
+      if(d&&Object.keys(d).length){ allData=d; localStorage.setItem(STORAGE_KEY,JSON.stringify(allData)); toast('☁️ クラウドから自動復元しました'); }
+    }catch(e){}
+  }
+  render();
+})();
+</script>
+</body>
+</html>
