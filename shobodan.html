@@ -83,6 +83,9 @@ footer{text-align:center;color:var(--sub);font-size:12px;padding:20px 0 30px}
   nav,header,.no-print{display:none!important}
   table{font-size:12px}
   th{background:#eee!important;color:#000!important;-webkit-print-color-adjust:exact}
+  body.print-entries #printArea,body.print-entries #printArea *{visibility:hidden}
+  body.print-entries #entryPrintArea{display:block!important;position:absolute;left:0;top:0;width:100%;padding:10mm;visibility:visible}
+  body.print-entries #entryPrintArea *{visibility:visible}
 }
 @media(max-width:600px){
   header h1{font-size:17px}
@@ -150,9 +153,11 @@ footer{text-align:center;color:var(--sub);font-size:12px;padding:20px 0 30px}
     <div class="filters">
       <select id="filterMonth" onchange="renderEntries()"><option value="">全期間</option></select>
       <select id="filterCat" onchange="renderEntries()"><option value="">全科目</option></select>
+      <button class="btn btn-navy btn-sm" onclick="printEntries()">🖨 この一覧を印刷</button>
       <span class="note" id="entrySummary"></span>
     </div>
     <div class="table-wrap"><table id="entryTable"></table></div>
+    <p class="note">🖨 印刷：上の「月」で印刷したい月を選んでから「この一覧を印刷」を押すと、その月の明細だけを印刷できます（全期間のままなら全件印刷）。</p>
   </div>
 </div>
 
@@ -244,6 +249,7 @@ footer{text-align:center;color:var(--sub);font-size:12px;padding:20px 0 30px}
 </div>
 
 </main>
+<div id="entryPrintArea" style="display:none"></div>
 <footer>内子消防団 第2部 会計管理アプリ（アップグレード版）</footer>
 <div id="toast"></div>
 
@@ -547,6 +553,51 @@ function deleteEntry(i){
   if(!confirm(`この記録を削除しますか？\n${e.d}　${e.cat}　${e.memo}`)) return;
   data.entries.splice(i,1); save(); renderAll();
 }
+
+// ===== 収支記録の月別印刷 =====
+function printEntries(){
+  const fm = document.getElementById("filterMonth").value;
+  const fc = document.getElementById("filterCat").value;
+  const rows = withBalance();
+  const shown = rows.filter(e=>(!fm || (e.d && e.d.startsWith(fm))) && (!fc || e.cat===fc));
+  if(!shown.length){ alert("印刷する記録がありません。月や科目の選択を確認してください。"); return; }
+  let sumIn=0,sumOut=0;
+  shown.forEach(e=>{ sumIn+=Number(e.inc)||0; sumOut+=Number(e.out)||0; });
+  const period = fm ? `${fm.slice(0,4)}年${Number(fm.slice(5))}月分` : "全期間";
+  const catTxt = fc ? `〔科目：${esc(fc)}〕` : "";
+  const body = shown.map(e=>`<tr>
+      <td>${esc(e.d)}</td><td>${esc(e.cat)}</td><td style="white-space:normal">${esc(e.memo)}</td><td class='center'>${esc(e.r)}</td>
+      <td class='num'>${e.inc?num(e.inc):""}</td><td class='num'>${e.out?num(e.out):""}</td><td class='num'>${num(e.bal)}</td></tr>`).join("");
+  let summary;
+  if(fm && !fc){
+    // 前月繰越 = 対象月より前の全収支
+    let carry=0;
+    rows.forEach(e=>{ if(e.d && e.d.slice(0,7) < fm) carry += (Number(e.inc)||0)-(Number(e.out)||0); });
+    summary = `<tr><th colspan="2">【残高確認】</th></tr>
+      <tr><td>前月繰越残高（円）</td><td class='num'>${num(carry)}</td></tr>
+      <tr><td>当月収入合計（円）</td><td class='num'>${num(sumIn)}</td></tr>
+      <tr><td>当月支出合計（円）</td><td class='num'>${num(sumOut)}</td></tr>
+      <tr class='total-row'><td>当月末残高（円）</td><td class='num'>${num(carry+sumIn-sumOut)}</td></tr>`;
+  }else{
+    summary = `<tr><th colspan="2">【集計】</th></tr>
+      <tr><td>収入合計（円）</td><td class='num'>${num(sumIn)}</td></tr>
+      <tr><td>支出合計（円）</td><td class='num'>${num(sumOut)}</td></tr>
+      <tr class='total-row'><td>差引（円）</td><td class='num'>${num(sumIn-sumOut)}</td></tr>`;
+  }
+  document.getElementById("entryPrintArea").innerHTML =
+    `<div class="report-title">${period}　収支記録${catTxt}（内子消防団 第2部）</div>
+     <p style="text-align:center;font-size:12px;color:#667;margin-bottom:10px">${esc(data.fiscalYear)}　／　${shown.length}件</p>
+     <table>
+       <tr><th>日付</th><th>科目</th><th>摘要</th><th>ﾚｼｰﾄ</th><th class='num'>収入（円）</th><th class='num'>支出（円）</th><th class='num'>残高（円）</th></tr>
+       ${body}
+       <tr class='total-row'><td colspan="4">合　計</td><td class='num'>${num(sumIn)}</td><td class='num'>${num(sumOut)}</td><td class='num'>${num(shown[shown.length-1].bal)}</td></tr>
+     </table>
+     <table style="margin-top:14px;max-width:420px">${summary}</table>
+     <div style="margin-top:16px;font-size:13px">作成者（会計）：${esc(data.signers.maker)||"　　　　　　"}　／　確認者（部長）：${esc(data.signers.checker)||"　　　　　　"}</div>`;
+  document.body.classList.add("print-entries");
+  window.print();
+}
+window.addEventListener("afterprint",()=>document.body.classList.remove("print-entries"));
 
 // ===== 積立管理 =====
 function renderMembers(){
