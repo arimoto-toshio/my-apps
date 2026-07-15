@@ -92,7 +92,14 @@
   .boxes{ display:flex; flex-wrap:wrap; gap:7px; align-items:stretch; }
   .adbox{ display:flex; align-items:center; justify-content:center; text-align:center; font-weight:800;
     border-radius:8px; padding:6px 9px; color:#173a29; background:#fff; border:2px solid; line-height:1.18;
-    box-shadow:0 2px 5px rgba(0,0,0,.08); word-break:break-word; }
+    box-shadow:0 2px 5px rgba(0,0,0,.08); word-break:break-word; position:relative; cursor:pointer; }
+  .adbox.paid{ background:#e7f8ee; }
+  .adbox.paid::after{ content:'✓'; position:absolute; top:-7px; right:-7px; width:18px; height:18px; border-radius:50%;
+    background:#1f9e6b; color:#fff; font-size:12px; line-height:18px; font-weight:800; box-shadow:0 1px 3px rgba(0,0,0,.25); }
+  /* 入金トグル（一覧） */
+  .paybtn{ border:none; border-radius:999px; padding:5px 12px; cursor:pointer; font-family:inherit; font-weight:800;
+    font-size:12px; background:#eef0ee; color:#8a8f8a; white-space:nowrap; }
+  .paybtn.on{ background:linear-gradient(180deg,#5ad19a,#1f9e6b); color:#fff; }
   .empty{ text-align:center; color:var(--gray); padding:30px 10px; font-weight:700; }
   /* 1枚印刷用に詰める（計測時も適用してズーム率を最適化） */
   .board.fit1 .boxes{ gap:4px; }
@@ -398,7 +405,7 @@
       editions=[{ id:genId(), label:'2025年（第66回）', sponsors:base }];
       curId=editions[0].id; sponsors=base;
     }
-    sponsors.forEach(s=>{ if(s.tierOverride===undefined) s.tierOverride=''; if(s.note===undefined) s.note=''; });
+    sponsors.forEach(s=>{ if(s.tierOverride===undefined) s.tierOverride=''; if(s.note===undefined) s.note=''; if(s.paid===undefined) s.paid=false; });
     save();
   }
   let dataSavedAt = 0;   // 最後にユーザーが編集した時刻（クラウドとの新旧比較用）
@@ -425,7 +432,7 @@
     if(d.sponsors&&Array.isArray(d.sponsors)) return { sponsors:d.sponsors, label:d.label||null, tiers:Array.isArray(d.tiers)?d.tiers:null };
     return null;
   }
-  function normSponsors(a){ return a.map(s=>({ name:s.name||'', person:s.person||'', amount:Number(s.amount)||0, note:s.note||'', tierOverride:s.tierOverride||'' })); }
+  function normSponsors(a){ return a.map(s=>({ name:s.name||'', person:s.person||'', amount:Number(s.amount)||0, note:s.note||'', tierOverride:s.tierOverride||'', paid:!!s.paid })); }
   function applyCloud(p){
     if(!p) return false;
     if(Array.isArray(p.editions)&&p.editions.length){
@@ -490,14 +497,18 @@
     $('tiers-sum').innerHTML = s.map(t=>{
       const list=sponsors.filter(sp=>effTierId(sp)===t.id);
       const sum=list.reduce((a,b)=>a+(Number(b.amount)||0),0);
+      const paidN=list.filter(sp=>sp.paid).length;
       return `<div class="tsum" style="border-top-color:${t.color}">
         <div class="tl">${esc(t.label)}</div>
         <div class="tc" style="color:${t.color}">${list.length}<small>件</small></div>
-        <div class="tm">${yen(sum)}</div></div>`;
+        <div class="tm">${yen(sum)}</div>
+        <div class="tm" style="color:#1f9e6b">✓入金 ${paidN}件</div></div>`;
     }).join('') + (()=>{ const tot=sponsors.reduce((a,b)=>a+(Number(b.amount)||0),0);
+      const paidN=sponsors.filter(sp=>sp.paid).length;
       return `<div class="tsum" style="border-top-color:#163a2a">
         <div class="tl">合計</div><div class="tc" style="color:#163a2a">${sponsors.length}<small>件</small></div>
-        <div class="tm">${yen(tot)}</div></div>`; })();
+        <div class="tm">${yen(tot)}</div>
+        <div class="tm" style="color:#1f9e6b">✓入金 ${paidN}件 / 未 ${sponsors.length-paidN}件</div></div>`; })();
   }
 
   function filtered(){
@@ -524,14 +535,15 @@
     };
     let html=`<div class="panel"><table class="list"><thead><tr>
       <th>会社・団体名</th><th class="hide-sp">担当</th><th style="text-align:right">寄付額</th>
-      <th>掲載枠</th><th>枠の指定</th><th></th></tr></thead><tbody>`;
-    if(!rows.length){ html+=`<tr><td colspan="6"><div class="empty">該当なし。「＋ 寄付者を追加」から登録できます。</div></td></tr>`; }
+      <th>入金</th><th>掲載枠</th><th>枠の指定</th><th></th></tr></thead><tbody>`;
+    if(!rows.length){ html+=`<tr><td colspan="7"><div class="empty">該当なし。「＋ 寄付者を追加」から登録できます。</div></td></tr>`; }
     rows.forEach(({s,i})=>{
       const eid=effTierId(s);
       html+=`<tr>
         <td><span class="pname">${esc(s.name)||'(名称未設定)'}</span>${s.note?`<div class="pmeta">📝 ${esc(s.note)}</div>`:''}</td>
         <td class="hide-sp pmeta">${esc(s.person)||'—'}</td>
         <td class="amt">${yen(s.amount)}</td>
+        <td><button class="paybtn ${s.paid?'on':''}" onclick="togglePaid(${i})">${s.paid?'✓ 済':'未'}</button></td>
         <td>${tierBadge(eid)}${s.tierOverride?'<span class="ovr">指定</span>':''}</td>
         <td><select class="tsel" onchange="setOverride(${i}, this.value)">${tierOpts(s)}</select></td>
         <td style="white-space:nowrap">
@@ -559,7 +571,9 @@
         <div class="tierhead">${tierBadge(t.id)}<span class="cnt">${list.length}件 ・ ${esc(t.label)}（${t.min.toLocaleString()}円〜）</span></div>
         <div class="boxes">`;
       list.forEach(sp=>{
-        html+=`<div class="adbox" title="${esc(sp.name)}　${yen(sp.amount)}"
+        const gi=sponsors.indexOf(sp);
+        html+=`<div class="adbox ${sp.paid?'paid':''}" onclick="togglePaid(${gi})"
+          title="${esc(sp.name)}　${yen(sp.amount)}　${sp.paid?'✓入金済（タップで未入金に戻す）':'未入金（タップで入金済にする）'}"
           style="min-width:${sz.w}px;min-height:${sz.h}px;font-size:${sz.fs}px;border-color:${t.color}">${esc(sp.name)||'(名称未設定)'}</div>`;
       });
       html+=`</div></div>`;
@@ -571,6 +585,11 @@
 
   // ====== 操作 ======
   function setOverride(i, val){ sponsors[i].tierOverride=val; save(); render(); }
+  function togglePaid(i){
+    const s=sponsors[i]; if(!s) return;
+    s.paid=!s.paid; save(); render();
+    toast(s.paid ? `✓ ${s.name}：入金済にしました` : `${s.name}：未入金に戻しました`);
+  }
   function delItem(i){ if(confirm(`「${sponsors[i].name}」を削除しますか？`)){ sponsors.splice(i,1); save(); render(); toast('削除しました'); } }
 
   let editIdx=null;
@@ -591,7 +610,8 @@
   function closeEdit(){ $('ov-edit').classList.remove('show'); editIdx=null; }
   function saveEdit(){
     const obj={ name:$('f-name').value.trim(), amount:Number($('f-amount').value)||0,
-      person:$('f-person').value.trim(), note:$('f-note').value.trim(), tierOverride:$('f-tier').value };
+      person:$('f-person').value.trim(), note:$('f-note').value.trim(), tierOverride:$('f-tier').value,
+      paid: editIdx==null ? false : !!sponsors[editIdx].paid };
     if(!obj.name){ alert('会社・団体名を入力してください'); return; }
     if(editIdx==null) sponsors.push(obj); else sponsors[editIdx]=obj;
     save(); closeEdit(); render(); toast('保存しました');
@@ -685,10 +705,10 @@
   });
 
   function exportCSV(){
-    const head=['会社・団体名','寄付額','掲載枠','担当','メモ'];
+    const head=['会社・団体名','寄付額','入金','掲載枠','担当','メモ'];
     const rows=[...sponsors].sort((a,b)=>(b.amount||0)-(a.amount||0)).map(s=>{
       const t=tierById(effTierId(s));
-      return [s.name, s.amount, t?t.label:'', s.person||'', (s.note||'').replace(/\n/g,' ')];
+      return [s.name, s.amount, s.paid?'済':'未', t?t.label:'', s.person||'', (s.note||'').replace(/\n/g,' ')];
     });
     const csv=[head,...rows].map(r=>r.map(c=>{
       const v=String(c==null?'':c); return /[",\n]/.test(v)?'"'+v.replace(/"/g,'""')+'"':v;
@@ -701,14 +721,14 @@
   }
 
   // ====== 年度（回） ======
-  function switchEdition(id){ save(); curId=id; sponsors=curEdition().sponsors; sponsors.forEach(s=>{ if(s.tierOverride===undefined)s.tierOverride=''; if(s.note===undefined)s.note=''; }); saveEditions(); render(); }
+  function switchEdition(id){ save(); curId=id; sponsors=curEdition().sponsors; sponsors.forEach(s=>{ if(s.tierOverride===undefined)s.tierOverride=''; if(s.note===undefined)s.note=''; if(s.paid===undefined)s.paid=false; }); saveEditions(); render(); }
   function newEdition(){
     save();
     const label=prompt('新しい回の名前を入力してください（例：2026年）',''); if(label===null) return;
     const name=label.trim(); if(!name){ alert('名前を入力してください'); return; }
     let list=[];
-    if(sponsors.length && confirm('今の年の寄付者リストを引き継ぎますか？\n\nOK＝引き継ぐ（金額・枠の指定もそのまま）\nキャンセル＝空で作成')){
-      list=sponsors.map(s=>({ name:s.name, person:s.person, amount:s.amount, note:s.note, tierOverride:s.tierOverride||'' }));
+    if(sponsors.length && confirm('今の年の寄付者リストを引き継ぎますか？\n\nOK＝引き継ぐ（金額・枠の指定もそのまま。入金チェックはリセット）\nキャンセル＝空で作成')){
+      list=sponsors.map(s=>({ name:s.name, person:s.person, amount:s.amount, note:s.note, tierOverride:s.tierOverride||'', paid:false }));
     }
     const ne={ id:genId(), label:name, sponsors:list };
     editions.push(ne); curId=ne.id; sponsors=ne.sponsors; save(); render(); toast(`「${name}」を作成しました`);
