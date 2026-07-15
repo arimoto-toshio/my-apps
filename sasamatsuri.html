@@ -402,9 +402,11 @@
       let seed=null; try{ seed=JSON.parse(localStorage.getItem(KEY)); }catch(e){}
       const base = (Array.isArray(seed)&&seed.length) ? seed
         : SEED.map(s=>({ name:s.name, person:'', amount:0, note:'', tierOverride:s.t }));
-      editions=[{ id:genId(), label:'2025年（第66回）', sponsors:base }];
+      editions=[{ id:genId(), label:'2026年（第67回）', sponsors:base }];
       curId=editions[0].id; sponsors=base;
     }
+    // 回名の一括修正（2026-07-15）: 旧「2025年（第66回）」→「2026年（第67回）」
+    editions.forEach(e=>{ if(e.label==='2025年（第66回）') e.label='2026年（第67回）'; });
     sponsors.forEach(s=>{ if(s.tierOverride===undefined) s.tierOverride=''; if(s.note===undefined) s.note=''; if(s.paid===undefined) s.paid=false; });
     save();
   }
