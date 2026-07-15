@@ -408,17 +408,25 @@
     // 回名の一括修正（2026-07-15）: 旧「2025年（第66回）」→「2026年（第67回）」
     editions.forEach(e=>{ if(e.label==='2025年（第66回）') e.label='2026年（第67回）'; });
     sponsors.forEach(s=>{ if(s.tierOverride===undefined) s.tierOverride=''; if(s.note===undefined) s.note=''; if(s.paid===undefined) s.paid=false; });
-    save();
+    persistLocal();  // 起動しただけでは編集時刻を進めない（クラウドとの新旧比較を壊さないため）
   }
   let dataSavedAt = 0;   // 最後にユーザーが編集した時刻（クラウドとの新旧比較用）
   function saveEditions(){ if(editions.length) localStorage.setItem(EKEY, JSON.stringify({list:editions, curId, savedAt:dataSavedAt})); }
-  function save(){
-    dataSavedAt = Date.now();
+  function persistLocal(){  // 端末内への保存のみ（編集時刻を進めず、クラウドにも送らない）
     const ed=curEdition(); if(ed) ed.sponsors=sponsors;
     localStorage.setItem(KEY, JSON.stringify(sponsors));
     localStorage.setItem(TKEY, JSON.stringify(tiers));
     saveEditions();
+  }
+  function save(){
+    dataSavedAt = Date.now();
+    persistLocal();
     scheduleCloudSave();
+  }
+  // 未使用の初期データのままか（＝この端末にユーザーの編集が無い）
+  function looksLikeUntouchedSeed(){
+    return editions.length===1 && sponsors.length &&
+      sponsors.every(s=>!(Number(s.amount)||0) && !s.person && !s.note && !s.paid);
   }
 
   // ====== クラウド同期 ======
@@ -752,12 +760,26 @@
 
   // ====== 起動 ======
   load(); render();
-  if(justMigrated){
-    // 入れ替え直後は古いクラウドを読み戻さず、最新を端末→クラウドへ反映
-    cloudReady = true; pushCloudSilent();
-  } else {
-    autoRestore().finally(()=>{ cloudReady=true; });
-  }
+  // 起動時のクラウド同期:
+  // ・この端末に実編集が無い（初期データのまま）→ クラウド優先で復元。初期データは絶対に送らない
+  // ・実編集がある → 新しい方を採用（手元が新しければ送る、クラウドが新しければ読む）
+  (async ()=>{
+    try{
+      const res=await fetch(SYNC_URL+'?action=load&key='+SYNC_KEY);
+      const j=await res.json(); const p=parseCloud(j&&j.data!==undefined?j.data:j);
+      const has=p&&((Array.isArray(p.editions)&&p.editions.length)||(Array.isArray(p.sponsors)&&p.sponsors.length));
+      const localAuthority = looksLikeUntouchedSeed() ? 0 : dataSavedAt;
+      if(!has){
+        // クラウドが空のときだけ、手元の内容を送る
+        cloudReady=true; if(!looksLikeUntouchedSeed()) pushCloudSilent(); return;
+      }
+      if(localAuthority && (!p.savedAt || localAuthority > p.savedAt)){
+        cloudReady=true; pushCloudSilent(); return;
+      }
+      if(applyCloud(p)){ render(); }
+    }catch(e){}
+    cloudReady=true;
+  })();
 </script>
 </body>
 </html>
