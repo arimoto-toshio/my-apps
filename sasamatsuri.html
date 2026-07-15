@@ -464,16 +464,42 @@
     if(p.tiers&&p.tiers.length){ tiers=p.tiers; localStorage.setItem(TKEY, JSON.stringify(tiers)); }
     localStorage.setItem(KEY, JSON.stringify(sponsors)); saveEditions(); return true;
   }
-  async function pushCloudSilent(){
-    try{ const res=await fetch(SYNC_URL+'?action=save&key='+SYNC_KEY,{method:'POST',body:JSON.stringify(cloudPayload())});
-      const j=await res.json(); if(j&&j.success) toast('☁ 自動保存しました'); }catch(e){}
+  // 送ろうとしている内容に、実際の入力（金額・担当・メモ・入金チェック）が1件でもあるか
+  function payloadHasRealData(){
+    return editions.some(e=>(e.sponsors||[]).some(s=>(Number(s.amount)||0)||s.person||s.note||s.paid));
   }
-  async function syncUpload(){
-    toast('☁ 保存中…');
-    try{ const res=await fetch(SYNC_URL+'?action=save&key='+SYNC_KEY,{method:'POST',body:JSON.stringify(cloudPayload())});
-      const j=await res.json(); toast(j&&j.success?'☁ クラウドに保存しました':'保存に失敗しました'); }
-    catch(e){ toast('通信エラー（端末内には保存済み）'); }
+  // クラウド側（読み込んだ内容）に実データがあるか
+  function cloudHasRealData(p){
+    if(!p) return false;
+    const eds=Array.isArray(p.editions)?p.editions:(Array.isArray(p.sponsors)?[{sponsors:p.sponsors}]:[]);
+    return eds.some(e=>(e.sponsors||[]).some(s=>(Number(s.amount)||0)||s.person||s.note||s.paid));
   }
+  async function cloudLoadRaw(){
+    const res=await fetch(SYNC_URL+'?action=load&key='+SYNC_KEY);
+    const j=await res.json(); return parseCloud(j&&j.data!==undefined?j.data:j);
+  }
+  // すべてのクラウド保存はここを通す（安全装置つき）
+  async function doCloudSave(silent){
+    const iHaveData=payloadHasRealData();
+    let cur=null; try{ cur=await cloudLoadRaw(); }catch(e){}
+    // 【安全装置1】自分は空同然・クラウドには入力済みデータ → 破壊的上書きなので中止
+    if(cloudHasRealData(cur) && !iHaveData){
+      if(!silent) toast('⚠ クラウドの入力済みデータを守るため、空データでの上書きを中止しました');
+      return false;
+    }
+    // 【安全装置2】上書きの直前に、今のクラウド内容を退避キーへ自動バックアップ
+    if(cloudHasRealData(cur)){
+      try{ await fetch(SYNC_URL+'?action=save&key='+SYNC_KEY+'_bak',{method:'POST',body:JSON.stringify(cur)}); }catch(e){}
+    }
+    try{
+      const res=await fetch(SYNC_URL+'?action=save&key='+SYNC_KEY,{method:'POST',body:JSON.stringify(cloudPayload())});
+      const j=await res.json();
+      if(j&&j.success){ if(!silent) toast('☁ クラウドに保存しました'); return true; }
+      if(!silent) toast('保存に失敗しました'); return false;
+    }catch(e){ if(!silent) toast('通信エラー（端末内には保存済み）'); return false; }
+  }
+  async function pushCloudSilent(){ return doCloudSave(true); }
+  async function syncUpload(){ toast('☁ 保存中…'); return doCloudSave(false); }
   async function syncDownload(){
     if(!confirm('クラウドの内容を読み込み、今の表示を上書きします。よろしいですか？')) return;
     toast('☁ 読込中…');
