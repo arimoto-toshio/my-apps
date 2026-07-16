@@ -1321,8 +1321,16 @@ function applyResultRules(rr) {
       }
     });
   }
-  // 2人だけの特例: 残った1人は大砲にもせず、普通の配当（判定なし）にする
-  if (validOpenerCount <= 2 && lockedTaihou.size === 0) taihouIdx = -1;
+
+  // 2人だけの特例: 落ち以外の1人は必ず大砲にする（ケツにはならない）。
+  // 手動で結果を指定している場合はそれを尊重。
+  if (validOpenerCount <= 2) {
+    const otherIdx = valid.findIndex((b, i) =>
+      i !== ochiIdx && !isLocked(i) &&
+      b.opener && b.openResult !== '' && b.openResult !== null && b.openResult !== undefined
+    );
+    if (otherIdx >= 0) taihouIdx = otherIdx;
+  }
 
   // フラグリセット
   valid.forEach(b => { b.taihouFromKetsu = false; });
