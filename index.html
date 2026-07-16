@@ -303,6 +303,18 @@
 const STORAGE_KEY = 'rakuseikai_data';
 const DEFAULT_MEMBERS = ['山本','渡部','宮瀬','米田','石岡','有本','白石','宮田','酒井','森岡','TKT','木工'];
 const RESULT_OPTIONS = ['','大砲','ケツ','落ち'];
+// 手動で人数を調整したとき、対象の名前もそれに追従させる。
+// ケツを減らして配当を増やした差分だけ、ケツの人を配当対象へ移す（減らしただけ・自動のままなら変化なし）。
+function adjustTargetsByCount(normalNames, ketsuNames, normalCount, ketsuCount){
+  const dispNormal = normalNames.slice();
+  const dispKetsu  = ketsuNames.slice();
+  const move = Math.min(
+    Math.max(0, dispKetsu.length - ketsuCount),
+    Math.max(0, normalCount - dispNormal.length)
+  );
+  for (let k = 0; k < move; k++) dispNormal.push(dispKetsu.shift());
+  return [dispNormal, dispKetsu];
+}
 const CARD_OPTIONS = ['','A','2','3','4','5','6','7','8','9','10','J','Q','K'];
 const CALL_OPTIONS = ['',0,50,100,150,200,250,300,350,400,450,500,550,600,650,700,750,800,850,900,950,1000];
 
@@ -349,8 +361,8 @@ function loadApp() {
           if (!b.manualResult) b.result = '';
         });
         cur.attendance.forEach(a => { a.ochi = false; });
-        delete cur.calc.normalCount;
-        delete cur.calc.ketsuCount;
+        // 手動で調整した配当・ケツの人数は保持する（開き直しても消えないように）。
+        // 自動算出される単価類だけリセットする。
         delete cur.calc.taihouCount;
         delete cur.calc.taihouUnit;
         return;
@@ -931,12 +943,16 @@ function renderCalc() {
     normalCallers.push(n + '(欠席)');
   });
 
+  // 人数を手動調整した場合、対象の名前表示もそれに合わせる
+  // （ケツを減らして配当を増やした分だけ、ケツの人を配当対象へ移す）
+  const [dispNormal, dispKetsu] = adjustTargetsByCount(normalCallers, [...ketsuNamesSet], normalCount, ketsuCount);
+
   document.getElementById('calcBody').innerHTML = `
     <div style="background:#f7f9fc; padding:10px; border-radius:6px; margin-bottom:10px; font-size:12px;">
       <div style="font-weight:700; color:#0d1b3e; margin-bottom:6px;">📋 配当の内訳</div>
       <div style="margin-bottom:4px;">
-        <span style="color:#0d1b3e;">配当対象 (${normalCallers.length}人):</span>
-        <strong>${normalCallers.length ? normalCallers.join('・') : '—'}</strong>
+        <span style="color:#0d1b3e;">配当対象 (${dispNormal.length}人):</span>
+        <strong>${dispNormal.length ? dispNormal.join('・') : '—'}</strong>
       </div>
       <div style="margin-bottom:4px;">
         <span style="color:#e65100;">落ち (除外):</span>
@@ -947,8 +963,8 @@ function renderCalc() {
         <strong>${[...taihouNames].join('・') || '—'}</strong>
       </div>
       <div>
-        <span style="color:#1565c0;">ケツ (${ketsuNamesSet.size}人分):</span>
-        <strong>${[...ketsuNamesSet].join('・') || '—'}</strong>
+        <span style="color:#1565c0;">ケツ (${dispKetsu.length}人分):</span>
+        <strong>${dispKetsu.join('・') || '—'}</strong>
       </div>
     </div>
     <div class="calc-line">
@@ -1091,6 +1107,9 @@ function renderShare() {
     normalCallers.push(n + '(欠席)');
   });
 
+  // 手動調整した人数に合わせて対象の名前も追従（ケツ→配当へ移動）
+  const [dispNormal, dispKetsu] = adjustTargetsByCount(normalCallers, [...ketsuNamesSet], normalCount, ketsuCount);
+
   const ochiCount2 = r.attendance.filter(a => a.ochi).length;
   const slots = Math.max(1, app.members.length - ochiCount2);
   const bidRows = r.bids.slice(0, slots).map((b, i) => {
@@ -1117,8 +1136,8 @@ function renderShare() {
   _sl.push('──────────');
   _sl.push('■ 精算・配当');
   _sl.push(`・集金: ${app.kaihi.toLocaleString()}円 × ${paidCount}名 = ${pool.toLocaleString()}円`);
-  _sl.push(`・配当(${normalCallers.length}人): ${haitouUnit.toLocaleString()}×${normalCount}=${haitouNormal.toLocaleString()}円`);
-  _sl.push(`・ケツ(${ketsuCount}人): ${ketsuUnit.toLocaleString()}×${ketsuCount}=${haitouKetsu.toLocaleString()}円`);
+  _sl.push(`・配当(${dispNormal.length}人): ${haitouUnit.toLocaleString()}×${normalCount}=${haitouNormal.toLocaleString()}円${dispNormal.length ? ' '+dispNormal.join('・') : ''}`);
+  _sl.push(`・ケツ(${dispKetsu.length}人): ${ketsuUnit.toLocaleString()}×${ketsuCount}=${haitouKetsu.toLocaleString()}円${dispKetsu.length ? ' '+dispKetsu.join('・') : ''}`);
   if (taihouNames.size) _sl.push(`・大砲: ${[...taihouNames].join('・')}`);
   if (ochiNames.size) _sl.push(`・落ち: ${[...ochiNames].join('・')}`);
   if (c.taihou) _sl.push(`・大砲: ${(+c.taihou).toLocaleString()}円`);
@@ -1159,8 +1178,8 @@ function renderShare() {
         <div style="font-size:11px;font-weight:700;color:#0d1b3e;margin-bottom:4px;">💰 精算・配当内訳</div>
         <div style="font-size:11px;line-height:1.6;">
           <div>● 集金: ${app.kaihi.toLocaleString()}円 × ${paidCount}名 = <strong>${pool.toLocaleString()}円</strong></div>
-          <div>● 配当 (${normalCallers.length}人分): ${haitouUnit.toLocaleString()} × ${normalCount} = <strong>${haitouNormal.toLocaleString()}円</strong> <span style="font-size:10px;color:#555;">対象: ${normalCallers.join('・') || '—'}</span></div>
-          <div>● ケツ (${ketsuNamesSet.size}人分): ${ketsuUnit.toLocaleString()} × ${ketsuCount} = <strong>${haitouKetsu.toLocaleString()}円</strong> <span style="font-size:10px;color:#1565c0;">対象: ${[...ketsuNamesSet].join('・') || '—'}</span></div>
+          <div>● 配当 (${dispNormal.length}人分): ${haitouUnit.toLocaleString()} × ${normalCount} = <strong>${haitouNormal.toLocaleString()}円</strong> <span style="font-size:10px;color:#555;">対象: ${dispNormal.join('・') || '—'}</span></div>
+          <div>● ケツ (${dispKetsu.length}人分): ${ketsuUnit.toLocaleString()} × ${ketsuCount} = <strong>${haitouKetsu.toLocaleString()}円</strong> <span style="font-size:10px;color:#1565c0;">対象: ${dispKetsu.join('・') || '—'}</span></div>
           ${taihouNames.size ? `<div>● 大砲: <strong style="color:#2e7d32;">${[...taihouNames].join('・')}</strong></div>` : ''}
           ${ochiNames.size  ? `<div>● 落ち: <strong style="color:#e65100;">${[...ochiNames].join('・')}</strong></div>` : ''}
           ${c.taihou       ? `<div>● 大砲: <strong>${(+c.taihou).toLocaleString()}円</strong></div>` : ''}
