@@ -1472,7 +1472,9 @@ function toggleAtt(i, field) {
   if (field === 'ochi') {
     const newVal = r.attendance[i][field];
     const name = r.attendance[i].name;
-    app.rounds.forEach(rd => {
+    // 「落ち済み」は今の回から先だけに反映する（過去の回は変えない）
+    app.rounds.forEach((rd, idx) => {
+      if (idx < curIdx) return;
       const att = rd.attendance.find(a => a.name === name);
       if (att) att.ochi = newVal;
     });
