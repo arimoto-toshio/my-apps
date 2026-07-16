@@ -361,8 +361,8 @@ function loadApp() {
           if (!b.manualResult) b.result = '';
         });
         cur.attendance.forEach(a => { a.ochi = false; });
-        // 手動で調整した配当・ケツの人数は保持する（開き直しても消えないように）。
-        // 自動算出される単価類だけリセットする。
+        delete cur.calc.normalCount;
+        delete cur.calc.ketsuCount;
         delete cur.calc.taihouCount;
         delete cur.calc.taihouUnit;
         return;
@@ -879,19 +879,25 @@ function renderCalc() {
     if (b.result === 'ケツ' && b.opener) ketsuNamesSet.add(b.opener);
   });
   // 開結果が最小の人（落ち除く）もケツ扱い（大砲昇格者を含めて）
-  let minOpenResCalc = Infinity;
-  r.bids.forEach(b => {
-    if (b.result === '落ち') return;
-    if (b.opener && b.openResult !== '' && b.openResult !== null && b.openResult !== undefined) {
-      if (+b.openResult < minOpenResCalc) minOpenResCalc = +b.openResult;
-    }
-  });
-  r.bids.forEach(b => {
-    if (b.result === '落ち') return;
-    if (!b.opener) return;
-    if (b.openResult === '' || b.openResult === null || b.openResult === undefined) return;
-    if (+b.openResult === minOpenResCalc) ketsuNamesSet.add(b.opener);
-  });
+  // ただし参加が実質2人だけ（落ち＋もう1人）のときは、その1人はケツにせず配当対象にする
+  const validOpenerCountCalc = r.bids.filter(b =>
+    b.opener && b.openResult !== '' && b.openResult !== null && b.openResult !== undefined
+  ).length;
+  if (validOpenerCountCalc > 2) {
+    let minOpenResCalc = Infinity;
+    r.bids.forEach(b => {
+      if (b.result === '落ち') return;
+      if (b.opener && b.openResult !== '' && b.openResult !== null && b.openResult !== undefined) {
+        if (+b.openResult < minOpenResCalc) minOpenResCalc = +b.openResult;
+      }
+    });
+    r.bids.forEach(b => {
+      if (b.result === '落ち') return;
+      if (!b.opener) return;
+      if (b.openResult === '' || b.openResult === null || b.openResult === undefined) return;
+      if (+b.openResult === minOpenResCalc) ketsuNamesSet.add(b.opener);
+    });
+  }
 
   // 欠席者（present===true, ochi===false）も配当対象に含める
   // ただし叫び枠を既に持っている人（caller or opener）は除外（二重カウント防止）
@@ -1051,19 +1057,25 @@ function renderShare() {
     if (b.result === '大砲' && b.opener) taihouNames.add(b.opener);
     if (b.result === 'ケツ' && b.opener) ketsuNamesSet.add(b.opener);
   });
-  let minOpenRes = Infinity;
-  r.bids.forEach(b => {
-    if (b.result === '落ち') return;
-    if (b.opener && b.openResult !== '' && b.openResult !== null && b.openResult !== undefined) {
-      if (+b.openResult < minOpenRes) minOpenRes = +b.openResult;
-    }
-  });
-  r.bids.forEach(b => {
-    if (b.result === '落ち') return;
-    if (!b.opener) return;
-    if (b.openResult === '' || b.openResult === null || b.openResult === undefined) return;
-    if (+b.openResult === minOpenRes) ketsuNamesSet.add(b.opener);
-  });
+  // 参加が実質2人だけ（落ち＋もう1人）のときは、その1人はケツにせず配当対象にする
+  const validOpenerCountPrint = r.bids.filter(b =>
+    b.opener && b.openResult !== '' && b.openResult !== null && b.openResult !== undefined
+  ).length;
+  if (validOpenerCountPrint > 2) {
+    let minOpenRes = Infinity;
+    r.bids.forEach(b => {
+      if (b.result === '落ち') return;
+      if (b.opener && b.openResult !== '' && b.openResult !== null && b.openResult !== undefined) {
+        if (+b.openResult < minOpenRes) minOpenRes = +b.openResult;
+      }
+    });
+    r.bids.forEach(b => {
+      if (b.result === '落ち') return;
+      if (!b.opener) return;
+      if (b.openResult === '' || b.openResult === null || b.openResult === undefined) return;
+      if (+b.openResult === minOpenRes) ketsuNamesSet.add(b.opener);
+    });
+  }
 
   const callerOrOpenerNames = new Set();
   r.bids.forEach(b => {
@@ -1282,6 +1294,17 @@ function applyResultRules(rr) {
   // 手動ケツも合わせる
   lockedKetsu.forEach(i => { if (!ketsuIdxs.includes(i)) ketsuIdxs.push(i); });
 
+  // 特例: 参加者が実質2人（落ち＋もう1人）だけのときは、
+  // 残った1人はケツにならず配当をもらえる（判定もケツにしない）。
+  const validOpenerCount = valid.filter(b =>
+    b.opener && b.openResult !== '' && b.openResult !== null && b.openResult !== undefined
+  ).length;
+  if (validOpenerCount <= 2) {
+    for (let k = ketsuIdxs.length - 1; k >= 0; k--) {
+      if (!lockedKetsu.has(ketsuIdxs[k])) ketsuIdxs.splice(k, 1);
+    }
+  }
+
   // 大砲: 手動があればそれを優先
   let taihouIdx = -1;
   if (lockedTaihou.size > 0) {
@@ -1298,6 +1321,8 @@ function applyResultRules(rr) {
       }
     });
   }
+  // 2人だけの特例: 残った1人は大砲にもせず、普通の配当（判定なし）にする
+  if (validOpenerCount <= 2 && lockedTaihou.size === 0) taihouIdx = -1;
 
   // フラグリセット
   valid.forEach(b => { b.taihouFromKetsu = false; });
