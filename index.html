@@ -645,7 +645,11 @@ function renderBids() {
   const taihouNames = Object.keys(resultByName).filter(n => resultByName[n] === '大砲');
   const ketsuNames  = Object.keys(resultByName).filter(n => resultByName[n] === 'ケツ');
   const ochiNames   = Object.keys(resultByName).filter(n => resultByName[n] === '落ち');
-  // 開結果が最小の人もケツ扱い（大砲昇格者も含めて）
+  // 参加が実質2人（落ち＋もう1人）だけのときは、最小開結果でもケツにしない特例
+  const validOpenerCountSummary = r.bids.slice(0, slots).filter(b =>
+    b.opener && b.openResult !== '' && b.openResult !== null && b.openResult !== undefined
+  ).length;
+  // 開結果が最小の人もケツ扱い（大砲昇格者も含めて）※2人だけの回は除く
   let minOpenResForSummary = Infinity;
   r.bids.slice(0, slots).forEach(b => {
     if (b.result === '落ち') return;
@@ -653,14 +657,16 @@ function renderBids() {
       if (+b.openResult < minOpenResForSummary) minOpenResForSummary = +b.openResult;
     }
   });
-  r.bids.slice(0, slots).forEach(b => {
-    if (b.result === '落ち') return;
-    if (!b.opener) return;
-    if (b.openResult === '' || b.openResult === null || b.openResult === undefined) return;
-    if (+b.openResult === minOpenResForSummary && !ketsuNames.includes(b.opener)) {
-      ketsuNames.push(b.opener);
-    }
-  });
+  if (validOpenerCountSummary > 2) {
+    r.bids.slice(0, slots).forEach(b => {
+      if (b.result === '落ち') return;
+      if (!b.opener) return;
+      if (b.openResult === '' || b.openResult === null || b.openResult === undefined) return;
+      if (+b.openResult === minOpenResForSummary && !ketsuNames.includes(b.opener)) {
+        ketsuNames.push(b.opener);
+      }
+    });
+  }
 
   // 開結果の最小値（落ち・空欄を除く）を求める
   let minOpenRes = Infinity;
@@ -670,13 +676,15 @@ function renderBids() {
       if (+b.openResult < minOpenRes) minOpenRes = +b.openResult;
     }
   });
-  // 大砲だが開結果が最小（=ケツでもある）人を集める
+  // 大砲だが開結果が最小（=ケツでもある）人を集める ※2人だけの回は除く
   const taihouAlsoKetsuNames = new Set();
-  r.bids.slice(0, slots).forEach(b => {
-    if (b.result === '大砲' && b.opener && b.openResult !== '' && b.openResult !== null && b.openResult !== undefined) {
-      if (+b.openResult === minOpenRes) taihouAlsoKetsuNames.add(b.opener);
-    }
-  });
+  if (validOpenerCountSummary > 2) {
+    r.bids.slice(0, slots).forEach(b => {
+      if (b.result === '大砲' && b.opener && b.openResult !== '' && b.openResult !== null && b.openResult !== undefined) {
+        if (+b.openResult === minOpenRes) taihouAlsoKetsuNames.add(b.opener);
+      }
+    });
+  }
 
   const pill = (text, color) => `<span style="background:${color};color:white;padding:2px 8px;border-radius:10px;font-size:11px;font-weight:700;white-space:nowrap;">${text}</span>`;
   const badgeOf = (name, side) => {
