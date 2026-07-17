@@ -157,6 +157,30 @@
     table.list .hide-sp{ display:none; }
     .tsum{ min-width:80px; padding:7px 9px; }
   }
+
+  /* ===== 業者用 掲載リスト（清書） ===== */
+  #vendor-doc{ background:#fff; color:#1a1a1a; font-family:'Hiragino Mincho ProN','Yu Mincho',serif; padding:6px 2px; }
+  #vendor-doc .vd-title{ text-align:center; font-size:19px; font-weight:800; letter-spacing:.08em; margin-bottom:2px; }
+  #vendor-doc .vd-sub{ text-align:center; font-size:11px; color:#555; margin-bottom:12px; }
+  #vendor-doc table.vd-sum{ width:100%; border-collapse:collapse; margin-bottom:14px; }
+  #vendor-doc table.vd-sum th, #vendor-doc table.vd-sum td{ border:1px solid #333; padding:4px 8px; font-size:12px; text-align:center; }
+  #vendor-doc table.vd-sum th{ background:#f2f2ec; }
+  #vendor-doc .vtier{ margin-bottom:13px; }
+  #vendor-doc .vtier-h{ font-size:13.5px; font-weight:800; border-left:6px solid #999; padding:2px 8px; margin-bottom:5px; }
+  #vendor-doc .vtier-h small{ font-weight:600; color:#666; margin-left:8px; }
+  #vendor-doc .vnames{ display:flex; flex-wrap:wrap; gap:3px 14px; font-size:12.5px; line-height:1.7; }
+  #vendor-doc .vnames .vn{ white-space:nowrap; }
+  #vendor-doc .vnames .num{ color:#999; font-size:10px; margin-right:2px; }
+  #vendor-doc .vnames .vmemo{ color:#a15c00; font-size:10px; }
+  #vendor-doc .vnames .vunpaid{ color:#b00; font-size:10px; }
+  #vendor-doc .vd-notes{ margin-top:14px; padding-top:8px; border-top:1px solid #999; font-size:11px; color:#444; line-height:1.7; }
+  @media print{
+    body.printing-vendor > :not(#ov-vendor){ display:none !important; }
+    body.printing-vendor #ov-vendor{ display:block !important; position:static; padding:0; background:#fff; }
+    body.printing-vendor #ov-vendor .modal{ max-width:none; width:auto; box-shadow:none; border-radius:0; max-height:none; overflow:visible; padding:0; }
+    body.printing-vendor .vendor-noprint{ display:none !important; }
+    #vendor-doc .vtier{ break-inside:avoid; page-break-inside:avoid; }
+  }
 </style>
 </head>
 <body>
@@ -202,6 +226,7 @@
     <button class="btn btn-print" onclick="exportBackup()">💾 控え(JSON)</button>
     <button class="btn btn-print" onclick="window.print()">🖨 印刷</button>
     <button class="btn btn-print" onclick="printBoardOnePage()">🖨 下見を1枚に</button>
+    <button class="btn btn-print" onclick="openVendor()">📄 業者用リスト</button>
     <button class="btn btn-cloud" onclick="syncUpload()">☁↑ 保存</button>
     <button class="btn btn-cloud" onclick="syncDownload()">☁↓ 読込</button>
   </div>
@@ -241,6 +266,21 @@
       <button class="btn btn-cancel" onclick="closeTiers()">キャンセル</button>
       <button class="btn btn-save" onclick="saveTiers()">保存</button>
     </div>
+  </div>
+</div>
+
+<!-- 業者打ち合わせ用 掲載リスト -->
+<div class="ov" id="ov-vendor">
+  <div class="modal" style="max-width:780px;">
+    <div class="vendor-noprint" style="display:flex;gap:8px;align-items:center;margin-bottom:10px;flex-wrap:wrap;">
+      <h2 style="margin:0;flex:1;font-size:16px;">📄 業者打ち合わせ用 掲載リスト</h2>
+      <label style="font-size:12px;font-weight:800;color:var(--gray);display:flex;align-items:center;gap:4px;cursor:pointer;">
+        <input type="checkbox" id="vendor-paidonly" onchange="renderVendor()"> 未入金を除く
+      </label>
+      <button class="btn btn-save" onclick="printVendor()">🖨 印刷 / PDF</button>
+      <button class="btn btn-cancel" onclick="closeVendor()">閉じる</button>
+    </div>
+    <div id="vendor-doc"></div>
   </div>
 </div>
 
@@ -740,6 +780,51 @@
     document.body.classList.remove('printing-board');
   });
 
+  // ===== 業者打ち合わせ用 掲載リスト =====
+  function openVendor(){ renderVendor(); $('ov-vendor').classList.add('show'); }
+  function closeVendor(){ $('ov-vendor').classList.remove('show'); }
+  function renderVendor(){
+    const paidOnly = $('vendor-paidonly').checked;
+    const ed = curEdition();
+    const today = new Date();
+    const dateStr = `${today.getFullYear()}年${today.getMonth()+1}月${today.getDate()}日`;
+    const s = sortedTiers();
+    const perTier = s.map(t=>{
+      let list = sponsors.filter(sp=>effTierId(sp)===t.id);
+      if(paidOnly) list = list.filter(sp=>sp.paid);
+      list.sort((a,b)=>(Number(b.amount)||0)-(Number(a.amount)||0));
+      return { t, list };
+    });
+    const total = perTier.reduce((a,x)=>a+x.list.length,0);
+    let html = `
+      <div class="vd-title">${esc(ed?ed.label:'')}　内子笹まつり　ポスター広告 掲載リスト</div>
+      <div class="vd-sub">作成日: ${dateStr}${paidOnly?'　※入金確認済みのみ':''}　／　合計 ${total}件</div>
+      <table class="vd-sum">
+        <tr>${perTier.map(x=>`<th>${esc(x.t.label)}</th>`).join('')}<th>合計</th></tr>
+        <tr>${perTier.map(x=>`<td>${x.list.length}件</td>`).join('')}<td><strong>${total}件</strong></td></tr>
+      </table>`;
+    perTier.forEach(({t,list})=>{
+      if(!list.length) return;
+      html += `<div class="vtier">
+        <div class="vtier-h" style="border-left-color:${t.color}">${esc(t.label)}<small>${list.length}件（掲載順）</small></div>
+        <div class="vnames">${list.map((sp,i)=>
+          `<span class="vn"><span class="num">${i+1}.</span>${esc(sp.name)}${sp.note?` <span class="vmemo">（${esc(sp.note)}）</span>`:''}${(!paidOnly && !sp.paid)?` <span class="vunpaid">（未入金）</span>`:''}</span>`
+        ).join('')}</div>
+      </div>`;
+    });
+    html += `<div class="vd-notes">
+      ※ 社名の表記（㈱・㈲・スペース・英字の大文字小文字）は本リストのとおりにお願いします。<br>
+      ※ 各枠の寸法・段組は昨年のポスターに準じます。変更がある場合はご相談ください。<br>
+      ※ 校正（ゲラ）は印刷前に必ず確認させてください。
+    </div>`;
+    $('vendor-doc').innerHTML = html;
+  }
+  function printVendor(){
+    document.body.classList.add('printing-vendor');
+    setTimeout(()=>window.print(), 60);
+  }
+  window.addEventListener('afterprint', ()=>{ document.body.classList.remove('printing-vendor'); });
+
   function exportCSV(){
     const head=['会社・団体名','寄付額','入金','掲載枠','担当','メモ'];
     const rows=[...sponsors].sort((a,b)=>(b.amount||0)-(a.amount||0)).map(s=>{
@@ -783,6 +868,7 @@
   // モーダル背景クリックで閉じる
   $('ov-edit').addEventListener('click',e=>{ if(e.target.id==='ov-edit') closeEdit(); });
   $('ov-tiers').addEventListener('click',e=>{ if(e.target.id==='ov-tiers') closeTiers(); });
+  $('ov-vendor').addEventListener('click',e=>{ if(e.target.id==='ov-vendor') closeVendor(); });
 
   // ====== 起動 ======
   load(); render();
