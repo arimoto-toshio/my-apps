@@ -1,0 +1,757 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>🐙 大阪旅行プラン 2026</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ctext y='.9em' font-size='90'%3E🐙%3C/text%3E%3C/svg%3E">
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: 'Hiragino Maru Gothic ProN', 'Hiragino Sans', 'Meiryo', sans-serif;
+    background: linear-gradient(180deg, #eef7ff 0%, #fff6ec 100%);
+    color: #33414f; font-size: 14px; min-height: 100vh;
+    -webkit-text-size-adjust: 100%;
+  }
+  .wrap { max-width: 780px; margin: 0 auto; padding: 12px 12px 44px; }
+
+  .header {
+    background: linear-gradient(135deg, #2f8fd6 0%, #4fb3e8 50%, #ff9e4a 100%);
+    color: #fff; padding: 18px 20px; border-radius: 18px;
+    box-shadow: 0 4px 14px rgba(47,143,214,0.32); margin-bottom: 14px;
+    text-align: center; position: relative; overflow: hidden;
+  }
+  .header::before { content: '🐙'; position: absolute; font-size: 58px; opacity: 0.22; top: -6px; left: 8px; transform: rotate(-15deg); }
+  .header::after  { content: '🎓'; position: absolute; font-size: 44px; opacity: 0.22; bottom: -4px; right: 12px; transform: rotate(14deg); }
+  .header h1 { font-size: 20px; text-shadow: 0 1px 3px rgba(0,0,0,0.14); letter-spacing: 1px; }
+  .header .sub { font-size: 11.5px; opacity: 0.96; margin-top: 4px; line-height: 1.6; }
+  .header .btns { margin-top: 10px; display: flex; gap: 6px; justify-content: center; flex-wrap: wrap; position: relative; z-index: 1; }
+  .hbtn { border-radius: 999px; padding: 6px 13px; font-size: 11.5px; font-weight: 700; cursor: pointer; font-family: inherit;
+    background: rgba(255,255,255,0.28); color: #fff; border: 1px solid rgba(255,255,255,0.65); }
+  .hbtn:hover { background: rgba(255,255,255,0.42); }
+
+  /* カウントダウン */
+  .count-row { display: flex; gap: 10px; margin-bottom: 14px; flex-wrap: wrap; }
+  .count-card { flex: 1; min-width: 150px; background: #fff; border-radius: 14px; padding: 12px 10px; text-align: center;
+    box-shadow: 0 2px 8px rgba(47,143,214,0.18); border: 2px solid #d9ecfb; }
+  .count-card .cc-label { font-size: 11px; color: #7b8ea0; font-weight: 700; }
+  .count-card .cc-num { font-size: 30px; font-weight: 800; color: #1f7ec4; font-variant-numeric: tabular-nums; line-height: 1.2; }
+  .count-card .cc-num span { font-size: 13px; color: #7b8ea0; font-weight: 700; }
+  .count-card .cc-date { font-size: 10.5px; color: #9fb0bf; margin-top: 2px; }
+  .count-card.warm { border-color: #ffe1c5; }
+  .count-card.warm .cc-num { color: #ef7c1f; }
+
+  /* タブ */
+  .tabs { display: flex; gap: 6px; overflow-x: auto; padding-bottom: 4px; margin-bottom: 12px; }
+  .tab { flex: none; border: 2px solid #d9ecfb; background: #fff; color: #5c7386; border-radius: 999px;
+    padding: 8px 14px; font-size: 12.5px; font-weight: 800; cursor: pointer; font-family: inherit; white-space: nowrap; }
+  .tab.on { background: #2f8fd6; border-color: #2f8fd6; color: #fff; box-shadow: 0 2px 8px rgba(47,143,214,0.3); }
+
+  .card { background: #fff; border-radius: 16px; padding: 16px; margin-bottom: 14px; box-shadow: 0 2px 10px rgba(47,143,214,0.14); }
+  .card-title { font-size: 15px; font-weight: 800; color: #1f7ec4; margin-bottom: 12px; padding-bottom: 8px; border-bottom: 2px dashed #d9ecfb;
+    display: flex; align-items: center; gap: 7px; flex-wrap: wrap; }
+  .card-title .prog { margin-left: auto; font-size: 11.5px; color: #ef9a4a; font-weight: 700; }
+  .page { display: none; }
+  .page.on { display: block; }
+
+  /* 行程タイムライン */
+  .day-badge { display: inline-block; font-size: 11px; font-weight: 800; color: #fff; background: #2f8fd6; border-radius: 999px; padding: 3px 11px; }
+  .day-badge.d2 { background: #ef7c1f; }
+  .day-badge.d3 { background: #5aa96a; }
+  .tl { border-left: 3.5px solid #d9ecfb; margin-left: 8px; padding: 4px 0 2px 16px; position: relative; margin-top: 12px; }
+  .ev { position: relative; padding: 8px 6px 8px 2px; border-radius: 10px; display: flex; gap: 9px; align-items: flex-start; cursor: pointer; }
+  .ev:hover { background: #f4fafe; }
+  .ev::before { content: ''; position: absolute; left: -25.5px; top: 14px; width: 13px; height: 13px; border-radius: 50%;
+    background: #d9ecfb; border: 3px solid #fff; box-shadow: 0 0 0 2px #d9ecfb; }
+  .ev.done::before { background: #5aa96a; box-shadow: 0 0 0 2px #5aa96a; }
+  .ev input[type=checkbox] { width: 19px; height: 19px; accent-color: #2f8fd6; margin-top: 2px; flex: none; cursor: pointer; }
+  .ev .e-body { flex: 1; }
+  .ev .e-time { font-size: 11.5px; font-weight: 800; color: #ef7c1f; font-variant-numeric: tabular-nums; }
+  .ev .e-title { font-size: 13.5px; font-weight: 700; line-height: 1.5; }
+  .ev .e-note { display: block; font-size: 11px; color: #8a9bab; line-height: 1.6; margin-top: 2px; }
+  .ev.done .e-title { text-decoration: line-through; color: #b3c1cc; }
+  .ev.done .e-note { text-decoration: none; }
+
+  .tag { display: inline-block; font-size: 10px; font-weight: 800; border-radius: 999px; padding: 2px 8px; margin-left: 6px; vertical-align: 1px; }
+  .tag.move { background: #e7f3fc; color: #1f7ec4; }
+  .tag.meal { background: #fff2e2; color: #d97008; }
+  .tag.see  { background: #eafaf0; color: #2f8b4c; }
+  .tag.oc   { background: #f1ecff; color: #6d4a9e; }
+  .tag.hotel{ background: #fdeef4; color: #c2417a; }
+  .tag.check{ background: #fff7d9; color: #a9820b; }
+
+  /* 表 */
+  table { width: 100%; border-collapse: collapse; font-size: 12.5px; }
+  th, td { padding: 8px 8px; border-bottom: 1px solid #eaf2f8; text-align: left; vertical-align: top; line-height: 1.6; }
+  th { background: #f4fafe; color: #5c7386; font-size: 11px; font-weight: 800; white-space: nowrap; }
+  td.num { text-align: right; font-variant-numeric: tabular-nums; white-space: nowrap; }
+  .tbl-scroll { overflow-x: auto; }
+
+  .route { border: 2px solid #eaf2f8; border-radius: 14px; padding: 12px; margin-bottom: 12px; }
+  .route h4 { font-size: 13.5px; color: #33414f; margin-bottom: 6px; display: flex; align-items: center; gap: 7px; flex-wrap: wrap; }
+  .pill { font-size: 10px; font-weight: 800; border-radius: 999px; padding: 2px 9px; }
+  .pill.best { background: #2f8fd6; color: #fff; }
+  .pill.alt { background: #eaf2f8; color: #5c7386; }
+  .pill.todo { background: #fff2e2; color: #d97008; }
+  .route .leg { font-size: 12.5px; line-height: 1.9; color: #4a5b6a; }
+  .route .leg b { color: #1f7ec4; }
+  .route .sum { margin-top: 6px; font-size: 11.5px; color: #8a9bab; }
+
+  .note { background: #fff9ef; border: 1px solid #ffe6c7; border-radius: 12px; padding: 10px 12px; font-size: 11.5px; color: #8a6c3d; line-height: 1.75; }
+  .note b { color: #d97008; }
+
+  label.fld { display: block; font-size: 11px; font-weight: 800; color: #7b8ea0; margin: 10px 0 4px; }
+  input[type=text], input[type=number], textarea, select {
+    width: 100%; padding: 9px 10px; border: 2px solid #e3eef7; border-radius: 10px; font-size: 15px;
+    font-family: inherit; color: #33414f; outline: none; background: #fff;
+  }
+  input:focus, textarea:focus, select:focus { border-color: #4fb3e8; background: #f8fcff; }
+  textarea { min-height: 78px; font-size: 14px; line-height: 1.7; resize: vertical; }
+  .grid2 { display: flex; gap: 10px; flex-wrap: wrap; }
+  .grid2 > div { flex: 1; min-width: 140px; }
+
+  .chk { display: flex; align-items: flex-start; gap: 9px; padding: 7px 6px; border-radius: 10px; cursor: pointer; }
+  .chk:hover { background: #f4fafe; }
+  .chk input[type=checkbox] { width: 19px; height: 19px; accent-color: #ef7c1f; margin-top: 1px; flex: none; cursor: pointer; }
+  .chk .c-txt { font-size: 13px; line-height: 1.55; }
+  .chk .c-txt small { display: block; color: #8a9bab; font-size: 11px; }
+  .chk.done .c-txt { text-decoration: line-through; color: #b3c1cc; }
+  .chk.done .c-txt small { text-decoration: none; }
+  .chk-cols { display: flex; flex-wrap: wrap; }
+  .chk-cols > .chk { width: 50%; min-width: 220px; }
+
+  .total { background: linear-gradient(135deg, #2f8fd6, #4fb3e8); color: #fff; border-radius: 14px; padding: 14px; text-align: center; margin-top: 12px; }
+  .total .t-lab { font-size: 11.5px; opacity: 0.9; font-weight: 700; }
+  .total .t-num { font-size: 28px; font-weight: 800; font-variant-numeric: tabular-nums; }
+  .total .t-sub { font-size: 11px; opacity: 0.9; margin-top: 2px; }
+
+  .save-hint { text-align: center; font-size: 10.5px; color: #9fb0bf; margin-top: 6px; }
+  .foot { text-align: center; font-size: 10.5px; color: #9fb0bf; margin-top: 18px; line-height: 1.8; }
+
+  @media print {
+    body { background: #fff; }
+    .tabs, .header .btns { display: none; }
+    .page { display: block !important; }
+    .card { box-shadow: none; border: 1px solid #ddd; page-break-inside: avoid; }
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <div class="header">
+    <h1>🐙 京都・大阪 &amp; オープンキャンパス</h1>
+    <div class="sub">2026年8月22日(土) 〜 24日(月)　2泊3日<br>内子駅 発 → 京都・一乗寺（娘さんのアパートに2泊）<br>日曜は 追手門学院大学 オープンキャンパス（茨木）</div>
+    <div class="btns">
+      <button class="hbtn" onclick="window.print()">🖨 印刷 / PDF</button>
+      <button class="hbtn" onclick="resetAll()">↺ チェックをリセット</button>
+    </div>
+  </div>
+
+  <div class="count-row">
+    <div class="count-card">
+      <div class="cc-label">出発まで</div>
+      <div class="cc-num" id="cd1">--<span>日</span></div>
+      <div class="cc-date">8/22(土) 6時台 内子駅発</div>
+    </div>
+    <div class="count-card warm">
+      <div class="cc-label">オープンキャンパスまで</div>
+      <div class="cc-num" id="cd2">--<span>日</span></div>
+      <div class="cc-date">8/23(日) 追手門学院大学（茨木）</div>
+    </div>
+  </div>
+
+  <div class="tabs">
+    <button class="tab on" data-p="p1">📅 行程</button>
+    <button class="tab" data-p="p2">🚄 移動</button>
+    <button class="tab" data-p="p3">🎓 オープンキャンパス</button>
+    <button class="tab" data-p="p4">🍜 一乗寺・京都</button>
+    <button class="tab" data-p="p5">💰 予算</button>
+    <button class="tab" data-p="p6">🎒 持ち物</button>
+    <button class="tab" data-p="p7">📝 メモ</button>
+  </div>
+
+  <!-- ============ 行程 ============ -->
+  <div class="page on" id="p1">
+    <div class="note" style="margin-bottom:14px">
+      <b>ざっくり版です。</b>列車の時刻・オープンキャンパスの時間と会場はまだ<b>要確認</b>（「移動」「オープンキャンパス」タブに記入欄あり）。<br>
+      大きな流れ：<b>土 = 京都で降りて一乗寺で合流 → 日 = 茨木でOC＋帰りに大阪 → 月 = 京都をまわって京都駅から帰路</b>。京都は新大阪の“先”なので、行きも帰りも遠回りになりません。
+    </div>
+
+    <div class="card">
+      <div class="card-title"><span class="day-badge">DAY 1</span> 8/22(土)・京都へ移動＆一乗寺 <span class="prog" id="prog-d1"></span></div>
+      <div class="tl" id="d1"></div>
+      <label class="fld">この日のメモ</label>
+      <textarea data-save="memo-d1" placeholder="確定した列車・予約番号・行きたい店など"></textarea>
+    </div>
+
+    <div class="card">
+      <div class="card-title"><span class="day-badge d2">DAY 2</span> 8/23(日)・OC＆帰りに大阪 <span class="prog" id="prog-d2"></span></div>
+      <div class="tl" id="d2"></div>
+      <label class="fld">この日のメモ</label>
+      <textarea data-save="memo-d2" placeholder="OCの受付時間・参加プログラム・聞きたいことなど"></textarea>
+    </div>
+
+    <div class="card">
+      <div class="card-title"><span class="day-badge d3">DAY 3</span> 8/24(月)・京都をまわって帰路 <span class="prog" id="prog-d3"></span></div>
+      <div class="tl" id="d3"></div>
+      <label class="fld">この日のメモ</label>
+      <textarea data-save="memo-d3" placeholder="帰りの列車・買うおみやげなど"></textarea>
+    </div>
+  </div>
+
+  <!-- ============ 移動 ============ -->
+  <div class="page" id="p2">
+    <div class="card">
+      <div class="card-title">🚄 往路 8/22(土)　内子 → 京都 → 一乗寺</div>
+
+      <div class="route">
+        <h4>本命ルート：JR特急＋新幹線 <span class="pill best">おすすめ</span></h4>
+        <div class="leg">
+          ① <b>内子 6時台発</b>　特急〈宇和海〉→ 松山（約25分）<br>
+          ② 松山　特急〈しおかぜ〉→ 岡山（約2時間40分）<br>
+          ③ 岡山　新幹線〈のぞみ／みずほ〉→ <b>京都</b>（約1時間・新大阪の次）<br>
+          ④ 京都駅 →（JR奈良線）東福寺 →（京阪）出町柳 →（叡山電鉄）<b>一乗寺</b>（約40分）
+        </div>
+        <div class="sum">所要 合計 約5時間30分 ／ <b>11時30分〜12時ごろ京都着、13時前に一乗寺</b>の想定。片道おおよそ 13,000〜14,500円/人（特急・新幹線 指定席）</div>
+      </div>
+
+      <div class="route">
+        <h4>京都駅 → 一乗寺 の行き方 <span class="pill best">3案</span></h4>
+        <div class="leg">
+          <b>A. 京阪＋叡電</b>（約40分）京都駅→JR奈良線1駅→東福寺→京阪出町柳→叡電〈一乗寺〉。乗り換え多めだが確実で安い<br>
+          <b>B. 地下鉄＋市バス</b>（約45分）京都駅→烏丸線→今出川/北大路→バス。荷物が多いと大変<br>
+          <b>C. タクシー</b>（約30分・3,500〜4,500円）大きい荷物＋2人以上なら初日はこれが正解
+        </div>
+        <div class="sum">叡電の一乗寺駅は無人駅の小さな駅。<b>娘さんに駅で待ち合わせしてもらうのが確実</b></div>
+      </div>
+
+      <div class="route">
+        <h4>代替：高速バス／飛行機 <span class="pill alt">比較用</span></h4>
+        <div class="leg">
+          <b>高速バス</b>：松山 → 京都（京都駅八条口行きの便あり）約7時間・6,000〜9,000円/人<br>
+          <b>飛行機</b>：松山空港 → 伊丹 → リムジンバスで京都駅（約55分）。早割が取れれば最速
+        </div>
+      </div>
+
+      <div class="note">
+        <b>要確認メモ</b>：内子発の早朝特急、松山→岡山のしおかぜ接続、岡山→京都の新幹線（京都に停まる列車を選ぶ）。荷物は<b>先に娘さんのアパートへ置く</b>と午後がラクです。
+      </div>
+      <label class="fld">確定した往路（列車名・時刻・座席）</label>
+      <textarea data-save="go-fix" placeholder="例）内子 6:○○ 宇和海○号 → 松山 7:○○／松山 7:○○ しおかぜ○号 → 岡山 10:○○／岡山 10:○○ のぞみ○号 → 京都 11:○○"></textarea>
+    </div>
+
+    <div class="card">
+      <div class="card-title">🎓 8/23(日)　一乗寺 → オープンキャンパス会場</div>
+      <div class="route">
+        <h4>会場が「茨木総持寺キャンパス」なら <span class="pill best">JRルート</span></h4>
+        <div class="leg">一乗寺 →（叡電 約10分）→ 出町柳 →（京阪 約5分）→ 東福寺 →（JR奈良線 約3分）→ 京都 →（JR京都線 普通／高槻で乗継 約30分）→ <b>JR総持寺</b>（徒歩すぐ）</div>
+        <div class="sum">所要 <b>約1時間15分〜1時間30分</b>（乗り換え4回）。10時開始なら <b>8時ごろ一乗寺を出発</b></div>
+      </div>
+      <div class="route">
+        <h4>会場が「茨木安威キャンパス」なら <span class="pill best">阪急ルート</span></h4>
+        <div class="leg">一乗寺 →（叡電）→ 出町柳 →（京阪）→ 祇園四条 → 徒歩 → 京都河原町 →（阪急京都線 特急 約30分）→ <b>茨木市</b> → 大学行きバス（約20分）</div>
+        <div class="sum">所要 <b>約1時間20分〜1時間40分</b>。スクールバスの有無・発車時刻を要確認</div>
+      </div>
+      <div class="note"><b>日曜ダイヤ</b>と<b>叡電の本数</b>（15分間隔ほど）に注意。前夜に乗り継ぎを1本前で組んでおくと安心です。</div>
+      <label class="fld">日曜の朝の出発時刻・ルートを決める</label>
+      <textarea data-save="oc-route" placeholder="例）一乗寺 7:5○ →出町柳 8:0○ →東福寺 →京都 8:3○ →JR総持寺 9:1○"></textarea>
+    </div>
+
+    <div class="card">
+      <div class="card-title">🏠 復路 8/24(月)　京都 → 内子</div>
+      <div class="route">
+        <h4>本命ルート <span class="pill best">おすすめ</span></h4>
+        <div class="leg">
+          一乗寺 →（叡電・京阪・JR 約40分＋余裕）→ 京都駅 →（新幹線 約1時間）→ 岡山 →（しおかぜ 約2時間40分）→ 松山 →（宇和海 約25分）→ 内子
+        </div>
+        <div class="sum">14時ごろ京都発なら <b>20時前後に内子着</b>のイメージ。京都駅は広いので<b>乗車30分前に着く</b>つもりで。</div>
+      </div>
+      <div class="note">最終の内子行き接続に注意。松山から内子への最終が意外と早いので、<b>松山着の時刻から逆算</b>して京都発を決めるのが安全です。おみやげは京都駅構内で全部そろいます。</div>
+      <label class="fld">確定した復路（列車名・時刻・座席）</label>
+      <textarea data-save="back-fix" placeholder="例）京都 14:○○ → 岡山 15:○○ → 松山 18:○○ → 内子 19:○○"></textarea>
+    </div>
+
+    <div class="card">
+      <div class="card-title">🚃 移動の目安（京都・大阪）</div>
+      <div class="tbl-scroll">
+      <table>
+        <thead><tr><th>区間</th><th>手段</th><th>目安</th></tr></thead>
+        <tbody>
+          <tr><td>一乗寺 → 出町柳</td><td>叡山電鉄</td><td>約10分</td></tr>
+          <tr><td>出町柳 → 京都駅</td><td>京阪＋JR奈良線（東福寺乗換）</td><td>約20分</td></tr>
+          <tr><td>一乗寺 → 銀閣寺・哲学の道</td><td>市バス／自転車</td><td>約10〜15分</td></tr>
+          <tr><td>出町柳 → 貴船口・鞍馬</td><td>叡山電鉄</td><td>約30分（涼しい）</td></tr>
+          <tr><td>京都 → 大阪(梅田)</td><td>JR新快速</td><td>約29分</td></tr>
+          <tr><td>京都 → JR総持寺</td><td>JR京都線（普通）</td><td>約30分</td></tr>
+          <tr><td>JR茨木 → 大阪(梅田)</td><td>JR京都線</td><td>約15分</td></tr>
+          <tr><td>梅田 → なんば・道頓堀</td><td>地下鉄御堂筋線</td><td>約8分</td></tr>
+          <tr><td>大阪(梅田) → 一乗寺</td><td>JR＋京阪＋叡電</td><td>約1時間15分（終電注意）</td></tr>
+        </tbody>
+      </table>
+      </div>
+      <div class="note" style="margin-top:12px">ICカード（ICOCA）1枚でJR・京阪・叡電・地下鉄・バスぜんぶ乗れます。<b>3人分チャージしておくと毎回の切符購入がなくなって快適</b>。</div>
+    </div>
+  </div>
+
+  <!-- ============ OC ============ -->
+  <div class="page" id="p3">
+    <div class="card">
+      <div class="card-title">🎓 追手門学院大学 オープンキャンパス（8/23 日）</div>
+      <div class="note" style="margin-bottom:12px">
+        <b>いちばん先に確認すること</b>：①8/23に開催されるか ②会場キャンパス ③予約の要否と開始時刻。大学の公式サイトの「オープンキャンパス」ページで確定させてください。
+      </div>
+      <div class="tbl-scroll">
+      <table>
+        <thead><tr><th>キャンパス</th><th>最寄り</th><th>一乗寺から</th></tr></thead>
+        <tbody>
+          <tr><td>茨木総持寺キャンパス</td><td>JR総持寺 すぐ</td><td>約1時間15分（叡電→京阪→JR）</td></tr>
+          <tr><td>茨木安威キャンパス</td><td>JR茨木／阪急茨木市 からバス</td><td>約1時間20分〜1時間40分（阪急経由）</td></tr>
+        </tbody>
+      </table>
+      </div>
+      <div class="note" style="margin-top:10px">一乗寺からは<b>1時間15分〜1時間40分</b>かかります。受付時刻が決まったら「移動」タブで朝の出発時刻を逆算してください。</div>
+      <div class="grid2">
+        <div>
+          <label class="fld">開催確認（会場・時間）</label>
+          <input type="text" data-save="oc-place" placeholder="例）総持寺キャンパス 10:00〜15:00">
+        </div>
+        <div>
+          <label class="fld">予約状況</label>
+          <input type="text" data-save="oc-resv" placeholder="例）Web予約済み／予約不要">
+        </div>
+      </div>
+      <label class="fld">参加したいプログラム</label>
+      <textarea data-save="oc-prog" placeholder="学部説明 / 模擬授業 / 個別相談 / 学食体験 / キャンパスツアー / 入試説明 …"></textarea>
+    </div>
+
+    <div class="card">
+      <div class="card-title">✅ 当日の持ち物・やること <span class="prog" id="prog-oc"></span></div>
+      <div id="ocList"></div>
+    </div>
+
+    <div class="card">
+      <div class="card-title">❓ 聞くことリスト</div>
+      <textarea data-save="oc-q" style="min-height:130px" placeholder="・入試方式（総合型／推薦／一般）の違いと日程
+・奨学金・学費のこと
+・下宿かどうか、通学圏の目安
+・就職支援、資格
+・気になる学部の1週間の時間割イメージ"></textarea>
+      <label class="fld">見た感想・帰ってからのメモ</label>
+      <textarea data-save="oc-memo" placeholder="良かった点／気になった点／他大学と比べてどうか"></textarea>
+    </div>
+  </div>
+
+  <!-- ============ 宿 ============ -->
+  <div class="page" id="p4">
+    <div class="card">
+      <div class="card-title">🏡 娘さんのアパート（2泊お世話になる）</div>
+      <div class="grid2">
+        <div><label class="fld">住所・最寄り</label><input type="text" data-save="ap-addr" placeholder="例）左京区一乗寺○○　叡電 一乗寺駅 徒歩○分"></div>
+        <div><label class="fld">到着予定を伝えた？</label><input type="text" data-save="ap-time" placeholder="例）8/22 13:00 一乗寺駅で待ち合わせ"></div>
+      </div>
+      <label class="fld">確認しておくこと（メモ）</label>
+      <textarea data-save="ap-memo" placeholder="・布団／寝具は足りる？（なければレンタルか近くのホテル1室）
+・タオル・洗面用具は持参する
+・お風呂の順番、朝の支度の時間
+・コンセントの数（充電器が3人分）
+・鍵・オートロック・宅配ボックス
+・ご近所への音（夜は静かに）"></textarea>
+      <div class="note" style="margin-top:12px">
+        <b>寝具がいちばんの現実問題。</b>ひとり暮らしの部屋に3人だと布団が足りないことが多いので、早めに聞いて「足りなければ1人だけ近くのホテル」も選択肢に。<b>食費や光熱費のぶんは多めに置いていくのが親の粋なところ</b>です。
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-title">🍜 一乗寺・周辺でやりたいこと</div>
+      <div class="tbl-scroll">
+      <table>
+        <thead><tr><th>場所</th><th>どんなところ</th><th>ひとこと</th></tr></thead>
+        <tbody>
+          <tr><td><b>一乗寺のラーメン</b></td><td>ラーメン激戦区。天下一品の総本店もこのエリア</td><td>娘さんの推しの店に連れて行ってもらう</td></tr>
+          <tr><td><b>恵文社 一乗寺店</b></td><td>全国から人が来る名物書店</td><td>本好きなら1時間いられる</td></tr>
+          <tr><td><b>詩仙堂 丈山寺</b></td><td>石川丈山の庭。ししおどしの音</td><td>一乗寺駅から徒歩圏。静かで涼しい</td></tr>
+          <tr><td><b>圓光寺</b></td><td>水琴窟と苔の庭。十牛之庭</td><td>詩仙堂とセットで回れる</td></tr>
+          <tr><td><b>曼殊院</b></td><td>枯山水と書院。少し坂の上</td><td>暑い日は無理をしない</td></tr>
+          <tr><td><b>八大神社・狸谷山不動院</b></td><td>宮本武蔵ゆかり</td><td>坂がきついので午前中に</td></tr>
+          <tr><td><b>出町柳・ふたばの豆餅</b></td><td>行列の名物和菓子</td><td>おみやげにも。売り切れ注意</td></tr>
+          <tr><td><b>下鴨神社・糺の森</b></td><td>出町柳すぐ。森の中は涼しい</td><td>夕方の散歩に最適</td></tr>
+          <tr><td><b>叡電で貴船・鞍馬</b></td><td>出町柳から約30分。川床と山の涼しさ</td><td>8月の逃げ場。展望列車〈きらら〉が楽しい</td></tr>
+          <tr><td><b>銀閣寺・哲学の道</b></td><td>一乗寺から南へバス10〜15分</td><td>朝いちで行くと人が少ない</td></tr>
+        </tbody>
+      </table>
+      </div>
+      <div class="note" style="margin-top:12px">
+        京都の8月下旬は<b>盆地の蒸し暑さで大阪よりしんどい</b>ことも。屋外は朝夕にして、日中は書店・カフェ・お寺の座敷、または叡電で北へ（貴船）が正解です。
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-title">🎁 娘さんへ・手土産メモ</div>
+      <label class="fld">持っていくもの</label>
+      <textarea data-save="gift" placeholder="例）内子/愛媛のもの（じゃこ天・ポンジュース・和菓子）、実家の写真、頼まれていたもの、少しの生活費"></textarea>
+      <label class="fld">聞いておきたいこと</label>
+      <textarea data-save="ask-daughter" placeholder="体調・バイト・学校のこと／困っていること／次に帰省するのはいつか"></textarea>
+    </div>
+
+    <div class="card">
+      <div class="card-title">🏨 予備：宿を取る場合の候補</div>
+      <div class="tbl-scroll">
+      <table>
+        <thead><tr><th>エリア</th><th>強み</th></tr></thead>
+        <tbody>
+          <tr><td><b>出町柳・北大路</b></td><td>一乗寺から叡電で10分。娘さんの近く</td></tr>
+          <tr><td><b>京都駅周辺</b></td><td>帰りの新幹線が最短。ホテル数がいちばん多い</td></tr>
+          <tr><td><b>大阪・梅田</b></td><td>OC会場が近い。日曜の夜を大阪で使うなら</td></tr>
+        </tbody>
+      </table>
+      </div>
+      <label class="fld">予約したら記録（予備）</label>
+      <textarea data-save="ho-memo" placeholder="宿名／最寄り／料金／予約番号／IN・OUT"></textarea>
+    </div>
+  </div>
+
+  <!-- ============ 予算 ============ -->
+  <div class="page" id="p5">
+    <div class="card">
+      <div class="card-title">💰 ざっくり予算（数字は書き替えOK）</div>
+      <div class="grid2">
+        <div><label class="fld">人数（行く人）</label><input type="number" data-save="bg-people" value="2" oninput="calc()"></div>
+        <div><label class="fld">往復交通費（1人・京都まで）</label><input type="number" data-save="bg-train" value="27000" oninput="calc()"></div>
+      </div>
+      <div class="grid2">
+        <div><label class="fld">現地の電車・バス（1人1日）</label><input type="number" data-save="bg-local" value="1500" oninput="calc()"></div>
+        <div><label class="fld">日数</label><input type="number" data-save="bg-days" value="3" oninput="calc()"></div>
+      </div>
+      <div class="grid2">
+        <div><label class="fld">食事（1人1日）</label><input type="number" data-save="bg-food" value="4000" oninput="calc()"></div>
+        <div><label class="fld">娘さんの食事もみる人数分</label><input type="number" data-save="bg-plus" value="1" oninput="calc()"></div>
+      </div>
+      <div class="grid2">
+        <div><label class="fld">観光・入場料（1人）</label><input type="number" data-save="bg-fun" value="3000" oninput="calc()"></div>
+        <div><label class="fld">手土産・娘さんへのお礼（全体）</label><input type="number" data-save="bg-gift" value="15000" oninput="calc()"></div>
+      </div>
+      <div class="grid2">
+        <div><label class="fld">おみやげ・雑費（全体）</label><input type="number" data-save="bg-etc" value="8000" oninput="calc()"></div>
+        <div><label class="fld">宿を取る場合（1泊×泊数の合計）</label><input type="number" data-save="bg-hotel" value="0" oninput="calc()"></div>
+      </div>
+
+      <div class="tbl-scroll" style="margin-top:14px">
+      <table>
+        <thead><tr><th>項目</th><th>計算</th><th style="text-align:right">金額</th></tr></thead>
+        <tbody id="bgRows"></tbody>
+      </table>
+      </div>
+
+      <div class="total">
+        <div class="t-lab">合計（ざっくり）</div>
+        <div class="t-num" id="bgTotal">-</div>
+        <div class="t-sub" id="bgPer">-</div>
+      </div>
+      <div class="note" style="margin-top:12px">
+        往復交通費は「内子〜京都・特急＋新幹線の指定席」想定。飛行機の早割や高速バスなら1人1万円以上下がることも。<br>
+        <b>宿代が浮くぶん</b>、手土産と3人分の食事を気持ちよく持つ計算にしています。
+      </div>
+    </div>
+  </div>
+
+  <!-- ============ 持ち物 ============ -->
+  <div class="page" id="p6">
+    <div class="card">
+      <div class="card-title">🎒 持ち物 <span class="prog" id="prog-pack"></span></div>
+      <div class="chk-cols" id="packList"></div>
+    </div>
+    <div class="card">
+      <div class="card-title">📋 出発前にやること <span class="prog" id="prog-prep"></span></div>
+      <div id="prepList"></div>
+    </div>
+  </div>
+
+  <!-- ============ メモ ============ -->
+  <div class="page" id="p7">
+    <div class="card">
+      <div class="card-title">📝 自由メモ</div>
+      <textarea data-save="free" style="min-height:220px" placeholder="行きたい店、候補の観光地、家族の希望、調べたことなど"></textarea>
+    </div>
+    <div class="card">
+      <div class="card-title">🐙 大阪でやりたいこと候補 <span class="prog">日曜の夕方に1〜2個だけ</span></div>
+      <div class="tbl-scroll">
+      <table>
+        <thead><tr><th>候補</th><th>場所</th><th>ひとこと</th></tr></thead>
+        <tbody>
+          <tr><td>道頓堀・グリコ看板</td><td>なんば</td><td>夜がきれい。定番の記念写真</td></tr>
+          <tr><td>たこ焼き／お好み焼き／串カツ</td><td>なんば・新世界</td><td>大阪の三種盛り</td></tr>
+          <tr><td>大阪城・天守閣</td><td>大阪城公園</td><td>8月は暑いので午前中に</td></tr>
+          <tr><td>梅田スカイビル 空中庭園</td><td>梅田</td><td>夕暮れがおすすめ</td></tr>
+          <tr><td>海遊館</td><td>天保山</td><td>涼しい。半日コース</td></tr>
+          <tr><td>黒門市場</td><td>日本橋</td><td>食べ歩き。午前が活気あり</td></tr>
+          <tr><td>通天閣・新世界</td><td>恵美須町</td><td>ザ・大阪な街並み</td></tr>
+          <tr><td>万博記念公園・EXPOCITY</td><td>吹田</td><td>OC会場から近い。太陽の塔</td></tr>
+          <tr><td>ニフレル</td><td>吹田</td><td>EXPOCITY内。涼める</td></tr>
+          <tr><td>USJ</td><td>此花区</td><td>行くなら1日フル。今回の日程には入らない</td></tr>
+        </tbody>
+      </table>
+      </div>
+      <div class="note" style="margin-top:12px">
+        日曜はOCで力を使うので、<b>大阪は「梅田だけ」か「なんばだけ」に絞る</b>のが現実的。海遊館・大阪城は半日かかるので今回は無理をしない方向で。<br>
+        8月下旬は京都も大阪も<b>本気で暑い</b>です。屋外は朝夕、日中は屋内へ逃げる組み方が快適。
+      </div>
+    </div>
+  </div>
+
+  <div class="foot">
+    入力とチェックはこの端末に自動保存されます（localStorage）<br>
+    🐙 大阪旅行プラン 2026.8.22–24
+  </div>
+</div>
+
+<script>
+const KEY = 'osaka2026_v1';
+let S = {};
+try { S = JSON.parse(localStorage.getItem(KEY) || '{}'); } catch(_) { S = {}; }
+const save = () => localStorage.setItem(KEY, JSON.stringify(S));
+
+/* ---------- データ ---------- */
+const DAYS = {
+  d1: [
+    { t:'6時台',  k:'move',  n:'内子駅 出発（特急〈宇和海〉）', s:'時刻は要確認。前日に指定券を用意しておく' },
+    { t:'7時台',  k:'move',  n:'松山駅で乗り換え → 特急〈しおかぜ〉', s:'乗り換え時間が短い場合は駅弁を先に確保' },
+    { t:'10時台', k:'move',  n:'岡山駅で新幹線に乗り換え', s:'京都に停まる〈のぞみ〉を選ぶ。新大阪の次が京都' },
+    { t:'11:30頃',k:'move',  n:'京都駅 到着', s:'ここで降りる。大阪までは行かない' },
+    { t:'12:00',  k:'move',  n:'京都駅 → 一乗寺へ（京阪＋叡電 約40分）', s:'荷物が多ければタクシー約30分・4千円前後もあり' },
+    { t:'12:45',  k:'hotel', n:'一乗寺駅で娘さんと合流', s:'無人の小さな駅。待ち合わせ場所を決めておく' },
+    { t:'13:00',  k:'meal',  n:'3人でお昼（一乗寺のラーメン！）', s:'ラーメン激戦区。娘さんの推しの店に連れて行ってもらう' },
+    { t:'14:30',  k:'hotel', n:'アパートに荷物を置く・手土産を渡す', s:'ひと休みしてから動くと午後がもつ' },
+    { t:'15:30',  k:'see',   n:'一乗寺の散歩：詩仙堂・圓光寺・恵文社', s:'暑ければ恵文社（書店）と喫茶で涼むだけでも十分' },
+    { t:'17:30',  k:'see',   n:'出町柳・下鴨神社の森を歩く（余力があれば）', s:'糺の森は夕方が気持ちいい。ふたばの豆餅も' },
+    { t:'19:00',  k:'meal',  n:'夕食（3人で。娘さんの行きたい店で）', s:'ここは親のおごりどころ' },
+    { t:'21:30',  k:'check', n:'明日のOC準備・出発時刻の確認', s:'一乗寺→会場は1時間15分〜1時間40分。逆算して起床時刻を決める' }
+  ],
+  d2: [
+    { t:'6:45',  k:'check', n:'起床・身支度', s:'涼しい服装＋羽織るもの（学内は冷房が強い）。朝の洗面は順番を決めて' },
+    { t:'8:00',  k:'move',  n:'一乗寺 出発 → 出町柳 → 東福寺 → 京都 → JR総持寺', s:'日曜ダイヤ＋叡電の本数に注意。1本早めが安全' },
+    { t:'9:30',  k:'oc',    n:'キャンパス到着・受付', s:'開始30分前が目標。受付方法は事前に確認' },
+    { t:'10:00', k:'oc',    n:'オープンキャンパス参加（学部説明・模擬授業）', s:'メモを取る。パンフ・入試要項は必ずもらう' },
+    { t:'12:00', k:'oc',    n:'学食体験 or 学内でお昼', s:'学食は雰囲気を知る近道' },
+    { t:'13:00', k:'oc',    n:'個別相談・キャンパスツアー・入試説明', s:'「聞くことリスト」を出して質問する' },
+    { t:'15:00', k:'oc',    n:'終了。駅までの通学路をひと歩き', s:'道・お店・下宿の雰囲気も見ておく' },
+    { t:'16:00', k:'move',  n:'茨木 → 大阪（梅田）へ（約15分）', s:'せっかくなので大阪の夜だけ寄る。疲れたら京都へ直帰でOK' },
+    { t:'17:00', k:'see',   n:'梅田／なんば・道頓堀をぶらり', s:'グリコ看板は夜がきれい。無理せず1エリアだけ' },
+    { t:'18:30', k:'meal',  n:'夕食：お好み焼き／串カツ／たこ焼き', s:'人気店は待つので早めに。ここが大阪メシの回収ポイント' },
+    { t:'20:00', k:'move',  n:'大阪 → 京都 → 一乗寺へ帰る（約1時間15分）', s:'⚠️ 叡電の終電を先に調べておく。遅くなるならタクシー代を見込む' },
+    { t:'21:30', k:'check', n:'帰宅。今日の感想をメモに書く', s:'記憶が新しいうちに。OCタブの感想欄へ' }
+  ],
+  d3: [
+    { t:'7:30',  k:'meal',  n:'朝ごはん・荷造り', s:'忘れ物チェック（充電器・洗面用具）。娘さんの部屋をきれいに戻す' },
+    { t:'9:00',  k:'see',   n:'午前の京都（下から1つ選ぶ）', s:'①叡電で貴船・鞍馬＝涼しい　②銀閣寺・哲学の道　③下鴨神社・京都御所' },
+    { t:'11:30', k:'move',  n:'一乗寺へ戻る／荷物をまとめる', s:'京都駅まで40分＋余裕を見て動く' },
+    { t:'12:00', k:'meal',  n:'娘さんと最後のお昼ごはん', s:'次に会える日を決めておくと帰り道がさみしくない' },
+    { t:'13:00', k:'move',  n:'一乗寺 → 京都駅（約40分）', s:'京都駅は広い。乗車30分前着のつもりで' },
+    { t:'13:45', k:'see',   n:'京都駅でおみやげ購入', s:'構内で全部そろう。八ツ橋・抹茶菓子・漬物' },
+    { t:'14:30', k:'move',  n:'京都駅 出発（新幹線 → 岡山）', s:'松山からの内子行き最終に間に合う便を選ぶ' },
+    { t:'18時台',k:'move',  n:'松山で乗り換え', s:'夕食を松山でとる手も' },
+    { t:'20時台',k:'move',  n:'内子駅 到着・おつかれさま', s:'車の回送・迎えの手配を忘れずに' }
+  ]
+};
+
+const OC_ITEMS = [
+  ['受験票・予約完了メール（スマホで表示できるか確認）',''],
+  ['筆記用具とメモ帳','パンフに書き込むより別メモが後で役に立つ'],
+  ['A4が入るサブバッグ','資料が思ったより重い'],
+  ['飲み物・塩分タブレット','8月の屋外移動は本気で暑い'],
+  ['学生証（あれば）',''],
+  ['羽織るもの','館内は冷房が効いている'],
+  ['スマホ充電器・モバイルバッテリー',''],
+  ['写真を撮る（校舎・掲示・学食）','あとで比べるときの記憶の頼り'],
+  ['入試日程・出願スケジュールをもらう',''],
+  ['気になる学部の先生・在学生に1つ質問する','']
+];
+
+const PACK_ITEMS = [
+  ['きっぷ／予約控え',''],['財布・現金・カード',''],['スマホ・充電器',''],
+  ['モバイルバッテリー',''],['ICカード（ICOCA等）','叡電・京阪・JR・バス全部これ1枚'],
+  ['着替え 2日分',''],['下着・靴下',''],
+  ['寝るときの服','アパート泊なので持参が無難'],
+  ['タオル（人数分）','借りずに持っていく'],
+  ['洗面用具・歯ブラシ','歯ブラシは絶対に人数分'],
+  ['常備薬・絆創膏',''],['日焼け止め',''],
+  ['扇子・ハンディファン','京都の盆地の暑さは大阪以上'],
+  ['折りたたみ傘','夕立あり'],['エコバッグ',''],
+  ['歩きやすい靴','詩仙堂・八大神社は坂と石段'],
+  ['帽子',''],['健康保険証',''],['メガネ／コンタクト用品',''],
+  ['娘さんへの手土産','愛媛のもの・頼まれもの'],
+  ['スリッパ（気になる人は）',''],
+  ['延長コード／充電タップ','コンセントが足りない問題に効く'],
+  ['おみやげ用の空きスペース','']
+];
+
+const PREP_ITEMS = [
+  ['オープンキャンパスの開催日・会場・予約を確認する','これが全部の前提'],
+  ['娘さんに日程を伝えて2泊OKをもらう','いちばん先に'],
+  ['寝具（布団）が3人分あるか聞く','足りなければ1人はホテルも検討'],
+  ['土曜の到着時刻と待ち合わせ場所を決める','一乗寺駅は無人の小さな駅'],
+  ['往路の列車を決めて指定席を取る（京都まで）','8月下旬の土曜は混む'],
+  ['復路の列車を決めて指定席を取る（京都発）','松山→内子の最終から逆算'],
+  ['日曜の朝の出発時刻を逆算して決める','一乗寺→会場は1時間15分以上'],
+  ['日曜夜の叡電の終電を調べる','大阪から帰るので要チェック'],
+  ['ICカードに3人分チャージしておく',''],
+  ['手土産を用意する','愛媛のもの＋娘さんの頼まれもの'],
+  ['行きたい場所を2〜3か所に絞る','詰め込むと暑さで潰れる'],
+  ['天気予報をチェック（台風シーズン）',''],
+  ['家の留守対応（郵便・戸締り・車）',''],
+  ['当日の起床時間を決めて目覚ましをかける','6時台発は逆算が命']
+];
+
+/* ---------- 行程描画 ---------- */
+function renderDays() {
+  for (const id of ['d1','d2','d3']) {
+    const box = document.getElementById(id);
+    box.innerHTML = DAYS[id].map((e, i) => {
+      const key = 'ev-' + id + '-' + i;
+      const on = !!S[key];
+      return '<div class="ev' + (on ? ' done' : '') + '" data-key="' + key + '">' +
+        '<input type="checkbox"' + (on ? ' checked' : '') + '>' +
+        '<div class="e-body"><div class="e-time">' + e.t + '</div>' +
+        '<div class="e-title">' + e.n + '<span class="tag ' + e.k + '">' + labelOf(e.k) + '</span></div>' +
+        (e.s ? '<small class="e-note">' + e.s + '</small>' : '') +
+        '</div></div>';
+    }).join('');
+  }
+  bindChecks('.ev');
+  updateProg();
+}
+function labelOf(k) {
+  return { move:'移動', meal:'食事', see:'観光', oc:'OC', hotel:'宿', check:'準備' }[k] || '';
+}
+
+/* ---------- チェックリスト描画 ---------- */
+function renderList(elId, items, prefix) {
+  document.getElementById(elId).innerHTML = items.map((it, i) => {
+    const key = prefix + i, on = !!S[key];
+    return '<div class="chk' + (on ? ' done' : '') + '" data-key="' + key + '">' +
+      '<input type="checkbox"' + (on ? ' checked' : '') + '>' +
+      '<div class="c-txt">' + it[0] + (it[1] ? '<small>' + it[1] + '</small>' : '') + '</div></div>';
+  }).join('');
+}
+
+function bindChecks(sel) {
+  document.querySelectorAll(sel).forEach(row => {
+    row.onclick = ev => {
+      const cb = row.querySelector('input');
+      if (ev.target !== cb) cb.checked = !cb.checked;
+      S[row.dataset.key] = cb.checked;
+      row.classList.toggle('done', cb.checked);
+      save(); updateProg();
+    };
+  });
+}
+
+function countOf(prefix, total) {
+  let n = 0;
+  for (let i = 0; i < total; i++) if (S[prefix + i]) n++;
+  return n + ' / ' + total;
+}
+function updateProg() {
+  for (const id of ['d1','d2','d3']) {
+    const t = DAYS[id].length;
+    let n = 0;
+    for (let i = 0; i < t; i++) if (S['ev-' + id + '-' + i]) n++;
+    document.getElementById('prog-' + id).textContent = n + ' / ' + t + ' 完了';
+  }
+  document.getElementById('prog-oc').textContent = countOf('oc-', OC_ITEMS.length);
+  document.getElementById('prog-pack').textContent = countOf('pk-', PACK_ITEMS.length);
+  document.getElementById('prog-prep').textContent = countOf('pp-', PREP_ITEMS.length);
+}
+
+/* ---------- 入力欄の保存 ---------- */
+function bindFields() {
+  document.querySelectorAll('[data-save]').forEach(el => {
+    const k = 'f-' + el.dataset.save;
+    if (S[k] !== undefined && S[k] !== '') el.value = S[k];
+    el.addEventListener('input', () => { S[k] = el.value; save(); });
+  });
+}
+
+/* ---------- 予算 ---------- */
+const yen = n => '¥' + Math.round(n).toLocaleString('ja-JP');
+function v(name) {
+  const el = document.querySelector('[data-save="' + name + '"]');
+  const n = parseFloat(el && el.value);
+  return isFinite(n) ? n : 0;
+}
+function calc() {
+  const p = v('bg-people') || 1, days = v('bg-days'), plus = v('bg-plus');
+  const eaters = p + plus;
+  const rows = [
+    ['交通（往復・内子〜京都）', yen(v('bg-train')) + ' × ' + p + '人', v('bg-train') * p],
+    ['現地の電車・バス', yen(v('bg-local')) + ' × ' + p + '人 × ' + days + '日', v('bg-local') * p * days],
+    ['食事', yen(v('bg-food')) + ' × ' + eaters + '人（娘さん含む）× ' + days + '日', v('bg-food') * eaters * days],
+    ['観光・入場料', yen(v('bg-fun')) + ' × ' + p + '人', v('bg-fun') * p],
+    ['手土産・お礼', '全体', v('bg-gift')],
+    ['おみやげ・雑費', '全体', v('bg-etc')],
+    ['宿泊', v('bg-hotel') ? '宿を取る場合' : 'アパート泊なので 0円', v('bg-hotel')]
+  ];
+  document.getElementById('bgRows').innerHTML = rows.map(r =>
+    '<tr><td><b>' + r[0] + '</b></td><td style="color:#8a9bab">' + r[1] + '</td><td class="num">' + yen(r[2]) + '</td></tr>'
+  ).join('');
+  const total = rows.reduce((a, r) => a + r[2], 0);
+  document.getElementById('bgTotal').textContent = yen(total);
+  document.getElementById('bgPer').textContent = '1人あたり 約 ' + yen(total / p) + '（' + p + '人で計算）';
+}
+
+/* ---------- カウントダウン ---------- */
+function countdown() {
+  const today = new Date(); today.setHours(0,0,0,0);
+  const set = (id, dateStr) => {
+    const d = new Date(dateStr + 'T00:00:00');
+    const diff = Math.round((d - today) / 86400000);
+    const el = document.getElementById(id);
+    el.innerHTML = diff > 0 ? diff + '<span>日</span>' : (diff === 0 ? '今日！' : '<span>おつかれさま</span>');
+  };
+  set('cd1', '2026-08-22');
+  set('cd2', '2026-08-23');
+}
+
+/* ---------- タブ ---------- */
+document.querySelectorAll('.tab').forEach(b => {
+  b.onclick = () => {
+    document.querySelectorAll('.tab').forEach(x => x.classList.remove('on'));
+    document.querySelectorAll('.page').forEach(x => x.classList.remove('on'));
+    b.classList.add('on');
+    document.getElementById(b.dataset.p).classList.add('on');
+    S['tab'] = b.dataset.p; save();
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
+});
+
+function resetAll() {
+  if (!confirm('チェックを全部外します（入力したメモは残ります）。よろしいですか？')) return;
+  Object.keys(S).forEach(k => { if (!k.startsWith('f-') && k !== 'tab') delete S[k]; });
+  save();
+  renderDays();
+  renderList('ocList', OC_ITEMS, 'oc-'); bindChecks('#ocList .chk');
+  renderList('packList', PACK_ITEMS, 'pk-'); bindChecks('#packList .chk');
+  renderList('prepList', PREP_ITEMS, 'pp-'); bindChecks('#prepList .chk');
+  updateProg();
+}
+
+/* ---------- 起動 ---------- */
+renderDays();
+renderList('ocList', OC_ITEMS, 'oc-'); bindChecks('#ocList .chk');
+renderList('packList', PACK_ITEMS, 'pk-'); bindChecks('#packList .chk');
+renderList('prepList', PREP_ITEMS, 'pp-'); bindChecks('#prepList .chk');
+bindFields();
+calc();
+countdown();
+if (S['tab']) {
+  const b = document.querySelector('.tab[data-p="' + S['tab'] + '"]');
+  if (b) {
+    document.querySelectorAll('.tab').forEach(x => x.classList.remove('on'));
+    document.querySelectorAll('.page').forEach(x => x.classList.remove('on'));
+    b.classList.add('on');
+    document.getElementById(S['tab']).classList.add('on');
+  }
+}
+</script>
+</body>
+</html>
