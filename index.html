@@ -249,10 +249,11 @@
       <button onclick="addMember()">追加</button>
     </div>
     <div style="margin-top:16px; display:flex; gap:8px; align-items:center;">
-      <label style="font-size:14px; font-weight:600;">会費:</label>
+      <label style="font-size:14px; font-weight:600;">この回の会費:</label>
       <input type="number" class="calc-input" id="kaihiInput" onchange="onKaihiChange()">
       <span>円</span>
     </div>
+    <div style="font-size:11px; color:#888; margin-top:4px;">2026年9月の回から17,000円（それ以前は18,000円）。ここで変えるとその回だけに反映されます</div>
   </div>
   <div class="card">
     <div class="card-h">⚙️ 操作</div>
@@ -303,6 +304,19 @@
 const STORAGE_KEY = 'rakuseikai_data';
 const DEFAULT_MEMBERS = ['山本','渡部','宮瀬','米田','石岡','有本','白石','宮田','酒井','森岡','TKT','木工'];
 const RESULT_OPTIONS = ['','大砲','ケツ','落ち'];
+// 会費（集金額）は 2026年9月の回から 18,000円 → 17,000円 に変更。
+// 回ごとに r.kaihi を持てる（会費欄で変えた回だけ保存される）。
+// 未設定の回は開催年月から既定額を決めるので、過去の回は18,000円のまま残る。
+const KAIHI_CHANGE = { year: 2026, month: 9, before: 18000, after: 17000 };
+function defaultKaihiFor(r) {
+  const y = (r && r.year  != null) ? +r.year  : new Date().getFullYear();
+  const m = (r && r.month != null) ? +r.month : new Date().getMonth() + 1;
+  return (y * 12 + m) >= (KAIHI_CHANGE.year * 12 + KAIHI_CHANGE.month)
+    ? KAIHI_CHANGE.after : KAIHI_CHANGE.before;
+}
+function roundKaihi(r) {
+  return (r && r.kaihi != null) ? +r.kaihi : defaultKaihiFor(r);
+}
 // 手動で人数を調整したとき、対象の名前もそれに追従させる。
 // ケツを減らして配当を増やした差分だけ、ケツの人を配当対象へ移す（減らしただけ・自動のままなら変化なし）。
 function adjustTargetsByCount(normalNames, ketsuNames, normalCount, ketsuCount){
@@ -456,7 +470,7 @@ function render() {
   document.getElementById('editYear').value  = r.year;
   document.getElementById('editMonth').value = r.month;
   document.getElementById('editNum').value   = r.num;
-  document.getElementById('kaihiInput').value = app.kaihi;
+  document.getElementById('kaihiInput').value = roundKaihi(r);
 
   // 表示前に毎回ルールを適用して結果を最新化
   recalcOpenResults();
@@ -858,7 +872,13 @@ function renderCalc() {
   const r = round();
   const c = r.calc;
   const paidCount = r.attendance.length;
-  const pool = app.kaihi * paidCount;
+  const kaihi = roundKaihi(r);
+  const pool = kaihi * paidCount;
+
+  // 最終回の特例: 残り1人（落ち以外が1人以下）の回は入札・配当・ケツ・大砲がなく、
+  // あみだ等の固定支出のみで差し引きする（例: 216,000 − 98,000 = 118,000円）。
+  const activeCount = app.members.length - r.attendance.filter(a => a.ochi).length;
+  const soloFinal = activeCount <= 1;
 
   // 配当・ケツ・大砲 単価 = 開結果の最大値を自動反映
   let maxOpenResult = 0;
@@ -935,12 +955,13 @@ function renderCalc() {
     if (ketsuNamesSet.has(n)) return;
     autoNormal++;
   });
-  const normalCount = c.normalCount !== undefined ? c.normalCount : autoNormal;
-  const ketsuCount  = c.ketsuCount  !== undefined ? c.ketsuCount  : autoKetsu;
+  const normalCount = soloFinal ? 0 : (c.normalCount !== undefined ? c.normalCount : autoNormal);
+  const ketsuCount  = soloFinal ? 0 : (c.ketsuCount  !== undefined ? c.ketsuCount  : autoKetsu);
 
   const haitouNormal = c.haitouUnit * normalCount;
   const haitouKetsu = c.ketsuUnit * ketsuCount;
-  const totalExpense = haitouNormal + haitouKetsu + c.taihou + c.amida + c.ryouridai + c.tsumitatekin;
+  const taihouExpense = soloFinal ? 0 : (+c.taihou || 0);
+  const totalExpense = haitouNormal + haitouKetsu + taihouExpense + c.amida + c.ryouridai + c.tsumitatekin;
   const payout = pool - totalExpense;
 
   // 配当に含まれる叫び者リスト（重複あり）— 大砲は対象に含める、欠席者も追加
@@ -1001,7 +1022,7 @@ function renderCalc() {
     </div>
     <div class="calc-row">
       <span class="calc-label">大砲</span>
-      <input class="calc-input" type="number" value="${c.taihou}" onchange="round().calc.taihou=+this.value; renderCalc();">
+      <input class="calc-input" type="number" value="${taihouExpense}" onchange="round().calc.taihou=+this.value; renderCalc();">
     </div>
     <div class="calc-row">
       <span class="calc-label">あみだ</span>
@@ -1043,7 +1064,12 @@ function renderShare() {
   const r = round();
   const c = r.calc;
   const paidCount = r.attendance.length;
-  const pool = app.kaihi * paidCount;
+  const kaihi = roundKaihi(r);
+  const pool = kaihi * paidCount;
+
+  // 最終回の特例: 残り1人（落ち以外が1人以下）の回は配当・ケツ・大砲代なし（あみだ等のみ）
+  const activeCount = app.members.length - r.attendance.filter(a => a.ochi).length;
+  const soloFinal = activeCount <= 1;
 
   // 落ち済みでも出席/欠席は出席状況に表示する
   const ochiList    = r.attendance.filter(a => a.ochi).map(a => a.name);
@@ -1107,11 +1133,12 @@ function renderShare() {
     if (ketsuNamesSet.has(n)) return;
     autoNormal++;
   });
-  const normalCount = c.normalCount !== undefined ? c.normalCount : autoNormal;
-  const ketsuCount  = c.ketsuCount  !== undefined ? c.ketsuCount  : ketsuNamesSet.size;
+  const normalCount = soloFinal ? 0 : (c.normalCount !== undefined ? c.normalCount : autoNormal);
+  const ketsuCount  = soloFinal ? 0 : (c.ketsuCount  !== undefined ? c.ketsuCount  : ketsuNamesSet.size);
   const haitouNormal = haitouUnit * normalCount;
   const haitouKetsu  = ketsuUnit  * ketsuCount;
-  const totalExpense = haitouNormal + haitouKetsu + (+c.taihou||0) + (+c.amida||0) + (+c.ryouridai||0) + (+c.tsumitatekin||0);
+  const taihouExpense = soloFinal ? 0 : (+c.taihou || 0);
+  const totalExpense = haitouNormal + haitouKetsu + taihouExpense + (+c.amida||0) + (+c.ryouridai||0) + (+c.tsumitatekin||0);
   const payout = pool - totalExpense;
 
   const normalCallers = [];
@@ -1155,12 +1182,12 @@ function renderShare() {
   _sl.push(`●欠席(${absentList.length}): ${absentList.join('・')||'—'}`);
   _sl.push('──────────');
   _sl.push('■ 精算・配当');
-  _sl.push(`・集金: ${app.kaihi.toLocaleString()}円 × ${paidCount}名 = ${pool.toLocaleString()}円`);
+  _sl.push(`・集金: ${kaihi.toLocaleString()}円 × ${paidCount}名 = ${pool.toLocaleString()}円`);
   _sl.push(`・配当(${dispNormal.length}人): ${haitouUnit.toLocaleString()}×${normalCount}=${haitouNormal.toLocaleString()}円${dispNormal.length ? ' '+dispNormal.join('・') : ''}`);
   _sl.push(`・ケツ(${dispKetsu.length}人): ${ketsuUnit.toLocaleString()}×${ketsuCount}=${haitouKetsu.toLocaleString()}円${dispKetsu.length ? ' '+dispKetsu.join('・') : ''}`);
   if (taihouNames.size) _sl.push(`・大砲: ${[...taihouNames].join('・')}`);
   if (ochiNames.size) _sl.push(`・落ち: ${[...ochiNames].join('・')}`);
-  if (c.taihou) _sl.push(`・大砲: ${(+c.taihou).toLocaleString()}円`);
+  if (taihouExpense) _sl.push(`・大砲: ${taihouExpense.toLocaleString()}円`);
   if (c.amida) _sl.push(`・あみだ: ${(+c.amida).toLocaleString()}円`);
   if (c.ryouridai) _sl.push(`・料理代: ${(+c.ryouridai).toLocaleString()}円`);
   if (c.tsumitatekin) _sl.push(`・積立金: ${(+c.tsumitatekin).toLocaleString()}円`);
@@ -1197,12 +1224,12 @@ function renderShare() {
       <div style="margin-bottom:6px;background:#f7f9fc;padding:8px;border-radius:5px;">
         <div style="font-size:11px;font-weight:700;color:#0d1b3e;margin-bottom:4px;">💰 精算・配当内訳</div>
         <div style="font-size:11px;line-height:1.6;">
-          <div>● 集金: ${app.kaihi.toLocaleString()}円 × ${paidCount}名 = <strong>${pool.toLocaleString()}円</strong></div>
+          <div>● 集金: ${kaihi.toLocaleString()}円 × ${paidCount}名 = <strong>${pool.toLocaleString()}円</strong></div>
           <div>● 配当 (${dispNormal.length}人分): ${haitouUnit.toLocaleString()} × ${normalCount} = <strong>${haitouNormal.toLocaleString()}円</strong> <span style="font-size:10px;color:#555;">対象: ${dispNormal.join('・') || '—'}</span></div>
           <div>● ケツ (${dispKetsu.length}人分): ${ketsuUnit.toLocaleString()} × ${ketsuCount} = <strong>${haitouKetsu.toLocaleString()}円</strong> <span style="font-size:10px;color:#1565c0;">対象: ${dispKetsu.join('・') || '—'}</span></div>
           ${taihouNames.size ? `<div>● 大砲: <strong style="color:#2e7d32;">${[...taihouNames].join('・')}</strong></div>` : ''}
           ${ochiNames.size  ? `<div>● 落ち: <strong style="color:#e65100;">${[...ochiNames].join('・')}</strong></div>` : ''}
-          ${c.taihou       ? `<div>● 大砲: <strong>${(+c.taihou).toLocaleString()}円</strong></div>` : ''}
+          ${taihouExpense  ? `<div>● 大砲: <strong>${taihouExpense.toLocaleString()}円</strong></div>` : ''}
           ${c.amida        ? `<div>● あみだ: <strong>${(+c.amida).toLocaleString()}円</strong></div>` : ''}
           ${c.ryouridai    ? `<div>● 料理代: <strong>${(+c.ryouridai).toLocaleString()}円</strong></div>` : ''}
           ${c.tsumitatekin ? `<div>● 積立金: <strong>${(+c.tsumitatekin).toLocaleString()}円</strong></div>` : ''}
@@ -1602,9 +1629,11 @@ function removeMember(idx) {
 }
 
 function onKaihiChange() {
-  app.kaihi = +document.getElementById('kaihiInput').value || 0;
+  // 会費はこの回だけに保存する（他の回や過去の記録は変わらない）
+  round().kaihi = +document.getElementById('kaihiInput').value || 0;
   persist();
   renderCalc();
+  renderShare();
 }
 
 function esc(s) { return String(s||'').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'})[c]); }
