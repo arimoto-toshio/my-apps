@@ -196,6 +196,9 @@
     </div>
     <button onclick="navRound(1)">▶</button>
   </div>
+  <div style="text-align:center; margin-top:6px;">
+    <button onclick="deleteRound()" style="background:rgba(192,57,43,0.9); color:#fff; border:none; border-radius:6px; padding:5px 14px; font-size:11px; font-weight:700; cursor:pointer;">🗑 いま開いている回を削除</button>
+  </div>
 </div>
 
 <div class="tabs">
@@ -702,7 +705,9 @@ function renderAttendance() {
   const info = `<div style="background:#f7f9fc;padding:10px;border-radius:6px;margin-bottom:10px;font-size:13px;color:#333;">
     <strong>第 ${r.num} 回 / 全12回</strong><br>
     入札枠: <strong style="color:#0d1b3e;">${expectedSlots}人</strong>　落ち済み: <strong style="color:#bf360c;">${ochiCount}人</strong>
-    <button onclick="recalcOchi()" style="float:right;padding:5px 10px;border:1px solid #bf360c;border-radius:6px;background:#fff;color:#bf360c;font-size:11px;font-weight:700;cursor:pointer;">🔄 落ち済みを計算し直す</button>
+    <div style="text-align:right;margin-top:6px;">
+      <button onclick="recalcOchi()" style="padding:5px 10px;border:1px solid #bf360c;border-radius:6px;background:#fff;color:#bf360c;font-size:11px;font-weight:700;cursor:pointer;">🔄 落ち済みを計算し直す</button>
+    </div>
   </div>`;
   // 退会した人はこの回には出さない（記録そのものは残っている）
   const html = r.attendance.map((a, i) => isActiveIn(a.name, r) ? `
@@ -1743,7 +1748,16 @@ function addNewRound() {
 
 function deleteRound() {
   if (app.rounds.length <= 1) { toast('最後の回は削除不可'); return; }
-  if (!confirm(round().year+'年'+round().month+'月 '+round().num+'回目を削除しますか？')) return;
+  const r = round();
+  const filled = r.bids.filter(b => b.caller || b.opener).length;
+  const same = app.rounds.filter(x => x.year === r.year && x.month === r.month).length;
+  const msg = `${r.year}年${r.month}月 第${r.num}回 を削除します。\n\n`
+            + (filled
+                ? `⚠️ この回には入札が ${filled}行 入っています。\n　消すと元に戻せません。\n\n`
+                : `この回はまだ入札が入力されていません。\n\n`)
+            + (same > 1 ? `※${r.year}年${r.month}月の回は ${same}つ あります。いま開いている方だけ消えます。\n\n` : '')
+            + `よろしいですか？`;
+  if (!confirm(msg)) return;
   app.rounds.splice(curIdx, 1);
   if (curIdx >= app.rounds.length) curIdx = app.rounds.length - 1;
   render();
