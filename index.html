@@ -329,6 +329,30 @@ function adjustTargetsByCount(normalNames, ketsuNames, normalCount, ketsuCount){
   for (let k = 0; k < move; k++) dispNormal.push(dispKetsu.shift());
   return [dispNormal, dispKetsu];
 }
+// ============================================================
+// 退会（メンバーが抜けるとき）
+// app.retired = { '名前': {year, month} }
+//   … その年月の回から参加しない。それより前の回の記録はそのまま残る。
+// メンバーを名簿から本当に消すことはしない（消すと過去の記録まで消えるため）。
+// 表示・計算では「その回に在籍していた人」だけを対象にする。
+// ============================================================
+function ymOf(y, m) { return (+y) * 12 + (+m); }
+// name はこの回に在籍していたか（途中から入った人・途中で抜けた人を判定する）
+function isActiveIn(name, r) {
+  const y = (r && r.year  != null) ? r.year  : new Date().getFullYear();
+  const m = (r && r.month != null) ? r.month : new Date().getMonth() + 1;
+  const t = ymOf(y, m);
+  const jn = app && app.joined  ? app.joined[name]  : null;   // 加入した年月より前は居ない
+  if (jn && t < ymOf(jn.year, jn.month)) return false;
+  const rt = app && app.retired ? app.retired[name] : null;   // 退会した年月からは居ない
+  if (rt && t >= ymOf(rt.year, rt.month)) return false;
+  return true;
+}
+// この回に在籍していたメンバー名の配列
+function membersOf(r) { return app.members.filter(m => isActiveIn(m, r)); }
+// この回に在籍していた人の出欠行だけ
+function attOf(r) { return r.attendance.filter(a => isActiveIn(a.name, r)); }
+
 const CARD_OPTIONS = ['','A','2','3','4','5','6','7','8','9','10','J','Q','K'];
 const CALL_OPTIONS = ['',0,50,100,150,200,250,300,350,400,450,500,550,600,650,700,750,800,850,900,950,1000];
 
@@ -359,6 +383,8 @@ function loadApp() {
       if (parsed && Array.isArray(parsed.rounds) && parsed.rounds.length > 0) {
         app = parsed;
         if (!Array.isArray(app.members)) app.members = [...DEFAULT_MEMBERS];
+        if (!app.retired || typeof app.retired !== 'object') app.retired = {};
+        if (!app.joined  || typeof app.joined  !== 'object') app.joined  = {};
         if (app.kaihi == null) app.kaihi = 18000;
         curIdx = app.rounds.length - 1;
         if (curIdx < 0 || curIdx >= app.rounds.length) curIdx = 0;
@@ -385,6 +411,8 @@ function loadApp() {
   } catch(e) {}
   app = {
     members: [...DEFAULT_MEMBERS],
+    retired: {},
+    joined: {},
     kaihi: 18000,
     rounds: [createEmptyRound(DEFAULT_MEMBERS)]
   };
@@ -613,14 +641,15 @@ function renderYear() {
 
 function renderAttendance() {
   const r = round();
-  const ochiCount = r.attendance.filter(a => a.ochi).length;
-  const activeCount = r.attendance.length - ochiCount;
-  const expectedSlots = Math.max(1, app.members.length - ochiCount);
+  const ochiCount = attOf(r).filter(a => a.ochi).length;
+  const activeCount = attOf(r).length - ochiCount;
+  const expectedSlots = Math.max(1, membersOf(r).length - ochiCount);
   const info = `<div style="background:#f7f9fc;padding:10px;border-radius:6px;margin-bottom:10px;font-size:13px;color:#333;">
     <strong>第 ${r.num} 回 / 全12回</strong><br>
     入札枠: <strong style="color:#0d1b3e;">${expectedSlots}人</strong>　落ち済み: <strong style="color:#bf360c;">${ochiCount}人</strong>
   </div>`;
-  const html = r.attendance.map((a, i) => `
+  // 退会した人はこの回には出さない（記録そのものは残っている）
+  const html = r.attendance.map((a, i) => isActiveIn(a.name, r) ? `
     <div class="mem-row" style="${a.ochi ? 'opacity:0.55;' : ''}">
       <div class="mem-name">${a.name}${a.ochi ? ' <span style="font-size:11px;color:#bf360c;">（落ち済み）</span>' : ''}</div>
       <button class="toggle-btn ${a.present ? '' : 'on-paid'}" onclick="toggleAtt(${i},'present')">
@@ -630,22 +659,22 @@ function renderAttendance() {
         ${a.ochi ? '落●' : '落'}
       </button>
     </div>
-  `).join('');
+  ` : '').join('');
   document.getElementById('memList').innerHTML = info + html;
 }
 
 function renderBids() {
   const r = round();
-  const ochiCount = r.attendance.filter(a => a.ochi).length;
-  const expectedSlots = Math.max(1, app.members.length - ochiCount);
+  const ochiCount = attOf(r).filter(a => a.ochi).length;
+  const expectedSlots = Math.max(1, membersOf(r).length - ochiCount);
   // bids 配列を slots に合わせて拡張
   while (r.bids.length < expectedSlots) {
     r.bids.push({ card:'', caller:'', call1:'', call2:'', opener:'', prevKetsu:'', open:'', openResult:'', card2:'', result:'' });
   }
   const slots = Math.min(expectedSlots, r.bids.length);
 
-  // 落ち済みを除いた選択肢
-  const activeMembers = app.members.filter(m => {
+  // 落ち済みを除いた選択肢（この回に在籍していた人のみ）
+  const activeMembers = membersOf(r).filter(m => {
     const att = r.attendance.find(a => a.name === m);
     return !(att && att.ochi);
   });
@@ -871,13 +900,13 @@ function renderBids() {
 function renderCalc() {
   const r = round();
   const c = r.calc;
-  const paidCount = r.attendance.length;
+  const paidCount = attOf(r).length;
   const kaihi = roundKaihi(r);
   const pool = kaihi * paidCount;
 
   // 最終回の特例: 残り1人（落ち以外が1人以下）の回は入札・配当・ケツ・大砲がなく、
   // あみだ等の固定支出のみで差し引きする（例: 216,000 − 98,000 = 118,000円）。
-  const activeCount = app.members.length - r.attendance.filter(a => a.ochi).length;
+  const activeCount = membersOf(r).length - attOf(r).filter(a => a.ochi).length;
   const soloFinal = activeCount <= 1;
 
   // 配当・ケツ・大砲 単価 = 開結果の最大値を自動反映
@@ -935,7 +964,7 @@ function renderCalc() {
     if (b.opener) callerOrOpenerNames.add(b.opener);
   });
   const absentNames = new Set();
-  r.attendance.forEach(a => {
+  attOf(r).forEach(a => {
     if (a.present && !a.ochi && !callerOrOpenerNames.has(a.name)) absentNames.add(a.name);
   });
 
@@ -1053,9 +1082,20 @@ function renderCalc() {
 }
 
 function renderMembers() {
-  document.getElementById('memberList').innerHTML = app.members.map((m, i) => `
-    <span class="mem-tag">${m}<span class="del" onclick="removeMember(${i})">×</span></span>
-  `).join('');
+  const r = round();
+  document.getElementById('memberList').innerHTML = app.members.map((m, i) => {
+    const rt = app.retired ? app.retired[m] : null;
+    if (rt) {
+      return `<span class="mem-tag" style="background:#eee;color:#888;">${m}
+        <span style="font-size:10px;color:#999;">${rt.year}年${rt.month}月〜退会</span>
+        <span class="del" style="color:#2e7d32;" onclick="removeMember(${i})" title="復帰させる">↩</span></span>`;
+    }
+    return `<span class="mem-tag">${m}<span class="del" onclick="removeMember(${i})">×</span></span>`;
+  }).join('')
+  + `<div style="width:100%;font-size:11px;color:#888;margin-top:8px;line-height:1.6;">
+      ×を押すと、いま開いている回（${r.year}年${r.month}月）からの退会になります。<br>
+      それより前の回の記録はそのまま残ります。↩で復帰できます。
+     </div>`;
 }
 
 function renderShare() {
@@ -1063,18 +1103,18 @@ function renderShare() {
   if (!el) return;
   const r = round();
   const c = r.calc;
-  const paidCount = r.attendance.length;
+  const paidCount = attOf(r).length;
   const kaihi = roundKaihi(r);
   const pool = kaihi * paidCount;
 
   // 最終回の特例: 残り1人（落ち以外が1人以下）の回は配当・ケツ・大砲代なし（あみだ等のみ）
-  const activeCount = app.members.length - r.attendance.filter(a => a.ochi).length;
+  const activeCount = membersOf(r).length - attOf(r).filter(a => a.ochi).length;
   const soloFinal = activeCount <= 1;
 
   // 落ち済みでも出席/欠席は出席状況に表示する
-  const ochiList    = r.attendance.filter(a => a.ochi).map(a => a.name);
-  const presentList = r.attendance.filter(a => a.present === false).map(a => a.name);
-  const absentList  = r.attendance.filter(a => a.present === true).map(a => a.name);
+  const ochiList    = attOf(r).filter(a => a.ochi).map(a => a.name);
+  const presentList = attOf(r).filter(a => a.present === false).map(a => a.name);
+  const absentList  = attOf(r).filter(a => a.present === true).map(a => a.name);
 
   let maxOpenResult = 0;
   r.bids.forEach(b => {
@@ -1117,7 +1157,7 @@ function renderShare() {
     if (b.opener) callerOrOpenerNames.add(b.opener);
   });
   const absentForHaitou = new Set();
-  r.attendance.forEach(a => {
+  attOf(r).forEach(a => {
     if (a.present && !a.ochi && !callerOrOpenerNames.has(a.name)) absentForHaitou.add(a.name);
   });
 
@@ -1157,8 +1197,8 @@ function renderShare() {
   // 手動調整した人数に合わせて対象の名前も追従（ケツ→配当へ移動）
   const [dispNormal, dispKetsu] = adjustTargetsByCount(normalCallers, [...ketsuNamesSet], normalCount, ketsuCount);
 
-  const ochiCount2 = r.attendance.filter(a => a.ochi).length;
-  const slots = Math.max(1, app.members.length - ochiCount2);
+  const ochiCount2 = attOf(r).filter(a => a.ochi).length;
+  const slots = Math.max(1, membersOf(r).length - ochiCount2);
   const bidRows = r.bids.slice(0, slots).map((b, i) => {
     const calls = [b.call1, b.call2].filter(x => x !== '' && x != null).join('+') || '—';
     const resColor = b.result === '大砲' ? '#2e7d32' : b.result === 'ケツ' ? '#1565c0' : b.result === '落ち' ? '#e65100' : '#999';
@@ -1269,8 +1309,8 @@ function sendShareLine(){
 // rr を渡すとその回に適用（省略時は現在の回）
 function applyResultRules(rr) {
   const r = rr || round();
-  const ochiCount = r.attendance.filter(a => a.ochi).length;
-  const expectedSlots = Math.max(1, app.members.length - ochiCount);
+  const ochiCount = attOf(r).filter(a => a.ochi).length;
+  const expectedSlots = Math.max(1, membersOf(r).length - ochiCount);
   const slots = Math.min(expectedSlots, r.bids.length);
   const valid = r.bids.slice(0, slots);
 
@@ -1604,8 +1644,25 @@ function addMember() {
   const input = document.getElementById('newMemberInput');
   const name = input.value.trim();
   if (!name) return;
-  if (app.members.includes(name)) { toast('既に登録されています'); return; }
+  if (app.members.includes(name)) {
+    const rt = app.retired ? app.retired[name] : null;
+    if (rt) {
+      if (confirm(name + ' さんは ' + rt.year + '年' + rt.month + '月からの退会になっています。\n復帰させますか？')) {
+        delete app.retired[name];
+        input.value = '';
+        persist(); render();
+        toast(name + ' を復帰させました');
+      }
+    } else {
+      toast('既に登録されています');
+    }
+    return;
+  }
   app.members.push(name);
+  // いま開いている回からの加入として記録する（それより前の回には出さない）
+  const cur = round();
+  if (!app.joined) app.joined = {};
+  app.joined[name] = { year: cur.year, month: cur.month };
   app.rounds.forEach(r => {
     r.attendance.push({ name, paid: false, present: false, ochi: false });
     r.bids.push({ card:'', caller:'', call1:'', call2:'', opener:'', prevKetsu:'', open:'', openResult:'', card2:'', result:'' });
@@ -1616,16 +1673,31 @@ function addMember() {
   toast(name + ' を追加しました');
 }
 
+// メンバーを抜ける扱いにする（名簿からも過去の回からも消さない）。
+// 名簿ごと消すと、その人が写っている過去の回の記録まで消えてしまうため。
 function removeMember(idx) {
   const name = app.members[idx];
-  if (!confirm(name + ' を削除しますか？')) return;
-  app.members.splice(idx, 1);
-  app.rounds.forEach(r => {
-    r.attendance = r.attendance.filter(a => a.name !== name);
-    if (r.bids.length > app.members.length) r.bids.pop();
-  });
+  if (!app.retired) app.retired = {};
+  const rt = app.retired[name];
+
+  if (rt) {   // すでに退会 → 復帰させる
+    if (!confirm(name + ' さんは ' + rt.year + '年' + rt.month + '月からの退会になっています。\n復帰させますか？')) return;
+    delete app.retired[name];
+    persist();
+    render();
+    toast(name + ' を復帰させました');
+    return;
+  }
+
+  const r = round();
+  const msg = name + ' さんを ' + r.year + '年' + r.month + '月の回から退会にします。\n\n'
+            + '・' + r.year + '年' + r.month + '月より前の回の記録はそのまま残ります\n'
+            + '・あとで「↩」を押せば復帰できます\n\nよろしいですか？';
+  if (!confirm(msg)) return;
+  app.retired[name] = { year: r.year, month: r.month };
   persist();
   render();
+  toast(name + ' を' + r.year + '年' + r.month + '月から退会にしました');
 }
 
 function onKaihiChange() {
@@ -1711,6 +1783,8 @@ async function syncDownload() {
       if (r.num == null) r.num = 1;
     });
     if (!Array.isArray(d.members)) d.members = [...DEFAULT_MEMBERS];
+    if (!d.retired || typeof d.retired !== 'object') d.retired = {};
+    if (!d.joined  || typeof d.joined  !== 'object') d.joined  = {};
     if (d.kaihi == null) d.kaihi = 18000;
     let ci = d.curIdx || 0;
     if (ci < 0 || ci >= d.rounds.length) ci = 0;
@@ -1767,6 +1841,8 @@ async function autoRestore(){  // 開いたらクラウドから自動読込（�
     }
     d.rounds.forEach(r => { if(!Array.isArray(r.attendance)) r.attendance=[]; if(!Array.isArray(r.bids)) r.bids=[]; if(!r.calc) r.calc={}; if(r.year==null) r.year=new Date().getFullYear(); if(r.month==null) r.month=new Date().getMonth()+1; if(r.num==null) r.num=1; });
     if (!Array.isArray(d.members)) d.members = [...DEFAULT_MEMBERS];
+    if (!d.retired || typeof d.retired !== 'object') d.retired = {};
+    if (!d.joined  || typeof d.joined  !== 'object') d.joined  = {};
     if (d.kaihi == null) d.kaihi = 18000;
     let ci = d.curIdx || 0; if (ci < 0 || ci >= d.rounds.length) ci = 0;
     app = d; curIdx = ci;
