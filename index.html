@@ -353,6 +353,33 @@ function membersOf(r) { return app.members.filter(m => isActiveIn(m, r)); }
 // この回に在籍していた人の出欠行だけ
 function attOf(r) { return r.attendance.filter(a => isActiveIn(a.name, r)); }
 
+// ============================================================
+// トランプ（札を開く人が引く当たりくじ）
+// 当たりは 100円×2・50円×2。
+// 残り3人の回は 100円×2・50円×1、残り2人の回は 100円×2 だけ。
+// 開き側の「カード」欄に入れた金額が、その人が引いた当たり。
+// ============================================================
+function activeCountOf(r) {
+  return membersOf(r).length - attOf(r).filter(a => a.ochi).length;
+}
+function cardQuotaOf(r) {
+  const n = activeCountOf(r);
+  if (n <= 1) return { c100: 0, c50: 0 };   // 最終回（ひとり）は引かない
+  if (n === 2) return { c100: 2, c50: 0 };
+  if (n === 3) return { c100: 2, c50: 1 };
+  return { c100: 2, c50: 2 };
+}
+function cardWinnersOf(r) {
+  const slots = Math.max(1, membersOf(r).length - attOf(r).filter(a => a.ochi).length);
+  const w100 = [], w50 = [];
+  r.bids.slice(0, slots).forEach(b => {
+    if (!b.opener) return;
+    if (+b.card2 === 100) w100.push(b.opener);
+    else if (+b.card2 === 50) w50.push(b.opener);
+  });
+  return { w100, w50 };
+}
+
 const CARD_OPTIONS = ['','A','2','3','4','5','6','7','8','9','10','J','Q','K'];
 const CALL_OPTIONS = ['',0,50,100,150,200,250,300,350,400,450,500,550,600,650,700,750,800,850,900,950,1000];
 
@@ -830,7 +857,30 @@ function renderBids() {
   // ===== 開き側 (札を開く順) =====
   let openerHtml = `<div class="card" style="border-left:5px solid #1b5e20;">
     <div class="card-h" style="color:#1b5e20; font-size:14px;">🃏 開き側（代表が札を1枚ずつ開く順）</div>`;
-  if (false) {
+
+  // トランプの当たりが何本引かれたか（残り人数で本数が変わる）
+  {
+    const q = cardQuotaOf(r), w = cardWinnersOf(r);
+    const line = (yen, names, need) => {
+      if (!need) return '';
+      const ok = names.length === need;
+      const col = ok ? '#2e7d32' : (names.length > need ? '#c62828' : '#999');
+      return `<div style="display:flex;align-items:center;gap:6px;margin-top:3px;">
+        <span style="background:#6a1b9a;color:#fff;padding:1px 7px;border-radius:10px;font-size:11px;font-weight:700;">${yen}円</span>
+        <span style="color:${col};font-weight:700;font-size:12px;">${names.length}/${need}本</span>
+        <span style="font-size:12px;color:#333;">${names.join('・') || 'まだ誰も引いていません'}</span>
+      </div>`;
+    };
+    if (q.c100 || q.c50) {
+      openerHtml += `
+      <div style="margin:8px; padding:8px 10px; background:#f8f2fb; border:1px solid #e1bee7; border-radius:8px;">
+        <div style="font-size:12px; font-weight:700; color:#6a1b9a;">
+          🃏 トランプの当たり <span style="font-weight:400;color:#888;">（残り${activeCountOf(r)}人 → 100円×${q.c100}${q.c50 ? '・50円×' + q.c50 : ''}）</span>
+        </div>
+        ${line(100, w.w100, q.c100)}
+        ${line(50, w.w50, q.c50)}
+      </div>`;
+    }
   }
   for (let i = 0; i < slots; i++) {
     const b = r.bids[i];
@@ -1199,7 +1249,8 @@ function renderShare() {
 
   const ochiCount2 = attOf(r).filter(a => a.ochi).length;
   const slots = Math.max(1, membersOf(r).length - ochiCount2);
-  const bidRows = r.bids.slice(0, slots).map((b, i) => {
+  // 叫びも開きも入っていない行は共有画面に出さない（空行が並ぶと読みにくいため）
+  const bidRows = r.bids.slice(0, slots).filter(b => b.caller || b.opener).map((b, i) => {
     const calls = [b.call1, b.call2].filter(x => x !== '' && x != null).join('+') || '—';
     const resColor = b.result === '大砲' ? '#2e7d32' : b.result === 'ケツ' ? '#1565c0' : b.result === '落ち' ? '#e65100' : '#999';
     const resBadge = b.result ? `<span style="background:${resColor};color:#fff;padding:1px 5px;border-radius:3px;font-size:10px;">${b.result}</span>` : '';
@@ -1208,7 +1259,10 @@ function renderShare() {
         <td style="padding:3px 4px;font-size:11px;text-align:center;">${b.caller || '—'}</td>
         <td style="padding:3px 4px;font-size:11px;text-align:center;color:#555;">${calls}</td>
         <td style="padding:3px 4px;font-size:11px;text-align:center;">${b.opener || '—'}</td>
-        <td style="padding:3px 4px;font-size:11px;text-align:center;font-weight:600;">${b.openResult !== '' && b.openResult != null ? b.openResult : '—'}</td>
+        <td style="padding:3px 4px;font-size:11px;text-align:center;font-weight:600;">
+          ${b.openResult !== '' && b.openResult != null ? b.openResult : '—'}
+          ${b.card2 ? `<div style="font-size:9px;font-weight:700;color:#6a1b9a;">🃏${+b.card2}円</div>` : ''}
+        </td>
         <td style="padding:3px 4px;font-size:11px;text-align:center;">${resBadge}</td>
       </tr>
     `;
@@ -1221,6 +1275,13 @@ function renderShare() {
   _sl.push(`●出席(${presentList.length}): ${presentList.join('・')||'—'}`);
   _sl.push(`●欠席(${absentList.length}): ${absentList.join('・')||'—'}`);
   _sl.push('──────────');
+  const _q = cardQuotaOf(r), _w = cardWinnersOf(r);
+  if (_q.c100 || _q.c50) {
+    _sl.push(`■ トランプ当たり（100円×${_q.c100}${_q.c50 ? '・50円×' + _q.c50 : ''}）`);
+    if (_q.c100) _sl.push(`・100円: ${_w.w100.join('・') || '—'}`);
+    if (_q.c50)  _sl.push(`・50円: ${_w.w50.join('・') || '—'}`);
+    _sl.push('──────────');
+  }
   _sl.push('■ 精算・配当');
   _sl.push(`・集金: ${kaihi.toLocaleString()}円 × ${paidCount}名 = ${pool.toLocaleString()}円`);
   _sl.push(`・配当(${dispNormal.length}人): ${haitouUnit.toLocaleString()}×${normalCount}=${haitouNormal.toLocaleString()}円${dispNormal.length ? ' '+dispNormal.join('・') : ''}`);
@@ -1261,6 +1322,20 @@ function renderShare() {
           <tbody>${bidRows}</tbody>
         </table>
       </div>
+      ${(_q.c100 || _q.c50) ? `
+      <div style="margin-bottom:6px;background:#f8f2fb;border:1px solid #e1bee7;padding:8px;border-radius:5px;">
+        <div style="font-size:11px;font-weight:700;color:#6a1b9a;margin-bottom:3px;">
+          🃏 トランプ当たり <span style="font-weight:400;color:#999;">（100円×${_q.c100}${_q.c50 ? '・50円×' + _q.c50 : ''}）</span>
+        </div>
+        <div style="font-size:11px;line-height:1.7;">
+          ${_q.c100 ? `<div>● <span style="background:#6a1b9a;color:#fff;padding:1px 6px;border-radius:9px;font-size:10px;font-weight:700;">100円</span>
+            <strong style="color:#6a1b9a;">${_w.w100.join('・') || '—'}</strong>
+            ${_w.w100.length !== _q.c100 ? `<span style="font-size:10px;color:#c62828;">（${_w.w100.length}/${_q.c100}本）</span>` : ''}</div>` : ''}
+          ${_q.c50 ? `<div>● <span style="background:#9575cd;color:#fff;padding:1px 6px;border-radius:9px;font-size:10px;font-weight:700;">50円</span>
+            <strong style="color:#6a1b9a;">${_w.w50.join('・') || '—'}</strong>
+            ${_w.w50.length !== _q.c50 ? `<span style="font-size:10px;color:#c62828;">（${_w.w50.length}/${_q.c50}本）</span>` : ''}</div>` : ''}
+        </div>
+      </div>` : ''}
       <div style="margin-bottom:6px;background:#f7f9fc;padding:8px;border-radius:5px;">
         <div style="font-size:11px;font-weight:700;color:#0d1b3e;margin-bottom:4px;">💰 精算・配当内訳</div>
         <div style="font-size:11px;line-height:1.6;">
