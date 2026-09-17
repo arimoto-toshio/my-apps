@@ -411,6 +411,16 @@ function cardWinnersOf(r) {
   return { w100, w50 };
 }
 
+// その回の「落ち済み」を、それより前の回の落ち判定から求める
+function computeOchiFor(r) {
+  if (+r.num === 1) return [];        // 第1回はシーズンの始まり＝誰も落ちていない
+  const set = new Set();
+  seasonRoundsBefore(r).forEach(rd => {
+    rd.bids.forEach(b => { if (b.result === '落ち' && b.opener) set.add(b.opener); });
+  });
+  return membersOf(r).filter(m => set.has(m));
+}
+
 const CARD_OPTIONS = ['','A','2','3','4','5','6','7','8','9','10','J','Q','K'];
 const CALL_OPTIONS = ['',0,50,100,150,200,250,300,350,400,450,500,550,600,650,700,750,800,850,900,950,1000];
 
@@ -458,7 +468,11 @@ function loadApp() {
         cur.bids.forEach(b => {
           if (!b.manualResult) b.result = '';
         });
-        cur.attendance.forEach(a => { a.ochi = false; });
+        // 「落ち済み」は、それより前の回で落ちた人から付け直す。
+        // 以前はここで一律 false にしていたため、開くたびに落ち済みが消えて
+        // 入札枠や配当人数がずれていた。
+        const ochiNow = computeOchiFor(cur);
+        cur.attendance.forEach(a => { a.ochi = ochiNow.includes(a.name); });
         delete cur.calc.normalCount;
         delete cur.calc.ketsuCount;
         delete cur.calc.taihouCount;
@@ -729,16 +743,7 @@ function renderAttendance() {
 function recalcOchi() {
   const r = round();
   const before = r.attendance.filter(a => a.ochi).map(a => a.name);
-  let after;
-  if (+r.num === 1) {
-    after = [];                       // 第1回はシーズンの始まりなので誰も落ちていない
-  } else {
-    const set = new Set();
-    seasonRoundsBefore(r).forEach(rd => {
-      rd.bids.forEach(b => { if (b.result === '落ち' && b.opener) set.add(b.opener); });
-    });
-    after = membersOf(r).filter(m => set.has(m));
-  }
+  const after = computeOchiFor(r);
   const msg = `この回（${r.year}年${r.month}月）の「落ち済み」を付け直します。\n\n`
             + `いま: ${before.join('・') || 'なし'}\n`
             + `あと: ${after.join('・') || 'なし'}\n\n`
