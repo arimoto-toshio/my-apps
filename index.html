@@ -273,6 +273,14 @@
   </div>
 </div>
 
+<!-- スクショ用: 共有カードだけを1画面に収めて出す -->
+<div id="shotOverlay" onclick="closeShot()" style="display:none; position:fixed; inset:0; background:#fff; z-index:9999;">
+  <div id="shotStage" style="position:absolute; top:6px; left:50%; transform-origin:top center;"></div>
+  <div id="shotHint" style="position:fixed; bottom:6px; left:0; right:0; text-align:center; font-size:11px; color:#aaa;">
+    スクリーンショットを撮ったら、画面をタップで戻ります
+  </div>
+</div>
+
 <!-- ボトムバー -->
 <div class="bottom-bar">
   <button class="bb-save" onclick="saveAll()">💾 保存</button>
@@ -1425,7 +1433,8 @@ function renderShare() {
       </div>
       <div style="text-align:center;font-size:9px;color:#999;margin-top:4px;">― 楽晴会管理アプリ ―</div>
     </div>
-    <div style="display:flex;gap:8px;margin-top:12px;">
+    <button onclick="openShot()" style="width:100%;margin-top:12px;padding:14px;border:none;border-radius:10px;background:#6a1b9a;color:#fff;font-size:15px;font-weight:700;cursor:pointer;">📷 1画面に収める（スクショ用）</button>
+    <div style="display:flex;gap:8px;margin-top:8px;">
       <button onclick="copyShareText()" style="flex:1;padding:14px;border:none;border-radius:10px;background:#0d1b3e;color:#fff;font-size:15px;font-weight:700;cursor:pointer;">📋 コピー</button>
       <button onclick="sendShareLine()" style="flex:1;padding:14px;border:none;border-radius:10px;background:#06C755;color:#fff;font-size:15px;font-weight:700;cursor:pointer;">💬 LINEで送る</button>
     </div>
@@ -1433,6 +1442,33 @@ function renderShare() {
 }
 
 let lastShareText = '';
+// 共有カードを画面の高さに収まるまで縮めて表示する（スマホで1回のスクショに収めるため）
+function openShot(){
+  const card = document.querySelector('#shareBody > div');
+  if (!card) { toast('共有の画面を開いてから押してください'); return; }
+  const ov = document.getElementById('shotOverlay');
+  const st = document.getElementById('shotStage');
+  const w = card.offsetWidth;
+  st.style.width = w + 'px';
+  st.style.transform = 'translateX(-50%) scale(1)';
+  st.innerHTML = card.outerHTML;
+  ov.style.display = 'block';
+  // 実際に置いてから高さを測って縮小率を決める
+  requestAnimationFrame(() => {
+    const h = st.offsetHeight;
+    const s = Math.min(1, (window.innerWidth - 12) / w, (window.innerHeight - 30) / h);
+    st.style.transform = `translateX(-50%) scale(${s})`;
+    document.getElementById('shotHint').textContent =
+      s < 1 ? `全体を ${Math.round(s * 100)}% に縮めています — タップで戻ります`
+            : 'スクリーンショットを撮ったら、画面をタップで戻ります';
+  });
+}
+function closeShot(){
+  const ov = document.getElementById('shotOverlay');
+  ov.style.display = 'none';
+  document.getElementById('shotStage').innerHTML = '';
+}
+
 function copyShareText(){
   if(!lastShareText){ toast('共有データがありません'); return; }
   if(navigator.clipboard && navigator.clipboard.writeText){
