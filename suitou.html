@@ -111,6 +111,7 @@
     <label class="btn" style="cursor:pointer;">⬆ 読込<input type="file" accept=".json" onchange="importData(event)" style="display:none"></label>
     <button class="btn cl1" onclick="cloudUpload()">☁️↑ クラウド保存</button>
     <button class="btn cl2" onclick="cloudDownload()">☁️↓ クラウド読込</button>
+    <button class="btn" onclick="openHist()" title="ほかの端末の内容を読み込む前の状態に戻せます">🕘 履歴</button>
   </div>
 </header>
 
@@ -207,14 +208,104 @@ function endBalanceOf(p){
 function persist(){ localStorage.setItem(STORAGE_KEY, JSON.stringify(allData)); cloudAutoSave(); }
 function loadStorage(){ try{ const r=localStorage.getItem(STORAGE_KEY); if(r) allData=JSON.parse(r); }catch(e){ allData={}; } }
 
-var autoCloudTimer=null;
-function cloudAutoSave(){ clearTimeout(autoCloudTimer); autoCloudTimer=setTimeout(()=>pushCloud(true),2500); }
+// ============================================================
+// Macとスマホの自動同期
+// 最後にクラウドとそろえた時点の中身（base）を覚えておき、
+//   クラウドだけ変わっていた → 読み込む（ほかの端末で入れた分・スプレッドシートからの取り込み）
+//   手元だけ変わっていた     → クラウドへ送る
+//   両方変わっていた         → どちらを残すか聞く（読み込む前の手元は履歴に残す）
+// 以前は手元が空のときしか読み込まず、入力のたびに手元の内容でクラウドを上書きしていたため、
+// ほかの端末で入れた分が消えることがあった。
+// ============================================================
+const BASE_KEY = 'yakiniku_kinsen_syncbase_v1';
+const HIST_KEY = 'yakiniku_kinsen_hist_v1';
+// 比べるための「中身」。空欄の表し方（'' / null / 0 / キー無し）の違いや、
+// 月を見ただけで作られる空のページは無視する（それだけで「変更あり」にしないため）
+function fpOf(d){
+  const rowHas = r => r && (String(r.d??'').trim() || String(r.kamoku||'').trim() || String(r.tekiyo||'').trim() || toNum(r.nyu) || toNum(r.shu));
+  const out = [];
+  Object.keys(d||{}).filter(k=>/^R\d+-\d+$/.test(k)).sort().forEach(k=>{
+    const p = d[k]||{}; const rows = (p.rows||[]).filter(rowHas);
+    if(!rows.length) return;
+    out.push([k, toNum(p.opening??0), rows.map(r=>[String(r.y??''),String(r.m??''),String(r.d??'').trim(),r.kamoku||'',r.tekiyo||'',String(r.tax||''),r.invoice?1:0,toNum(r.nyu),toNum(r.shu)])]);
+  });
+  return JSON.stringify(out);
+}
+function getBase(){ try{ return localStorage.getItem(BASE_KEY); }catch(e){ return null; } }
+function setBase(d){ try{ localStorage.setItem(BASE_KEY, fpOf(d)); }catch(e){} }
+// 読み込む前の手元を残す（データが大きいので3世代まで。容量が足りなければ古いものから捨てる）
+function snapshot(){
+  try{
+    const s = localStorage.getItem(STORAGE_KEY); if(!s) return;
+    let h=[]; try{ h=JSON.parse(localStorage.getItem(HIST_KEY)||'[]'); }catch(e){}
+    if(h.length && h[0].d===s) return;
+    h.unshift({t:Date.now(), d:s}); h=h.slice(0,3);
+    while(h.length){ try{ localStorage.setItem(HIST_KEY, JSON.stringify(h)); return; }catch(e){ h.pop(); } }
+  }catch(e){}
+}
+function histList(){ try{ return JSON.parse(localStorage.getItem(HIST_KEY)||'[]'); }catch(e){ return []; } }
+function openHist(){
+  const h = histList();
+  if(!h.length){ alert('まだ履歴はありません。\n（ほかの端末の内容を読み込むとき、読み込む前の状態が自動で残ります）'); return; }
+  const lines = h.map((e,i)=>`${i+1}. ${new Date(e.t).toLocaleString('ja-JP',{month:'numeric',day:'numeric',hour:'2-digit',minute:'2-digit'})} の状態`).join('\n');
+  const v = prompt('どの時点に戻しますか？ 番号を入れてください。\n（読み込む前に残した状態です。今の内容も履歴に残ります）\n\n'+lines);
+  const i = parseInt(v,10)-1; const e = h[i]; if(!e) return;
+  snapshot();
+  allData = JSON.parse(e.d); localStorage.setItem(STORAGE_KEY, e.d);
+  render(); cloudAutoSave(); toast('🕘 戻しました');
+}
+
+var autoCloudTimer=null, syncing=false, cloudReady=false, lastSync=0;
+function cloudAutoSave(){ if(!cloudReady) return; clearTimeout(autoCloudTimer); autoCloudTimer=setTimeout(syncNow,2500); }
+async function fetchCloud(){
+  const res=await fetch(SYNC_URL+'?action=load&key='+SYNC_KEY,{cache:'no-store'});
+  const j=await res.json();
+  let d=j&&j.data; if(typeof d==='string'){ try{ d=JSON.parse(d); }catch(e){ d=null; } }
+  return (d&&typeof d==='object'&&Object.keys(d).length) ? d : null;
+}
+function takeCloud(d,msg){
+  snapshot();
+  allData=d; localStorage.setItem(STORAGE_KEY, JSON.stringify(allData));
+  setBase(allData); render();
+  if(msg) toast(msg);
+}
+async function syncNow(){
+  if(syncing) return;
+  syncing=true; lastSync=Date.now();
+  clearTimeout(autoCloudTimer); autoCloudTimer=null;
+  try{
+    const cloud=await fetchCloud();
+    const hasLocal=localStorage.getItem(STORAGE_KEY)!==null;
+    const local=fpOf(allData), base=getBase();
+    if(!cloud){
+      if(hasLocal && local!=='[]') await pushCloud(true);            // クラウドが空なら手元を送る
+    }else{
+      const cs=fpOf(cloud);
+      if(cs===local) setBase(allData);                                // 同じ
+      else if(!hasLocal || local==='[]') takeCloud(cloud,'☁️ クラウドから読み込みました');
+      else{
+        const cloudChanged = base===null || cs!==base;
+        const localChanged = base===null || local!==base;
+        if(cloudChanged && !localChanged) takeCloud(cloud,'☁️ 新しい記録を読み込みました');
+        else if(!cloudChanged && localChanged) await pushCloud(true);
+        else if(confirm('⚠️ この画面とクラウド（ほかの端末）の両方に、違う内容があります。\n\n'
+                      + 'OK＝クラウドの内容を読み込む（この画面の内容は履歴に残ります）\n'
+                      + 'キャンセル＝この画面の内容でクラウドを上書きする')) takeCloud(cloud,'☁️ クラウドの内容を読み込みました');
+        else await pushCloud(true);
+      }
+    }
+  }catch(e){ /* オフライン等。手元には保存済み */ }
+  syncing=false; cloudReady=true;
+}
 async function pushCloud(silent){
   if(!silent) toast('☁️ アップロード中...');
   try{
-    const res=await fetch(SYNC_URL+'?action=save&key='+SYNC_KEY,{method:'POST',body:JSON.stringify(allData)});
+    // 空の欄（'' / null / false）は送らない。クラウドの保存容量に上限があり、
+    // 空欄込みだと上限を超えて保存に失敗したことがある（2026-09-08）。表示は空欄のまま変わらない
+    const sent=JSON.stringify(allData,(k,v)=>(v===''||v===null||v===false)?undefined:v);
+    const res=await fetch(SYNC_URL+'?action=save&key='+SYNC_KEY,{method:'POST',body:sent});
     const j=await res.json();
-    if(j.success){ if(!silent) toast('☁️ クラウドに保存しました'); return true; }
+    if(j.success){ setBase(JSON.parse(sent)); if(!silent) toast('☁️ クラウドに保存しました'); return true; }
     if(!silent) toast('エラー: '+(j.message||''));
   }catch(e){ if(!silent) toast('通信エラー: '+e.message); }
   return false;
@@ -223,9 +314,15 @@ function applyCloud(j){
   if(!j||!j.success||!j.data) return false;
   let d=j.data; if(typeof d==='string'){ try{ d=JSON.parse(d); }catch(e){ return false; } }
   if(!d||typeof d!=='object'||!Object.keys(d).length) return false;
-  allData=d; localStorage.setItem(STORAGE_KEY, JSON.stringify(allData)); render();
+  snapshot();
+  allData=d; localStorage.setItem(STORAGE_KEY, JSON.stringify(allData)); setBase(allData); render();
   return true;
 }
+// 画面に戻ってきたときにも同期（スマホで別アプリから戻ったとき等）
+document.addEventListener('visibilitychange',()=>{
+  if(document.visibilityState==='hidden'){ if(autoCloudTimer) syncNow(); return; }   // 送る前の入力があれば送っておく
+  if(cloudReady && !autoCloudTimer && Date.now()-lastSync>30*1000) syncNow();
+});
 async function cloudUpload(){ await pushCloud(false); }
 async function cloudDownload(){
   toast('☁️ ダウンロード中...');
@@ -366,7 +463,7 @@ function exportCSV(){
 function importData(e){
   const f=e.target.files[0]; if(!f) return;
   const r=new FileReader();
-  r.onload=ev=>{ try{ allData=JSON.parse(ev.target.result); localStorage.setItem(STORAGE_KEY,JSON.stringify(allData)); render(); toast('⬆ 読み込みました'); }catch(err){ toast('❌ 読込エラー'); } };
+  r.onload=ev=>{ try{ const d=JSON.parse(ev.target.result); snapshot(); allData=d; localStorage.setItem(STORAGE_KEY,JSON.stringify(allData)); render(); cloudAutoSave(); toast('⬆ 読み込みました'); }catch(err){ toast('❌ 読込エラー'); } };
   r.readAsText(f); e.target.value='';
 }
 function toast(m){ const t=document.getElementById('toast'); t.textContent=m; t.classList.add('show'); clearTimeout(toast._t); toast._t=setTimeout(()=>t.classList.remove('show'),2000); }
@@ -374,19 +471,9 @@ function toast(m){ const t=document.getElementById('toast'); t.textContent=m; t.
 // ============================================================
 // 起動
 // ============================================================
-(async ()=>{
-  loadStorage();
-  if(!Object.keys(allData).length){
-    // ローカルが空ならクラウドから自動復元
-    try{
-      const res=await fetch(SYNC_URL+'?action=load&key='+SYNC_KEY);
-      const j=await res.json();
-      let d=j&&j.data; if(typeof d==='string'){ try{ d=JSON.parse(d); }catch(e){} }
-      if(d&&Object.keys(d).length){ allData=d; localStorage.setItem(STORAGE_KEY,JSON.stringify(allData)); toast('☁️ クラウドから自動復元しました'); }
-    }catch(e){}
-  }
-  render();
-})();
+loadStorage();
+render();
+syncNow();   // 開いたらクラウドと突き合わせて、新しい方にそろえる
 </script>
 </body>
 </html>
