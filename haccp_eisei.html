@@ -1,0 +1,1471 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>🧼 HACCP 衛生管理</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ctext y='.9em' font-size='90'%3E🧼%3C/text%3E%3C/svg%3E">
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: 'Hiragino Sans', 'Meiryo', sans-serif; background: #f4f6f0; color: #23301a; padding: 14px; font-size: 15px; }
+  .wrap { max-width: 960px; margin: 0 auto; }
+  .header { background: linear-gradient(135deg, #33691e, #689f38); color: white; padding: 14px 18px; border-radius: 12px; box-shadow: 0 3px 10px rgba(0,0,0,0.2); margin-bottom: 12px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px; }
+  .header h1 { font-size: 1.2rem; }
+  .header .sub { font-size: 0.82rem; opacity: 0.9; margin-top: 3px; }
+  .header .cloud-btn { background: rgba(255,255,255,0.2); border: 1.5px solid rgba(255,255,255,0.6); color: white; padding: 8px 14px; border-radius: 8px; font-size: 0.9rem; font-weight: bold; cursor: pointer; font-family: inherit; }
+
+  .tabs { display: flex; gap: 6px; margin-bottom: 12px; flex-wrap: wrap; }
+  .tab { flex: 1; min-width: 120px; background: white; border: 2px solid #dde8cd; border-radius: 10px; padding: 10px 6px; font-size: 0.92rem; font-weight: bold; color: #557a33; cursor: pointer; font-family: inherit; text-align: center; }
+  .tab.active { background: #33691e; border-color: #33691e; color: white; }
+
+  .card { background: white; border-radius: 10px; padding: 14px; margin-bottom: 12px; box-shadow: 0 2px 6px rgba(0,0,0,0.08); }
+  .card-title { font-size: 1rem; font-weight: bold; color: #33691e; margin-bottom: 10px; padding-bottom: 6px; border-bottom: 2px solid #d4a017; display: flex; justify-content: space-between; align-items: center; gap: 8px; flex-wrap: wrap; }
+
+  .btn { padding: 9px 16px; border: none; border-radius: 8px; cursor: pointer; font-size: 0.95rem; font-weight: bold; font-family: inherit; transition: all 0.15s; }
+  .btn:active { transform: scale(0.97); }
+  .btn-red { background: #689f38; color: white; }
+  .btn-gold { background: #d4a017; color: white; }
+  .btn-teal { background: #006064; color: white; }
+  .btn-gray { background: #888; color: white; }
+  .btn-sm { padding: 6px 10px; font-size: 0.85rem; }
+
+  .form-row { display: flex; gap: 10px; flex-wrap: wrap; margin-bottom: 10px; }
+  .form-group { display: flex; flex-direction: column; gap: 4px; flex: 1; min-width: 110px; }
+  .form-group label { font-size: 0.78rem; color: #666; font-weight: bold; }
+  .form-group input, .form-group select, .form-group textarea { padding: 10px; border: 1.5px solid #ccc; border-radius: 6px; font-size: 1rem; font-family: inherit; outline: none; background: white; }
+  .form-group input:focus, .form-group select:focus, .form-group textarea:focus { border-color: #d4a017; background: #fffbea; }
+
+  /* ===== チェック項目 ===== */
+  .sec-head { background: #fff8e1; padding: 9px 12px; border-left: 5px solid #d4a017; font-weight: bold; margin: 14px 0 8px 0; border-radius: 0 6px 6px 0; font-size: 0.93rem; }
+  .sec-head .hint { display: block; font-weight: normal; font-size: 0.76rem; color: #7a6a33; margin-top: 3px; }
+
+  .chk { display: flex; align-items: center; gap: 8px; padding: 9px 4px; border-bottom: 1px solid #eef2e6; flex-wrap: wrap; }
+  .chk .lbl { flex: 1; min-width: 150px; font-size: 0.9rem; line-height: 1.45; }
+  .chk .lbl small { display: block; color: #8a8a7a; font-size: 0.76rem; margin-top: 2px; }
+  .chk .ops { display: flex; gap: 5px; flex: 0 0 auto; }
+  .op { border: 1.5px solid #ccc; background: white; border-radius: 8px; padding: 8px 12px; font-size: 0.9rem; font-weight: bold; color: #777; cursor: pointer; font-family: inherit; min-width: 46px; }
+  .op.ok.on { background: #689f38; border-color: #689f38; color: white; }
+  .op.ng.on { background: #c62828; border-color: #c62828; color: white; }
+  .op.na.on { background: #9e9e9e; border-color: #9e9e9e; color: white; }
+  .chk.is-ng { background: #fff4f4; }
+  .fix { width: 100%; margin-top: 6px; display: none; }
+  .chk.is-ng .fix { display: block; }
+  .fix input { width: 100%; padding: 8px 10px; border: 1.5px solid #e79c9c; border-radius: 6px; font-size: 0.88rem; font-family: inherit; background: #fffafa; }
+
+  /* 肉入荷記録アプリとの連携表示 */
+  .intake { background: #f6faf0; border: 1px solid #dde8cd; border-radius: 8px; padding: 9px 11px; margin: 4px 0 10px 0; font-size: 0.84rem; line-height: 1.65; }
+  .intake .ttl { font-weight: bold; color: #33691e; display: flex; justify-content: space-between; align-items: center; gap: 8px; flex-wrap: wrap; margin-bottom: 3px; }
+  .intake .ttl .acts { display: flex; gap: 5px; }
+  .intake .ttl .acts button, .intake .ttl .acts a { background: white; border: 1.5px solid #c3d4ac; border-radius: 6px; padding: 4px 9px; font-size: 0.78rem; color: #33691e; cursor: pointer; font-family: inherit; font-weight: bold; text-decoration: none; }
+  .intake .row { color: #3c4a30; }
+  .intake .row b { color: #23301a; }
+  .intake .none { color: #999; }
+  .intake .warn { color: #c62828; font-weight: bold; }
+  .intake .src { font-size: 0.74rem; color: #9aa88a; margin-top: 3px; }
+
+  .temp-row { display: flex; align-items: center; gap: 8px; padding: 8px 4px; border-bottom: 1px solid #eef2e6; flex-wrap: wrap; }
+  .temp-row .nm { flex: 1; min-width: 120px; font-size: 0.9rem; }
+  .temp-row input { width: 92px; padding: 9px; border: 1.5px solid #ccc; border-radius: 6px; font-size: 1.05rem; font-weight: bold; text-align: center; font-family: inherit; }
+  .temp-row .unit { font-size: 0.85rem; color: #777; }
+  .temp-row .std { font-size: 0.76rem; color: #999; min-width: 92px; }
+  .temp-row input.warn { border-color: #c62828; background: #fff4f4; color: #c62828; }
+  .temp-row .prev { background: #f6faf0; border: 1.5px dashed #c3d4ac; border-radius: 6px; padding: 7px 10px; font-size: 0.8rem; color: #557a33; cursor: pointer; font-family: inherit; }
+  .temp-row .prev b { color: #33691e; }
+
+  #toast { position: fixed; left: 50%; bottom: 24px; transform: translateX(-50%) translateY(20px); background: #33691e; color: white; padding: 10px 18px; border-radius: 24px; font-size: 0.88rem; font-weight: bold; box-shadow: 0 4px 14px rgba(0,0,0,0.25); opacity: 0; pointer-events: none; transition: all 0.25s; z-index: 2000; }
+  #toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+  @media print { #toast { display: none; } }
+
+  .pill { display: inline-block; padding: 3px 9px; border-radius: 20px; font-size: 0.76rem; font-weight: bold; }
+  .pill-ok { background: #e8f3dd; color: #33691e; }
+  .pill-ng { background: #fde8e8; color: #c62828; }
+  .pill-non { background: #f0f0f0; color: #999; }
+  .pill-part { background: #fff3c0; color: #8a6d0b; }
+
+  table { width: 100%; border-collapse: collapse; font-size: 0.88rem; }
+  thead tr { background: #33691e; color: white; }
+  thead th { padding: 8px 5px; text-align: center; font-weight: normal; font-size: 0.82rem; }
+  tbody tr { border-bottom: 1px solid #dde8cd; }
+  tbody tr:nth-child(even) { background: #fafaf5; }
+  tbody td { padding: 7px 5px; vertical-align: middle; text-align: center; }
+  tbody td.l { text-align: left; }
+  .del-btn { background: none; border: none; color: #c62828; cursor: pointer; font-size: 1rem; padding: 4px 8px; border-radius: 4px; }
+  .del-btn:hover { background: #fce4ec; }
+
+  .cal { display: grid; grid-template-columns: repeat(7, 1fr); gap: 4px; margin-top: 8px; }
+  .cal .cd { aspect-ratio: 1; border: 1.5px solid #e3e8d8; border-radius: 8px; display: flex; flex-direction: column; align-items: center; justify-content: center; font-size: 0.8rem; cursor: pointer; background: white; }
+  .cal .cd.blank { border: none; background: none; cursor: default; }
+  .cal .cd.done { background: #e8f3dd; border-color: #689f38; color: #33691e; font-weight: bold; }
+  .cal .cd.ng { background: #fde8e8; border-color: #c62828; color: #c62828; font-weight: bold; }
+  .cal .cd.part { background: #fff8e1; border-color: #d4a017; color: #8a6d0b; font-weight: bold; }
+  .cal .cd .mk { font-size: 0.72rem; }
+  .cal-head { display: grid; grid-template-columns: repeat(7, 1fr); gap: 4px; font-size: 0.74rem; color: #888; text-align: center; margin-top: 6px; }
+
+  .plan-item { border: 1.5px solid #e3e8d8; border-radius: 8px; padding: 10px 12px; margin-bottom: 8px; background: #fcfdfa; }
+  .plan-item .pt { font-weight: bold; color: #33691e; font-size: 0.92rem; margin-bottom: 4px; }
+  .plan-item .pw { font-size: 0.85rem; line-height: 1.55; color: #444; }
+  .plan-item .pw b { color: #23301a; }
+  .plan-item textarea { width: 100%; min-height: 62px; padding: 8px; border: 1.5px solid #ccc; border-radius: 6px; font-size: 0.85rem; font-family: inherit; line-height: 1.5; }
+
+  .note { background: #fff8e1; border: 1px solid #f0dfa8; border-radius: 8px; padding: 10px 12px; font-size: 0.82rem; color: #6b5a20; line-height: 1.6; margin-bottom: 10px; }
+  .danger { background: #fde8e8; border: 1px solid #f0b8b8; border-radius: 8px; padding: 10px 12px; font-size: 0.82rem; color: #a01818; line-height: 1.6; margin-bottom: 10px; }
+  .empty { text-align: center; color: #aaa; padding: 30px; font-size: 0.9rem; }
+  .tag-list { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 6px; }
+  .tag { background: #fff3c0; border: 1.5px solid #d4a017; border-radius: 20px; padding: 6px 12px; font-size: 0.86rem; color: #33691e; font-weight: bold; display: flex; align-items: center; gap: 6px; }
+  .tag button { background: none; border: none; color: #c62828; cursor: pointer; font-size: 0.9rem; padding: 0; }
+
+  @media (max-width: 600px) {
+    body { padding: 10px; }
+    .form-group { min-width: 100%; }
+    thead th, tbody td { padding: 5px 3px; font-size: 0.78rem; }
+    .tab { min-width: calc(50% - 3px); }
+    .op { padding: 9px 14px; }
+  }
+
+  /* ===== 印刷シート ===== */
+  #printSheet { display: none; background: white; color: #000; }
+  #printSheet h1 { font-size: 17px; text-align: center; letter-spacing: 4px; margin-bottom: 5px; }
+  #printSheet h2 { font-size: 13px; background: #eee !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; padding: 3px 6px; margin: 7px 0 4px 0; border-left: 4px solid #333; }
+  #printSheet .ps-sub { display: flex; justify-content: space-between; font-size: 11px; margin-bottom: 6px; flex-wrap: wrap; gap: 6px; }
+  #printSheet .ps-table { width: 100%; border-collapse: collapse; font-size: 10px; }
+  /* font-size: inherit は必須。画面用の `tbody td { font-size: .78rem }` 等が
+     直接指定として効いてしまい、ウィンドウ幅で印刷の文字サイズが変わるのを防ぐ */
+  #printSheet .ps-table th, #printSheet .ps-table td { border: 1px solid #333; padding: 2px 4px; text-align: center; line-height: 1.15; font-size: inherit; }
+  #printSheet .ps-table td.l, #printSheet .ps-table th.l { text-align: left; }
+  #printSheet .ps-table thead th { background: #eee !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; font-weight: bold; color: #000; }
+  #printSheet .ps-table td.d { font-size: 9px; width: 18px; padding: 2px 1px; }
+  #printSheet .ps-foot { display: flex; justify-content: space-between; align-items: flex-end; margin-top: 10px; }
+  #printSheet .ps-note { font-size: 9px; color: #333; max-width: 66%; line-height: 1.5; }
+  #printSheet .ps-sign { display: flex; align-items: center; gap: 8px; font-size: 10px; }
+  #printSheet .ps-sign .box { display: inline-block; width: 50px; height: 50px; border: 1px solid #333; }
+  #printSheet .pbreak { page-break-before: always; }
+  #printSheet .plan-box { border: 1px solid #333; padding: 5px 8px; font-size: 10.5px; line-height: 1.4; margin-bottom: 5px; }
+  #printSheet .plan-box .bt { font-weight: bold; font-size: 11px; margin-bottom: 2px; }
+  @page { size: A4 portrait; margin: 10mm; }
+  @media print {
+    body { background: #fff; padding: 0; }
+    body.printing-sheet .wrap { display: none !important; }
+    body.printing-sheet #printSheet { display: block !important; }
+    body.print-land { }
+  }
+
+  /* ===== モーダル ===== */
+  .modal { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.5); z-index: 1000; align-items: center; justify-content: center; padding: 20px; }
+  .modal .box2 { background: white; border-radius: 12px; padding: 20px; max-width: 560px; width: 100%; max-height: 85vh; overflow-y: auto; box-shadow: 0 8px 32px rgba(0,0,0,0.3); }
+  .hist-item { display: flex; align-items: center; gap: 10px; border: 1px solid #eee; border-radius: 10px; padding: 9px 12px; margin: 7px 0; font-size: 0.85rem; }
+  .hist-item .when { font-weight: bold; color: #33691e; }
+  .hist-item .info { color: #888; }
+  .hist-item button { margin-left: auto; white-space: nowrap; }
+</style>
+</head>
+<body>
+
+<div class="wrap">
+
+<div class="header">
+  <div>
+    <h1>🧼 HACCP 衛生管理</h1>
+    <div class="sub" id="hdrSub">焼肉ありもと｜衛生管理計画と毎日の記録</div>
+  </div>
+  <div style="display:flex;gap:8px;">
+    <button class="cloud-btn" onclick="syncUpload()">☁︎↑</button>
+    <button class="cloud-btn" onclick="syncDownload()">☁︎↓</button>
+  </div>
+</div>
+
+<div class="tabs">
+  <button class="tab active" id="tab-today" onclick="showTab('today')">📅 今日の記録</button>
+  <button class="tab" id="tab-list" onclick="showTab('list')">📊 記録一覧</button>
+  <button class="tab" id="tab-plan" onclick="showTab('plan')">📖 衛生管理計画</button>
+  <button class="tab" id="tab-set" onclick="showTab('set')">⚙️ 設定</button>
+</div>
+
+<!-- ============ 今日の記録 ============ -->
+<div id="pane-today">
+  <div class="card">
+    <div class="card-title">
+      <span>📅 日々の記録</span>
+      <span id="todayStatus"></span>
+    </div>
+    <div class="form-row">
+      <div class="form-group" style="flex:0 0 auto;min-width:170px;">
+        <label>記録日</label>
+        <input type="date" id="recDate" onchange="onDateChange()">
+      </div>
+      <div class="form-group" style="flex:0 0 auto;min-width:130px;">
+        <label>確認者</label>
+        <select id="recStaff" onchange="autoSave(0)"></select>
+      </div>
+      <div class="form-group" style="flex:1;justify-content:flex-end;align-self:flex-end;min-width:200px;">
+        <button class="btn btn-gold" onclick="allOk()" style="width:100%;">⚡️ 全部「良」にする</button>
+      </div>
+    </div>
+    <div class="note">「良」でない項目は <b>赤</b> になり、<b>どう対応したか</b>の入力欄が出ます。そこに書いた内容がそのまま改善措置の記録になります。<br>押した内容は<b>その場で自動保存</b>され、スマホとMacの両方にそろいます。</div>
+  </div>
+
+  <div class="card">
+    <div class="card-title">🌡 冷蔵庫・冷凍庫の温度</div>
+    <div id="tempBox"></div>
+  </div>
+
+  <div class="card">
+    <div class="card-title">✅ 一般衛生管理のポイント</div>
+    <div id="genBox"></div>
+  </div>
+
+  <div class="card">
+    <div class="card-title">🔥 重要管理のポイント（加熱・冷却）</div>
+    <div id="ccpBox"></div>
+  </div>
+
+  <div class="card">
+    <div class="card-title">🥩 焼肉店として特に注意する点</div>
+    <div id="ykBox"></div>
+  </div>
+
+  <div class="card">
+    <div class="card-title">📝 特記事項（あれば）</div>
+    <div class="form-group">
+      <textarea id="recNote" rows="3" oninput="autoSave(800)" placeholder="例: 網の焦げ付きがひどく交換した／業者に排水溝の清掃を依頼した"></textarea>
+    </div>
+    <div style="text-align:center;margin-top:14px;">
+      <button class="btn btn-red" onclick="saveRecord()" style="width:100%;padding:14px;font-size:1.05rem;">💾 この日の記録を保存</button>
+    </div>
+    <div id="saveMsg" style="text-align:center;font-size:0.85rem;color:#33691e;margin-top:8px;min-height:1.2em;"></div>
+  </div>
+</div>
+
+<!-- ============ 記録一覧 ============ -->
+<div id="pane-list" style="display:none;">
+  <div class="card">
+    <div class="card-title">📊 記録の一覧</div>
+    <div class="form-row">
+      <div class="form-group" style="flex:0 0 auto;min-width:140px;">
+        <label>表示月</label>
+        <select id="listMonth" onchange="renderList()"></select>
+      </div>
+      <div class="form-group" style="flex:1;justify-content:flex-end;align-self:flex-end;">
+        <div style="display:flex;gap:6px;flex-wrap:wrap;justify-content:flex-end;">
+          <button class="btn btn-teal btn-sm" onclick="exportJSON()">💾 保存</button>
+          <button class="btn btn-teal btn-sm" onclick="document.getElementById('importFile').click()">📂 読込</button>
+          <input type="file" id="importFile" accept=".json" style="display:none;" onchange="importJSON(event)">
+          <button class="btn btn-gray btn-sm" onclick="openHist()">🕘 履歴</button>
+          <button class="btn btn-gold btn-sm" onclick="printMonth()">🖨 月間記録表を印刷</button>
+        </div>
+      </div>
+    </div>
+    <div id="calBox"></div>
+    <div id="listSummary" style="margin-top:12px;"></div>
+  </div>
+
+  <div class="card">
+    <div class="card-title">⚠️ 「良でない」があった日</div>
+    <div id="ngBox"></div>
+  </div>
+</div>
+
+<!-- ============ 衛生管理計画 ============ -->
+<div id="pane-plan" style="display:none;">
+  <div class="card">
+    <div class="card-title">
+      <span>📖 衛生管理計画</span>
+      <button class="btn btn-gold btn-sm" onclick="printPlan()">🖨 計画書を印刷</button>
+    </div>
+    <div class="note">
+      食品衛生法で、飲食店は<b>「HACCPの考え方を取り入れた衛生管理」</b>として ①衛生管理計画をつくる ②その通りに実行する ③記録して保存する、の3つが必要です。この計画書を印刷して店に備え、日々の記録と一緒に保管してください（保存は<b>1年以上</b>が目安）。
+    </div>
+    <div class="danger">
+      <b>提供してはいけないもの（法令）</b>：牛の生レバー、豚の肉・内臓の生食は<b>提供禁止</b>です。牛肉のユッケ・タルタル等の生食用食肉は、専用設備・加熱殺菌・表示など厳しい規格基準を満たした場合のみ。<b>当店は生食の提供はしない</b>方針を計画に明記しています。
+    </div>
+    <div id="planBox"></div>
+  </div>
+</div>
+
+<!-- ============ 設定 ============ -->
+<div id="pane-set" style="display:none;">
+  <div class="card">
+    <div class="card-title">⚙️ 店舗の情報</div>
+    <div class="form-row">
+      <div class="form-group"><label>店名</label><input type="text" id="setShop"></div>
+      <div class="form-group"><label>食品衛生責任者</label><input type="text" id="setResp"></div>
+    </div>
+    <div class="form-row">
+      <div class="form-group"><label>営業許可番号（任意）</label><input type="text" id="setPermit" placeholder="例: 第○○号"></div>
+      <div class="form-group"><label>所在地（任意）</label><input type="text" id="setAddr" placeholder="愛媛県喜多郡内子町…"></div>
+    </div>
+    <div style="text-align:right;margin-top:6px;"><button class="btn btn-red btn-sm" onclick="saveSettings()">保存</button></div>
+  </div>
+
+  <div class="card">
+    <div class="card-title">👥 確認者（従業員）</div>
+    <div class="form-row">
+      <div class="form-group"><label>名前を追加</label><input type="text" id="newStaff" placeholder="例: 有本"></div>
+      <div class="form-group" style="flex:0 0 auto;align-self:flex-end;"><button class="btn btn-teal" onclick="addStaff()">＋ 追加</button></div>
+    </div>
+    <div class="tag-list" id="staffList"></div>
+  </div>
+
+  <div class="card">
+    <div class="card-title">🌡 温度を記録する機器</div>
+    <div class="form-row">
+      <div class="form-group"><label>機器名</label><input type="text" id="newFridgeName" placeholder="例: 肉用冷蔵庫"></div>
+      <div class="form-group" style="flex:0 0 auto;min-width:120px;"><label>区分</label>
+        <select id="newFridgeType"><option value="chill">冷蔵（10℃以下）</option><option value="freeze">冷凍（-15℃以下）</option></select>
+      </div>
+      <div class="form-group" style="flex:0 0 auto;align-self:flex-end;"><button class="btn btn-teal" onclick="addFridge()">＋ 追加</button></div>
+    </div>
+    <div class="tag-list" id="fridgeList"></div>
+  </div>
+
+  <div class="card">
+    <div class="card-title">🗑 データ</div>
+    <div style="display:flex;gap:8px;flex-wrap:wrap;">
+      <button class="btn btn-teal btn-sm" onclick="exportJSON()">💾 バックアップを書き出す</button>
+      <button class="btn btn-teal btn-sm" onclick="document.getElementById('importFile2').click()">📂 バックアップを読み込む</button>
+      <input type="file" id="importFile2" accept=".json" style="display:none;" onchange="importJSON(event)">
+      <button class="btn btn-gray btn-sm" onclick="openHist()">🕘 保存履歴から戻す</button>
+    </div>
+    <div style="font-size:0.8rem;color:#888;margin-top:10px;line-height:1.6;">
+      記録は端末の中（localStorage）と、☁︎ボタンでGoogleドライブに保存されます。保健所の立入検査では、この画面ではなく<b>印刷した記録表</b>を見せるのが確実です。月が変わったら「🖨 月間記録表を印刷」で紙にして綴じておくのがおすすめ。
+    </div>
+  </div>
+</div>
+
+</div>
+
+<!-- 履歴モーダル -->
+<div id="histModal" class="modal" onclick="if(event.target===this)closeHist()">
+  <div class="box2">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;padding-bottom:8px;border-bottom:2px solid #d4a017;">
+      <div style="font-size:1.05rem;font-weight:bold;color:#33691e;">🕘 保存履歴（バックアップ）</div>
+      <button class="btn btn-red btn-sm" onclick="closeHist()">✕ 閉じる</button>
+    </div>
+    <div style="font-size:0.8rem;color:#666;margin-bottom:10px;">記録のたびに自動で履歴が残ります（最大15世代）。間違えたときはここから戻せます。</div>
+    <div id="histBody"></div>
+  </div>
+</div>
+
+<!-- 日別詳細モーダル -->
+<div id="dayModal" class="modal" onclick="if(event.target===this)closeDay()">
+  <div class="box2">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;padding-bottom:8px;border-bottom:2px solid #d4a017;">
+      <div style="font-size:1.05rem;font-weight:bold;color:#33691e;" id="dayTitle">記録</div>
+      <button class="btn btn-red btn-sm" onclick="closeDay()">✕ 閉じる</button>
+    </div>
+    <div id="dayBody"></div>
+  </div>
+</div>
+
+<!-- 印刷シート -->
+<div id="printSheet"></div>
+<div id="toast"></div>
+
+<script>
+// ==================== 項目の定義 ====================
+// 一般衛生管理のポイント（手引書の標準項目）
+const GENERAL = [
+  { id:'g1', t:'原材料の受入の確認', s:'肉・野菜の外観、におい、包装の破れ、期限表示、配送時の温度を確認（肉の明細は🥩入荷記録アプリと連動）' },
+  { id:'g2', t:'冷蔵・冷凍庫の温度確認', s:'温度計で確認し数値を記録（上の🌡欄に入力）' },
+  { id:'g3', t:'交差汚染・二次汚染の防止', s:'生肉と野菜・提供済み食品を分けて保管。まな板・包丁を使い分けた' },
+  { id:'g4', t:'器具等の洗浄・消毒・殺菌', s:'まな板、包丁、スライサー、トング、ボウルを洗浄後に消毒した' },
+  { id:'g5', t:'トイレの洗浄・消毒', s:'便座、ドアノブ、水栓を消毒。手洗い石けん・ペーパーを補充' },
+  { id:'g6', t:'従業員の健康管理・衛生的な作業着', s:'下痢・嘔吐・発熱・手の傷の有無を確認。清潔な作業着と帽子' },
+  { id:'g7', t:'手洗いの実施', s:'作業前、トイレの後、生肉に触れた後、盛り付け前に石けんで手洗い' },
+  { id:'g8', t:'ねずみ・昆虫対策', s:'侵入経路、捕獲器、生ゴミの管理。異常があれば駆除を手配' }
+];
+
+// 重要管理のポイント（加熱・冷却）
+const CCP = [
+  { id:'c1', t:'グループ① 非加熱（そのまま出すもの）', s:'キムチ、ナムル、サラダ、冷麺、デザート等。冷蔵で保管し、盛り付けは清潔な手袋・器具で。出したらすぐ提供した' },
+  { id:'c2', t:'グループ② 加熱してすぐ出すもの', s:'スープ、揚げ物、焼き物、ご飯もの等。中心部まで十分に加熱（目安75℃で1分以上）したことを確認した' },
+  { id:'c3', t:'グループ③ 加熱後に冷却・再加熱するもの', s:'仕込んだスープ、下茹でホルモン等。加熱後は小分けして速やかに冷却し冷蔵保管。提供前に再加熱（75℃1分以上）した' }
+];
+
+// 焼肉店として特に注意する点
+const YAKINIKU = [
+  { id:'y1', t:'生食用としての提供はしていない', s:'牛レバー・豚肉（内臓含む）の生食提供は法令で禁止。ユッケ等の生食用食肉も提供しない' },
+  { id:'y2', t:'生肉用トングと食べる箸の区別を案内した', s:'卓上に生肉用トングを用意し、お客様へ声かけ・表示で案内' },
+  { id:'y3', t:'ロースター・網・鉄板の清掃と交換', s:'焦げ付いた網は交換。ロースター、ダクト、排気の油汚れを清掃' },
+  { id:'y4', t:'スライサー・ミンチ機の分解洗浄と消毒', s:'使用後に分解して洗浄・消毒。刃の欠けや金属片の混入がないか確認' },
+  { id:'y5', t:'冷凍肉の解凍方法', s:'冷蔵庫内または流水で解凍。常温放置はしない。再冷凍はしない' },
+  { id:'y6', t:'お子様・高齢者への加熱の声かけ', s:'抵抗力の弱い方には、特に十分な加熱をお願いする（提供時の声かけ・卓上表示）' }
+];
+
+// ==================== データ ====================
+const LSKEY = 'haccp_kanri';
+const BAKKEY = 'haccp_kanri_backups';
+const CLOUDKEY = 'haccp_kanri_data';
+const SYNC_URL = 'https://script.google.com/macros/s/AKfycbxwL19mAenATUMILRsQYrDL0ThjU2C583Cj729OfzNHEH3drMcZCExYULRp4VGOZ11J/exec';
+
+function blankData() {
+  return {
+    settings: {
+      shop: '焼肉ありもと',
+      resp: '有本',
+      permit: '',
+      addr: '',
+      staff: ['有本'],
+      fridges: [
+        { id:'f1', name:'肉用冷蔵庫', type:'chill' },
+        { id:'f2', name:'仕込み用冷蔵庫', type:'chill' },
+        { id:'f3', name:'冷凍庫', type:'freeze' }
+      ]
+    },
+    plan: {},       // 計画書の自由記入（上書きした項目だけ入る）
+    records: {},    // "2026-09-12": { staff, temps:{}, checks:{id:{v:'ok'|'ng'|'na', fix:''}}, note, savedAt }
+    deleted: {}     // "2026-09-12": 削除した時刻
+  };
+}
+
+// 形をそろえる（足りない項目を補い、日付の並びを固定する。端末どうしの比較で差が出ないように）
+function sortKeys(o) {
+  const out = {};
+  Object.keys(o || {}).sort().forEach(k => { out[k] = o[k]; });
+  return out;
+}
+function normalize(d) {
+  if (!d || typeof d !== 'object') return blankData();
+  const b = blankData();
+  d.settings = Object.assign(b.settings, d.settings || {});
+  d.plan = d.plan || {};
+  d.records = sortKeys(d.records);
+  d.deleted = sortKeys(d.deleted);   // 削除した日と時刻（ほかの端末から復活させないため）
+  return d;
+}
+function getData() {
+  try { return normalize(JSON.parse(localStorage.getItem(LSKEY) || 'null')); }
+  catch (e) { return blankData(); }
+}
+function setData(d) {
+  d.savedAt = new Date().toISOString();
+  localStorage.setItem(LSKEY, JSON.stringify(d));
+  autoBackup(d);
+  scheduleCloudSave();
+}
+let DATA = getData();
+
+function hasContent(d) {
+  return d && d.records && Object.keys(d.records).length > 0;
+}
+
+// ==================== クラウド同期 ====================
+// 開いたとき・画面に戻ったときにクラウドと突き合わせ、日付ごとに新しい方を残す。
+// これで Mac とスマホのどちらで付けても、両方に同じ記録がそろう。
+let cloudReady = false, cloudTimer = null, syncing = false, lastSync = 0;
+
+// localStorage が使えない環境（エディタのプレビュー等）からはクラウドへ書き込ませない
+function canStore() {
+  try { localStorage.setItem('__synctest', '1'); localStorage.removeItem('__synctest'); return true; }
+  catch (e) { return false; }
+}
+function scheduleCloudSave() {
+  if (!cloudReady) return;
+  clearTimeout(cloudTimer);
+  cloudTimer = setTimeout(pushCloudSilent, 1500);
+}
+async function pushCloudSilent(keepalive) {
+  if (!canStore() || !hasContent(DATA)) return;
+  clearTimeout(cloudTimer);
+  const body = JSON.stringify(DATA);
+  try {
+    await fetch(SYNC_URL + '?action=save&key=' + CLOUDKEY,
+      { method:'POST', body: body, keepalive: !!keepalive && body.length < 60000 });
+  } catch (e) {}
+}
+async function fetchCloud() {
+  const res = await fetch(SYNC_URL + '?action=load&key=' + CLOUDKEY);
+  const json = await res.json();
+  let d = json && json.data;
+  if (typeof d === 'string') { try { d = JSON.parse(d); } catch (e) { d = null; } }
+  return (d && typeof d === 'object' && d.records) ? normalize(d) : null;
+}
+function timeOf(iso) { return iso ? (Date.parse(iso) || 0) : 0; }
+
+// 2つのデータを1つに合わせる
+// ・日々の記録は日付ごとに、あとで保存された方を残す
+// ・削除した日は、削除のほうが新しければ消したままにする
+// ・設定と計画は、全体としてあとで保存された方を使う（中身が空の端末の設定は使わない）
+function mergeData(a, b) {
+  const base = !hasContent(a) ? b : !hasContent(b) ? a
+             : (timeOf(b.savedAt) > timeOf(a.savedAt) ? b : a);
+  const out = JSON.parse(JSON.stringify(base));
+  const del = Object.assign({}, b.deleted);
+  Object.entries(a.deleted).forEach(([k, t]) => { if (timeOf(t) > timeOf(del[k])) del[k] = t; });
+  out.records = {}; out.deleted = {};
+  new Set(Object.keys(a.records).concat(Object.keys(b.records))).forEach(k => {
+    const ra = a.records[k], rb = b.records[k];
+    const r = !ra ? rb : !rb ? ra : (timeOf(rb.savedAt) > timeOf(ra.savedAt) ? rb : ra);
+    if (del[k] && timeOf(del[k]) >= timeOf(r.savedAt)) return;
+    out.records[k] = r;
+  });
+  Object.entries(del).forEach(([k, t]) => { if (!out.records[k]) out.deleted[k] = t; });
+  if (timeOf(a.savedAt) || timeOf(b.savedAt))
+    out.savedAt = timeOf(a.savedAt) >= timeOf(b.savedAt) ? a.savedAt : b.savedAt;
+  return normalize(out);
+}
+
+async function syncNow() {
+  if (syncing) return;
+  if (!canStore()) { cloudReady = true; return; }
+  syncing = true;
+  let needPush = false;
+  try {
+    flushAutoSave();
+    const cloud = await fetchCloud();
+    const mine = JSON.stringify(DATA);
+    if (cloud) {
+      const merged = mergeData(DATA, cloud);
+      const ms = JSON.stringify(merged);
+      if (ms !== mine) {   // ほかの端末で付けた記録があった
+        autoBackup(DATA, true);
+        localStorage.setItem(LSKEY, ms);
+        DATA = getData();
+        renderAll();
+        if (document.getElementById('pane-list').style.display !== 'none') { renderMonthOptions(); renderList(); }
+        toast('☁︎ ほかの端末の記録を取り込みました');
+      }
+      needPush = ms !== JSON.stringify(cloud);
+    } else {
+      needPush = hasContent(DATA);
+    }
+    lastSync = Date.now();
+  } catch (e) {}
+  syncing = false;
+  cloudReady = true;
+  if (needPush) pushCloudSilent();
+}
+// 画面に戻ってきたとき（スマホでアプリを切り替えた後など）にも取り込む
+document.addEventListener('visibilitychange', () => {
+  if (document.visibilityState === 'visible') {
+    if (Date.now() - lastSync > 30 * 1000) syncNow();
+  } else {
+    flushAutoSave();
+    if (cloudTimer) pushCloudSilent(true);
+  }
+});
+window.addEventListener('pagehide', () => {
+  flushAutoSave();
+  if (cloudTimer) pushCloudSilent(true);
+});
+
+function toast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  clearTimeout(toast.tm);
+  toast.tm = setTimeout(() => t.classList.remove('show'), 3000);
+}
+async function syncUpload() {
+  if (!confirm('今のデータをクラウドへ保存しますか？\n（クラウドの内容は上書きされます）')) return;
+  try {
+    const res = await fetch(SYNC_URL + '?action=save&key=' + CLOUDKEY, { method:'POST', body: JSON.stringify(DATA) });
+    const json = await res.json();
+    if (json.success) alert('☁︎↑ クラウドに保存しました（記録 ' + Object.keys(DATA.records).length + '日分）');
+    else alert('エラー: ' + (json.message || '不明'));
+  } catch (e) { alert('通信エラー: ' + e.message); }
+}
+async function syncDownload() {
+  if (!confirm('クラウドから読み込みますか？\n（今のデータは上書きされます）')) return;
+  try {
+    const res = await fetch(SYNC_URL + '?action=load&key=' + CLOUDKEY);
+    const json = await res.json();
+    if (!json.success || !json.data) { alert('クラウドにデータがありません'); return; }
+    let d = json.data;
+    if (typeof d === 'string') { try { d = JSON.parse(d); } catch (e) { alert('データ形式エラー'); return; } }
+    if (!d || typeof d !== 'object' || !d.records) { alert('データ不正です'); return; }
+    autoBackup(DATA, true);
+    localStorage.setItem(LSKEY, JSON.stringify(d));
+    alert('☁︎↓ クラウドから読み込みました（記録 ' + Object.keys(d.records).length + '日分）');
+    location.reload();
+  } catch (e) { alert('通信エラー: ' + e.message); }
+}
+
+// 自動バックアップ（最大15世代・10分間隔）
+function autoBackup(d, force) {
+  try {
+    if (!hasContent(d)) return;
+    let backups = [];
+    try { backups = JSON.parse(localStorage.getItem(BAKKEY) || '[]'); } catch (e) {}
+    const s = JSON.stringify(d);
+    if (backups.length && JSON.stringify(backups[0].data) === s) return;
+    if (!force && backups.length && Date.now() - new Date(backups[0].savedAt).getTime() < 10*60*1000) return;
+    backups.unshift({ data: d, savedAt: new Date().toISOString() });
+    backups = backups.slice(0, 15);
+    localStorage.setItem(BAKKEY, JSON.stringify(backups));
+  } catch (e) {}
+}
+function openHist() {
+  let backups = [];
+  try { backups = JSON.parse(localStorage.getItem(BAKKEY) || '[]'); } catch (e) {}
+  let html = '';
+  if (!backups.length) html = '<div style="color:#888;padding:10px 2px;">まだ履歴がありません（記録すると自動で貯まります）</div>';
+  backups.forEach((b, i) => {
+    const when = new Date(b.savedAt).toLocaleString('ja-JP', { month:'numeric', day:'numeric', hour:'2-digit', minute:'2-digit' });
+    const n = b.data && b.data.records ? Object.keys(b.data.records).length : 0;
+    html += `<div class="hist-item"><span class="when">${when}</span><span class="info">${n}日分</span>
+      <button class="btn btn-teal btn-sm" onclick="restoreHist(${i})">この時点に戻す</button></div>`;
+  });
+  document.getElementById('histBody').innerHTML = html;
+  document.getElementById('histModal').style.display = 'flex';
+}
+function closeHist() { document.getElementById('histModal').style.display = 'none'; }
+// 戻した内容・読み込んだ内容を「いちばん新しい」ことにする
+// （そうしないと、次の同期でクラウド側の新しい記録に負けて元に戻ってしまう）
+function asLatest(d) {
+  d = normalize(d);
+  const now = new Date().toISOString();
+  Object.values(d.records).forEach(r => { r.savedAt = now; });
+  Object.keys(DATA.records).forEach(k => { if (!d.records[k]) d.deleted[k] = now; });
+  Object.keys(d.records).forEach(k => { delete d.deleted[k]; });
+  return d;
+}
+function restoreHist(i) {
+  let backups = [];
+  try { backups = JSON.parse(localStorage.getItem(BAKKEY) || '[]'); } catch (e) {}
+  const b = backups[i];
+  if (!b || !b.data) return;
+  const n = Object.keys(b.data.records || {}).length;
+  if (!confirm(`この時点（${n}日分）に戻しますか？\n今の内容も履歴に残るので、あとで戻せます。`)) return;
+  autoBackup(DATA, true);
+  DATA = asLatest(JSON.parse(JSON.stringify(b.data)));
+  setData(DATA);
+  closeHist();
+  renderAll();
+  alert('🕘 復元しました');
+}
+
+// ==================== 画面切替 ====================
+function showTab(name) {
+  ['today','list','plan','set'].forEach(n => {
+    document.getElementById('pane-' + n).style.display = (n === name) ? 'block' : 'none';
+    document.getElementById('tab-' + n).classList.toggle('active', n === name);
+  });
+  if (name === 'list') { renderMonthOptions(); renderList(); }
+  if (name === 'plan') renderPlan();
+  if (name === 'set') renderSettings();
+  window.scrollTo(0, 0);
+}
+
+// ==================== 今日の記録 ====================
+function esc(s) { return String(s == null ? '' : s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
+function todayStr() {
+  const d = new Date();
+  return d.getFullYear() + '-' + String(d.getMonth()+1).padStart(2,'0') + '-' + String(d.getDate()).padStart(2,'0');
+}
+function allItems() { return GENERAL.concat(CCP, YAKINIKU); }
+
+function renderChecks() {
+  const mk = (arr, box) => {
+    document.getElementById(box).innerHTML = arr.map(it => `
+      <div class="chk" id="chk-${it.id}">
+        <div class="lbl">${esc(it.t)}<small>${esc(it.s)}</small></div>
+        <div class="ops">
+          <button class="op ok" onclick="setChk('${it.id}','ok')">良</button>
+          <button class="op ng" onclick="setChk('${it.id}','ng')">要改善</button>
+          <button class="op na" onclick="setChk('${it.id}','na')">該当なし</button>
+        </div>
+        <div class="fix"><input type="text" id="fix-${it.id}" oninput="autoSave(800)" placeholder="どう対応したか（例: 消毒をやり直した／廃棄した／業者に連絡した）"></div>
+      </div>` + (it.id === 'g1' ? '<div class="intake" id="intakeBox"></div>' : '')).join('');
+  };
+  mk(GENERAL, 'genBox');
+  mk(CCP, 'ccpBox');
+  mk(YAKINIKU, 'ykBox');
+}
+
+function setChk(id, v) {
+  const row = document.getElementById('chk-' + id);
+  const cur = row.dataset.v;
+  const nv = (cur === v) ? '' : v;   // 押し直しで解除
+  row.dataset.v = nv;
+  row.classList.toggle('is-ng', nv === 'ng');
+  row.querySelectorAll('.op').forEach(b => b.classList.remove('on'));
+  if (nv) row.querySelector('.op.' + nv).classList.add('on');
+  updateTodayStatus();
+  autoSave(0);
+}
+
+function allOk() {
+  allItems().forEach(it => {
+    const row = document.getElementById('chk-' + it.id);
+    if (row.dataset.v === 'ng' || row.dataset.v === 'na') return;  // 手で付けたものは残す
+    setChkDirect(it.id, 'ok');
+  });
+  updateTodayStatus();
+  autoSave(0);
+}
+function setChkDirect(id, v) {
+  const row = document.getElementById('chk-' + id);
+  row.dataset.v = v;
+  row.classList.toggle('is-ng', v === 'ng');
+  row.querySelectorAll('.op').forEach(b => b.classList.remove('on'));
+  if (v) row.querySelector('.op.' + v).classList.add('on');
+}
+
+function renderTemps() {
+  const fr = DATA.settings.fridges || [];
+  if (!fr.length) { document.getElementById('tempBox').innerHTML = '<div class="empty">⚙️設定で冷蔵庫・冷凍庫を登録してください</div>'; return; }
+  document.getElementById('tempBox').innerHTML = fr.map(f => `
+    <div class="temp-row">
+      <div class="nm">${f.type === 'freeze' ? '❄️' : '🧊'} ${esc(f.name)}</div>
+      <div class="std">${f.type === 'freeze' ? '-15℃以下' : '10℃以下'}</div>
+      <input type="text" inputmode="decimal" id="temp-${f.id}" data-type="${f.type}" placeholder="—" oninput="checkTemp('${f.id}'); autoSave(800)">
+      <span class="unit">℃</span>
+      <button class="prev" id="prev-${f.id}" onclick="usePrev('${f.id}')" style="display:none;"></button>
+    </div>`).join('');
+}
+// 前回（この日より前でいちばん近い日）に記録した温度
+function prevTemp(fid, date) {
+  const k = Object.keys(DATA.records).filter(d => d < date).sort().reverse()
+    .find(d => { const t = DATA.records[d].temps; return t && t[fid] != null && t[fid] !== ''; });
+  return k ? { date: k, v: DATA.records[k].temps[fid] } : null;
+}
+function renderPrevTemps() {
+  (DATA.settings.fridges || []).forEach(f => {
+    const b = document.getElementById('prev-' + f.id);
+    if (!b) return;
+    const p = prevTemp(f.id, LOADED_DATE);
+    b.style.display = p ? '' : 'none';
+    if (p) {
+      b.dataset.v = p.v;
+      b.innerHTML = `前回 <b>${esc(p.v)}℃</b>（${Number(p.date.slice(5, 7))}/${Number(p.date.slice(8))}）を入れる`;
+    }
+  });
+}
+function usePrev(fid) {
+  const b = document.getElementById('prev-' + fid);
+  const el = document.getElementById('temp-' + fid);
+  el.value = b.dataset.v;
+  checkTemp(fid);
+  autoSave(0);
+}
+function checkTemp(fid) {
+  const el = document.getElementById('temp-' + fid);
+  const v = parseFloat(String(el.value).replace(/[^0-9.\-]/g, ''));
+  const t = el.dataset.type;
+  const bad = !isNaN(v) && ((t === 'freeze' && v > -15) || (t === 'chill' && v > 10));
+  el.classList.toggle('warn', bad);
+  updateTodayStatus();
+}
+
+function updateTodayStatus() {
+  let ok = 0, ng = 0, na = 0, blank = 0;
+  allItems().forEach(it => {
+    const v = document.getElementById('chk-' + it.id).dataset.v;
+    if (v === 'ok') ok++; else if (v === 'ng') ng++; else if (v === 'na') na++; else blank++;
+  });
+  let h = `<span class="pill pill-ok">良 ${ok}</span> `;
+  if (ng) h += `<span class="pill pill-ng">要改善 ${ng}</span> `;
+  if (blank) h += `<span class="pill pill-non">未 ${blank}</span>`;
+  document.getElementById('todayStatus').innerHTML = h;
+}
+
+function loadRecord() {
+  clearTimeout(autoTimer);
+  autoTimer = null;
+  const date = document.getElementById('recDate').value;
+  LOADED_DATE = date;
+  const r = DATA.records[date];
+  // リセット
+  allItems().forEach(it => {
+    setChkDirect(it.id, '');
+    const f = document.getElementById('fix-' + it.id); if (f) f.value = '';
+  });
+  (DATA.settings.fridges || []).forEach(f => {
+    const el = document.getElementById('temp-' + f.id);
+    if (el) { el.value = ''; el.classList.remove('warn'); }
+  });
+  document.getElementById('recNote').value = '';
+
+  if (r) {
+    allItems().forEach(it => {
+      const c = r.checks && r.checks[it.id];
+      if (c) {
+        setChkDirect(it.id, c.v || '');
+        const f = document.getElementById('fix-' + it.id);
+        if (f) f.value = c.fix || '';
+      }
+    });
+    (DATA.settings.fridges || []).forEach(f => {
+      const el = document.getElementById('temp-' + f.id);
+      if (el && r.temps && r.temps[f.id] != null) { el.value = r.temps[f.id]; checkTemp(f.id); }
+    });
+    document.getElementById('recNote').value = r.note || '';
+    if (r.staff) document.getElementById('recStaff').value = r.staff;
+    document.getElementById('saveMsg').textContent = 'この日は保存済みです（入力は自動で保存されます）';
+  } else {
+    document.getElementById('saveMsg').textContent = '';
+  }
+  renderPrevTemps();
+  updateTodayStatus();
+  renderIntake(!r);   // 肉入荷記録との連携（新規の日だけ自動反映する）
+}
+
+// ==================== 🥩 肉入荷記録アプリとの連携 ====================
+// 同じ端末の localStorage（file:// で同一オリジン扱いになる場合）→ だめならクラウドの順で読む
+let MEAT = null, MEAT_SRC = '';
+async function loadMeat(force) {
+  if (MEAT && !force) return MEAT;
+  try {
+    const local = JSON.parse(localStorage.getItem('haccp_meat') || 'null');
+    if (Array.isArray(local) && local.length) { MEAT = local; MEAT_SRC = 'この端末'; return MEAT; }
+  } catch (e) {}
+  try {
+    const res = await fetch(SYNC_URL + '?action=load&key=haccp_meat_data');
+    const json = await res.json();
+    let d = json && json.data;
+    if (typeof d === 'string') { try { d = JSON.parse(d); } catch (e) {} }
+    if (Array.isArray(d)) { MEAT = d; MEAT_SRC = 'クラウド'; return MEAT; }
+  } catch (e) {}
+  return null;
+}
+function meatOf(date) {
+  if (!Array.isArray(MEAT)) return null;
+  return MEAT.filter(e => e && e.date === date);
+}
+function intakeSummary(list, date) {
+  const bySup = {};
+  list.forEach(e => {
+    const s = e.supplier || '（仕入先なし）';
+    (bySup[s] = bySup[s] || []).push(e);
+  });
+  let expired = 0;
+  list.forEach(e => { if (e.expiry && e.expiry < date) expired++; });
+  return { bySup, expired, n: list.length };
+}
+
+async function renderIntake(isNew) {
+  const box = document.getElementById('intakeBox');
+  if (!box) return;
+  const date = document.getElementById('recDate').value;
+  const opener = `<div class="acts">
+      <button onclick="refreshMeat()">🔄 再取得</button>
+      <a href="haccp.html" target="_blank">🥩 入荷記録を開く</a>
+    </div>`;
+
+  if (!MEAT) {
+    box.innerHTML = `<div class="ttl"><span>🥩 この日の入荷</span>${opener}</div>
+      <div class="none">入荷記録を読み込み中…</div>`;
+    await loadMeat();
+  }
+  if (!MEAT) {
+    box.innerHTML = `<div class="ttl"><span>🥩 この日の入荷</span>${opener}</div>
+      <div class="none">入荷記録を読み込めませんでした（オフライン、またはまだ記録がありません）</div>`;
+    return;
+  }
+
+  const list = meatOf(date);
+  if (!list.length) {
+    box.innerHTML = `<div class="ttl"><span>🥩 この日の入荷</span>${opener}</div>
+      <div class="none">この日の入荷記録はありません。肉の入荷が無かった日は「該当なし」で構いません（野菜などの受入があれば「良」を押してください）。</div>
+      <div class="src">出所: ${esc(MEAT_SRC)}の入荷記録</div>`;
+    return;
+  }
+
+  const sum = intakeSummary(list, date);
+  const rows = Object.entries(sum.bySup).map(([sup, es]) => {
+    const items = es.map(e => {
+      const exp = e.expiry ? `<span class="${e.expiry < date ? 'warn' : ''}">期限${e.expiry.slice(5).replace('-','/')}</span>` : '';
+      return `${esc(e.name)} ${esc(e.amount)}${exp ? ' <small>(' + exp + ')</small>' : ''}`;
+    }).join('、');
+    return `<div class="row"><b>${esc(sup)}</b>：${items}</div>`;
+  }).join('');
+  const checker = list.map(e => e.checker).filter(Boolean)[0] || '';
+
+  let auto = '';
+  if (isNew && !sum.expired) {
+    setChkDirect('g1', 'ok');
+    updateTodayStatus();
+    auto = '<div class="src">入荷が記録されているので「良」を自動で付けました（違うときは押し直してください）</div>';
+  }
+  const warn = sum.expired
+    ? `<div class="warn">⚠️ 期限がこの日より前のものが ${sum.expired} 件あります。受入時に確認してください（自動では「良」を付けていません）</div>`
+    : '';
+
+  box.innerHTML = `<div class="ttl"><span>🥩 この日の入荷（${sum.n}件）${checker ? '　確認者: ' + esc(checker) : ''}</span>${opener}</div>
+    ${rows}${warn}${auto}
+    <div class="src">出所: ${esc(MEAT_SRC)}の入荷記録</div>`;
+}
+async function refreshMeat() {
+  MEAT = null;
+  await loadMeat(true);
+  renderIntake(false);
+}
+
+// ==================== 自動保存 ====================
+// ボタンを押したらすぐ、文字の入力は手が止まってから保存する。
+// 保存先はいま画面に出している日（LOADED_DATE）。日付を切り替える前に必ず書き出す。
+let LOADED_DATE = '', autoTimer = null;
+function autoSave(delay) {
+  clearTimeout(autoTimer);
+  autoTimer = null;
+  if (!delay) { saveRecord(true); return; }
+  autoTimer = setTimeout(() => { autoTimer = null; saveRecord(true); }, delay);
+}
+function flushAutoSave() {
+  if (!autoTimer) return;
+  clearTimeout(autoTimer);
+  autoTimer = null;
+  saveRecord(true);
+}
+function onDateChange() {
+  flushAutoSave();
+  loadRecord();
+}
+function hhmm() {
+  const d = new Date();
+  return d.getHours() + ':' + String(d.getMinutes()).padStart(2, '0');
+}
+
+function saveRecord(auto) {
+  const date = auto ? LOADED_DATE : document.getElementById('recDate').value;
+  if (!date) { if (!auto) alert('記録日を選んでください'); return; }
+  const checks = {};
+  let filled = 0, ngNoFix = [];
+  allItems().forEach(it => {
+    const v = document.getElementById('chk-' + it.id).dataset.v || '';
+    const fix = (document.getElementById('fix-' + it.id) || {}).value || '';
+    if (v) filled++;
+    if (v === 'ng' && !fix.trim()) ngNoFix.push(it.t);
+    checks[it.id] = { v: v, fix: fix.trim() };
+  });
+  const temps = {};
+  (DATA.settings.fridges || []).forEach(f => {
+    const el = document.getElementById('temp-' + f.id);
+    if (el && el.value.trim() !== '') temps[f.id] = el.value.trim();
+  });
+  const note = document.getElementById('recNote').value.trim();
+  if (auto) {
+    // 何も入っていない日は、まだ記録を作らない
+    if (!filled && !Object.keys(temps).length && !note && !DATA.records[date]) return;
+  } else {
+    if (!filled) { alert('チェックが1つも入っていません'); return; }
+    if (ngNoFix.length) {
+      if (!confirm('「要改善」なのに対応内容が空の項目があります。\n\n・' + ngNoFix.join('\n・') + '\n\nこのまま保存しますか？（あとで追記できます）')) return;
+    }
+  }
+  const ml = meatOf(date);
+  DATA.records[date] = {
+    staff: document.getElementById('recStaff').value || '',
+    temps: temps,
+    checks: checks,
+    note: note,
+    // 入荷記録の件数を控えておく（あとで入荷記録が読めなくても記録表に出せるように）
+    intake: ml ? { n: ml.length, sup: Array.from(new Set(ml.map(e => e.supplier).filter(Boolean))) }
+                : (DATA.records[date] && DATA.records[date].intake) || null,
+    savedAt: new Date().toISOString()
+  };
+  delete DATA.deleted[date];
+  setData(DATA);
+  const m = document.getElementById('saveMsg');
+  if (auto) {
+    m.textContent = '✓ 自動で保存しました（' + hhmm() + '）';
+    return;
+  }
+  m.textContent = '💾 ' + date + ' の記録を保存しました';
+  setTimeout(() => { if (m.textContent.startsWith('💾')) m.textContent = 'この日は保存済みです（入力は自動で保存されます）'; }, 2500);
+}
+
+// ==================== 記録一覧 ====================
+function monthsOf() {
+  const ms = new Set();
+  Object.keys(DATA.records).forEach(d => ms.add(d.slice(0, 7)));
+  ms.add(todayStr().slice(0, 7));
+  return Array.from(ms).sort().reverse();
+}
+function renderMonthOptions() {
+  const sel = document.getElementById('listMonth');
+  const cur = sel.value;
+  sel.innerHTML = monthsOf().map(m => `<option value="${m}">${m.replace('-', '年')}月</option>`).join('');
+  if (cur && monthsOf().includes(cur)) sel.value = cur;
+}
+function dayStat(r) {
+  if (!r) return null;
+  let ng = 0, ok = 0, blank = 0;
+  allItems().forEach(it => {
+    const c = (r.checks || {})[it.id];
+    const v = c && c.v;
+    if (v === 'ng') ng++; else if (v === 'ok') ok++; else if (v !== 'na') blank++;
+  });
+  return { ng, ok, blank };
+}
+function renderList() {
+  const m = document.getElementById('listMonth').value || todayStr().slice(0, 7);
+  const [y, mo] = m.split('-').map(Number);
+  const first = new Date(y, mo - 1, 1);
+  const days = new Date(y, mo, 0).getDate();
+  const lead = first.getDay();
+
+  let cells = '';
+  for (let i = 0; i < lead; i++) cells += '<div class="cd blank"></div>';
+  let done = 0, ngDays = 0, partDays = 0;
+  for (let d = 1; d <= days; d++) {
+    const key = `${y}-${String(mo).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
+    const st = dayStat(DATA.records[key]);
+    let cls = 'cd', mk = '';
+    if (st) {
+      if (st.ng) { done++; cls += ' ng'; ngDays++; mk = '⚠️'; }
+      else if (st.blank) { partDays++; cls += ' part'; mk = '途中'; }   // 自動保存で途中まで付いた日
+      else { done++; cls += ' done'; mk = '✓'; }
+    }
+    cells += `<div class="${cls}" onclick="openDay('${key}')">${d}<span class="mk">${mk}</span></div>`;
+  }
+  document.getElementById('calBox').innerHTML =
+    '<div class="cal-head"><div>日</div><div>月</div><div>火</div><div>水</div><div>木</div><div>金</div><div>土</div></div>' +
+    '<div class="cal">' + cells + '</div>';
+
+  document.getElementById('listSummary').innerHTML =
+    `<div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;">
+      <span class="pill pill-ok">記録した日 ${done} / ${days}日</span>
+      ${ngDays ? `<span class="pill pill-ng">要改善があった日 ${ngDays}</span>` : ''}
+      ${partDays ? `<span class="pill pill-part">つけかけの日 ${partDays}</span>` : ''}
+      <span style="font-size:0.8rem;color:#888;">日付をタップすると内容を確認できます</span>
+    </div>`;
+
+  // 要改善リスト
+  const rows = [];
+  Object.keys(DATA.records).filter(k => k.startsWith(m)).sort().forEach(k => {
+    const r = DATA.records[k];
+    Object.entries(r.checks || {}).forEach(([id, c]) => {
+      if (c.v !== 'ng') return;
+      const it = allItems().find(x => x.id === id);
+      rows.push(`<tr><td>${k.slice(5).replace('-','/')}</td><td class="l">${esc(it ? it.t : id)}</td><td class="l">${esc(c.fix || '（未記入）')}</td></tr>`);
+    });
+  });
+  document.getElementById('ngBox').innerHTML = rows.length
+    ? `<table><thead><tr><th style="width:60px;">日付</th><th>項目</th><th>行った対応（改善措置）</th></tr></thead><tbody>${rows.join('')}</tbody></table>`
+    : '<div class="empty">この月は「要改善」の記録はありません</div>';
+}
+
+function openDay(key) {
+  const r = DATA.records[key];
+  document.getElementById('dayTitle').textContent = key.replace(/-/g, '/') + ' の記録';
+  if (!r) {
+    document.getElementById('dayBody').innerHTML =
+      `<div class="empty">まだ記録がありません</div>
+       <div style="text-align:center;"><button class="btn btn-red" onclick="gotoDate('${key}')">この日の記録をつける</button></div>`;
+  } else {
+    let h = `<div style="font-size:0.85rem;color:#666;margin-bottom:8px;">確認者: <b>${esc(r.staff || '—')}</b></div>`;
+    const temps = Object.entries(r.temps || {});
+    if (temps.length) {
+      h += '<div style="margin-bottom:10px;font-size:0.88rem;">🌡 ' + temps.map(([fid, v]) => {
+        const f = (DATA.settings.fridges || []).find(x => x.id === fid);
+        return `${esc(f ? f.name : fid)} <b>${esc(v)}℃</b>`;
+      }).join('　/　') + '</div>';
+    }
+    const ml = meatOf(key);
+    const ik = ml ? (ml.length ? { n: ml.length, sup: Array.from(new Set(ml.map(e => e.supplier).filter(Boolean))) } : null)
+                  : r.intake;
+    if (ik && ik.n) h += `<div style="margin-bottom:10px;font-size:0.88rem;">🥩 入荷 <b>${ik.n}件</b>${(ik.sup || []).length ? '（' + esc(ik.sup.join('、')) + '）' : ''}</div>`;
+    h += '<table><tbody>' + allItems().map(it => {
+      const c = (r.checks || {})[it.id] || {};
+      const p = c.v === 'ok' ? '<span class="pill pill-ok">良</span>'
+              : c.v === 'ng' ? '<span class="pill pill-ng">要改善</span>'
+              : c.v === 'na' ? '<span class="pill pill-non">該当なし</span>'
+              : '<span class="pill pill-non">—</span>';
+      return `<tr><td class="l" style="font-size:0.84rem;">${esc(it.t)}${c.fix ? `<br><small style="color:#c62828;">→ ${esc(c.fix)}</small>` : ''}</td><td style="width:80px;">${p}</td></tr>`;
+    }).join('') + '</tbody></table>';
+    if (r.note) h += `<div style="margin-top:10px;font-size:0.85rem;background:#fff8e1;padding:8px 10px;border-radius:6px;">📝 ${esc(r.note)}</div>`;
+    h += `<div style="text-align:center;margin-top:12px;display:flex;gap:8px;justify-content:center;">
+            <button class="btn btn-teal btn-sm" onclick="gotoDate('${key}')">✏️ 修正する</button>
+            <button class="btn btn-gray btn-sm" onclick="delDay('${key}')">🗑 この日を削除</button>
+          </div>`;
+    document.getElementById('dayBody').innerHTML = h;
+  }
+  document.getElementById('dayModal').style.display = 'flex';
+}
+function closeDay() { document.getElementById('dayModal').style.display = 'none'; }
+function gotoDate(key) {
+  closeDay();
+  flushAutoSave();
+  document.getElementById('recDate').value = key;
+  showTab('today');
+  loadRecord();
+}
+function delDay(key) {
+  if (!confirm(key + ' の記録を削除しますか？')) return;
+  delete DATA.records[key];
+  DATA.deleted[key] = new Date().toISOString();
+  setData(DATA);
+  if (key === LOADED_DATE) loadRecord();
+  closeDay();
+  renderList();
+}
+
+// ==================== 衛生管理計画 ====================
+const PLAN_TEXT = {
+  head: [
+    { id:'p0', t:'この計画について', w:'当店は食品衛生法に基づき「HACCPの考え方を取り入れた衛生管理」を実施する。一般社団法人日本フードサービス協会ほかの飲食店向け手引書を参考に、当店の実態（焼肉店）に合わせて作成した。計画は毎年見直し、メニューや設備が変わったときはその都度改訂する。' }
+  ],
+  general: GENERAL.map(g => ({ id:g.id, t:g.t })),
+  genDetail: {
+    g1: { when:'納品のつど', how:'肉は皆川畜産・元永食品ほかから受け入れる。外観、におい、包装の破れ、期限表示、配送時の温度を確認する。<b>入荷の内容は別アプリ「HACCP肉入荷記録」に記録する。</b>', ng:'異常があれば受け取らない（返品）。すでに受け取っていれば使用せず廃棄し、仕入先へ連絡する。' },
+    g2: { when:'始業前・終業後（1日1回以上）', how:'温度計で庫内温度を確認し、数値をこのアプリに記録する。冷蔵は10℃以下、冷凍は-15℃以下。', ng:'設定と扉の閉まり具合を確認。温度が戻らなければ食材を他の庫へ移し、業者に修理を依頼する。異常な温度に長時間置かれた食材は廃棄する。' },
+    g3: { when:'作業中つねに', how:'生肉は下段、そのまま食べるものは上段に保管。まな板・包丁・トング・ボウルを「生肉用」「野菜用」「提供用」で使い分ける。生肉を扱った後は必ず手洗い。', ng:'汚染の疑いがあるものは使用しない。器具は洗浄・消毒をやり直す。' },
+    g4: { when:'使用後・終業時', how:'洗剤で洗った後、次亜塩素酸ナトリウム（200ppm程度）または熱湯・アルコールで消毒する。スライサー・ミンチ機は分解して洗浄する。', ng:'汚れが残っていれば洗い直す。破損した器具は廃棄して交換する。' },
+    g5: { when:'1日1回以上（汚れたらそのつど）', how:'便座、ドアノブ、水栓、床を消毒する。手洗い用の石けん・ペーパータオルを補充する。', ng:'汚染があればただちに清掃・消毒する。清掃した従業員は手洗いを徹底する。' },
+    g6: { when:'始業前（全員）', how:'下痢・嘔吐・発熱・手指の傷や化膿の有無を本人に確認する。清潔な作業着・帽子を着用する。', ng:'症状がある者は調理作業に就かせない。手指に傷がある場合は耐水性絆創膏と手袋で覆う。ノロウイルス等が疑われる場合は受診させる。' },
+    g7: { when:'作業前・トイレの後・生肉に触れた後・盛り付け前', how:'石けんで2回洗い、流水ですすぎ、ペーパータオルで拭き、アルコール消毒する。', ng:'手洗いが不十分だと気づいたらやり直す。' },
+    g8: { when:'月1回の点検（発見時はそのつど）', how:'侵入経路をふさぎ、捕獲器を設置する。生ゴミは蓋付き容器に入れ、その日のうちに片付ける。', ng:'発生を確認したら駆除する。必要に応じて専門業者に依頼する。食品に触れた可能性があるものは廃棄する。' }
+  },
+  ccpDetail: {
+    c1: { ex:'キムチ、ナムル、サラダ、冷麺の具、キムチ盛り合わせ、デザート、アイス', how:'冷蔵庫（10℃以下）から出したらすぐに盛り付けて提供する。盛り付けは清潔な手袋または専用トングで行い、素手で触れない。', ng:'長時間常温に置いたものは廃棄する。においや見た目に異常があれば提供しない。' },
+    c2: { ex:'テールスープ、わかめスープ、チゲ、石焼ビビンバ、揚げ物、焼き物、ご飯もの', how:'中心部まで十分に加熱する（目安：中心温度75℃で1分以上）。大きな塊は切って中心の色・肉汁で確認し、必要なら中心温度計で測る。', ng:'加熱が不十分なら追加で加熱する。' },
+    c3: { ex:'仕込んだスープ、下茹でしたホルモン、作り置きのタレ類', how:'加熱後は小分けして速やかに冷却し（目安：30分以内に20℃、60分以内に10℃付近）、冷蔵庫で保管する。提供前に十分に再加熱する（中心75℃1分以上）。', ng:'ゆっくり冷えたものや、いつ作ったか分からないものは廃棄する。再加熱が不十分なら加熱し直す。' }
+  },
+  yakiniku: '【焼肉店として特に定めること】\n' +
+    '① 生食用としての提供はしない。牛の生レバー、豚の肉・内臓の生食提供は法令で禁止されており、ユッケ等の生食用食肉も取り扱わない。\n' +
+    '② 客席には生肉をつかむ専用トングを用意し、食べる箸と分けて使っていただくよう声かけ・卓上表示で案内する。\n' +
+    '③ 焦げ付いた網は交換する。ロースター、ダクト、排気設備の油汚れを定期的に清掃する。\n' +
+    '④ スライサー・ミンチ機は使用後に分解して洗浄・消毒し、刃の欠けがないか確認する。\n' +
+    '⑤ 冷凍肉は冷蔵庫内または流水で解凍し、常温に放置しない。解凍したものを再冷凍しない。\n' +
+    '⑥ お子様・高齢者・妊娠中の方など抵抗力の弱い方には、十分に加熱してお召し上がりいただくよう案内する。'
+};
+
+function renderPlan() {
+  const s = DATA.settings;
+  let h = `<div class="plan-item"><div class="pt">🏪 店舗</div><div class="pw">
+      <b>店名</b> ${esc(s.shop)}　<b>食品衛生責任者</b> ${esc(s.resp)}
+      ${s.permit ? `　<b>営業許可</b> ${esc(s.permit)}` : ''}
+      ${s.addr ? `<br><b>所在地</b> ${esc(s.addr)}` : ''}
+      <br><b>業種</b> 飲食店営業（焼肉店）　<b>作成日</b> ${todayStr().replace(/-/g,'/')}
+    </div></div>`;
+
+  h += '<div class="sec-head">1. 一般衛生管理のポイント<span class="hint">いつ・どのように行い、問題があったときどうするかを定めたもの</span></div>';
+  GENERAL.forEach(g => {
+    const d = PLAN_TEXT.genDetail[g.id] || {};
+    h += `<div class="plan-item"><div class="pt">${esc(g.t)}</div><div class="pw">
+      <b>いつ</b>：${d.when || ''}<br>
+      <b>どのように</b>：${d.how || ''}<br>
+      <b>問題があったとき</b>：${d.ng || ''}
+    </div></div>`;
+  });
+
+  h += '<div class="sec-head">2. 重要管理のポイント<span class="hint">メニューを3つのグループに分けて管理する</span></div>';
+  CCP.forEach(c => {
+    const d = PLAN_TEXT.ccpDetail[c.id] || {};
+    h += `<div class="plan-item"><div class="pt">${esc(c.t)}</div><div class="pw">
+      <b>当店の該当メニュー</b>：${d.ex || ''}<br>
+      <b>どのように</b>：${d.how || ''}<br>
+      <b>問題があったとき</b>：${d.ng || ''}
+    </div></div>`;
+  });
+
+  h += '<div class="sec-head">3. 当店で特に定めること（焼肉店）</div>';
+  const yk = (DATA.plan && DATA.plan.yakiniku != null) ? DATA.plan.yakiniku : PLAN_TEXT.yakiniku;
+  h += `<div class="plan-item"><div class="pw" style="white-space:pre-wrap;">${esc(yk)}</div>
+    <div style="margin-top:8px;"><button class="btn btn-teal btn-sm" onclick="editYk()">✏️ ここを書き換える</button></div></div>`;
+
+  h += '<div class="sec-head">4. 記録と保存<span class="hint"></span></div>';
+  h += `<div class="plan-item"><div class="pw">
+    ・毎日の点検結果は本アプリ「📅 今日の記録」に入力する。<br>
+    ・原材料（肉類）の入荷はアプリ「🥩 HACCP肉入荷記録」に記録する。<br>
+    ・記録は月ごとに印刷し、店内に<b>1年以上</b>保存する。<br>
+    ・問題があった場合は、何が起きたか・どう対応したかを記録に残す。<br>
+    ・計画は年1回見直し、メニューや設備を変えたときは改訂する。
+  </div></div>`;
+
+  document.getElementById('planBox').innerHTML = h;
+}
+function editYk() {
+  const cur = (DATA.plan && DATA.plan.yakiniku != null) ? DATA.plan.yakiniku : PLAN_TEXT.yakiniku;
+  const v = prompt('当店で特に定めること（自由に書き換えできます）', cur);
+  if (v == null) return;
+  DATA.plan.yakiniku = v;
+  setData(DATA);
+  renderPlan();
+}
+
+// ==================== 設定 ====================
+function renderSettings() {
+  const s = DATA.settings;
+  document.getElementById('setShop').value = s.shop || '';
+  document.getElementById('setResp').value = s.resp || '';
+  document.getElementById('setPermit').value = s.permit || '';
+  document.getElementById('setAddr').value = s.addr || '';
+  document.getElementById('staffList').innerHTML = (s.staff || []).map((n, i) =>
+    `<span class="tag">${esc(n)}<button onclick="delStaff(${i})">✕</button></span>`).join('') || '<span style="color:#aaa;font-size:0.85rem;">まだ登録がありません</span>';
+  document.getElementById('fridgeList').innerHTML = (s.fridges || []).map((f, i) =>
+    `<span class="tag">${f.type === 'freeze' ? '❄️' : '🧊'} ${esc(f.name)}<button onclick="delFridge(${i})">✕</button></span>`).join('') || '<span style="color:#aaa;font-size:0.85rem;">まだ登録がありません</span>';
+}
+function saveSettings() {
+  DATA.settings.shop = document.getElementById('setShop').value.trim();
+  DATA.settings.resp = document.getElementById('setResp').value.trim();
+  DATA.settings.permit = document.getElementById('setPermit').value.trim();
+  DATA.settings.addr = document.getElementById('setAddr').value.trim();
+  setData(DATA);
+  document.getElementById('hdrSub').textContent = (DATA.settings.shop || '') + '｜衛生管理計画と毎日の記録';
+  alert('保存しました');
+}
+function addStaff() {
+  const v = document.getElementById('newStaff').value.trim();
+  if (!v) return;
+  DATA.settings.staff = DATA.settings.staff || [];
+  if (DATA.settings.staff.includes(v)) { alert('すでに登録されています'); return; }
+  DATA.settings.staff.push(v);
+  setData(DATA);
+  document.getElementById('newStaff').value = '';
+  renderSettings(); renderStaffSelect();
+}
+function delStaff(i) {
+  if (!confirm(DATA.settings.staff[i] + ' を削除しますか？（過去の記録は残ります）')) return;
+  DATA.settings.staff.splice(i, 1);
+  setData(DATA);
+  renderSettings(); renderStaffSelect();
+}
+function addFridge() {
+  const n = document.getElementById('newFridgeName').value.trim();
+  if (!n) return;
+  DATA.settings.fridges = DATA.settings.fridges || [];
+  DATA.settings.fridges.push({ id: 'f' + Date.now(), name: n, type: document.getElementById('newFridgeType').value });
+  setData(DATA);
+  document.getElementById('newFridgeName').value = '';
+  renderSettings(); renderTemps();
+}
+function delFridge(i) {
+  if (!confirm(DATA.settings.fridges[i].name + ' を削除しますか？（過去の記録は残ります）')) return;
+  DATA.settings.fridges.splice(i, 1);
+  setData(DATA);
+  renderSettings(); renderTemps();
+}
+function renderStaffSelect() {
+  const sel = document.getElementById('recStaff');
+  const cur = sel.value;
+  sel.innerHTML = (DATA.settings.staff || []).map(n => `<option value="${esc(n)}">${esc(n)}</option>`).join('');
+  if (cur) sel.value = cur;
+}
+
+// ==================== 書き出し・読み込み ====================
+function exportJSON() {
+  const blob = new Blob([JSON.stringify(DATA, null, 2)], { type: 'application/json' });
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = 'HACCP衛生管理_' + todayStr() + '.json';
+  a.click();
+  URL.revokeObjectURL(a.href);
+}
+function importJSON(ev) {
+  const file = ev.target.files[0];
+  if (!file) return;
+  const r = new FileReader();
+  r.onload = e => {
+    try {
+      const d = JSON.parse(e.target.result);
+      if (!d || typeof d !== 'object' || !d.records) { alert('このファイルは読み込めません'); return; }
+      if (!confirm('読み込むと今のデータは置き換わります。よろしいですか？\n（今の内容は履歴に残ります）')) return;
+      autoBackup(DATA, true);
+      DATA = asLatest(d);
+      setData(DATA);
+      pushCloudSilent(true);
+      setTimeout(() => location.reload(), 300);
+    } catch (err) { alert('読み込みエラー: ' + err.message); }
+  };
+  r.readAsText(file);
+  ev.target.value = '';
+}
+
+// ==================== 印刷 ====================
+// A4用紙1枚に必ず収める。はみ出す分だけ自動で縮小する（内容が増えても2枚目に流れない）
+const PAGE_MARGIN_MM = 8;
+function printFrame(inner, landscape) {
+  const sheet = document.getElementById('printSheet');
+  sheet.innerHTML = '<div id="printInner">' + inner + '</div>';
+  const box = document.getElementById('printInner');
+
+  const st = document.createElement('style');
+  st.id = 'tmpPageStyle';
+  st.textContent = '@page { size: A4 ' + (landscape ? 'landscape' : 'portrait') + '; margin: ' + PAGE_MARGIN_MM + 'mm; }';
+  document.head.appendChild(st);
+
+  // 用紙の印刷できる範囲（mm）。1mm = 96/25.4 px
+  const PX = 96 / 25.4;
+  const wMM = (landscape ? 297 : 210) - PAGE_MARGIN_MM * 2;
+  const hMM = (landscape ? 210 : 297) - PAGE_MARGIN_MM * 2;
+
+  // 画面の外で実寸に組んで、はみ出し具合を測る
+  sheet.setAttribute('style',
+    'display:block;position:absolute;left:-10000px;top:0;width:' + wMM + 'mm;background:#fff;');
+  box.setAttribute('style', 'width:' + wMM + 'mm;');
+  const h = box.scrollHeight, w = box.scrollWidth;
+  const k = Math.min(1, (hMM * PX) / h, (wMM * PX) / w);
+
+  // 縮小するのは中身だけ。外側は縮小後の高さに合わせる
+  // （transform はレイアウト上の高さを変えないので、そのままだと空白の2枚目が出る）
+  sheet.setAttribute('style', 'width:' + wMM + 'mm;height:' + Math.floor(h * k) + 'px;overflow:hidden;');
+  box.setAttribute('style', 'width:' + wMM + 'mm;' +
+    (k < 1 ? 'transform:scale(' + k.toFixed(4) + ');transform-origin:top left;' : ''));
+
+  document.body.classList.add('printing-sheet');
+  window.print();
+  setTimeout(() => {
+    document.body.classList.remove('printing-sheet');
+    sheet.removeAttribute('style');
+    const s = document.getElementById('tmpPageStyle'); if (s) s.remove();
+  }, 400);
+}
+
+function printMonth() {
+  const m = document.getElementById('listMonth').value || todayStr().slice(0, 7);
+  const [y, mo] = m.split('-').map(Number);
+  const days = new Date(y, mo, 0).getDate();
+  const s = DATA.settings;
+  const dnum = [];
+  for (let d = 1; d <= days; d++) dnum.push(d);
+
+  const head = '<tr><th class="l" style="width:170px;">点検項目</th>' + dnum.map(d => `<th class="d">${d}</th>`).join('') + '</tr>';
+
+  const rowsFor = (arr) => arr.map(it => {
+    const tds = dnum.map(d => {
+      const key = `${y}-${String(mo).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
+      const r = DATA.records[key];
+      const c = r && r.checks ? r.checks[it.id] : null;
+      const v = c && c.v === 'ok' ? '✓' : c && c.v === 'ng' ? '×' : c && c.v === 'na' ? '−' : '';
+      return `<td class="d">${v}</td>`;
+    }).join('');
+    return `<tr><td class="l">${esc(it.t)}</td>${tds}</tr>`;
+  }).join('');
+
+  const tempRows = (s.fridges || []).map(f => {
+    const tds = dnum.map(d => {
+      const key = `${y}-${String(mo).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
+      const r = DATA.records[key];
+      const v = r && r.temps && r.temps[f.id] != null ? r.temps[f.id] : '';
+      return `<td class="d">${esc(v)}</td>`;
+    }).join('');
+    return `<tr><td class="l">${esc(f.name)}（${f.type === 'freeze' ? '-15℃以下' : '10℃以下'}）</td>${tds}</tr>`;
+  }).join('');
+
+  // 肉入荷記録アプリからの件数（参考行）
+  const intakeRow = '<tr><td class="l">（参考）肉の入荷 件数</td>' + dnum.map(d => {
+    const key = `${y}-${String(mo).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
+    if (key > todayStr()) return '<td class="d"></td>';   // まだ来ていない日は空欄
+    const ml = meatOf(key);
+    let n = null;
+    if (ml) n = ml.length;
+    else if (DATA.records[key] && DATA.records[key].intake) n = DATA.records[key].intake.n;
+    return `<td class="d">${n == null ? '' : (n ? n : '−')}</td>`;
+  }).join('') + '</tr>';
+
+  const staffRow = '<tr><td class="l">確認者</td>' + dnum.map(d => {
+    const key = `${y}-${String(mo).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
+    const r = DATA.records[key];
+    return `<td class="d">${r && r.staff ? esc(r.staff.slice(0, 1)) : ''}</td>`;
+  }).join('') + '</tr>';
+
+  // 改善措置・特記事項
+  const notes = [];
+  Object.keys(DATA.records).filter(k => k.startsWith(m)).sort().forEach(k => {
+    const r = DATA.records[k];
+    Object.entries(r.checks || {}).forEach(([id, c]) => {
+      if (c.v !== 'ng') return;
+      const it = allItems().find(x => x.id === id);
+      notes.push(`<tr><td style="width:50px;">${k.slice(5).replace('-','/')}</td><td class="l">${esc(it ? it.t : id)}</td><td class="l">${esc(c.fix || '')}</td></tr>`);
+    });
+    if (r.note) notes.push(`<tr><td style="width:50px;">${k.slice(5).replace('-','/')}</td><td class="l">（特記事項）</td><td class="l">${esc(r.note)}</td></tr>`);
+  });
+
+  const inner = `
+    <h1>衛生管理実施記録表</h1>
+    <div class="ps-sub">
+      <span>店名: ${esc(s.shop)}</span>
+      <span>食品衛生責任者: ${esc(s.resp)}</span>
+      <span>対象: ${y}年${mo}月</span>
+    </div>
+    <table class="ps-table">
+      <thead>${head}</thead>
+      <tbody>
+        <tr><td class="l" colspan="${days + 1}" style="background:#f3f3f3;font-weight:bold;text-align:left;">■ 一般衛生管理のポイント</td></tr>
+        ${rowsFor(GENERAL)}
+        ${intakeRow}
+        <tr><td class="l" colspan="${days + 1}" style="background:#f3f3f3;font-weight:bold;text-align:left;">■ 重要管理のポイント</td></tr>
+        ${rowsFor(CCP)}
+        <tr><td class="l" colspan="${days + 1}" style="background:#f3f3f3;font-weight:bold;text-align:left;">■ 焼肉店として特に注意する点</td></tr>
+        ${rowsFor(YAKINIKU)}
+        <tr><td class="l" colspan="${days + 1}" style="background:#f3f3f3;font-weight:bold;text-align:left;">■ 庫内温度（℃）</td></tr>
+        ${tempRows}
+        ${staffRow}
+      </tbody>
+    </table>
+    <div style="margin-top:8px;font-size:9px;">記号: ✓ 良い　× 問題あり（下欄に対応を記載）　− 該当なし</div>
+    ${notes.length ? `
+      <h2>問題があったとき行ったこと（改善措置）・特記事項</h2>
+      <table class="ps-table"><thead><tr><th style="width:50px;">日</th><th class="l">項目</th><th class="l">内容</th></tr></thead>
+      <tbody>${notes.join('')}</tbody></table>` : ''}
+    <div class="ps-foot">
+      <div class="ps-note">この記録は食品衛生法に基づく「HACCPの考え方を取り入れた衛生管理」の実施記録です。衛生管理計画とあわせて1年以上保存してください。</div>
+      <div class="ps-sign"><span>確認印</span><span class="box"></span></div>
+    </div>`;
+  printFrame(inner, true);
+}
+
+function printPlan() {
+  const s = DATA.settings;
+  const gen = GENERAL.map(g => {
+    const d = PLAN_TEXT.genDetail[g.id] || {};
+    return `<tr><td class="l" style="width:110px;font-weight:bold;">${esc(g.t)}</td>
+      <td class="l" style="width:90px;">${d.when || ''}</td>
+      <td class="l">${d.how || ''}</td>
+      <td class="l">${d.ng || ''}</td></tr>`;
+  }).join('');
+  const ccp = CCP.map(c => {
+    const d = PLAN_TEXT.ccpDetail[c.id] || {};
+    return `<tr><td class="l" style="width:110px;font-weight:bold;">${esc(c.t)}</td>
+      <td class="l" style="width:120px;">${d.ex || ''}</td>
+      <td class="l">${d.how || ''}</td>
+      <td class="l">${d.ng || ''}</td></tr>`;
+  }).join('');
+  const yk = (DATA.plan && DATA.plan.yakiniku != null) ? DATA.plan.yakiniku : PLAN_TEXT.yakiniku;
+
+  const inner = `
+    <h1>衛生管理計画書</h1>
+    <div class="ps-sub">
+      <span>店名: ${esc(s.shop)}　業種: 飲食店営業（焼肉店）</span>
+      <span>食品衛生責任者: ${esc(s.resp)}</span>
+      <span>作成日: ${todayStr().replace(/-/g,'/')}</span>
+    </div>
+    ${s.addr || s.permit ? `<div style="font-size:10px;margin-bottom:6px;">${s.addr ? '所在地: ' + esc(s.addr) : ''}　${s.permit ? '営業許可: ' + esc(s.permit) : ''}</div>` : ''}
+    <div class="plan-box"><div class="bt">この計画について</div>${PLAN_TEXT.head[0].w}</div>
+
+    <h2>1. 一般衛生管理のポイント</h2>
+    <table class="ps-table"><thead><tr><th class="l">項目</th><th class="l">いつ</th><th class="l">どのように</th><th class="l">問題があったとき</th></tr></thead>
+    <tbody>${gen}</tbody></table>
+
+    <h2>2. 重要管理のポイント（メニューを3グループに分けて管理）</h2>
+    <table class="ps-table"><thead><tr><th class="l">グループ</th><th class="l">該当メニュー</th><th class="l">どのように</th><th class="l">問題があったとき</th></tr></thead>
+    <tbody>${ccp}</tbody></table>
+
+    <h2>3. 当店で特に定めること（焼肉店）</h2>
+    <div class="plan-box" style="white-space:pre-wrap;">${esc(yk)}</div>
+
+    <h2>4. 記録と保存</h2>
+    <div class="plan-box">
+      ・毎日の点検結果は「衛生管理実施記録表」に記録する。<br>
+      ・原材料（肉類）の入荷は「原材料（肉類）入荷・使用記録表」に記録する。<br>
+      ・記録は月ごとに印刷し、店内に1年以上保存する。<br>
+      ・問題があった場合は、何が起きたか・どう対応したかを記録に残す。<br>
+      ・計画は年1回見直し、メニューや設備を変えたときは改訂する。
+    </div>
+    <div class="ps-foot">
+      <div class="ps-note">食品衛生法第51条に基づく衛生管理計画です。保健所の立入検査の際は、本計画書と実施記録をあわせて提示してください。</div>
+      <div class="ps-sign"><span>確認印</span><span class="box"></span></div>
+    </div>`;
+  printFrame(inner, false);
+}
+
+// ==================== 起動 ====================
+function renderAll() {
+  renderStaffSelect();
+  renderTemps();
+  renderChecks();
+  loadRecord();
+  document.getElementById('hdrSub').textContent = (DATA.settings.shop || '焼肉ありもと') + '｜衛生管理計画と毎日の記録';
+}
+function init() {
+  document.getElementById('recDate').value = todayStr();
+  renderAll();
+  renderMonthOptions();
+  syncNow();
+}
+init();
+</script>
+</body>
+</html>

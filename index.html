@@ -40,6 +40,23 @@
   }
   .round-meta input::-webkit-outer-spin-button,
   .round-meta input::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
+  .round-select {
+    flex: 1; min-width: 0; height: 38px; padding: 0 10px; border: none; border-radius: 8px;
+    background: rgba(255,255,255,0.2); color: white; font-size: 15px; font-weight: 700;
+    text-align: center; text-align-last: center; -webkit-appearance: none; appearance: none; cursor: pointer;
+  }
+  .round-select option { color: #1a1a2e; background: white; }
+  .round-nav button.meta-btn { font-size: 15px; }
+  .round-nav button.meta-btn.on { background: #f0c040; }
+  .meta-edit { margin-top: 8px; padding: 8px; border-radius: 8px; background: rgba(240,192,64,0.25); }
+  .meta-edit .meta-done { margin-left: 8px; background: #f0c040; color: #1a1a2e; border: none; border-radius: 6px; padding: 5px 12px; font-size: 13px; font-weight: 700; cursor: pointer; }
+
+  /* 入札: まだ入っていない人・重複の知らせ */
+  .pending { margin: 6px 8px 2px; padding: 7px 10px; border-radius: 8px; font-size: 12px; line-height: 1.6; }
+  .pending.todo { background: #fff8e1; color: #7a5a00; border: 1px solid #f0dfa8; }
+  .pending.done { background: #e8f5e9; color: #2e7d32; border: 1px solid #c8e6c9; font-weight: 700; }
+  .pending.dup  { background: #ffebee; color: #c62828; border: 1px solid #ffcdd2; font-weight: 700; }
+  .bid-select.dup { border: 2px solid #c62828 !important; background: #fff5f5; }
 
   /* ========== Tabs ========== */
   .tabs {
@@ -189,15 +206,16 @@
   </div>
   <div class="round-nav">
     <button onclick="navRound(-1)">◀</button>
-    <div class="round-meta">
-      <input id="editYear" type="number" onchange="updateRoundMeta()">年
-      <input id="editMonth" type="number" onchange="updateRoundMeta()">月
-      <input id="editNum" type="number" min="1" max="12" onchange="updateRoundMeta()">回
-    </div>
+    <select id="roundSelect" class="round-select" onchange="jumpRound(+this.value)"></select>
     <button onclick="navRound(1)">▶</button>
+    <button id="metaEditBtn" class="meta-btn" onclick="toggleMetaEdit()" title="この回の年月・回数を直す">✏️</button>
   </div>
-  <div style="text-align:center; margin-top:6px;">
-    <button onclick="deleteRound()" style="background:rgba(192,57,43,0.9); color:#fff; border:none; border-radius:6px; padding:5px 14px; font-size:11px; font-weight:700; cursor:pointer;">🗑 いま開いている回を削除</button>
+  <!-- 年月・回数は✏️を押したときだけ直せる（うっかり書き換え防止） -->
+  <div id="metaEdit" class="round-meta meta-edit" style="display:none;">
+    <input id="editYear" type="number" onchange="updateRoundMeta()">年
+    <input id="editMonth" type="number" onchange="updateRoundMeta()">月
+    <input id="editNum" type="number" min="1" max="12" onchange="updateRoundMeta()">回
+    <button class="meta-done" onclick="toggleMetaEdit(false)">完了</button>
   </div>
 </div>
 
@@ -485,6 +503,8 @@ function loadApp() {
         delete cur.calc.ketsuCount;
         delete cur.calc.taihouCount;
         delete cur.calc.taihouUnit;
+        // 表示するのは今月の回（先の月の空の回が作ってあっても、そちらは開かない）
+        curIdx = openIdx();
         return;
       }
     }
@@ -579,6 +599,7 @@ function render() {
   document.getElementById('editMonth').value = r.month;
   document.getElementById('editNum').value   = r.num;
   document.getElementById('kaihiInput').value = roundKaihi(r);
+  renderRoundSelect();
 
   // 表示前に毎回ルールを適用して結果を最新化
   recalcOpenResults();
@@ -778,7 +799,28 @@ function renderBids() {
     const att = r.attendance.find(a => a.name === m);
     return !(att && att.ochi);
   });
-  const memOpts = ['<option value=""></option>', ...activeMembers.map(m => `<option value="${m}">${m}</option>`)].join('');
+  // 叫び側・開き側それぞれで、もう選ばれた人を数える（入れ漏れ・2回入れの確認用）
+  const pickedOf = f => {
+    const c = {};
+    r.bids.slice(0, slots).forEach(b => { if (b[f]) c[b[f]] = (c[b[f]] || 0) + 1; });
+    return c;
+  };
+  const pickedC = pickedOf('caller'), pickedO = pickedOf('opener');
+  // 名前の選択肢。ほかの行で選ばれている人には「（済）」を付ける
+  const optsFor = (f, cur) => {
+    const picked = f === 'caller' ? pickedC : pickedO;
+    return '<option value=""></option>' + activeMembers.map(m =>
+      `<option value="${esc(m)}"${m === cur ? ' selected' : ''}>${esc(m)}${m !== cur && picked[m] ? '（済）' : ''}</option>`).join('');
+  };
+  const dupClass = (f, name) => name && (f === 'caller' ? pickedC : pickedO)[name] > 1 ? ' dup' : '';
+  const absentSet = new Set(attOf(r).filter(a => a.present).map(a => a.name));   // present=true が欠席
+  const pendingBox = picked => {
+    const dups = Object.keys(picked).filter(n => picked[n] > 1);
+    if (dups.length) return `<div class="pending dup">⚠️ ${dups.map(esc).join('・')} さんが2回入っています</div>`;
+    const rest = activeMembers.filter(m => !picked[m]);
+    if (!rest.length) return `<div class="pending done">✓ 全員入りました</div>`;
+    return `<div class="pending todo">まだの人（${rest.length}人）: ${rest.map(m => esc(m) + (absentSet.has(m) ? '<small>(欠)</small>' : '')).join('・')}</div>`;
+  };
 
   // 結果マップ（開き側で確定した結果を、その人物の名前に紐付ける）
   const resultByName = {};
@@ -881,7 +923,8 @@ function renderBids() {
 
   // ===== 叫び側 (じゃんけん順) =====
   let callerHtml = `<div class="card" style="border-left:5px solid #bf360c;">
-    <div class="card-h" style="color:#bf360c; font-size:14px;">📢 叫び側（じゃんけん順／一人2回まで）</div>`;
+    <div class="card-h" style="color:#bf360c; font-size:14px;">📢 叫び側（じゃんけん順／一人2回まで）</div>
+    ${pendingBox(pickedC)}`;
   for (let i = 0; i < slots; i++) {
     const b = r.bids[i];
     const cBg = bgOfName(b.caller);
@@ -889,8 +932,8 @@ function renderBids() {
     <div style="padding:10px 8px; border-bottom:1px solid #eee; ${cBg ? 'background:'+cBg+';' : ''}">
       <div style="display:flex; align-items:center; gap:8px; margin-bottom:8px;">
         <span style="background:#bf360c; color:white; padding:4px 10px; border-radius:6px; font-size:13px; font-weight:700; min-width:64px; text-align:center;">叫 No.${i+1}</span>
-        <select class="bid-select" data-bid="${i}" data-f="caller" onchange="onBidChange(this)" style="flex:1; border-color:#bf360c;">
-          ${memOpts.replace(`value="${esc(b.caller||'')}"`, `value="${esc(b.caller||'')}" selected`)}
+        <select class="bid-select${dupClass('caller', b.caller)}" data-bid="${i}" data-f="caller" onchange="onBidChange(this)" style="flex:1; border-color:#bf360c;">
+          ${optsFor('caller', b.caller)}
         </select>
         ${b.caller ? badgeOf(b.caller, 'caller') : ''}
       </div>
@@ -929,7 +972,8 @@ function renderBids() {
 
   // ===== 開き側 (札を開く順) =====
   let openerHtml = `<div class="card" style="border-left:5px solid #1b5e20;">
-    <div class="card-h" style="color:#1b5e20; font-size:14px;">🃏 開き側（代表が札を1枚ずつ開く順）</div>`;
+    <div class="card-h" style="color:#1b5e20; font-size:14px;">🃏 開き側（代表が札を1枚ずつ開く順）</div>
+    ${pendingBox(pickedO)}`;
 
   // トランプの当たりが何本引かれたか（残り人数で本数が変わる）
   {
@@ -968,8 +1012,8 @@ function renderBids() {
     <div style="padding:10px 8px; border-bottom:1px solid #eee; ${bg ? 'background:'+bg+';' : ''}">
       <div style="display:flex; align-items:center; gap:8px; margin-bottom:8px;">
         <span style="background:#1b5e20; color:white; padding:4px 10px; border-radius:6px; font-size:13px; font-weight:700; min-width:64px; text-align:center;">開 No.${i+1}</span>
-        <select class="bid-select" data-bid="${i}" data-f="opener" onchange="onBidChange(this)" style="flex:1; border-color:#1b5e20;">
-          ${memOpts.replace(`value="${esc(b.opener||'')}"`, `value="${esc(b.opener||'')}" selected`)}
+        <select class="bid-select${dupClass('opener', b.opener)}" data-bid="${i}" data-f="opener" onchange="onBidChange(this)" style="flex:1; border-color:#1b5e20;">
+          ${optsFor('opener', b.opener)}
         </select>
         ${b.opener ? badgeOf(b.opener, 'opener') : ''}
       </div>
@@ -1737,12 +1781,51 @@ function updateRoundMeta() {
   r.month = +document.getElementById('editMonth').value || r.month;
   r.num   = +document.getElementById('editNum').value   || r.num;
   persist();
+  renderRoundSelect();
 }
 
-function navRound(dir) {
-  const len = app.rounds.length;
-  curIdx = (curIdx + dir + len) % len;
+// 回を開催順（年月の古い順）に並べた番号の一覧
+function roundOrder() {
+  return app.rounds.map((r, i) => i)
+    .sort((a, b) => (ymOf(app.rounds[a].year, app.rounds[a].month) - ymOf(app.rounds[b].year, app.rounds[b].month)) || (a - b));
+}
+// 開いたときに出す回: 今月の回 → なければ今月より前でいちばん新しい回 → それもなければ最後の回
+// （先の月の空の回が作ってあっても、そちらには飛ばない）
+function openIdx() {
+  const now = new Date();
+  const t = ymOf(now.getFullYear(), now.getMonth() + 1);
+  const order = roundOrder();
+  let pick = -1;
+  order.forEach(i => { if (ymOf(app.rounds[i].year, app.rounds[i].month) <= t) pick = i; });
+  return pick >= 0 ? pick : order[order.length - 1];
+}
+function renderRoundSelect() {
+  const sel = document.getElementById('roundSelect');
+  sel.innerHTML = roundOrder().slice().reverse().map(i => {
+    const r = app.rounds[i];
+    return `<option value="${i}"${i === curIdx ? ' selected' : ''}>${r.year}年${r.month}月　第${r.num}回</option>`;
+  }).join('');
+}
+function jumpRound(i) {
+  if (!app.rounds[i]) return;
+  curIdx = i;
+  toggleMetaEdit(false);
   render();
+  window.scrollTo({ top: 0, behavior: 'instant' });
+}
+// ◀ は前の月の回、▶ は次の月の回へ（端で止まる。最新から最古へ一周しない）
+function navRound(dir) {
+  const order = roundOrder();
+  const pos = order.indexOf(curIdx) + dir;
+  if (pos < 0) { toast('いちばん古い回です'); return; }
+  if (pos >= order.length) { toast('いちばん新しい回です'); return; }
+  jumpRound(order[pos]);
+}
+function toggleMetaEdit(on) {
+  const box = document.getElementById('metaEdit');
+  const show = (on === undefined) ? box.style.display === 'none' : !!on;
+  box.style.display = show ? '' : 'none';
+  document.getElementById('metaEditBtn').classList.toggle('on', show);
 }
 
 function addNewRound() {
@@ -2017,6 +2100,7 @@ function scheduleCloudSave(){
   cloudTimer = setTimeout(pushCloudSilent, 1500);
 }
 async function pushCloudSilent(){
+  clearTimeout(cloudTimer); cloudTimer = null;   // 送信待ちなし、に戻す
   try{
     app.curIdx = curIdx;
     const res = await fetch(SYNC_URL + '?action=save&key=rakuseikai_data', { method:'POST', body: JSON.stringify(app) });
@@ -2028,7 +2112,13 @@ function flushCloudSave(){    // 閉じる瞬間に確実に送る（編集し�
   if (!dirty) return;
   try{ app.curIdx = curIdx; navigator.sendBeacon(SYNC_URL + '?action=save&key=rakuseikai_data', JSON.stringify(app)); }catch(e){}
 }
-async function autoRestore(){  // 開いたらクラウドから自動読込（手動☁↓と同じ処理）
+// 開いたとき・スマホで画面に戻ってきたときにクラウドから最新を読む。
+// keepView=true（画面に戻ってきたとき）は、見ていた回をそのまま開いておく。
+let lastRestore = 0;
+async function autoRestore(keepView){
+  lastRestore = Date.now();
+  const viewKey = keepView && round() ? [round().year, round().month, round().num].join('-') : null;
+  const before = JSON.stringify(app && app.rounds);
   try{
     const res = await fetch(SYNC_URL + '?action=load&key=rakuseikai_data');
     const json = await res.json();
@@ -2052,10 +2142,13 @@ async function autoRestore(){  // 開いたらクラウドから自動読込（�
     if (!d.retired || typeof d.retired !== 'object') d.retired = {};
     if (!d.joined  || typeof d.joined  !== 'object') d.joined  = {};
     if (d.kaihi == null) d.kaihi = 18000;
-    let ci = d.curIdx || 0; if (ci < 0 || ci >= d.rounds.length) ci = 0;
-    app = d; curIdx = ci;
+    app = d;
+    // ほかの端末で最後に見ていた回（d.curIdx）ではなく、今月の回を開く
+    const same = viewKey ? app.rounds.findIndex(r => [r.year, r.month, r.num].join('-') === viewKey) : -1;
+    curIdx = same >= 0 ? same : openIdx();
     localStorage.setItem(STORAGE_KEY, JSON.stringify(app));
     render();
+    if (keepView && JSON.stringify(app.rounds) !== before) toast('☁ 最新の内容に更新しました');
   }catch(e){ /* オフライン等は端末内データのまま */ }
 }
 
@@ -2066,6 +2159,17 @@ autoRestore().finally(()=>{ cloudReady = true; });
 // 閉じる・離れるときに最新を確実に保存
 window.addEventListener('beforeunload', flushCloudSave);
 window.addEventListener('pagehide', flushCloudSave);
+// スマホで別のアプリから戻ってきたときも最新を読む（開きっぱなしでも、ほかの人の入力が反映される）
+document.addEventListener('visibilitychange', () => {
+  if (document.visibilityState === 'hidden') {
+    // 送る前の編集が残っていたら、離れる前に送っておく
+    if (cloudTimer) { clearTimeout(cloudTimer); cloudTimer = null; flushCloudSave(); }
+    return;
+  }
+  if (!cloudReady || cloudTimer) return;             // 起動中・送信待ちの編集があるときは読まない
+  if (Date.now() - lastRestore < 30 * 1000) return;   // 短い間の行ったり来たりでは読み直さない
+  autoRestore(true);
+});
 </script>
 </body>
 </html>
