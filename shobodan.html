@@ -239,7 +239,7 @@ input.amount-input{font-size:26px;font-weight:bold;text-align:right;padding:10px
         <button type="button" class="k-in" id="kindIn" onclick="setKind('in')">収入</button>
       </div>
     </div>
-    <div class="field"><label>金額（円）</label><input type="text" inputmode="numeric" id="eAmt" class="amount-input" placeholder="0" autocomplete="off"></div>
+    <div class="field"><label>金額（円）</label><input type="text" inputmode="numeric" id="eAmt" class="amount-input" placeholder="0" autocomplete="off" oninput="fmtAmt(this)"></div>
     <div class="field"><label>日付</label><input type="date" id="eDate"></div>
     <div class="field">
       <label>科目（よく使う順・押して選ぶ）</label>
@@ -686,6 +686,8 @@ function parseAmt(s){
   s = String(s||"").replace(/[０-９]/g,c=>String.fromCharCode(c.charCodeAt(0)-0xFEE0)).replace(/[^\d]/g,"");
   return Number(s)||0;
 }
+// 入力中の金額欄に3桁ごとのコンマを付ける
+function fmtAmt(el){ const v = parseAmt(el.value); el.value = v ? num(v) : ""; }
 // 種別（収入/支出）ごとに、よく使う順の科目
 function catsFor(kind){
   const base = kind==="in" ? ["会費","補助金","繰越","その他"] : ["食事","食糧費","会費","訓練費","備品費","通信費","慶弔費","雑費","その他"];
@@ -783,7 +785,7 @@ function editEntry(i){
   document.getElementById("eDate").value = e.d;
   document.getElementById("eCat").value = e.cat;
   document.getElementById("eMemo").value = e.memo;
-  document.getElementById("eAmt").value = (eKind==="in" ? inc : out) || "";
+  document.getElementById("eAmt").value = num(eKind==="in" ? inc : out);
   document.getElementById("entryFormTitle").textContent = "記録を直す";
   document.getElementById("entrySubmit").textContent = "更新する";
   document.getElementById("entryCancel").style.display = "";
@@ -964,7 +966,7 @@ function renderMembers(){
       <div class="edit form-grid">
         <div><label>団員名</label><input value="${esc(m.name)}" onchange="uM(${i},'name',this.value)"></div>
         <div><label>役職</label><input value="${esc(m.role)}" onchange="uM(${i},'role',this.value)"></div>
-        <div><label>会費（円）</label><input type="number" value="${m.fee}" style="text-align:right" onchange="uM(${i},'fee',Number(this.value)||0)"></div>
+        <div><label>会費（円）</label><input type="text" inputmode="numeric" value="${num(m.fee)}" style="text-align:right" oninput="fmtAmt(this)" onchange="uM(${i},'fee',parseAmt(this.value))"></div>
         <div><label>納入日</label><input type="date" value="${esc(m.date)}" onchange="uM(${i},'date',this.value)"></div>
         <div><label>備考</label><input value="${esc(m.memo)}" onchange="uM(${i},'memo',this.value)"></div>
         <div style="align-self:end"><button class='btn btn-danger btn-sm' onclick='delMember(${i})'>この団員を削除</button></div>
@@ -991,10 +993,10 @@ function renderDeposits(){
     data.deposits.map((d,i)=>`<tr>
       <td><input value="${esc(d.date)}" style="min-width:90px" onchange="uD(${i},'date',this.value)"></td>
       <td><input value="${esc(d.bank)}" style="min-width:100px" onchange="uD(${i},'bank',this.value)"></td>
-      <td><input type="number" value="${d.amount}" style="min-width:100px;text-align:right" onchange="uD(${i},'amount',Number(this.value)||0)"></td>
+      <td><input type="text" inputmode="numeric" value="${num(d.amount)}" style="min-width:100px;text-align:right" oninput="fmtAmt(this)" onchange="uD(${i},'amount',parseAmt(this.value))"></td>
       <td><input value="${esc(d.maturity)}" style="min-width:90px" onchange="uD(${i},'maturity',this.value)"></td>
       <td><input value="${esc(d.rate)}" style="min-width:60px;text-align:right" onchange="uD(${i},'rate',this.value)"></td>
-      <td><input type="number" value="${d.matAmount}" style="min-width:100px;text-align:right" onchange="uD(${i},'matAmount',Number(this.value)||0)"></td>
+      <td><input type="text" inputmode="numeric" value="${num(d.matAmount)}" style="min-width:100px;text-align:right" oninput="fmtAmt(this)" onchange="uD(${i},'matAmount',parseAmt(this.value))"></td>
       <td><select onchange="uD(${i},'status',this.value)" style="min-width:90px">
         <option${d.status==="預入中"?" selected":""}>預入中</option>
         <option${d.status==="満期済"?" selected":""}>満期済</option>
@@ -1031,7 +1033,7 @@ function renderBudget(){
       return `<tr class="${cls}">
         <td><input value="${esc(b.name)}" style="min-width:100px" onchange="uB('${side}',${i},'name',this.value)"></td>
         <td><input value="${esc(b.match||"")}" style="min-width:80px" placeholder="収支記録の科目名" onchange="uB('${side}',${i},'match',this.value)"></td>
-        <td><input type="number" value="${b.amount}" style="min-width:100px;text-align:right" onchange="uB('${side}',${i},'amount',Number(this.value)||0)"></td>
+        <td><input type="text" inputmode="numeric" value="${num(b.amount)}" style="min-width:100px;text-align:right" oninput="fmtAmt(this)" onchange="uB('${side}',${i},'amount',parseAmt(this.value))"></td>
         <td class='num'>${num(exe)}</td>
         <td class='num'>${num(rem)}</td>
         <td class='num'>${(rate*100).toFixed(1)}%</td>
