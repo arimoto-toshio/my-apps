@@ -63,9 +63,11 @@
   .pm-table th { background: #2a4a2a; color: white; font-weight: 700; padding: 6px 4px; font-size: 11.5px; }
   .pm-table td { padding: 5px 6px; border-bottom: 1px solid #eef3ee; text-align: right; font-weight: 700; font-variant-numeric: tabular-nums; white-space: nowrap; }
   .pm-table td.nm { text-align: left; font-weight: 700; color: #1a3322; }
+  .pm-table td.nm.nm-plus { color: #1565c0; }
+  .pm-table td.nm.nm-minus { color: #c62828; }
   .pm-table tbody tr { cursor: pointer; }
   .pm-table tbody tr:active { background: #f0f7f0; }
-  .pm-table .pm-plus { color: #1b5e20; }
+  .pm-table .pm-plus { color: #1565c0; }
   .pm-table .pm-minus { color: #c62828; }
   .pm-table .pm-zero { color: #aaa; font-weight: 400; }
   .pm-table tfoot td { border-top: 2px solid #2a4a2a; border-bottom: none; background: #fffbea; font-size: 14px; padding: 7px 6px; }
@@ -527,7 +529,7 @@ function renderPM() {
     });
     tNow += now; tYear += year; tAll += all;
     return `<tr onclick="document.getElementById('card-${i}')?.scrollIntoView({behavior:'smooth',block:'center'})">
-      <td class="nm">${esc(m.name)}</td><td>${fmt(now)}</td><td>${fmt(year)}</td><td>${fmt(all)}</td></tr>`;
+      <td class="nm${now > 0 ? ' nm-plus' : now < 0 ? ' nm-minus' : ''}">${esc(m.name)}</td><td>${fmt(now)}</td><td>${fmt(year)}</td><td>${fmt(all)}</td></tr>`;
   }).join('');
   foot.innerHTML = `<tr><td class="nm">合計</td><td>${fmt(tNow)}</td><td>${fmt(tYear)}</td><td>${fmt(tAll)}</td></tr>`;
 }
