@@ -111,10 +111,74 @@ footer{text-align:center;color:var(--sub);font-size:12px;padding:20px 0 30px}
   #kessanPrintArea .ksheet{border:none;padding:10mm 6mm}
   .ksheet th{background:#f2ece2!important;color:#111!important}
 }
-@media(max-width:600px){
-  header h1{font-size:17px}
+/* ===== 2026-09-30 見やすさ・使いやすさ改善 ===== */
+input,select,textarea{font-size:16px}
+#syncState{font-size:11px;opacity:.85;margin-top:3px;min-height:14px}
+nav button .ic{margin-right:4px}
+.hero{background:linear-gradient(135deg,var(--navy) 0%,var(--navy-dark) 100%);color:#fff;border-radius:14px;padding:18px 16px;margin-bottom:12px;text-align:center;box-shadow:0 2px 6px rgba(0,0,0,.15)}
+.hero .label{font-size:13px;opacity:.85}
+.hero .value{font-size:40px;font-weight:bold;margin:4px 0 2px;font-variant-numeric:tabular-nums}
+.hero .sub{font-size:12px;opacity:.8}
+.btn-big{display:block;width:100%;padding:14px;font-size:17px;border-radius:10px;margin-bottom:14px}
+.cards.c3{grid-template-columns:repeat(3,1fr)}
+.card.link{cursor:pointer}
+.field{margin-bottom:12px}
+.field>label{font-size:13px;color:var(--sub);display:block;margin-bottom:4px;font-weight:bold}
+.seg{display:flex;gap:6px}
+.seg button{flex:1;padding:11px 6px;font-size:15px;font-weight:bold;border:2px solid var(--line);background:#fff;color:var(--sub);border-radius:8px;cursor:pointer;font-family:inherit}
+.seg button.on{background:var(--navy);border-color:var(--navy);color:#fff}
+.seg button.on.k-out{background:var(--red);border-color:var(--red)}
+.seg button.on.k-in{background:var(--green);border-color:var(--green)}
+input.amount-input{font-size:26px;font-weight:bold;text-align:right;padding:10px 12px}
+.chips{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:6px}
+.chips:empty{display:none}
+.chip{border:1px solid var(--line);background:#f4f5f7;border-radius:999px;padding:7px 13px;font-size:14px;cursor:pointer;font-family:inherit;color:var(--text)}
+.chip.on{background:var(--navy);color:#fff;border-color:var(--navy)}
+.chip.memo{background:#fff;font-size:13px;padding:6px 11px}
+.form-actions{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+.form-actions .btn-primary{flex:1;min-width:140px;padding:13px;font-size:16px}
+.mhead{display:flex;justify-content:space-between;align-items:baseline;gap:8px;background:var(--blue-bg);padding:7px 10px;border-radius:6px;margin:12px 0 2px;font-size:13px;color:var(--navy)}
+.mhead b{font-size:15px}
+.erow{display:flex;gap:10px;align-items:center;padding:10px 4px;border-bottom:1px solid var(--line);cursor:pointer}
+.erow:active{background:#f0f3f7}
+.erow.editing{background:var(--yellow-bg)}
+.erow .dt{flex:0 0 46px;text-align:center;font-size:12px;color:var(--sub);line-height:1.25}
+.erow .dt b{display:block;font-size:16px;color:var(--text)}
+.erow .mid{flex:1;min-width:0}
+.erow .cat{display:inline-block;background:var(--blue-bg);color:var(--navy);font-size:12px;padding:1px 8px;border-radius:10px;margin-right:4px}
+.erow .cat.norc{background:var(--red-bg);color:var(--red)}
+.erow .memo{font-size:14px;word-break:break-word;margin-top:2px}
+.erow .amt{text-align:right;flex:0 0 auto}
+.erow .amt .a{font-size:17px;font-variant-numeric:tabular-nums}
+.erow .amt .b{font-size:11px;color:var(--sub);font-variant-numeric:tabular-nums}
+.mbar{display:grid;grid-template-columns:40px 1fr;column-gap:8px;row-gap:3px;padding:8px 0;border-bottom:1px solid var(--line)}
+.mbar .m{grid-row:1 / span 2;align-self:center;font-weight:bold;text-align:center}
+.mbar .line{display:flex;align-items:center;gap:6px;font-size:13px;font-variant-numeric:tabular-nums}
+.mbar .line i{display:block;height:12px;border-radius:3px;min-width:2px}
+.mrow{border-bottom:1px solid var(--line);padding:9px 2px}
+.mrow .top{display:flex;align-items:center;gap:8px}
+.mrow .no{flex:0 0 22px;color:var(--sub);font-size:12px;text-align:center}
+.mrow .nm{flex:1;min-width:0;font-weight:bold;font-size:16px}
+.mrow .nm small{display:block;font-weight:normal;color:var(--sub);font-size:12px}
+.mrow .fee{font-variant-numeric:tabular-nums;font-size:14px;white-space:nowrap}
+.paybtn{min-width:66px;padding:9px 8px;border-radius:8px;font-weight:bold;font-size:14px;border:1px solid;cursor:pointer;font-family:inherit}
+.paybtn.ok{background:#e2f5e9;color:var(--green);border-color:var(--green)}
+.paybtn.ng{background:var(--red-bg);color:var(--red);border-color:var(--red)}
+.mrow .edit{display:none;margin:10px 0 4px;padding:10px;background:#fafbfc;border-radius:8px}
+.mrow.open .edit{display:grid}
+@media(max-width:700px){
+  header{padding:9px 12px}
+  header h1{font-size:16px}
+  header .year{font-size:12px}
+  nav{display:grid;grid-template-columns:repeat(4,1fr);overflow:visible}
+  nav button{padding:6px 2px 4px;font-size:11px;display:flex;flex-direction:column;align-items:center;gap:1px}
+  nav button .ic{margin:0;font-size:17px;line-height:1.2}
   .card .value{font-size:18px}
+  .cards.c3 .card{padding:9px 4px}
+  .cards.c3 .card .value{font-size:16px}
+  .hero .value{font-size:34px}
   main{padding:8px}
+  .section{padding:12px 10px}
 }
 </style>
 </head>
@@ -122,67 +186,96 @@ footer{text-align:center;color:var(--sub);font-size:12px;padding:20px 0 30px}
 <header>
   <h1>🚒 内子消防団 第2部　会計管理</h1>
   <div class="year" id="fiscalYear">令和8年度（2026年度）</div>
+  <div id="syncState"></div>
 </header>
 <nav id="nav">
-  <button data-tab="dashboard" class="active">ダッシュボード</button>
-  <button data-tab="entries">収支記録</button>
-  <button data-tab="members">積立管理</button>
-  <button data-tab="deposits">定期預金</button>
-  <button data-tab="budget">予算管理</button>
-  <button data-tab="report">月次報告書</button>
-  <button data-tab="kessan">決算書</button>
-  <button data-tab="data">データ管理</button>
+  <button data-tab="dashboard" class="active"><span class="ic">🏠</span>ホーム</button>
+  <button data-tab="entries"><span class="ic">✏️</span>収支記録</button>
+  <button data-tab="members"><span class="ic">👥</span>積立管理</button>
+  <button data-tab="deposits"><span class="ic">🏦</span>定期預金</button>
+  <button data-tab="budget"><span class="ic">📊</span>予算管理</button>
+  <button data-tab="report"><span class="ic">📄</span>月次報告</button>
+  <button data-tab="kessan"><span class="ic">📑</span>決算書</button>
+  <button data-tab="data"><span class="ic">⚙️</span>データ</button>
 </nav>
 <main>
 
 <!-- ダッシュボード -->
 <div class="tab active" id="tab-dashboard">
-  <div class="cards">
-    <div class="card"><div class="label">現在の残高</div><div class="value" id="dashBalance">-</div></div>
+  <div class="hero">
+    <div class="label">現在の残高</div>
+    <div class="value" id="dashBalance">-</div>
+    <div class="sub" id="dashBalanceSub"></div>
+  </div>
+  <button class="btn btn-primary btn-big" onclick="goAdd()">＋ 収支を記録する</button>
+  <div class="cards c3">
     <div class="card"><div class="label">今月の収入</div><div class="value plus" id="dashIncome">-</div></div>
     <div class="card"><div class="label">今月の支出</div><div class="value minus" id="dashExpense">-</div></div>
-    <div class="card"><div class="label">会費未納人数</div><div class="value" id="dashUnpaid">-</div></div>
+    <div class="card link" onclick="goTab('members')"><div class="label">会費未納</div><div class="value" id="dashUnpaid">-</div></div>
+  </div>
+  <div class="section">
+    <h2>最近の記録</h2>
+    <div id="recentList"></div>
+    <p class="note">行を押すと、その記録を直せます。</p>
   </div>
   <div class="section">
     <h2>月別収支</h2>
-    <div class="bar-chart" id="monthChart"></div>
-    <div class="legend"><span class="l-in">収入</span><span class="l-out">支出</span></div>
+    <div id="monthChart"></div>
+    <p class="note">緑＝収入、赤＝支出。前年度からの繰越は収入に含めていません。</p>
   </div>
   <div class="section">
     <h2>科目別支出（年度累計）</h2>
     <div class="table-wrap"><table id="catTable"></table></div>
   </div>
-  <div class="section">
-    <h2>最近の記録</h2>
-    <div class="table-wrap"><table id="recentTable"></table></div>
-  </div>
 </div>
 
 <!-- 収支記録 -->
 <div class="tab" id="tab-entries">
-  <div class="section">
-    <h2 id="entryFormTitle">新規記録の追加</h2>
-    <div class="form-grid">
-      <div><label>日付</label><input type="date" id="eDate"></div>
-      <div><label>科目</label><input list="catList" id="eCat" placeholder="例：食事"><datalist id="catList"></datalist></div>
-      <div style="grid-column:span 2"><label>摘要</label><input type="text" id="eMemo" placeholder="内容・店名など"></div>
-      <div><label>レシート</label><select id="eReceipt"><option value="⭕️">⭕️ あり</option><option value="✖">✖ なし</option><option value="ー">ー 対象外</option></select></div>
-      <div><label>収入（円）</label><input type="number" id="eIn" min="0" placeholder="0"></div>
-      <div><label>支出（円）</label><input type="number" id="eOut" min="0" placeholder="0"></div>
+  <div class="section" id="entryForm">
+    <h2 id="entryFormTitle">新しい記録</h2>
+    <div class="field">
+      <div class="seg">
+        <button type="button" class="k-out" id="kindOut" onclick="setKind('out')">支出</button>
+        <button type="button" class="k-in" id="kindIn" onclick="setKind('in')">収入</button>
+      </div>
     </div>
-    <button class="btn btn-primary" id="entrySubmit" onclick="submitEntry()">追加する</button>
-    <button class="btn btn-gray" id="entryCancel" onclick="cancelEdit()" style="display:none">キャンセル</button>
+    <div class="field"><label>金額（円）</label><input type="text" inputmode="numeric" id="eAmt" class="amount-input" placeholder="0" autocomplete="off"></div>
+    <div class="field"><label>日付</label><input type="date" id="eDate"></div>
+    <div class="field">
+      <label>科目（よく使う順・押して選ぶ）</label>
+      <div class="chips" id="catChips"></div>
+      <input list="catList" id="eCat" placeholder="ほかの科目はここに入力" oninput="renderForm()" autocomplete="off"><datalist id="catList"></datalist>
+    </div>
+    <div class="field">
+      <label>摘要（内容・店名など）</label>
+      <div class="chips" id="memoChips"></div>
+      <input type="text" id="eMemo" placeholder="例：操法手伝い　フジ" autocomplete="off">
+    </div>
+    <div class="field">
+      <label>レシート</label>
+      <div class="seg" id="rcSeg">
+        <button type="button" data-r="⭕️" onclick="setRc(this.dataset.r)">⭕️ あり</button>
+        <button type="button" data-r="✖" onclick="setRc(this.dataset.r)">✖ なし</button>
+        <button type="button" data-r="ー" onclick="setRc(this.dataset.r)">ー 対象外</button>
+      </div>
+    </div>
+    <div class="form-actions">
+      <button class="btn btn-primary" id="entrySubmit" onclick="submitEntry()">追加する</button>
+      <button class="btn btn-gray" id="entryCancel" onclick="cancelEdit()" style="display:none">キャンセル</button>
+      <button class="btn btn-danger" id="entryDelete" onclick="deleteEntry(editIndex)" style="display:none">削除</button>
+    </div>
   </div>
   <div class="section">
     <h2>収支記録一覧</h2>
     <div class="filters">
       <select id="filterMonth" onchange="renderEntries()"><option value="">全期間</option></select>
       <select id="filterCat" onchange="renderEntries()"><option value="">全科目</option></select>
-      <button class="btn btn-navy btn-sm" onclick="printEntries()">🖨 この一覧を印刷</button>
-      <span class="note" id="entrySummary"></span>
+      <input type="search" id="filterQ" placeholder="🔍 摘要で検索" oninput="renderEntries()" style="flex:1;min-width:130px">
     </div>
-    <div class="table-wrap"><table id="entryTable"></table></div>
-    <p class="note">🖨 印刷：上の「月」で印刷したい月を選んでから「この一覧を印刷」を押すと、その月の明細だけを印刷できます（全期間のままなら全件印刷）。</p>
+    <div class="note" id="entrySummary" style="margin:0 0 4px"></div>
+    <div id="entryList"></div>
+    <div style="margin-top:12px"><button class="btn btn-navy" onclick="printEntries()">🖨 この一覧を印刷</button></div>
+    <p class="note">行を押すと、上の入力欄でその記録を直したり削除したりできます。<br>🖨 印刷：印刷したい月を選んでから「この一覧を印刷」を押すと、その月の明細だけを印刷できます（全期間のままなら全件印刷）。</p>
   </div>
 </div>
 
@@ -196,7 +289,8 @@ footer{text-align:center;color:var(--sub);font-size:12px;padding:20px 0 30px}
       <div class="card"><div class="label">未納額</div><div class="value minus" id="mUnpaid">-</div></div>
       <div class="card"><div class="label">納入率</div><div class="value" id="mRate">-</div></div>
     </div>
-    <div class="table-wrap"><table id="memberTable"></table></div>
+    <p class="note" style="margin:0 0 4px">「未納／済」のボタンを押すと切り替わります（済にすると納入日に今日の日付が入ります）。名前や金額は「編集」から直せます。</p>
+    <div id="memberList"></div>
     <div style="margin-top:10px"><button class="btn btn-navy" onclick="addMember()">＋ 団員を追加</button></div>
   </div>
 </div>
@@ -250,7 +344,7 @@ footer{text-align:center;color:var(--sub);font-size:12px;padding:20px 0 30px}
 <div class="tab" id="tab-kessan">
   <div class="section no-print">
     <h2>収支決算書</h2>
-    <p class="note" style="margin-bottom:10px">収支記録の全期間（年度分）を科目別に自動集計した決算書です。「繰越」科目は前年度繰越金として収入の部に入ります。氏名は月次報告書の作成者（会計）・確認者（部長）欄から自動で入ります。</p>
+    <p class="note" style="margin-bottom:10px">収支記録の全期間（年度分）を科目別に自動集計した決算書です。「繰越」科目は前年度繰越金として収入の部に入ります。定期預金タブの内容は「財産の部」に別掲され、状態が「預入中」のものが財産合計に加算されます。氏名は月次報告書の作成者（会計）・確認者（部長）欄から自動で入ります。</p>
     <button class="btn btn-primary" onclick="printKessan()">🖨 決算書を印刷</button>
   </div>
   <div class="ksheet" id="kessanSheet"></div>
@@ -364,20 +458,30 @@ const DEFAULT_DATA = {
 const LS_KEY = "uchiko_fd2_kaikei_v2";
 const SYNC_URL = "https://script.google.com/macros/s/AKfycbxwL19mAenATUMILRsQYrDL0ThjU2C583Cj729OfzNHEH3drMcZCExYULRp4VGOZ11J/exec";
 const SYNC_KEY = "shobodan2_kaikei";
+const $ = id => document.getElementById(id);
 let data;
 try { data = JSON.parse(localStorage.getItem(LS_KEY)) || structuredClone(DEFAULT_DATA); }
 catch(e){ data = structuredClone(DEFAULT_DATA); }
-let editIndex = -1;
-let cloudReady = false, cloudTimer = null;
+let editIndex = -1, editBoth = false;
+let eKind = "out", eRc = "⭕️";
+let openMember = -1;
+let cloudReady = false, cloudTimer = null, cloudDirty = false, lastPull = 0;
 
 function toast(msg){
   const t = document.getElementById("toast");
   t.textContent = msg; t.classList.add("show");
   clearTimeout(t._tm); t._tm = setTimeout(()=>t.classList.remove("show"), 2200);
 }
+// localStorage が使えない環境（エディタのプレビュー等）からはクラウドへ書き込ませない
+function canStore(){
+  try{ localStorage.setItem("__synctest","1"); localStorage.removeItem("__synctest"); return true; }catch(e){ return false; }
+}
+function setSync(t){ const el = $("syncState"); if(el) el.textContent = t; }
+function hm(){ const t = new Date(); return t.getHours()+":"+String(t.getMinutes()).padStart(2,"0"); }
 function save(){
   data.updated = Date.now();
-  localStorage.setItem(LS_KEY, JSON.stringify(data));
+  try{ localStorage.setItem(LS_KEY, JSON.stringify(data)); }catch(e){}
+  cloudDirty = true;
   scheduleCloudSave();
 }
 
@@ -385,21 +489,33 @@ function save(){
 function scheduleCloudSave(){
   if(!cloudReady) return;
   clearTimeout(cloudTimer);
+  setSync("☁ 保存中…");
   cloudTimer = setTimeout(pushCloudSilent, 1500);
 }
-async function pushCloudSilent(){
+async function postCloud(keep){
+  if(!canStore()) throw new Error("nostorage");
+  const res = await fetch(SYNC_URL + "?action=save&key=" + SYNC_KEY, {method:"POST", body: JSON.stringify(data), keepalive: keep===true});
+  const json = await res.json();
+  if(!(json && json.success)) throw new Error("fail");
+}
+async function pushCloudSilent(keep){
+  clearTimeout(cloudTimer); cloudTimer = null;
   try{
-    const res = await fetch(SYNC_URL + "?action=save&key=" + SYNC_KEY, {method:"POST", body: JSON.stringify(data)});
-    const json = await res.json();
-    if(json && json.success) toast("☁ 自動保存しました");
-  }catch(e){ /* オフライン時は端末内保存のみ */ }
+    await postCloud(keep);
+    cloudDirty = false;
+    setSync("☁ 保存済み " + hm());
+  }catch(e){
+    /* オフライン時は端末内保存のみ */
+    setSync(e.message==="nostorage" ? "" : "📴 クラウド未送信（この端末には保存済み）");
+  }
 }
 async function pushCloud(){
   try{
-    const res = await fetch(SYNC_URL + "?action=save&key=" + SYNC_KEY, {method:"POST", body: JSON.stringify(data)});
-    const json = await res.json();
-    toast(json && json.success ? "☁ クラウドに保存しました" : "保存に失敗しました");
-  }catch(e){ toast("通信エラー：保存できませんでした"); }
+    await postCloud();
+    cloudDirty = false;
+    setSync("☁ 保存済み " + hm());
+    toast("☁ クラウドに保存しました");
+  }catch(e){ toast(e.message==="fail" ? "保存に失敗しました" : "通信エラー：保存できませんでした"); }
 }
 function parseCloud(d){
   if(d == null) return null;
@@ -417,26 +533,43 @@ async function pullCloud(){
     if(!d){ toast("クラウドにデータがありません"); return; }
     if(!confirm("クラウドのデータで置き換えますか？（現在の内容は上書きされます）")) return;
     data = d;
-    localStorage.setItem(LS_KEY, JSON.stringify(data));
+    try{ localStorage.setItem(LS_KEY, JSON.stringify(data)); }catch(e){}
+    cloudDirty = false;
+    resetForm(true);
     renderAll();
     toast("☁ クラウドから復元しました");
   }catch(e){ toast("通信エラー：復元できませんでした"); }
 }
-// 起動時：クラウドの方が新しければ自動で取り込む
+// 起動時・画面に戻ったとき：クラウドの方が新しければ自動で取り込む
 async function autoRestore(){
+  lastPull = Date.now();
   try{
     const res = await fetch(SYNC_URL + "?action=load&key=" + SYNC_KEY);
     const json = await res.json();
     const d = parseCloud(json);
-    if(d && (d.updated||0) > (data.updated||0)){
+    // 記録を直している最中は入れ替えない（編集中の行がずれるため）
+    if(d && (d.updated||0) > (data.updated||0) && editIndex < 0){
       data = d;
-      localStorage.setItem(LS_KEY, JSON.stringify(data));
+      try{ localStorage.setItem(LS_KEY, JSON.stringify(data)); }catch(e){}
+      cloudDirty = false;
       renderAll();
       toast("☁ クラウドの最新データを読み込みました");
     }
-  }catch(e){ /* オフラインなら端末内データのまま */ }
+    if(!cloudDirty) setSync("☁ 同期済み " + hm());
+  }catch(e){
+    /* オフラインなら端末内データのまま */
+    setSync("📴 オフライン（この端末のデータを表示中）");
+  }
   cloudReady = true;
+  if(cloudDirty) scheduleCloudSave();
 }
+document.addEventListener("visibilitychange", ()=>{
+  if(document.hidden){
+    if(cloudDirty && cloudReady) pushCloudSilent(true);   // 送信待ちがあれば閉じる前に送る
+  }else if(!cloudDirty && Date.now()-lastPull > 30000){
+    autoRestore();                                        // 別の端末での変更を取り込む
+  }
+});
 function yen(n){ return "¥" + Number(n||0).toLocaleString(); }
 function num(n){ return Number(n||0).toLocaleString(); }
 function esc(s){ return String(s==null?"":s).replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c])); }
@@ -450,14 +583,44 @@ function withBalance(){
 }
 
 // ===== タブ =====
+function goTab(name){
+  document.querySelectorAll("nav button").forEach(x=>x.classList.toggle("active", x.dataset.tab===name));
+  document.querySelectorAll(".tab").forEach(x=>x.classList.toggle("active", x.id==="tab-"+name));
+  renderAll();
+  window.scrollTo(0,0);
+}
 document.getElementById("nav").addEventListener("click",ev=>{
   const b = ev.target.closest("button"); if(!b) return;
-  document.querySelectorAll("nav button").forEach(x=>x.classList.remove("active"));
-  document.querySelectorAll(".tab").forEach(x=>x.classList.remove("active"));
-  b.classList.add("active");
-  document.getElementById("tab-"+b.dataset.tab).classList.add("active");
-  renderAll();
+  goTab(b.dataset.tab);
 });
+function goAdd(){
+  goTab("entries");
+  resetForm(true);
+  setTimeout(()=>$("eAmt").focus(), 50);
+}
+function today(){
+  const t = new Date();
+  return t.getFullYear()+"-"+String(t.getMonth()+1).padStart(2,"0")+"-"+String(t.getDate()).padStart(2,"0");
+}
+function dparts(d){
+  const m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(d||"");
+  if(!m) return null;
+  const dt = new Date(+m[1], +m[2]-1, +m[3]);
+  return {md:(+m[2])+"/"+(+m[3]), w:"日月火水木金土"[dt.getDay()]};
+}
+// 1行ぶんの表示（ホームの「最近の記録」と収支記録一覧で共通）
+function rowHTML(e, fn){
+  const p = dparts(e.d);
+  const inc = Number(e.inc)||0, out = Number(e.out)||0;
+  let amt = "";
+  if(inc) amt += `<div class="a in">+${num(inc)}</div>`;
+  if(out) amt += `<div class="a out">−${num(out)}</div>`;
+  return `<div class="erow${editIndex===e._i?" editing":""}" onclick="${fn}(${e._i})">
+    <div class="dt">${p ? `<b>${p.md}</b>${p.w}` : esc(e.d)}</div>
+    <div class="mid"><span class="cat">${esc(e.cat)}</span>${e.r==="✖" ? '<span class="cat norc">レシートなし</span>' : ""}<div class="memo">${esc(e.memo)}</div></div>
+    <div class="amt">${amt}<div class="b">残高 ${num(e.bal)}</div></div>
+  </div>`;
+}
 
 // ===== ダッシュボード =====
 function renderDashboard(){
@@ -466,15 +629,17 @@ function renderDashboard(){
   const now = new Date();
   const ym = now.getFullYear()+"-"+String(now.getMonth()+1).padStart(2,"0");
   let inc=0,out=0;
-  rows.forEach(e=>{ if(e.d && e.d.startsWith(ym)){ inc+=Number(e.inc)||0; out+=Number(e.out)||0; } });
+  rows.forEach(e=>{ if(e.d && e.d.startsWith(ym) && e.cat!=="繰越"){ inc+=Number(e.inc)||0; } if(e.d && e.d.startsWith(ym)){ out+=Number(e.out)||0; } });
   document.getElementById("dashBalance").textContent = yen(bal);
+  const last = rows.length ? dparts(rows[rows.length-1].d) : null;
+  document.getElementById("dashBalanceSub").textContent = rows.length ? `全${rows.length}件${last ? "　最後の記録 "+last.md+"（"+last.w+"）" : ""}` : "まだ記録がありません";
   document.getElementById("dashIncome").textContent = yen(inc);
   document.getElementById("dashExpense").textContent = yen(out);
   const unpaid = data.members.filter(m=>!m.paid).length;
-  document.getElementById("dashUnpaid").textContent = unpaid + "人";
-  document.getElementById("dashUnpaid").className = "value" + (unpaid>0 ? " minus" : "");
+  document.getElementById("dashUnpaid").textContent = unpaid>0 ? unpaid + "人" : "なし";
+  document.getElementById("dashUnpaid").className = "value" + (unpaid>0 ? " minus" : " plus");
 
-  // 月別チャート
+  // 月別収支（横棒）
   const byMonth = {};
   rows.forEach(e=>{
     if(!e.d) return;
@@ -487,12 +652,10 @@ function renderDashboard(){
   const max = Math.max(1,...months.flatMap(m=>[byMonth[m].inc,byMonth[m].out]));
   document.getElementById("monthChart").innerHTML = months.map(m=>{
     const g=byMonth[m];
-    return `<div class="bar-group">
-      <div class="bars">
-        <div class="bar income" style="height:${Math.round(g.inc/max*130)}px" title="収入 ${num(g.inc)}円"></div>
-        <div class="bar expense" style="height:${Math.round(g.out/max*130)}px" title="支出 ${num(g.out)}円"></div>
-      </div>
-      <div class="bar-label">${m.slice(0,4)}年${Number(m.slice(5))}月</div>
+    return `<div class="mbar">
+      <div class="m">${Number(m.slice(5))}月</div>
+      <div class="line"><i style="flex:0 0 ${(g.inc/max*68).toFixed(1)}%;background:var(--green)"></i><span class="in">${num(g.inc)}</span></div>
+      <div class="line"><i style="flex:0 0 ${(g.out/max*68).toFixed(1)}%;background:var(--red)"></i><span class="out">${num(g.out)}</span></div>
     </div>`;
   }).join("") || '<p class="note">記録がありません</p>';
 
@@ -508,17 +671,61 @@ function renderDashboard(){
 
   // 最近の記録
   const recent = rows.slice(-5).reverse();
-  document.getElementById("recentTable").innerHTML =
-    "<tr><th>日付</th><th>科目</th><th>摘要</th><th class='num'>収入</th><th class='num'>支出</th><th class='num'>残高</th></tr>" +
-    recent.map(e=>`<tr><td>${esc(e.d)}</td><td>${esc(e.cat)}</td><td>${esc(e.memo)}</td>
-      <td class='num in'>${e.inc?num(e.inc):""}</td><td class='num out'>${e.out?num(e.out):""}</td><td class='num'>${num(e.bal)}</td></tr>`).join("");
+  document.getElementById("recentList").innerHTML = recent.map(e=>rowHTML(e,"editFromHome")).join("") || '<p class="note">記録がありません</p>';
 }
+function editFromHome(i){ goTab("entries"); editEntry(i); }
 
 // ===== 収支記録 =====
 function catSet(){
   const s = new Set(["繰越","会費","補助金","食事","食糧費","訓練費","備品費","通信費","慶弔費","雑費","その他"]);
   data.entries.forEach(e=>e.cat && s.add(e.cat));
   return [...s];
+}
+// 金額欄：カンマ・全角数字・「円」が混じっていても数字だけ拾う
+function parseAmt(s){
+  s = String(s||"").replace(/[０-９]/g,c=>String.fromCharCode(c.charCodeAt(0)-0xFEE0)).replace(/[^\d]/g,"");
+  return Number(s)||0;
+}
+// 種別（収入/支出）ごとに、よく使う順の科目
+function catsFor(kind){
+  const base = kind==="in" ? ["会費","補助金","繰越","その他"] : ["食事","食糧費","会費","訓練費","備品費","通信費","慶弔費","雑費","その他"];
+  const cnt = {};
+  base.forEach(c=>cnt[c]=0);
+  data.entries.forEach(e=>{
+    const v = kind==="in" ? Number(e.inc) : Number(e.out);
+    if(v>0 && e.cat) cnt[e.cat] = (cnt[e.cat]||0)+1;
+  });
+  const ord = c => { const i = base.indexOf(c); return i<0 ? 99 : i; };
+  return Object.keys(cnt).sort((a,b)=> cnt[b]-cnt[a] || ord(a)-ord(b));
+}
+function renderForm(){
+  $("kindOut").classList.toggle("on", eKind==="out");
+  $("kindIn").classList.toggle("on", eKind==="in");
+  document.querySelectorAll("#rcSeg button").forEach(b=>b.classList.toggle("on", b.dataset.r===eRc));
+  const cur = $("eCat").value.trim();
+  $("catChips").innerHTML = catsFor(eKind).map(c=>`<button type="button" class="chip${c===cur?" on":""}" onclick="pickCat(this.textContent)">${esc(c)}</button>`).join("");
+  // 過去の摘要から、よく使う順に候補を出す（科目を選ぶとその科目の分だけ）
+  const cnt = {};
+  data.entries.forEach(e=>{
+    if(!e.memo) return;
+    if(cur && e.cat!==cur) return;
+    if((eKind==="in") !== (Number(e.inc)>0)) return;
+    cnt[e.memo] = (cnt[e.memo]||0)+1;
+  });
+  const memos = Object.keys(cnt).sort((a,b)=>cnt[b]-cnt[a]).slice(0,6);
+  $("memoChips").innerHTML = memos.map(m=>`<button type="button" class="chip memo" onclick="pickMemo(this.textContent)">${esc(m)}</button>`).join("");
+}
+function setKind(k){
+  eKind = k;
+  if(editIndex<0) eRc = k==="in" ? "ー" : "⭕️";
+  renderForm();
+}
+function setRc(r){ eRc = r; renderForm(); }
+function pickCat(c){ $("eCat").value = c; renderForm(); }
+function pickMemo(m){ $("eMemo").value = m; }
+function filteredRows(){
+  const fm = $("filterMonth").value, fc = $("filterCat").value, q = $("filterQ").value.trim();
+  return withBalance().filter(e=>(!fm || (e.d && e.d.startsWith(fm))) && (!fc || e.cat===fc) && (!q || ((e.memo||"")+" "+(e.cat||"")).includes(q)));
 }
 function renderEntries(){
   document.getElementById("catList").innerHTML = catSet().map(c=>`<option value="${esc(c)}">`).join("");
@@ -534,68 +741,84 @@ function renderEntries(){
   fc.innerHTML = '<option value="">全科目</option>' + catSet().map(c=>`<option value="${esc(c)}">${esc(c)}</option>`).join("");
   fc.value = fcVal;
 
-  const shown = rows.filter(e=>(!fm.value || (e.d && e.d.startsWith(fm.value))) && (!fc.value || e.cat===fc.value));
+  const shown = filteredRows();
   let sumIn=0,sumOut=0;
   shown.forEach(e=>{ sumIn+=Number(e.inc)||0; sumOut+=Number(e.out)||0; });
   document.getElementById("entrySummary").textContent = `${shown.length}件　収入計 ${num(sumIn)}円 ／ 支出計 ${num(sumOut)}円`;
-  document.getElementById("entryTable").innerHTML =
-    "<tr><th>日付</th><th>科目</th><th>摘要</th><th>ﾚｼｰﾄ</th><th class='num'>収入</th><th class='num'>支出</th><th class='num'>残高</th><th></th></tr>" +
-    shown.map(e=>`<tr>
-      <td>${esc(e.d)}</td><td>${esc(e.cat)}</td><td style="white-space:normal;min-width:150px">${esc(e.memo)}</td><td class='center'>${esc(e.r)}</td>
-      <td class='num in'>${e.inc?num(e.inc):""}</td><td class='num out'>${e.out?num(e.out):""}</td><td class='num'>${num(e.bal)}</td>
-      <td class='center' style="white-space:nowrap">
-        <button class='btn btn-gray btn-sm' onclick='editEntry(${e._i})'>編集</button>
-        <button class='btn btn-danger btn-sm' onclick='deleteEntry(${e._i})'>削除</button>
-      </td></tr>`).join("");
+  // 月ごとにまとめて、新しい順に並べる
+  const groups = {};
+  shown.forEach(e=>{ const m = (e.d||"").slice(0,7) || "-"; (groups[m] = groups[m]||[]).push(e); });
+  document.getElementById("entryList").innerHTML = Object.keys(groups).sort().reverse().map(m=>{
+    const g = groups[m];
+    let gi=0, go=0;
+    g.forEach(e=>{ gi+=Number(e.inc)||0; go+=Number(e.out)||0; });
+    const label = m==="-" ? "日付なし" : `${m.slice(0,4)}年${Number(m.slice(5))}月`;
+    return `<div class="mhead"><b>${label}</b><span>収入 ${num(gi)}　支出 ${num(go)}</span></div>` +
+      g.slice().reverse().map(e=>rowHTML(e,"editEntry")).join("");
+  }).join("") || '<p class="note" style="padding:14px 0">該当する記録がありません</p>';
 }
 function submitEntry(){
   const d = document.getElementById("eDate").value;
   const cat = document.getElementById("eCat").value.trim();
   const memo = document.getElementById("eMemo").value.trim();
-  const r = document.getElementById("eReceipt").value;
-  const inc = Number(document.getElementById("eIn").value)||0;
-  const out = Number(document.getElementById("eOut").value)||0;
+  const amt = parseAmt(document.getElementById("eAmt").value);
+  if(!(amt>0)){ alert("金額を入力してください"); $("eAmt").focus(); return; }
   if(!d){ alert("日付を入力してください"); return; }
-  if(!cat){ alert("科目を入力してください"); return; }
-  if(inc===0 && out===0){ alert("収入または支出の金額を入力してください"); return; }
-  const rec = {d,cat,memo,r,inc,out};
-  if(editIndex>=0){ data.entries[editIndex]=rec; } else { data.entries.push(rec); }
-  save(); cancelEdit(); renderAll();
+  if(!cat){ alert("科目を選ぶか、入力してください"); return; }
+  if(editIndex>=0 && editBoth && !confirm("この記録には収入と支出の両方が入っています。\n更新すると「"+(eKind==="in"?"収入":"支出")+"」だけの記録になります。よろしいですか？")) return;
+  const rec = {d, cat, memo, r:eRc, inc: eKind==="in"?amt:0, out: eKind==="out"?amt:0};
+  const wasEdit = editIndex>=0;
+  if(wasEdit){ data.entries[editIndex]=rec; } else { data.entries.push(rec); }
+  save(); resetForm(true); renderAll();
+  toast((wasEdit?"更新しました：":"追加しました：") + cat + "　" + (eKind==="in"?"+":"−") + num(amt) + "円");
 }
 function editEntry(i){
   const e = data.entries[i];
+  if(!e) return;
   editIndex = i;
+  const inc = Number(e.inc)||0, out = Number(e.out)||0;
+  editBoth = inc>0 && out>0;
+  eKind = (inc>0 && !(out>0)) ? "in" : "out";
+  eRc = e.r || "ー";
   document.getElementById("eDate").value = e.d;
   document.getElementById("eCat").value = e.cat;
   document.getElementById("eMemo").value = e.memo;
-  document.getElementById("eReceipt").value = e.r;
-  document.getElementById("eIn").value = e.inc||"";
-  document.getElementById("eOut").value = e.out||"";
-  document.getElementById("entryFormTitle").textContent = "記録の編集";
+  document.getElementById("eAmt").value = (eKind==="in" ? inc : out) || "";
+  document.getElementById("entryFormTitle").textContent = "記録を直す";
   document.getElementById("entrySubmit").textContent = "更新する";
   document.getElementById("entryCancel").style.display = "";
+  document.getElementById("entryDelete").style.display = "";
+  renderForm(); renderEntries(); renderDashboard();
   window.scrollTo({top:0,behavior:"smooth"});
 }
-function cancelEdit(){
-  editIndex = -1;
-  ["eDate","eCat","eMemo","eIn","eOut"].forEach(id=>document.getElementById(id).value="");
-  document.getElementById("eReceipt").value="⭕️";
-  document.getElementById("entryFormTitle").textContent = "新規記録の追加";
+// 入力欄を空にする。keepDate=true なら日付はそのまま（レシートをまとめて入れるとき用）
+function resetForm(keepDate){
+  editIndex = -1; editBoth = false;
+  ["eCat","eMemo","eAmt"].forEach(id=>document.getElementById(id).value="");
+  if(!keepDate || !$("eDate").value) $("eDate").value = today();
+  eRc = eKind==="in" ? "ー" : "⭕️";
+  document.getElementById("entryFormTitle").textContent = "新しい記録";
   document.getElementById("entrySubmit").textContent = "追加する";
   document.getElementById("entryCancel").style.display = "none";
+  document.getElementById("entryDelete").style.display = "none";
+  renderForm();
 }
+function cancelEdit(){ resetForm(false); renderEntries(); renderDashboard(); }
 function deleteEntry(i){
   const e = data.entries[i];
+  if(!e) return;
   if(!confirm(`この記録を削除しますか？\n${e.d}　${e.cat}　${e.memo}`)) return;
-  data.entries.splice(i,1); save(); renderAll();
+  data.entries.splice(i,1); save(); resetForm(true); renderAll();
+  toast("削除しました");
 }
 
 // ===== 収支記録の月別印刷 =====
 function printEntries(){
   const fm = document.getElementById("filterMonth").value;
   const fc = document.getElementById("filterCat").value;
+  const q = document.getElementById("filterQ").value.trim();
   const rows = withBalance();
-  const shown = rows.filter(e=>(!fm || (e.d && e.d.startsWith(fm))) && (!fc || e.cat===fc));
+  const shown = filteredRows();
   if(!shown.length){ alert("印刷する記録がありません。月や科目の選択を確認してください。"); return; }
   let sumIn=0,sumOut=0;
   shown.forEach(e=>{ sumIn+=Number(e.inc)||0; sumOut+=Number(e.out)||0; });
@@ -605,7 +828,7 @@ function printEntries(){
       <td>${esc(e.d)}</td><td>${esc(e.cat)}</td><td style="white-space:normal">${esc(e.memo)}</td><td class='center'>${esc(e.r)}</td>
       <td class='num'>${e.inc?num(e.inc):""}</td><td class='num'>${e.out?num(e.out):""}</td><td class='num'>${num(e.bal)}</td></tr>`).join("");
   let summary;
-  if(fm && !fc){
+  if(fm && !fc && !q){
     // 前月繰越 = 対象月より前の全収支
     let carry=0;
     rows.forEach(e=>{ if(e.d && e.d.slice(0,7) < fm) carry += (Number(e.inc)||0)-(Number(e.out)||0); });
@@ -662,6 +885,16 @@ function kessanHTML(){
   });
   if(!outRows) outRows = '<tr><td class="c">—</td><td class="r">0円</td><td></td></tr>';
   outRows += `<tr class="total"><td class="c">支出合計</td><td class="r">${num(outTotal)}円</td><td></td></tr>`;
+  // 財産の部（定期預金）
+  const deps = data.deposits || [];
+  const depTotal = deps.filter(d=>d.status==="預入中").reduce((s,d)=>s+(Number(d.amount)||0),0);
+  let depRows = deps.map(d=>{
+    const memo = [d.date?"預入 "+esc(d.date):"", d.maturity?"満期 "+esc(d.maturity):"", d.rate?"利率 "+esc(d.rate)+"%":"", esc(d.status||""), d.memo?esc(d.memo):""].filter(Boolean).join("　");
+    return `<tr><td class="c">${esc(d.bank)||"定期預金"}</td><td class="r">${num(Number(d.amount)||0)}円</td><td style="font-size:11px">${memo}</td></tr>`;
+  }).join("");
+  if(!depRows) depRows = '<tr><td class="c">—</td><td class="r">0円</td><td></td></tr>';
+  depRows += `<tr class="total"><td class="c">定期預金合計（預入中）</td><td class="r">${num(depTotal)}円</td><td></td></tr>`;
+  const balance = incTotal - outTotal;
   const t = new Date();
   const dateStr = t.getFullYear()+"年"+(t.getMonth()+1)+"月"+t.getDate()+"日";
   const maker = data.signers.maker ? esc(data.signers.maker)+"　" : "　　　　　　";
@@ -676,8 +909,16 @@ function kessanHTML(){
     <div class="k-summary"><table>
       <tr><td>収入合計</td><td class="r">${num(incTotal)}円</td></tr>
       <tr><td>支出合計</td><td class="r">${num(outTotal)}円</td></tr>
-      <tr class="grand"><td>差引残高（次年度繰越金）</td><td class="r">${num(incTotal-outTotal)}円</td></tr>
+      <tr class="grand"><td>差引残高（次年度繰越金）</td><td class="r">${num(balance)}円</td></tr>
     </table></div>
+    <h2>財産の部（定期預金）</h2>
+    <table><tr><th style="width:32%">預入先</th><th style="width:26%">預入金額</th><th>内訳</th></tr>${depRows}</table>
+    <div class="k-summary"><table>
+      <tr><td>現金・普通預金（差引残高）</td><td class="r">${num(balance)}円</td></tr>
+      <tr><td>定期預金（預入中）</td><td class="r">${num(depTotal)}円</td></tr>
+      <tr class="grand"><td>財産合計</td><td class="r">${num(balance+depTotal)}円</td></tr>
+    </table></div>
+    <div style="font-size:11px;margin-top:6px">※「満期済」「解約済」の定期預金は元利金が普通預金に戻っているため、財産合計には算入せず収支の部に含めています。</div>
     <div class="k-sign">
       <div>上記のとおり報告いたします。</div>
       <div class="names">
@@ -699,29 +940,49 @@ function printKessan(){
 }
 
 // ===== 積立管理 =====
-function renderMembers(){
+function renderMemberSummary(){
   const total = data.members.reduce((s,m)=>s+(Number(m.fee)||0),0);
   const paid = data.members.filter(m=>m.paid).reduce((s,m)=>s+(Number(m.fee)||0),0);
   document.getElementById("mTotal").textContent = yen(total);
   document.getElementById("mPaid").textContent = yen(paid);
   document.getElementById("mUnpaid").textContent = yen(total-paid);
   document.getElementById("mRate").textContent = total? Math.round(paid/total*100)+"%" : "-";
-  document.getElementById("memberTable").innerHTML =
-    "<tr><th>No.</th><th>団員名</th><th>役職</th><th class='num'>会費（円）</th><th>納入日</th><th>納入状況</th><th>備考</th><th></th></tr>" +
-    data.members.map((m,i)=>`<tr>
-      <td class='center'>${i+1}</td>
-      <td><input value="${esc(m.name)}" style="min-width:70px" onchange="uM(${i},'name',this.value)"></td>
-      <td><input value="${esc(m.role)}" style="min-width:70px" onchange="uM(${i},'role',this.value)"></td>
-      <td><input type="number" value="${m.fee}" style="min-width:90px;text-align:right" onchange="uM(${i},'fee',Number(this.value)||0)"></td>
-      <td><input type="date" value="${esc(m.date)}" onchange="uM(${i},'date',this.value)"></td>
-      <td class='center'><button class="btn btn-sm ${m.paid?'':'btn-danger'}" style="${m.paid?'background:#e2f5e9;color:var(--green);border:1px solid var(--green)':''}" onclick="uM(${i},'paid',${!m.paid})">${m.paid?"済":"未納"}</button></td>
-      <td><input value="${esc(m.memo)}" style="min-width:90px" onchange="uM(${i},'memo',this.value)"></td>
-      <td class='center'><button class='btn btn-danger btn-sm' onclick='delMember(${i})'>削除</button></td>
-    </tr>`).join("");
 }
-function uM(i,k,v){ data.members[i][k]=v; save(); renderMembers(); renderDashboard(); }
-function addMember(){ data.members.push({no:data.members.length+1,name:"",role:"団員",fee:30000,date:"",paid:false,memo:""}); save(); renderMembers(); renderDashboard(); }
-function delMember(i){ if(!confirm(`「${data.members[i].name||"（無名）"}」さんを削除しますか？`)) return; data.members.splice(i,1); save(); renderMembers(); renderDashboard(); }
+function renderMembers(){
+  renderMemberSummary();
+  document.getElementById("memberList").innerHTML = data.members.map((m,i)=>{
+    const p = dparts(m.date);
+    const sub = [esc(m.role), m.paid && p ? "納入 "+p.md : "", esc(m.memo)].filter(Boolean).join("・");
+    return `<div class="mrow${openMember===i?" open":""}">
+      <div class="top">
+        <div class="no">${i+1}</div>
+        <div class="nm">${esc(m.name)||"（名前未入力）"}<small>${sub}</small></div>
+        <div class="fee">${num(m.fee)}円</div>
+        <button class="paybtn ${m.paid?"ok":"ng"}" onclick="togglePaid(${i})">${m.paid?"✓ 済":"未納"}</button>
+        <button class="btn btn-gray btn-sm" onclick="toggleMember(${i})">${openMember===i?"閉じる":"編集"}</button>
+      </div>
+      <div class="edit form-grid">
+        <div><label>団員名</label><input value="${esc(m.name)}" onchange="uM(${i},'name',this.value)"></div>
+        <div><label>役職</label><input value="${esc(m.role)}" onchange="uM(${i},'role',this.value)"></div>
+        <div><label>会費（円）</label><input type="number" value="${m.fee}" style="text-align:right" onchange="uM(${i},'fee',Number(this.value)||0)"></div>
+        <div><label>納入日</label><input type="date" value="${esc(m.date)}" onchange="uM(${i},'date',this.value)"></div>
+        <div><label>備考</label><input value="${esc(m.memo)}" onchange="uM(${i},'memo',this.value)"></div>
+        <div style="align-self:end"><button class='btn btn-danger btn-sm' onclick='delMember(${i})'>この団員を削除</button></div>
+      </div>
+    </div>`;
+  }).join("");
+}
+// 入力欄の変更：開いたまま次の欄へ移れるよう、一覧は描き直さず集計だけ更新する
+function uM(i,k,v){ data.members[i][k]=v; save(); renderMemberSummary(); renderDashboard(); }
+function toggleMember(i){ openMember = openMember===i ? -1 : i; renderMembers(); }
+function togglePaid(i){
+  const m = data.members[i];
+  m.paid = !m.paid;
+  if(m.paid && !m.date) m.date = today();
+  save(); renderMembers(); renderDashboard();
+}
+function addMember(){ data.members.push({no:data.members.length+1,name:"",role:"団員",fee:30000,date:"",paid:false,memo:""}); openMember = data.members.length-1; save(); renderMembers(); renderDashboard(); }
+function delMember(i){ if(!confirm(`「${data.members[i].name||"（無名）"}」さんを削除しますか？`)) return; data.members.splice(i,1); openMember = -1; save(); renderMembers(); renderDashboard(); }
 
 // ===== 定期預金 =====
 function renderDeposits(){
@@ -904,6 +1165,7 @@ function renderAll(){
   document.getElementById("fiscalInput").value = data.fiscalYear;
   renderDashboard();
   renderEntries();
+  renderForm();
   renderMembers();
   renderDeposits();
   renderBudget();
@@ -911,6 +1173,8 @@ function renderAll(){
   renderReport();
   renderKessan();
 }
+$("eDate").value = today();
+eRc = "⭕️";
 renderAll();
 autoRestore();
 </script>
