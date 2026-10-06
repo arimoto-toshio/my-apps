@@ -1,0 +1,2830 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<title>楽晴会｜新アプリ</title>
+<meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+<meta http-equiv="Pragma" content="no-cache">
+<meta http-equiv="Expires" content="0">
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+  body { font-family: -apple-system, 'Hiragino Sans', 'Meiryo', sans-serif; background: #eef2f7; color: #1a1a2e; font-size: 15px; padding-bottom: 100px; }
+
+  /* ========== Header ========== */
+  .hdr {
+    background: linear-gradient(135deg, #0d1b3e, #1a3a6e);
+    color: white; padding: 12px 14px;
+    position: sticky; top: 0; z-index: 100;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.25);
+  }
+  .hdr-top { display:flex; justify-content:space-between; align-items:center; gap:8px; margin-bottom:8px; }
+  .hdr-title { font-size: 16px; font-weight: 700; }
+  .hdr-btns { display:flex; gap:6px; }
+  .hdr-btn {
+    background: rgba(255,255,255,0.18); color: white;
+    border: 1px solid rgba(255,255,255,0.35); padding: 6px 10px;
+    border-radius: 6px; font-size: 12px; cursor: pointer;
+  }
+  .hdr-btn.gold { background: #f0c040; color: #1a1a2e; border: none; font-weight: 700; }
+  .round-nav { display:flex; align-items:center; justify-content:space-between; gap:6px; }
+  .round-nav button {
+    background: rgba(255,255,255,0.15); border: none; color: white;
+    width: 38px; height: 38px; border-radius: 8px; font-size: 18px; cursor: pointer;
+  }
+  .round-meta { display:flex; gap:4px; align-items:center; flex:1; justify-content:center; font-size: 14px; }
+  .round-meta input {
+    width: 50px; padding: 4px 6px; border: none; border-radius: 4px;
+    background: rgba(255,255,255,0.2); color: white; text-align: center; font-size: 14px;
+  }
+  .round-meta input::-webkit-outer-spin-button,
+  .round-meta input::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
+  .round-select {
+    flex: 1; min-width: 0; height: 38px; padding: 0 10px; border: none; border-radius: 8px;
+    background: rgba(255,255,255,0.2); color: white; font-size: 15px; font-weight: 700;
+    text-align: center; text-align-last: center; -webkit-appearance: none; appearance: none; cursor: pointer;
+  }
+  .round-select option { color: #1a1a2e; background: white; }
+  .round-nav button.meta-btn { font-size: 15px; }
+  .round-nav button.meta-btn.on { background: #f0c040; }
+  .meta-edit { margin-top: 8px; padding: 8px; border-radius: 8px; background: rgba(240,192,64,0.25); }
+  .meta-edit .meta-done { margin-left: 8px; background: #f0c040; color: #1a1a2e; border: none; border-radius: 6px; padding: 5px 12px; font-size: 13px; font-weight: 700; cursor: pointer; }
+
+  /* 入札: まだ入っていない人・重複の知らせ */
+  .pending { margin: 6px 8px 2px; padding: 7px 10px; border-radius: 8px; font-size: 12px; line-height: 1.6; }
+  .pending.todo { background: #fff8e1; color: #7a5a00; border: 1px solid #f0dfa8; }
+  .pending.done { background: #e8f5e9; color: #2e7d32; border: 1px solid #c8e6c9; font-weight: 700; }
+  .pending.dup  { background: #ffebee; color: #c62828; border: 1px solid #ffcdd2; font-weight: 700; }
+  .bid-select.dup { border: 2px solid #c62828 !important; background: #fff5f5; }
+
+  /* ========== Tabs ========== */
+  .tabs {
+    display:flex; background: white; box-shadow: 0 1px 3px rgba(0,0,0,0.08);
+    position: sticky; top: 90px; z-index: 99;
+    overflow-x: auto;
+  }
+  .tab {
+    flex: 1; padding: 14px 3px; text-align: center; font-size: 12px;
+    font-weight: 600; cursor: pointer; color: #666;
+    border-bottom: 3px solid transparent; transition: all 0.15s;
+    white-space: nowrap;
+  }
+  .tab.active { color: #0d1b3e; border-bottom-color: #f0c040; background: #f7f9fc; }
+
+  /* ========== Page ========== */
+  .page { padding: 12px; display: none; }
+  .page.active { display: block; }
+  .card {
+    background: white; border-radius: 10px; padding: 12px;
+    margin-bottom: 12px; box-shadow: 0 1px 4px rgba(0,0,0,0.06);
+  }
+  .card-h { font-size: 13px; font-weight: 700; color: #0d1b3e; margin-bottom: 10px; }
+
+  /* ========== Member List (出席ページ) ========== */
+  .mem-row {
+    display:flex; align-items:center; gap:10px;
+    padding: 12px 8px; border-bottom: 1px solid #eee;
+  }
+  .mem-row:last-child { border-bottom: none; }
+  .mem-name { flex:1; font-size:16px; font-weight:600; }
+  .toggle-btn {
+    border: 2px solid #ccc; background: white; color: #999;
+    padding: 6px 14px; border-radius: 20px; font-size: 13px;
+    font-weight: 600; cursor: pointer; min-width: 60px;
+  }
+  .toggle-btn.on-paid { background: #f0c040; border-color: #d4a017; color: #1a1a2e; }
+  .toggle-btn.on-absent { background: #c0392b; border-color: #c0392b; color: white; }
+  .toggle-btn.on-ochi { background: #6c5ce7; border-color: #6c5ce7; color: white; }
+
+  /* ========== Bid Cards (入札ページ) ========== */
+  .bid-card {
+    background: white; border-radius: 10px; padding: 14px;
+    margin-bottom: 12px; box-shadow: 0 1px 4px rgba(0,0,0,0.06);
+    border-left: 4px solid #ccc;
+  }
+  .bid-card.has-result-taihou { border-left-color: #bf360c; background: #fffae0; }
+  .bid-card.has-result-ketsu { border-left-color: #1565c0; background: #f0f7ff; }
+  .bid-card.has-result-ochi { border-left-color: #e65100; background: #fff8f0; }
+
+  .bid-no { font-size: 11px; color: #999; font-weight: 700; margin-bottom: 6px; }
+  .bid-grid {
+    display: grid; grid-template-columns: 80px 1fr; gap: 8px 10px;
+    align-items: center;
+  }
+  .bid-label { font-size: 13px; color: #555; font-weight: 600; }
+  .bid-input, .bid-select {
+    width: 100%; padding: 10px 8px; font-size: 16px;
+    border: 1px solid #ddd; border-radius: 6px; background: white;
+    font-family: inherit; -webkit-appearance: none; appearance: none;
+  }
+  .bid-select {
+    background: white url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath fill='%23666' d='M6 8L0 0h12z'/%3E%3C/svg%3E") no-repeat right 10px center;
+    padding-right: 28px;
+  }
+  .bid-result-row { grid-column: 1 / -1; }
+  .result-btns { display: flex; gap: 6px; margin-top: 4px; }
+  .result-btn {
+    flex: 1; padding: 10px; border-radius: 6px; border: 2px solid #ddd;
+    background: white; font-size: 13px; font-weight: 600; cursor: pointer;
+  }
+  .result-btn.active.taihou { background: #bf360c; color: white; border-color: #bf360c; }
+  .result-btn.active.ketsu { background: #1565c0; color: white; border-color: #1565c0; }
+  .result-btn.active.ochi { background: #e65100; color: white; border-color: #e65100; }
+
+  .bid-sum { grid-column: 1 / -1; text-align: right; padding-top: 6px; border-top: 1px dashed #ddd; }
+  .bid-sum-val { font-size: 17px; font-weight: 700; color: #0d1b3e; }
+
+  /* ========== Calc page ========== */
+  .calc-row {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 10px 4px; border-bottom: 1px solid #eee;
+  }
+  .calc-row:last-child { border-bottom: none; }
+  .calc-label { font-size: 14px; font-weight: 600; color: #333; }
+  .calc-input {
+    width: 100px; padding: 8px; font-size: 16px; text-align: right;
+    border: 1px solid #ddd; border-radius: 6px;
+  }
+  .calc-mini { width: 50px; padding: 6px; font-size: 14px; text-align: center; border: 1px solid #ddd; border-radius: 4px; }
+  .calc-line { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; padding: 8px 4px; border-bottom: 1px solid #eee; font-size: 14px; }
+  .calc-val { font-weight: 700; color: #0d1b3e; min-width: 70px; text-align: right; }
+
+  .final-card {
+    background: linear-gradient(135deg, #fff8e1, #ffe0b2);
+    padding: 18px; border-radius: 14px; text-align: center;
+    margin-top: 16px; box-shadow: 0 2px 10px rgba(240,192,64,0.3);
+  }
+  .final-formula { font-size: 14px; color: #555; margin-bottom: 8px; }
+  .final-payout { font-size: 38px; font-weight: 900; color: #c0392b; letter-spacing: 1px; }
+
+  /* ========== Members page ========== */
+  .mem-list { display:flex; flex-wrap:wrap; gap:8px; }
+  .mem-tag {
+    background: #f0f4ff; padding: 8px 12px; border-radius: 20px;
+    font-size: 14px; display: flex; align-items: center; gap: 6px;
+  }
+  .mem-tag .del { color: #c0392b; cursor: pointer; font-weight: 700; padding: 0 4px; }
+  .add-row { display:flex; gap:6px; margin-top: 12px; }
+  .add-row input { flex:1; padding: 10px; border: 1px solid #ddd; border-radius: 6px; font-size: 15px; }
+  .add-row button { padding: 10px 16px; background: #f0c040; border: none; border-radius: 6px; font-weight: 700; cursor: pointer; font-size: 14px; }
+
+  /* ========== Toast ========== */
+  #toast {
+    position: fixed; top: 50%; left: 50%; transform: translate(-50%,-50%);
+    background: rgba(0,0,0,0.85); color: white; padding: 12px 20px;
+    border-radius: 10px; font-size: 14px; opacity: 0;
+    pointer-events: none; transition: opacity 0.2s; z-index: 1000;
+  }
+  #toast.show { opacity: 1; }
+
+  /* ========== Bottom Bar ========== */
+  .bottom-bar {
+    position: fixed; bottom: 0; left: 0; right: 0;
+    background: white; border-top: 1px solid #ddd;
+    padding: 10px 14px; display: flex; gap: 8px; z-index: 90;
+    box-shadow: 0 -2px 8px rgba(0,0,0,0.08);
+    padding-bottom: calc(10px + env(safe-area-inset-bottom));
+  }
+  .bottom-bar button {
+    flex: 1; padding: 12px; border-radius: 8px; border: none;
+    font-size: 14px; font-weight: 700; cursor: pointer;
+  }
+  .bb-save { background: #f0c040; color: #1a1a2e; }
+  .bb-add { background: #0d1b3e; color: white; }
+
+  /* ================= 新アプリ（v2）の見た目 ================= */
+  body { background: #eef1f6; padding-bottom: calc(80px + env(safe-area-inset-bottom)); }
+  .hdr { padding: 10px 12px; }
+  .hdr-top { margin-bottom: 8px; }
+  .hdr-title { display: flex; align-items: center; gap: 6px; white-space: nowrap; }
+  .hdr-btns { gap: 5px; }
+  .hdr-btn { padding: 6px 9px; }
+  #undoBtn.off { opacity: .35; }
+  .sync-badge { font-size: 10px; font-weight: 700; padding: 2px 8px; border-radius: 10px; background: rgba(255,255,255,.15); }
+  .sync-badge.ok   { background: rgba(46,204,113,.35); }
+  .sync-badge.wait { background: rgba(240,192,64,.55); color: #1a1a2e; }
+  .sync-badge.off  { background: rgba(231,76,60,.75); }
+
+  /* 下のタブ（親指で押しやすく） */
+  .tabs {
+    position: fixed; top: auto; bottom: 0; left: 0; right: 0; z-index: 95;
+    border-top: 1px solid #e1e6ee; box-shadow: 0 -2px 10px rgba(0,0,0,.07);
+    padding-bottom: env(safe-area-inset-bottom); overflow: visible;
+  }
+  .tab {
+    padding: 6px 2px 7px; font-size: 10.5px; border-bottom: none; border-top: 3px solid transparent;
+    display: flex; flex-direction: column; align-items: center; gap: 1px;
+  }
+  .tab b { font-size: 21px; line-height: 1.15; font-weight: 400; }
+  .tab.active { border-top-color: #f0c040; background: #fffbea; color: #0d1b3e; }
+  .bottom-bar { display: none !important; }
+
+  .card { border-radius: 14px; padding: 14px; box-shadow: 0 1px 6px rgba(13,27,62,.07); }
+  .card-h { font-size: 14px; }
+  .final-card { border-radius: 16px; }
+  .final-who { font-size: 15px; font-weight: 800; color: #0d1b3e; margin-bottom: 6px; }
+
+  /* 進み具合 */
+  .step-bar { display: flex; gap: 5px; padding: 10px 12px 0; }
+  .step {
+    flex: 1; min-width: 0; background: #fff; border-radius: 10px; padding: 6px 3px 5px; text-align: center;
+    box-shadow: 0 1px 3px rgba(0,0,0,.06); border: 2px solid transparent; cursor: pointer; position: relative;
+  }
+  .step .si { font-size: 15px; line-height: 1.2; }
+  .step .sl { font-size: 10px; color: #667; font-weight: 700; }
+  .step .sv { font-size: 11px; font-weight: 800; color: #0d1b3e; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .step.done { background: #e8f5e9; }
+  .step.done .sv { color: #2e7d32; }
+  .step.done::after { content: '✓'; position: absolute; top: 2px; right: 5px; font-size: 10px; color: #2e7d32; font-weight: 900; }
+  .step.now { border-color: #f0c040; background: #fffbea; }
+  .step.now .sl::after { content: ' ←いま'; color: #b8860b; }
+
+  /* 入札：選ぶ欄をボタンに（タップで大きな選択肢が出る） */
+  .pick-btn {
+    width: 100%; min-height: 42px; padding: 8px 6px; font-size: 16px; font-weight: 700;
+    border: 1px solid #c9d1de; border-radius: 8px; background: #fff; color: #0d1b3e;
+    cursor: pointer; font-family: inherit; text-align: center;
+  }
+  .pick-btn.name { text-align: left; padding-left: 12px; font-size: 17px; }
+  .pick-btn .ph { color: #a8b0bd; font-weight: 500; font-size: 13px; }
+  .pick-btn.dup { border: 2px solid #c62828; background: #fff5f5; }
+  .pick-btn.hl { outline: 3px solid #f0c040; outline-offset: 1px; }
+
+  /* 下から出るシート */
+  #sheetBg { position: fixed; inset: 0; background: rgba(13,27,62,.45); z-index: 2000; display: none; }
+  #sheet {
+    position: fixed; left: 0; right: 0; bottom: 0; z-index: 2001; background: #fff;
+    border-radius: 18px 18px 0 0; padding: 14px 14px calc(16px + env(safe-area-inset-bottom));
+    transform: translateY(105%); transition: transform .2s ease; max-height: 82vh; overflow-y: auto;
+    box-shadow: 0 -6px 24px rgba(0,0,0,.2);
+  }
+  #sheet.open { transform: none; }
+  .sh-title { font-size: 15px; font-weight: 800; color: #0d1b3e; margin-bottom: 10px; display: flex; justify-content: space-between; align-items: center; gap: 8px; }
+  .sh-x { border: none; background: #eef1f6; border-radius: 50%; width: 32px; height: 32px; font-size: 15px; cursor: pointer; flex: none; }
+  .sh-grid { display: grid; gap: 8px; }
+  .sh-opt {
+    padding: 14px 4px; font-size: 17px; font-weight: 700; border-radius: 10px; border: 1.5px solid #d5dbe6;
+    background: #f7f9fc; color: #0d1b3e; cursor: pointer; font-family: inherit;
+  }
+  .sh-opt.used { color: #9aa3b2; background: #f0f1f4; font-weight: 500; font-size: 14px; }
+  .sh-opt.cur { background: #0d1b3e; color: #fff; border-color: #0d1b3e; }
+  .sh-foot { display: flex; gap: 8px; margin-top: 12px; align-items: center; }
+  .sh-foot > button { flex: 1; padding: 12px; border-radius: 10px; border: none; font-weight: 700; font-size: 14px; cursor: pointer; font-family: inherit; }
+  .sh-auto { font-size: 13px; color: #445; display: flex; align-items: center; gap: 5px; white-space: nowrap; }
+  .sh-auto input { width: 18px; height: 18px; }
+
+  /* 保存履歴 */
+  .hist-row { display: flex; align-items: center; gap: 8px; padding: 10px 2px; border-bottom: 1px solid #eee; }
+  .hist-row:last-child { border-bottom: none; }
+  .hist-main { flex: 1; min-width: 0; }
+  .hist-t { font-weight: 800; font-size: 14px; color: #0d1b3e; }
+  .hist-s { font-size: 11px; color: #777; margin-top: 2px; }
+  .hist-row button { padding: 8px 12px; border-radius: 8px; border: 1px solid #6a1b9a; background: #fff; color: #6a1b9a; font-weight: 700; font-size: 12px; cursor: pointer; }
+
+  /* 年間：お金のまとめ */
+  .money-sum { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; margin-bottom: 10px; }
+  .money-sum div { background: #f7f9fc; border-radius: 8px; padding: 7px 8px; font-size: 11px; color: #667; }
+  .money-sum b { display: block; font-size: 15px; color: #0d1b3e; }
+  .money-row { display: grid; grid-template-columns: 62px 1fr 92px; gap: 6px; align-items: center; padding: 5px 0; border-bottom: 1px solid #f0f0f0; font-size: 12px; }
+  .money-row:last-child { border-bottom: none; }
+  .money-bar { height: 9px; background: linear-gradient(90deg, #f0c040, #e6a100); border-radius: 5px; margin-top: 3px; }
+  .money-yen { text-align: right; font-weight: 800; color: #0d1b3e; font-variant-numeric: tabular-nums; }
+
+</style>
+</head>
+<body>
+
+<div class="hdr">
+  <div class="hdr-top">
+    <div class="hdr-title">🎴 楽晴会 <span id="syncBadge" class="sync-badge">☁ 確認中…</span></div>
+    <div class="hdr-btns">
+      <button class="hdr-btn" id="undoBtn" onclick="undo()" title="ひとつ前に戻す">↶ 戻す</button>
+      <button class="hdr-btn" onclick="openHistory()" title="保存履歴">🕘</button>
+      <button class="hdr-btn" onclick="syncUpload()" style="background:rgba(46,204,113,0.3);font-size:11px;">☁↑</button>
+      <button class="hdr-btn" onclick="syncDownload()" style="background:rgba(52,152,219,0.3);font-size:11px;">☁↓</button>
+    </div>
+  </div>
+  <div class="round-nav">
+    <button onclick="navRound(-1)">◀</button>
+    <select id="roundSelect" class="round-select" onchange="jumpRound(+this.value)"></select>
+    <button onclick="navRound(1)">▶</button>
+    <button id="metaEditBtn" class="meta-btn" onclick="toggleMetaEdit()" title="この回の年月・回数を直す">✏️</button>
+  </div>
+  <!-- 年月・回数は✏️を押したときだけ直せる（うっかり書き換え防止） -->
+  <div id="metaEdit" class="round-meta meta-edit" style="display:none;">
+    <input id="editYear" type="number" onchange="updateRoundMeta()">年
+    <input id="editMonth" type="number" onchange="updateRoundMeta()">月
+    <input id="editNum" type="number" min="1" max="12" onchange="updateRoundMeta()">回
+    <button class="meta-done" onclick="toggleMetaEdit(false)">完了</button>
+  </div>
+</div>
+
+<div class="tabs">
+  <div class="tab active" data-page="att" onclick="showPage('att')"><b>📋</b>出席</div>
+  <div class="tab" data-page="bid" onclick="showPage('bid')"><b>🃏</b>入札</div>
+  <div class="tab" data-page="calc" onclick="showPage('calc')"><b>💰</b>精算</div>
+  <div class="tab" data-page="year" onclick="showPage('year')"><b>📅</b>年間</div>
+  <div class="tab" data-page="mem" onclick="showPage('mem')"><b>👥</b>メンバー</div>
+  <div class="tab" data-page="share" onclick="showPage('share')"><b>📤</b>共有</div>
+</div>
+
+<!-- 進み具合（出欠→叫び→開き→精算→共有） -->
+<div id="stepBar" class="step-bar"></div>
+
+<!-- 出席ページ -->
+<div id="page-att" class="page active">
+  <div class="card">
+    <div class="card-h">出席・会費（タップで切替）</div>
+    <div id="memList"></div>
+  </div>
+</div>
+
+<!-- 入札ページ -->
+<div id="page-bid" class="page">
+  <div id="bidList"></div>
+</div>
+
+<!-- 精算ページ -->
+<div id="page-calc" class="page">
+  <div class="card">
+    <div class="card-h">💰 精算</div>
+    <div id="calcBody"></div>
+  </div>
+  <div id="finalBox"></div>
+</div>
+
+<!-- 年間サマリーページ -->
+<div id="page-year" class="page">
+  <div id="yearBody"></div>
+</div>
+
+<!-- 共有ページ -->
+<div id="page-share" class="page">
+  <div id="shareBody"></div>
+</div>
+
+<!-- メンバーページ -->
+<div id="page-mem" class="page">
+  <div class="card">
+    <div class="card-h">👥 メンバー管理</div>
+    <div class="mem-list" id="memberList"></div>
+    <div class="add-row">
+      <input type="text" id="newMemberInput" placeholder="新メンバー名">
+      <button onclick="addMember()">追加</button>
+    </div>
+    <div style="margin-top:16px; display:flex; gap:8px; align-items:center;">
+      <label style="font-size:14px; font-weight:600;">この回の会費:</label>
+      <input type="number" class="calc-input" id="kaihiInput" onchange="onKaihiChange()">
+      <span>円</span>
+    </div>
+    <div style="font-size:11px; color:#888; margin-top:4px;">2026年9月の回から17,000円（それ以前は18,000円）。ここで変えるとその回だけに反映されます</div>
+  </div>
+  <div class="card">
+    <div class="card-h">⚙️ 操作</div>
+    <button class="hdr-btn" style="background:#0d1b3e; color:white; padding:10px 16px; margin:0 8px 8px 0;" onclick="addNewRound()">＋ 新規回を追加</button>
+    <button class="hdr-btn" style="background:#c0392b; color:white; padding:10px 16px; margin:0 8px 8px 0;" onclick="deleteRound()">この回を削除</button>
+    <button class="hdr-btn" style="background:#e67e22; color:white; padding:10px 16px; margin:0 8px 8px 0;" onclick="deleteMonth()">📅 月ごと削除</button>
+  </div>
+  <div class="card">
+    <div class="card-h">💾 バックアップ</div>
+    <button class="hdr-btn" style="background:#0d1b3e; color:white; padding:10px 16px; margin:0 8px 8px 0;" onclick="exportData()">💾 書き出し（JSON）</button>
+    <button class="hdr-btn" style="background:#2e7d32; color:white; padding:10px 16px; margin:0 8px 8px 0;" onclick="document.getElementById('importFile').click()">📂 読み込み</button>
+    <input type="file" id="importFile" accept=".json,application/json" style="display:none;" onchange="importData(event)">
+    <div style="font-size:11px; color:#888; margin-top:4px;">クラウド同期とは別に、手元にJSONファイルとして残せます</div>
+  </div>
+  <div class="card">
+    <div class="card-h">🕘 保存履歴（この端末）</div>
+    <button class="hdr-btn" style="background:#6a1b9a; color:white; padding:10px 16px; margin:0 8px 8px 0;" onclick="openHistory()">🕘 履歴を見る・戻す</button>
+    <div style="font-size:11px; color:#888; margin-top:4px; line-height:1.6;">10分ごと、それと回の削除・クラウドの読み込みなど大きな操作の前に、この端末に控えを残します（15世代）。<br>入力をひとつ取り消すときは、上の「↶ 戻す」。</div>
+  </div>
+</div>
+
+<!-- スクショ用: 共有カードだけを1画面に収めて出す -->
+<div id="shotOverlay" onclick="closeShot()" style="display:none; position:fixed; inset:0; background:#fff; z-index:9999;">
+  <div id="shotStage" style="position:absolute; top:6px; left:50%; transform-origin:top center;"></div>
+  <div id="shotHint" style="position:fixed; bottom:6px; left:0; right:0; text-align:center; font-size:11px; color:#aaa;">
+    スクリーンショットを撮ったら、画面をタップで戻ります
+  </div>
+</div>
+
+<!-- ボトムバー -->
+<div class="bottom-bar">
+  <button class="bb-save" onclick="saveAll()">💾 保存</button>
+  <button class="bb-add" onclick="addNewRound()">＋ 新規回</button>
+</div>
+
+<div id="sheetBg" onclick="closeSheet()"></div>
+<div id="sheet"></div>
+<div id="toast"></div>
+
+<script>
+// ============================================================
+// 自動更新チェック（キャッシュ対策）
+// ============================================================
+(async function autoUpdateCheck() {
+  try {
+    const res = await fetch(window.location.pathname + '?_cb=' + Date.now(), { cache: 'no-store' });
+    if (!res.ok) return;
+    const html = await res.text();
+    const hash = html.length + ':' + html.slice(0, 200);
+    const stored = localStorage.getItem('app_version_hash_v2');
+    if (stored && stored !== hash) {
+      localStorage.setItem('app_version_hash_v2', hash);
+      window.location.reload();
+      return;
+    }
+    if (!stored) localStorage.setItem('app_version_hash_v2', hash);
+  } catch (e) { /* ignore */ }
+})();
+
+// ============================================================
+// データ：既存PC版と互換のキーを使う（同じレシピで読み書き）
+// ============================================================
+const STORAGE_KEY = 'rakuseikai_data';
+const DEFAULT_MEMBERS = ['山本','渡部','宮瀬','米田','石岡','有本','白石','宮田','酒井','森岡','TKT','木工'];
+const RESULT_OPTIONS = ['','大砲','ケツ','落ち'];
+// 会費（集金額）は 2026年9月の回から 18,000円 → 17,000円 に変更。
+// 回ごとに r.kaihi を持てる（会費欄で変えた回だけ保存される）。
+// 未設定の回は開催年月から既定額を決めるので、過去の回は18,000円のまま残る。
+const KAIHI_CHANGE = { year: 2026, month: 9, before: 18000, after: 17000 };
+function defaultKaihiFor(r) {
+  const y = (r && r.year  != null) ? +r.year  : new Date().getFullYear();
+  const m = (r && r.month != null) ? +r.month : new Date().getMonth() + 1;
+  return (y * 12 + m) >= (KAIHI_CHANGE.year * 12 + KAIHI_CHANGE.month)
+    ? KAIHI_CHANGE.after : KAIHI_CHANGE.before;
+}
+function roundKaihi(r) {
+  return (r && r.kaihi != null) ? +r.kaihi : defaultKaihiFor(r);
+}
+// 大砲代は 2026年10月の回から 5,000円で固定（毎回入れなくてよい）。
+// それより前の回は、そのとき記録した金額をそのまま使う（過去の記録は変えない）。
+const TAIHOU_FIXED = { year: 2026, month: 10, amount: 5000 };
+function isTaihouFixed(r) {
+  const y = (r && r.year  != null) ? +r.year  : new Date().getFullYear();
+  const m = (r && r.month != null) ? +r.month : new Date().getMonth() + 1;
+  return (y * 12 + m) >= (TAIHOU_FIXED.year * 12 + TAIHOU_FIXED.month);
+}
+function roundTaihou(r) {
+  if (activeCountOf(r) <= 1) return 0;            // 最終回（残りひとり）は大砲なし
+  if (isTaihouFixed(r)) return TAIHOU_FIXED.amount;
+  return +(r.calc && r.calc.taihou) || 0;
+}
+// target の回から見て「今のシーズンのこれまでの回」を古い順に返す。
+// 年月をさかのぼって直近の第1回までを範囲とするので、
+// 一覧に日付のちぐはぐな回（誤操作でできた空の回など）が混ざっていても拾わない。
+function seasonRoundsBefore(target) {
+  const t = ymOf(target.year, target.month);
+  const past = app.rounds
+    .filter(r => r !== target && ymOf(r.year, r.month) < t)
+    .sort((a, b) => ymOf(a.year, a.month) - ymOf(b.year, b.month));
+  const out = [];
+  for (let i = past.length - 1; i >= 0; i--) {
+    out.unshift(past[i]);
+    if (+past[i].num === 1) break;   // 第1回まで来たら、そこがシーズンの始まり
+  }
+  return out;
+}
+// 手動で人数を調整したとき、対象の名前もそれに追従させる。
+// ケツを減らして配当を増やした差分だけ、ケツの人を配当対象へ移す（減らしただけ・自動のままなら変化なし）。
+function adjustTargetsByCount(normalNames, ketsuNames, normalCount, ketsuCount){
+  const dispNormal = normalNames.slice();
+  const dispKetsu  = ketsuNames.slice();
+  const move = Math.min(
+    Math.max(0, dispKetsu.length - ketsuCount),
+    Math.max(0, normalCount - dispNormal.length)
+  );
+  for (let k = 0; k < move; k++) dispNormal.push(dispKetsu.shift());
+  return [dispNormal, dispKetsu];
+}
+// ============================================================
+// 退会（メンバーが抜けるとき）
+// app.retired = { '名前': {year, month} }
+//   … その年月の回から参加しない。それより前の回の記録はそのまま残る。
+// メンバーを名簿から本当に消すことはしない（消すと過去の記録まで消えるため）。
+// 表示・計算では「その回に在籍していた人」だけを対象にする。
+// ============================================================
+function ymOf(y, m) { return (+y) * 12 + (+m); }
+// name はこの回に在籍していたか（途中から入った人・途中で抜けた人を判定する）
+function isActiveIn(name, r) {
+  const y = (r && r.year  != null) ? r.year  : new Date().getFullYear();
+  const m = (r && r.month != null) ? r.month : new Date().getMonth() + 1;
+  const t = ymOf(y, m);
+  const jn = app && app.joined  ? app.joined[name]  : null;   // 加入した年月より前は居ない
+  if (jn && t < ymOf(jn.year, jn.month)) return false;
+  const rt = app && app.retired ? app.retired[name] : null;   // 退会した年月からは居ない
+  if (rt && t >= ymOf(rt.year, rt.month)) return false;
+  return true;
+}
+// この回に在籍していたメンバー名の配列
+function membersOf(r) { return app.members.filter(m => isActiveIn(m, r)); }
+// この回に在籍していた人の出欠行だけ
+function attOf(r) { return r.attendance.filter(a => isActiveIn(a.name, r)); }
+
+// ============================================================
+// トランプ（札を開く人が引く当たりくじ）
+// 当たりは 100円×2・50円×2。
+// 残り3人の回は 100円×2・50円×1、残り2人の回は 100円×2 だけ。
+// 開き側の「カード」欄に入れた金額が、その人が引いた当たり。
+// ============================================================
+function activeCountOf(r) {
+  return membersOf(r).length - attOf(r).filter(a => a.ochi).length;
+}
+function cardQuotaOf(r) {
+  const n = activeCountOf(r);
+  if (n <= 1) return { c100: 0, c50: 0 };   // 最終回（ひとり）は引かない
+  if (n === 2) return { c100: 2, c50: 0 };
+  if (n === 3) return { c100: 2, c50: 1 };
+  return { c100: 2, c50: 2 };
+}
+function cardWinnersOf(r) {
+  const slots = Math.max(1, membersOf(r).length - attOf(r).filter(a => a.ochi).length);
+  const w100 = [], w50 = [];
+  r.bids.slice(0, slots).forEach(b => {
+    if (!b.opener) return;
+    if (+b.card2 === 100) w100.push(b.opener);
+    else if (+b.card2 === 50) w50.push(b.opener);
+  });
+  return { w100, w50 };
+}
+
+// その回の「落ち済み」を、それより前の回の落ち判定から求める
+function computeOchiFor(r) {
+  if (+r.num === 1) return [];        // 第1回はシーズンの始まり＝誰も落ちていない
+  const set = new Set();
+  seasonRoundsBefore(r).forEach(rd => {
+    rd.bids.forEach(b => { if (b.result === '落ち' && b.opener) set.add(b.opener); });
+  });
+  return membersOf(r).filter(m => set.has(m));
+}
+
+const CARD_OPTIONS = ['','A','2','3','4','5','6','7','8','9','10','J','Q','K'];
+const CALL_OPTIONS = ['',0,50,100,150,200,250,300,350,400,450,500,550,600,650,700,750,800,850,900,950,1000];
+
+let app, curIdx, curPage = 'att';
+
+function createEmptyRound(members) {
+  return {
+    year: new Date().getFullYear(),
+    month: new Date().getMonth() + 1,
+    num: 1,
+    attendance: members.map(m => ({ name: m, paid: false, present: false, ochi: false })),
+    bids: members.map(() => ({
+      card:'', caller:'', call1:'', call2:'',
+      opener:'', prevKetsu:'', open:'', openResult:'', card2:'', result:''
+    })),
+    calc: {
+      haitouUnit: 1000, ketsuUnit: 1000,
+      taihou: 5000, amida: 2000, ryouridai: 72000, tsumitatekin: 24000
+    }
+  };
+}
+
+function loadApp() {
+  try {
+    const s = localStorage.getItem(STORAGE_KEY);
+    if (s) {
+      const parsed = JSON.parse(s);
+      if (parsed && Array.isArray(parsed.rounds) && parsed.rounds.length > 0) {
+        app = parsed;
+        if (!Array.isArray(app.members)) app.members = [...DEFAULT_MEMBERS];
+        if (!app.retired || typeof app.retired !== 'object') app.retired = {};
+        if (!app.joined  || typeof app.joined  !== 'object') app.joined  = {};
+        if (app.kaihi == null) app.kaihi = 18000;
+        curIdx = app.rounds.length - 1;
+        if (curIdx < 0 || curIdx >= app.rounds.length) curIdx = 0;
+        // 各ラウンドのフィールド補完
+        app.rounds.forEach(r => {
+          if (!Array.isArray(r.attendance)) r.attendance = [];
+          if (!Array.isArray(r.bids)) r.bids = [];
+          if (!r.calc) r.calc = {};
+        });
+        // 現在のラウンドのみ結果を再計算用にリセット（過去ラウンドは保持）
+        // ただし手動設定された結果(manualResult=true)は保持する
+        const cur = app.rounds[curIdx];
+        cur.bids.forEach(b => {
+          if (!b.manualResult) b.result = '';
+        });
+        // 「落ち済み」は、それより前の回で落ちた人から付け直す。
+        // 以前はここで一律 false にしていたため、開くたびに落ち済みが消えて
+        // 入札枠や配当人数がずれていた。
+        const ochiNow = computeOchiFor(cur);
+        cur.attendance.forEach(a => { a.ochi = ochiNow.includes(a.name); });
+        delete cur.calc.normalCount;
+        delete cur.calc.ketsuCount;
+        delete cur.calc.taihouCount;
+        delete cur.calc.taihouUnit;
+        // 表示するのは今月の回（先の月の空の回が作ってあっても、そちらは開かない）
+        curIdx = openIdx();
+        return;
+      }
+    }
+  } catch(e) {}
+  app = {
+    members: [...DEFAULT_MEMBERS],
+    retired: {},
+    joined: {},
+    kaihi: 18000,
+    rounds: [createEmptyRound(DEFAULT_MEMBERS)]
+  };
+  const r = app.rounds[0];
+  r.year = new Date().getFullYear(); r.month = new Date().getMonth()+1; r.num = 1;
+  curIdx = 0;
+}
+
+// トーストなしの保存（編集操作から呼ぶ）
+let dirty = false;   // この画面でユーザーが編集したかどうか
+function persist() {
+  dirty = true;
+  app.curIdx = curIdx;
+  app.savedAt = Date.now();
+  localStorage.setItem(STORAGE_KEY, JSON.stringify(app));
+  scheduleCloudSave();   // ← 編集のたびに自動でクラウドにも保存
+}
+
+function saveAll() {
+  persist();
+  toast('保存しました');
+}
+
+function round() { return app.rounds[curIdx]; }
+
+async function exportData() {
+  const json = JSON.stringify(app, null, 2);
+  const fileName = '楽晴会データ_' + new Date().toISOString().slice(0,10) + '.json';
+  if (navigator.share && navigator.canShare) {
+    try {
+      const file = new File([json], fileName, { type: 'application/json' });
+      if (navigator.canShare({ files: [file] })) {
+        await navigator.share({ files: [file], title: '楽晴会データ' });
+        return;
+      }
+    } catch(e) {}
+  }
+  const blob = new Blob([json], { type: 'application/octet-stream' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url; a.download = fileName;
+  document.body.appendChild(a); a.click();
+  setTimeout(() => { document.body.removeChild(a); URL.revokeObjectURL(url); }, 100);
+  toast('データを書き出しました');
+}
+
+function importData(event) {
+  const file = event.target.files[0];
+  if (!file) return;
+  const r = new FileReader();
+  r.onload = e => {
+    try {
+      const parsed = JSON.parse(e.target.result);
+      if (!parsed || !Array.isArray(parsed.rounds) || parsed.rounds.length === 0) {
+        toast('楽晴会のデータではありません'); return;
+      }
+      app = parsed;
+      curIdx = app.curIdx || 0;
+      if (curIdx < 0 || curIdx >= app.rounds.length) curIdx = 0;
+      saveAll(); render();
+      toast('読み込みました');
+    } catch(err) { toast('読み込み失敗'); }
+  };
+  r.readAsText(file);
+  event.target.value = '';
+}
+
+// ============================================================
+// PAGE切替
+// ============================================================
+function showPage(name) {
+  curPage = name;
+  document.querySelectorAll('.tab').forEach(t => t.classList.toggle('active', t.dataset.page === name));
+  document.querySelectorAll('.page').forEach(p => p.classList.toggle('active', p.id === 'page-'+name));
+  window.scrollTo({top: 0, behavior: 'instant'});
+}
+
+// ============================================================
+// RENDER
+// ============================================================
+function render() {
+  const r = round();
+  document.getElementById('editYear').value  = r.year;
+  document.getElementById('editMonth').value = r.month;
+  document.getElementById('editNum').value   = r.num;
+  document.getElementById('kaihiInput').value = roundKaihi(r);
+  renderRoundSelect();
+
+  // 表示前に毎回ルールを適用して結果を最新化
+  recalcOpenResults();
+  applyResultRules();
+  syncOchiFromResults();
+
+  renderAttendance();
+  renderBids();
+  renderCalc();
+  renderMembers();
+  renderShare();
+  renderYear();
+}
+
+function renderYear() {
+  const el = document.getElementById('yearBody');
+  if (!el) return;
+  // 年ではなく講の1周（第1回〜第12回）ごとにグループ化（回の数字が戻ったら新しい周）
+  const cycles = [];
+  let prevNum = Infinity;
+  app.rounds.forEach(r => {
+    if (r.num <= prevNum) cycles.push([]);
+    cycles[cycles.length - 1].push(r);
+    prevNum = r.num;
+  });
+  cycles.reverse(); // 新しい周が上
+  const pillOf = (names, color) => names.length
+    ? names.map(n => `<span style="background:${color};color:#fff;padding:1px 6px;border-radius:8px;font-size:10px;white-space:nowrap;">${esc(n)}</span>`).join(' ')
+    : '<span style="color:#bbb;">—</span>';
+
+  let html = '';
+  cycles.forEach(cycle => {
+    // 保存データを直接使わず、コピーに自動判定ルールをかけ直してから集計
+    // （大砲1名・落ち1名・ケツ複数可のルールを常に保証する）
+    const rounds = cycle.slice().sort((a, b) => a.num - b.num)
+      .map(r => {
+        const rc = JSON.parse(JSON.stringify(r));
+        try { applyResultRules(rc); } catch (e) {}
+        // 手動ロックが重複していても大砲・落ちは各1名に絞る（開結果が大きい方を採用）
+        ['落ち', '大砲'].forEach(res => {
+          const marked = rc.bids.filter(b => b.result === res && b.opener);
+          if (marked.length <= 1) return;
+          let best = marked[0];
+          marked.forEach(b => { if ((+b.openResult || 0) > (+best.openResult || 0)) best = b; });
+          marked.forEach(b => { if (b !== best) b.result = ''; });
+        });
+        return rc;
+      });
+    // メンバー別集計（落ちは回数ではなく落ちた月を記録）
+    const stats = {};
+    rounds.forEach(r => r.bids.forEach(b => {
+      if (!b.opener) return;
+      if (b.result !== '大砲' && b.result !== 'ケツ' && b.result !== '落ち') return;
+      stats[b.opener] = stats[b.opener] || { '大砲': 0, 'ケツ': 0, '落ち': 0, ochiMonths: [] };
+      stats[b.opener][b.result]++;
+      if (b.result === '落ち') stats[b.opener].ochiMonths.push(r.month);
+    }));
+
+    // 第1回〜第12回を通しで表示（未入力の回も枠として出す）
+    const byNum = {};
+    rounds.forEach(r => { byNum[r.num] = r; });
+    const totalRounds = Math.max(12, ...rounds.map(r => r.num));
+    let roundRows = '';
+    for (let n = 1; n <= totalRounds; n++) {
+      const r = byNum[n];
+      if (!r) {
+        roundRows += `
+      <tr style="border-bottom:1px solid #eee;">
+        <td style="padding:5px 4px;font-size:12px;text-align:center;font-weight:700;color:#bbb;white-space:nowrap;">第${n}回</td>
+        <td style="padding:5px 4px;text-align:center;color:#ddd;">—</td>
+        <td style="padding:5px 4px;text-align:center;color:#ddd;">—</td>
+        <td style="padding:5px 4px;text-align:center;color:#ddd;">—</td>
+      </tr>`;
+        continue;
+      }
+      const names = res => [...new Set(r.bids.filter(b => b.result === res && b.opener).map(b => b.opener))];
+      roundRows += `
+      <tr style="border-bottom:1px solid #eee;">
+        <td style="padding:5px 4px;font-size:12px;text-align:center;font-weight:700;color:#0d1b3e;white-space:nowrap;">第${r.num}回<div style="font-size:10px;font-weight:400;color:#888;">${r.year}年${r.month}月</div></td>
+        <td style="padding:5px 4px;text-align:center;">${pillOf(names('落ち'), '#e65100')}</td>
+        <td style="padding:5px 4px;text-align:center;">${pillOf(names('大砲'), '#bf360c')}</td>
+        <td style="padding:5px 4px;text-align:center;">${pillOf(names('ケツ'), '#1565c0')}</td>
+      </tr>`;
+    }
+
+    // メンバー行: 登録順、記録のある人のみ
+    const statMembers = app.members.filter(m => stats[m]);
+    Object.keys(stats).forEach(n => { if (!statMembers.includes(n)) statMembers.push(n); });
+    const statRows = statMembers.map(m => {
+      const s = stats[m];
+      const cell = (v, color) => v ? `<strong style="color:${color};">${v}</strong>` : '<span style="color:#ccc;">0</span>';
+      const ochiCell = s.ochiMonths.length
+        ? `<strong style="color:#e65100;">${s.ochiMonths.map(mo => mo + '月').join('・')}</strong>`
+        : '<span style="color:#ccc;">—</span>';
+      return `
+      <tr style="border-bottom:1px solid #eee;">
+        <td style="padding:5px 6px;font-size:12px;font-weight:600;text-align:center;">${esc(m)}</td>
+        <td style="padding:5px 4px;font-size:13px;text-align:center;">${ochiCell}</td>
+        <td style="padding:5px 4px;font-size:13px;text-align:center;">${cell(s['大砲'], '#bf360c')}</td>
+        <td style="padding:5px 4px;font-size:13px;text-align:center;">${cell(s['ケツ'], '#1565c0')}</td>
+      </tr>`;
+    }).join('');
+
+    const label = rounds.length
+      ? rounds[0].year + '年' + rounds[0].month + '月〜' + rounds[rounds.length - 1].year + '年' + rounds[rounds.length - 1].month + '月'
+      : '';
+    html += `
+    <div class="card">
+      <div class="card-h">📅 回ごとの結果（全12回） <span style="font-weight:400;color:#888;font-size:11px;">${label}</span></div>
+      <table style="width:100%;border-collapse:collapse;">
+        <thead>
+          <tr style="background:#0d1b3e;color:#fff;">
+            <th style="padding:5px;font-size:11px;">回</th>
+            <th style="padding:5px;font-size:11px;">落ち</th>
+            <th style="padding:5px;font-size:11px;">大砲</th>
+            <th style="padding:5px;font-size:11px;">ケツ</th>
+          </tr>
+        </thead>
+        <tbody>${roundRows}</tbody>
+      </table>
+    </div>
+    <div class="card">
+      <div class="card-h">👥 メンバー別成績</div>
+      ${statMembers.length ? `
+      <table style="width:100%;border-collapse:collapse;">
+        <thead>
+          <tr style="background:#0d1b3e;color:#fff;">
+            <th style="padding:5px;font-size:11px;">名前</th>
+            <th style="padding:5px;font-size:11px;">落ち</th>
+            <th style="padding:5px;font-size:11px;">大砲</th>
+            <th style="padding:5px;font-size:11px;">ケツ</th>
+          </tr>
+        </thead>
+        <tbody>${statRows}</tbody>
+      </table>` : '<div style="font-size:13px;color:#999;text-align:center;padding:10px;">まだ結果の記録がありません</div>'}
+    </div>`;
+  });
+  el.innerHTML = html || '<div class="card"><div style="font-size:13px;color:#999;text-align:center;padding:10px;">データがありません</div></div>';
+}
+
+function renderAttendance() {
+  const r = round();
+  const ochiCount = attOf(r).filter(a => a.ochi).length;
+  const activeCount = attOf(r).length - ochiCount;
+  const expectedSlots = Math.max(1, membersOf(r).length - ochiCount);
+  const info = `<div style="background:#f7f9fc;padding:10px;border-radius:6px;margin-bottom:10px;font-size:13px;color:#333;">
+    <strong>第 ${r.num} 回 / 全12回</strong><br>
+    入札枠: <strong style="color:#0d1b3e;">${expectedSlots}人</strong>　落ち済み: <strong style="color:#bf360c;">${ochiCount}人</strong>
+    <div style="text-align:right;margin-top:6px;">
+      <button onclick="recalcOchi()" style="padding:5px 10px;border:1px solid #bf360c;border-radius:6px;background:#fff;color:#bf360c;font-size:11px;font-weight:700;cursor:pointer;">🔄 落ち済みを計算し直す</button>
+    </div>
+  </div>`;
+  // 退会した人はこの回には出さない（記録そのものは残っている）
+  const html = r.attendance.map((a, i) => isActiveIn(a.name, r) ? `
+    <div class="mem-row" style="${a.ochi ? 'opacity:0.55;' : ''}">
+      <div class="mem-name">${a.name}${a.ochi ? ' <span style="font-size:11px;color:#bf360c;">（落ち済み）</span>' : ''}</div>
+      <button class="toggle-btn ${a.present ? '' : 'on-paid'}" onclick="toggleAtt(${i},'present')">
+        ${a.present ? '欠席' : '出席'}
+      </button>
+      <button class="toggle-btn ${a.ochi ? 'on-ochi' : ''}" onclick="toggleAtt(${i},'ochi')">
+        ${a.ochi ? '落●' : '落'}
+      </button>
+    </div>
+  ` : '').join('');
+  document.getElementById('memList').innerHTML = info + html;
+}
+
+// 「落ち済み」を、今のシーズンでその人が落ちたかどうかから付け直す。
+// 回の作り方を間違えて全員が落ち済みになってしまったときの直し用。
+function recalcOchi() {
+  const r = round();
+  const before = r.attendance.filter(a => a.ochi).map(a => a.name);
+  const after = computeOchiFor(r);
+  const msg = `この回（${r.year}年${r.month}月）の「落ち済み」を付け直します。\n\n`
+            + `いま: ${before.join('・') || 'なし'}\n`
+            + `あと: ${after.join('・') || 'なし'}\n\n`
+            + `※これより前の回で落ちた人から数え直します。よろしいですか？`;
+  if (!confirm(msg)) return;
+  r.attendance.forEach(a => { a.ochi = after.includes(a.name); });
+  saveAll();
+  render();
+  toast('落ち済みを計算し直しました');
+}
+
+function renderBids() {
+  const r = round();
+  const ochiCount = attOf(r).filter(a => a.ochi).length;
+  const expectedSlots = Math.max(1, membersOf(r).length - ochiCount);
+  // bids 配列を slots に合わせて拡張
+  while (r.bids.length < expectedSlots) {
+    r.bids.push({ card:'', caller:'', call1:'', call2:'', opener:'', prevKetsu:'', open:'', openResult:'', card2:'', result:'' });
+  }
+  const slots = Math.min(expectedSlots, r.bids.length);
+
+  // 落ち済みを除いた選択肢（この回に在籍していた人のみ）
+  const activeMembers = membersOf(r).filter(m => {
+    const att = r.attendance.find(a => a.name === m);
+    return !(att && att.ochi);
+  });
+  // 叫び側・開き側それぞれで、もう選ばれた人を数える（入れ漏れ・2回入れの確認用）
+  const pickedOf = f => {
+    const c = {};
+    r.bids.slice(0, slots).forEach(b => { if (b[f]) c[b[f]] = (c[b[f]] || 0) + 1; });
+    return c;
+  };
+  const pickedC = pickedOf('caller'), pickedO = pickedOf('opener');
+  // 名前の選択肢。ほかの行で選ばれている人には「（済）」を付ける
+  const optsFor = (f, cur) => {
+    const picked = f === 'caller' ? pickedC : pickedO;
+    return '<option value=""></option>' + activeMembers.map(m =>
+      `<option value="${esc(m)}"${m === cur ? ' selected' : ''}>${esc(m)}${m !== cur && picked[m] ? '（済）' : ''}</option>`).join('');
+  };
+  const dupClass = (f, name) => name && (f === 'caller' ? pickedC : pickedO)[name] > 1 ? ' dup' : '';
+  const absentSet = new Set(attOf(r).filter(a => a.present).map(a => a.name));   // present=true が欠席
+  const pendingBox = picked => {
+    const dups = Object.keys(picked).filter(n => picked[n] > 1);
+    if (dups.length) return `<div class="pending dup">⚠️ ${dups.map(esc).join('・')} さんが2回入っています</div>`;
+    const rest = activeMembers.filter(m => !picked[m]);
+    if (!rest.length) return `<div class="pending done">✓ 全員入りました</div>`;
+    return `<div class="pending todo">まだの人（${rest.length}人）: ${rest.map(m => esc(m) + (absentSet.has(m) ? '<small>(欠)</small>' : '')).join('・')}</div>`;
+  };
+
+  // 結果マップ（開き側で確定した結果を、その人物の名前に紐付ける）
+  const resultByName = {};
+  r.bids.slice(0, slots).forEach(b => {
+    if (b.opener && b.result) resultByName[b.opener] = b.result;
+  });
+  const taihouNames = Object.keys(resultByName).filter(n => resultByName[n] === '大砲');
+  const ketsuNames  = Object.keys(resultByName).filter(n => resultByName[n] === 'ケツ');
+  const ochiNames   = Object.keys(resultByName).filter(n => resultByName[n] === '落ち');
+  // 参加が実質2人（落ち＋もう1人）だけのときは、最小開結果でもケツにしない特例
+  const validOpenerCountSummary = r.bids.slice(0, slots).filter(b =>
+    b.opener && b.openResult !== '' && b.openResult !== null && b.openResult !== undefined
+  ).length;
+  // 開結果が最小の人もケツ扱い（大砲昇格者も含めて）※2人だけの回は除く
+  let minOpenResForSummary = Infinity;
+  r.bids.slice(0, slots).forEach(b => {
+    if (b.result === '落ち') return;
+    if (b.opener && b.openResult !== '' && b.openResult !== null && b.openResult !== undefined) {
+      if (+b.openResult < minOpenResForSummary) minOpenResForSummary = +b.openResult;
+    }
+  });
+  if (validOpenerCountSummary > 2) {
+    r.bids.slice(0, slots).forEach(b => {
+      if (b.result === '落ち') return;
+      if (!b.opener) return;
+      if (b.openResult === '' || b.openResult === null || b.openResult === undefined) return;
+      if (+b.openResult === minOpenResForSummary && !ketsuNames.includes(b.opener)) {
+        ketsuNames.push(b.opener);
+      }
+    });
+  }
+
+  // 開結果の最小値（落ち・空欄を除く）を求める
+  let minOpenRes = Infinity;
+  r.bids.slice(0, slots).forEach(b => {
+    if (b.result === '落ち') return;
+    if (b.opener && b.openResult !== '' && b.openResult !== null && b.openResult !== undefined) {
+      if (+b.openResult < minOpenRes) minOpenRes = +b.openResult;
+    }
+  });
+  // 大砲だが開結果が最小（=ケツでもある）人を集める ※2人だけの回は除く
+  const taihouAlsoKetsuNames = new Set();
+  if (validOpenerCountSummary > 2) {
+    r.bids.slice(0, slots).forEach(b => {
+      if (b.result === '大砲' && b.opener && b.openResult !== '' && b.openResult !== null && b.openResult !== undefined) {
+        if (+b.openResult === minOpenRes) taihouAlsoKetsuNames.add(b.opener);
+      }
+    });
+  }
+
+  const pill = (text, color) => `<span style="background:${color};color:white;padding:2px 8px;border-radius:10px;font-size:11px;font-weight:700;white-space:nowrap;">${text}</span>`;
+  const badgeOf = (name, side) => {
+    const res = resultByName[name];
+    if (!res) return '';
+    const col = res === '大砲' ? '#bf360c' : res === 'ケツ' ? '#1565c0' : '#e65100';
+    // 大砲かつケツ（開結果が最小）の場合は、大砲の下にケツも縦並びで表示
+    if (res === '大砲' && taihouAlsoKetsuNames.has(name)) {
+      return ` <span style="display:inline-flex;flex-direction:column;gap:3px;margin-left:6px;vertical-align:middle;">
+        ${pill('大砲', col)}
+        ${pill('ケツ', '#1565c0')}
+      </span>`;
+    }
+    return ` <span style="margin-left:6px;display:inline-block;vertical-align:middle;">${pill(res, col)}</span>`;
+  };
+  const bgOfName = (name) => {
+    const res = resultByName[name];
+    return res === '大砲' ? '#fffae0' : res === 'ケツ' ? '#f0f7ff' : res === '落ち' ? '#fff8f0' : '';
+  };
+
+  // ===== サマリー =====
+  const sumPill = (label, names, color) => `
+    <div style="background:${color};color:white;padding:8px 12px;border-radius:20px;font-size:13px;font-weight:700;display:inline-flex;align-items:center;gap:6px;margin:4px;">
+      <span>${label}</span>
+      <span style="background:white;color:${color};padding:2px 8px;border-radius:10px;">
+        ${names.length ? names.join('・') : '—'}
+      </span>
+    </div>`;
+  const summaryHtml = `<div class="card" style="text-align:center;">
+    <div class="card-h">🎯 結果サマリー</div>
+    ${sumPill('大砲', taihouNames, '#bf360c')}
+    ${sumPill('ケツ', ketsuNames, '#1565c0')}
+    ${sumPill('落ち', ochiNames, '#e65100')}
+    <div style="margin-top:10px;">
+      <div style="font-size:11px; color:#0d1b3e; background:#e8f4f8; padding:6px 10px; border-radius:6px; display:inline-block; font-weight:700;">
+        ✨ 入力のたびに自動判定中
+      </div>
+      <div style="font-size:11px; color:#666; margin-top:6px;">
+        落ち=開結果が最大（同点なら先開き）<br>
+        大砲=2番目に高い人（同点なら先開き）<br>
+        ケツ=開結果が最少（同じ数字なら全員）<br>
+        ※落ち・大砲は完全除外／ケツは配当対象外だが人数1回分としてカウント
+      </div>
+      <div style="margin-top:10px;">
+        <button onclick="autoDetectResults()" style="background:#bf360c; color:white; border:none; padding:8px 14px; border-radius:8px; font-size:12px; font-weight:700; cursor:pointer;">
+          ✅ 確定（落ち者を次回除外）
+        </button>
+      </div>
+    </div>
+  </div>`;
+
+  // ===== 叫び側 (じゃんけん順) =====
+  let callerHtml = `<div class="card" style="border-left:5px solid #bf360c;">
+    <div class="card-h" style="color:#bf360c; font-size:14px;">📢 叫び側（じゃんけん順／一人2回まで）</div>
+    ${pendingBox(pickedC)}`;
+  for (let i = 0; i < slots; i++) {
+    const b = r.bids[i];
+    const cBg = bgOfName(b.caller);
+    callerHtml += `
+    <div style="padding:10px 8px; border-bottom:1px solid #eee; ${cBg ? 'background:'+cBg+';' : ''}">
+      <div style="display:flex; align-items:center; gap:8px; margin-bottom:8px;">
+        <span style="background:#bf360c; color:white; padding:4px 10px; border-radius:6px; font-size:13px; font-weight:700; min-width:64px; text-align:center;">叫 No.${i+1}</span>
+        <select class="bid-select${dupClass('caller', b.caller)}" data-bid="${i}" data-f="caller" onchange="onBidChange(this)" style="flex:1; border-color:#bf360c;">
+          ${optsFor('caller', b.caller)}
+        </select>
+        ${b.caller ? badgeOf(b.caller, 'caller') : ''}
+      </div>
+      <div style="display:grid; grid-template-columns:1fr 1fr 1fr; gap:8px;">
+        <div>
+          <div style="font-size:11px; color:#666; margin-bottom:2px;">カード</div>
+          <select class="bid-select" data-bid="${i}" data-f="card" onchange="onBidChange(this)">
+            ${CARD_OPTIONS.map(c=>`<option value="${c}"${b.card==c?' selected':''}>${c||'—'}</option>`).join('')}
+          </select>
+        </div>
+        <div>
+          <div style="font-size:11px; color:#666; margin-bottom:2px;">叫1</div>
+          <select class="bid-select" data-bid="${i}" data-f="call1" onchange="onBidChange(this)">
+            ${CALL_OPTIONS.map(c=>`<option value="${c}"${String(b.call1)===String(c)?' selected':''}>${c===''?'—':c}</option>`).join('')}
+          </select>
+        </div>
+        <div>
+          <div style="font-size:11px; color:#666; margin-bottom:2px;">叫2</div>
+          <select class="bid-select" data-bid="${i}" data-f="call2" onchange="onBidChange(this)">
+            ${CALL_OPTIONS.map(c=>`<option value="${c}"${String(b.call2)===String(c)?' selected':''}>${c===''?'—':c}</option>`).join('')}
+          </select>
+        </div>
+      </div>
+    </div>`;
+  }
+  callerHtml += '</div>';
+
+  // 叫び側を名前で索引（開き側で叫合計を表示するため）
+  const callerByName = {};
+  r.bids.forEach(cb => {
+    if (cb.caller) {
+      callerByName[cb.caller] = { call1: +cb.call1 || 0, call2: +cb.call2 || 0 };
+    }
+  });
+  const prevTaihouName = getPrevTaihouName();
+
+  // ===== 開き側 (札を開く順) =====
+  let openerHtml = `<div class="card" style="border-left:5px solid #1b5e20;">
+    <div class="card-h" style="color:#1b5e20; font-size:14px;">🃏 開き側（代表が札を1枚ずつ開く順）</div>
+    ${pendingBox(pickedO)}`;
+
+  // トランプの当たりが何本引かれたか（残り人数で本数が変わる）
+  {
+    const q = cardQuotaOf(r), w = cardWinnersOf(r);
+    const line = (yen, names, need) => {
+      if (!need) return '';
+      const ok = names.length === need;
+      const col = ok ? '#2e7d32' : (names.length > need ? '#c62828' : '#999');
+      return `<div style="display:flex;align-items:center;gap:6px;margin-top:3px;">
+        <span style="background:#6a1b9a;color:#fff;padding:1px 7px;border-radius:10px;font-size:11px;font-weight:700;">${yen}円</span>
+        <span style="color:${col};font-weight:700;font-size:12px;">${names.length}/${need}本</span>
+        <span style="font-size:12px;color:#333;">${names.join('・') || 'まだ誰も引いていません'}</span>
+      </div>`;
+    };
+    if (q.c100 || q.c50) {
+      openerHtml += `
+      <div style="margin:8px; padding:8px 10px; background:#f8f2fb; border:1px solid #e1bee7; border-radius:8px;">
+        <div style="font-size:12px; font-weight:700; color:#6a1b9a;">
+          🃏 トランプの当たり <span style="font-weight:400;color:#888;">（残り${activeCountOf(r)}人 → 100円×${q.c100}${q.c50 ? '・50円×' + q.c50 : ''}）</span>
+        </div>
+        ${line(100, w.w100, q.c100)}
+        ${line(50, w.w50, q.c50)}
+      </div>`;
+    }
+  }
+  for (let i = 0; i < slots; i++) {
+    const b = r.bids[i];
+    const sum = (b.openResult !== '' && b.openResult !== undefined && b.openResult !== null)
+      ? (b.card2 ? (+b.openResult + +b.card2) : +b.openResult)
+      : '';
+    const bg = b.result === '大砲' ? '#fffae0' : b.result === 'ケツ' ? '#f0f7ff' : b.result === '落ち' ? '#fff8f0' : '';
+    const cInfo = b.opener ? (callerByName[b.opener] || { call1: 0, call2: 0 }) : { call1: 0, call2: 0 };
+    const callSum = cInfo.call1 + cInfo.call2;
+    const isPrevTaihou = false;
+    openerHtml += `
+    <div style="padding:10px 8px; border-bottom:1px solid #eee; ${bg ? 'background:'+bg+';' : ''}">
+      <div style="display:flex; align-items:center; gap:8px; margin-bottom:8px;">
+        <span style="background:#1b5e20; color:white; padding:4px 10px; border-radius:6px; font-size:13px; font-weight:700; min-width:64px; text-align:center;">開 No.${i+1}</span>
+        <select class="bid-select${dupClass('opener', b.opener)}" data-bid="${i}" data-f="opener" onchange="onBidChange(this)" style="flex:1; border-color:#1b5e20;">
+          ${optsFor('opener', b.opener)}
+        </select>
+        ${b.opener ? badgeOf(b.opener, 'opener') : ''}
+      </div>
+      <div style="display:flex; gap:6px; margin-bottom:6px; flex-wrap:wrap; font-size:12px;">
+        <div style="background:#fff3e0; color:#bf360c; padding:4px 10px; border-radius:6px; font-weight:700;">
+          📢 叫1+叫2 = <strong>¥${callSum.toLocaleString()}</strong>
+        </div>
+        ${isPrevTaihou ? `<div style="background:#e65100; color:white; padding:4px 10px; border-radius:6px; font-weight:700;">🎯 前月大砲 +¥3,000</div>` : ''}
+      </div>
+      <div style="display:grid; grid-template-columns:1fr 1fr 1fr 1fr; gap:6px; margin-bottom:8px;">
+        <div>
+          <div style="font-size:11px; color:#666; margin-bottom:2px;">前ケツ</div>
+          <select class="bid-select" data-bid="${i}" data-f="prevKetsu" onchange="onBidChange(this)" style="padding:8px 4px;">
+            <option value="">—</option><option value="100"${b.prevKetsu==100?' selected':''}>100</option>
+          </select>
+        </div>
+        <div>
+          <div style="font-size:11px; color:#666; margin-bottom:2px;">開き</div>
+          <select class="bid-select" data-bid="${i}" data-f="open" onchange="onBidChange(this)" style="padding:8px 4px;">
+            ${CALL_OPTIONS.map(c=>`<option value="${c}"${String(b.open)===String(c)?' selected':''}>${c===''?'—':c}</option>`).join('')}
+          </select>
+        </div>
+        <div>
+          <div style="font-size:11px; color:#666; margin-bottom:2px;">開結果（自動）</div>
+          <div style="padding:8px 4px; background:#f7f9fc; border:1px solid #ddd; border-radius:6px; text-align:center; font-weight:700; color:#0d1b3e; font-size:15px; min-height:36px;">
+            ${(b.openResult !== '' && b.openResult !== undefined && b.openResult !== null) ? (+b.openResult).toLocaleString() : '—'}
+          </div>
+        </div>
+        <div>
+          <div style="font-size:11px; color:#666; margin-bottom:2px;">カード</div>
+          <select class="bid-select" data-bid="${i}" data-f="card2" onchange="onBidChange(this)" style="padding:8px 4px;">
+            <option value="">—</option>
+            <option value="50"${b.card2==50?' selected':''}>50</option>
+            <option value="100"${b.card2==100?' selected':''}>100</option>
+          </select>
+        </div>
+      </div>
+      <div class="result-btns">
+        <button class="result-btn taihou ${b.result==='大砲'?'active':''}" onclick="setResult(${i},'大砲')">大砲${b.manualResult && b.result==='大砲'?'🔒':''}</button>
+        <button class="result-btn ketsu ${b.result==='ケツ'?'active':''}" onclick="setResult(${i},'ケツ')">ケツ${b.manualResult && b.result==='ケツ'?'🔒':''}</button>
+        <button class="result-btn ochi ${b.result==='落ち'?'active':''}" onclick="setResult(${i},'落ち')">落ち${b.manualResult && b.result==='落ち'?'🔒':''}</button>
+        <button class="result-btn ${b.result===''?'active':''}" style="${b.result===''?'background:#999;color:white;border-color:#999;':''}" onclick="setResult(${i},'')">−${b.manualResult && b.result===''?'🔒':''}</button>
+      </div>
+    </div>`;
+  }
+  openerHtml += '</div>';
+
+  document.getElementById('bidList').innerHTML = summaryHtml + callerHtml + openerHtml;
+}
+
+function renderCalc() {
+  const r = round();
+  const c = r.calc;
+  const paidCount = attOf(r).length;
+  const kaihi = roundKaihi(r);
+  const pool = kaihi * paidCount;
+
+  // 最終回の特例: 残り1人（落ち以外が1人以下）の回は入札・配当・ケツ・大砲がなく、
+  // あみだ等の固定支出のみで差し引きする（例: 216,000 − 98,000 = 118,000円）。
+  const activeCount = membersOf(r).length - attOf(r).filter(a => a.ochi).length;
+  const soloFinal = activeCount <= 1;
+
+  // 配当・ケツ・大砲 単価 = 開結果の最大値を自動反映
+  let maxOpenResult = 0;
+  r.bids.forEach(b => {
+    if (b.opener && b.openResult !== '' && +b.openResult > maxOpenResult) maxOpenResult = +b.openResult;
+  });
+  if (maxOpenResult > 0) {
+    c.haitouUnit = maxOpenResult;
+    c.ketsuUnit  = maxOpenResult;
+    c.taihouUnit = maxOpenResult;
+  }
+
+  // 落ち = 完全除外（配当にも人数にもカウントしない）
+  const ochiNames = new Set();
+  r.bids.forEach(b => {
+    if (b.result === '落ち' && b.opener) ochiNames.add(b.opener);
+  });
+  // 大砲 = 配当対象（通常）
+  const taihouNames = new Set();
+  r.bids.forEach(b => {
+    if (b.result === '大砲' && b.opener) taihouNames.add(b.opener);
+  });
+  // ケツ = 配当対象外
+  const ketsuNamesSet = new Set();
+  r.bids.forEach(b => {
+    if (b.result === 'ケツ' && b.opener) ketsuNamesSet.add(b.opener);
+  });
+  // 開結果が最小の人（落ち除く）もケツ扱い（大砲昇格者を含めて）
+  // ただし参加が実質2人だけ（落ち＋もう1人）のときは、その1人はケツにせず配当対象にする
+  const validOpenerCountCalc = r.bids.filter(b =>
+    b.opener && b.openResult !== '' && b.openResult !== null && b.openResult !== undefined
+  ).length;
+  if (validOpenerCountCalc > 2) {
+    let minOpenResCalc = Infinity;
+    r.bids.forEach(b => {
+      if (b.result === '落ち') return;
+      if (b.opener && b.openResult !== '' && b.openResult !== null && b.openResult !== undefined) {
+        if (+b.openResult < minOpenResCalc) minOpenResCalc = +b.openResult;
+      }
+    });
+    r.bids.forEach(b => {
+      if (b.result === '落ち') return;
+      if (!b.opener) return;
+      if (b.openResult === '' || b.openResult === null || b.openResult === undefined) return;
+      if (+b.openResult === minOpenResCalc) ketsuNamesSet.add(b.opener);
+    });
+  }
+
+  // 欠席者（present===true, ochi===false）も配当対象に含める
+  // ただし叫び枠を既に持っている人（caller or opener）は除外（二重カウント防止）
+  const callerOrOpenerNames = new Set();
+  r.bids.forEach(b => {
+    if (b.caller) callerOrOpenerNames.add(b.caller);
+    if (b.opener) callerOrOpenerNames.add(b.opener);
+  });
+  const absentNames = new Set();
+  attOf(r).forEach(a => {
+    if (a.present && !a.ochi && !callerOrOpenerNames.has(a.name)) absentNames.add(a.name);
+  });
+
+  // 配当(normal): 落ち・ケツに該当しない叫びをカウント（大砲は配当対象に含める／同名2回は2人分）
+  let autoNormal = 0;
+  const autoKetsu = ketsuNamesSet.size;
+  const autoTaihou = taihouNames.size;
+  r.bids.forEach(b => {
+    if (!b.caller) return;
+    if (ochiNames.has(b.caller)) return;
+    if (ketsuNamesSet.has(b.caller)) return;
+    autoNormal++;
+  });
+  // 欠席者は叫び枠を持たないが配当に含める（一人1回分）
+  absentNames.forEach(n => {
+    if (ochiNames.has(n)) return;
+    if (ketsuNamesSet.has(n)) return;
+    autoNormal++;
+  });
+  const normalCount = soloFinal ? 0 : (c.normalCount !== undefined ? c.normalCount : autoNormal);
+  const ketsuCount  = soloFinal ? 0 : (c.ketsuCount  !== undefined ? c.ketsuCount  : autoKetsu);
+
+  const haitouNormal = c.haitouUnit * normalCount;
+  const haitouKetsu = c.ketsuUnit * ketsuCount;
+  const taihouExpense = soloFinal ? 0 : roundTaihou(r);
+  const totalExpense = haitouNormal + haitouKetsu + taihouExpense + c.amida + c.ryouridai + c.tsumitatekin;
+  const payout = pool - totalExpense;
+
+  // 配当に含まれる叫び者リスト（重複あり）— 大砲は対象に含める、欠席者も追加
+  const normalCallers = [];
+  r.bids.forEach(b => {
+    if (!b.caller) return;
+    if (ochiNames.has(b.caller)) return;
+    if (ketsuNamesSet.has(b.caller)) return;
+    normalCallers.push(b.caller);
+  });
+  absentNames.forEach(n => {
+    if (ochiNames.has(n)) return;
+    if (ketsuNamesSet.has(n)) return;
+    normalCallers.push(n + '(欠席)');
+  });
+
+  // 人数を手動調整した場合、対象の名前表示もそれに合わせる
+  // （ケツを減らして配当を増やした分だけ、ケツの人を配当対象へ移す）
+  const [dispNormal, dispKetsu] = adjustTargetsByCount(normalCallers, [...ketsuNamesSet], normalCount, ketsuCount);
+
+  document.getElementById('calcBody').innerHTML = `
+    <div style="background:#f7f9fc; padding:10px; border-radius:6px; margin-bottom:10px; font-size:12px;">
+      <div style="font-weight:700; color:#0d1b3e; margin-bottom:6px;">📋 配当の内訳</div>
+      <div style="margin-bottom:4px;">
+        <span style="color:#0d1b3e;">配当対象 (${dispNormal.length}人):</span>
+        <strong>${dispNormal.length ? dispNormal.join('・') : '—'}</strong>
+      </div>
+      <div style="margin-bottom:4px;">
+        <span style="color:#e65100;">落ち (除外):</span>
+        <strong>${[...ochiNames].join('・') || '—'}</strong>
+      </div>
+      <div style="margin-bottom:4px;">
+        <span style="color:#bf360c;">大砲 (${taihouNames.size}人分):</span>
+        <strong>${[...taihouNames].join('・') || '—'}</strong>
+      </div>
+      <div>
+        <span style="color:#1565c0;">ケツ (${dispKetsu.length}人分):</span>
+        <strong>${dispKetsu.join('・') || '—'}</strong>
+      </div>
+    </div>
+    <div class="calc-line">
+      <span class="calc-label" style="min-width:60px;">配当</span>
+      <span class="calc-mini" style="background:#f7f9fc; border:1px solid #ddd; border-radius:4px; padding:6px; font-weight:700; color:#0d1b3e; text-align:center; min-width:50px;">${c.haitouUnit}</span>
+      <span style="font-size:10px; color:#888;">(自動)</span>
+      <span>×</span>
+      <input class="calc-mini" type="number" min="0" value="${normalCount}" onchange="round().calc.normalCount=+this.value; persist(); renderCalc(); renderShare();">
+      <span>人 =</span>
+      <span class="calc-val" style="flex:1;">${haitouNormal.toLocaleString()}</span>
+    </div>
+    <div class="calc-line">
+      <span class="calc-label" style="min-width:60px;">ケツ</span>
+      <span class="calc-mini" style="background:#f7f9fc; border:1px solid #ddd; border-radius:4px; padding:6px; font-weight:700; color:#0d1b3e; text-align:center; min-width:50px;">${c.ketsuUnit}</span>
+      <span style="font-size:10px; color:#888;">(自動)</span>
+      <span>×</span>
+      <input class="calc-mini" type="number" min="0" value="${ketsuCount}" onchange="round().calc.ketsuCount=+this.value; persist(); renderCalc(); renderShare();">
+      <span>人 =</span>
+      <span class="calc-val" style="flex:1;">${haitouKetsu.toLocaleString()}</span>
+    </div>
+    <div class="calc-row">
+      <span class="calc-label">大砲</span>
+      ${isTaihouFixed(r) && !soloFinal ? `
+        <span class="calc-input" style="display:flex;align-items:center;justify-content:flex-end;gap:6px;background:#f7f9fc;border:1px solid #ddd;border-radius:6px;font-weight:700;color:#0d1b3e;">
+          ${TAIHOU_FIXED.amount.toLocaleString()}
+          <span style="font-size:10px;font-weight:400;color:#888;">(固定)</span>
+        </span>`
+      : `<input class="calc-input" type="number" value="${taihouExpense}" onchange="round().calc.taihou=+this.value; persist(); renderCalc(); renderShare();">`}
+    </div>
+    <div class="calc-row">
+      <span class="calc-label">あみだ</span>
+      <input class="calc-input" type="number" value="${c.amida}" onchange="round().calc.amida=+this.value; persist(); renderCalc(); renderShare();">
+    </div>
+    <div class="calc-row">
+      <span class="calc-label">料理代</span>
+      <input class="calc-input" type="number" value="${c.ryouridai}" onchange="round().calc.ryouridai=+this.value; persist(); renderCalc(); renderShare();">
+    </div>
+    <div class="calc-row">
+      <span class="calc-label">積立金</span>
+      <input class="calc-input" type="number" value="${c.tsumitatekin}" onchange="round().calc.tsumitatekin=+this.value; persist(); renderCalc(); renderShare();">
+    </div>
+    <div class="calc-row" style="border-top:2px solid #0d1b3e; padding-top:12px; margin-top:6px;">
+      <span class="calc-label" style="font-weight:700;">合計</span>
+      <span class="calc-val" style="font-size:18px; color:#c0392b;">${totalExpense.toLocaleString()}</span>
+    </div>
+  `;
+
+  document.getElementById('finalBox').innerHTML = `
+    <div class="final-card">
+      <div class="final-formula">
+        ${pool.toLocaleString()} − ${totalExpense.toLocaleString()} =
+      </div>
+      <div class="final-payout">${payout.toLocaleString()} 円</div>
+    </div>
+  `;
+}
+
+function renderMembers() {
+  const r = round();
+  document.getElementById('memberList').innerHTML = app.members.map((m, i) => {
+    const rt = app.retired ? app.retired[m] : null;
+    if (rt) {
+      return `<span class="mem-tag" style="background:#eee;color:#888;">${m}
+        <span style="font-size:10px;color:#999;">${rt.year}年${rt.month}月〜退会</span>
+        <span class="del" style="color:#2e7d32;" onclick="removeMember(${i})" title="復帰させる">↩</span></span>`;
+    }
+    return `<span class="mem-tag">${m}<span class="del" onclick="removeMember(${i})">×</span></span>`;
+  }).join('')
+  + `<div style="width:100%;font-size:11px;color:#888;margin-top:8px;line-height:1.6;">
+      ×を押すと、いま開いている回（${r.year}年${r.month}月）からの退会になります。<br>
+      それより前の回の記録はそのまま残ります。↩で復帰できます。
+     </div>`;
+}
+
+function renderShare() {
+  const el = document.getElementById('shareBody');
+  if (!el) return;
+  const r = round();
+  const c = r.calc;
+  const paidCount = attOf(r).length;
+  const kaihi = roundKaihi(r);
+  const pool = kaihi * paidCount;
+
+  // 最終回の特例: 残り1人（落ち以外が1人以下）の回は配当・ケツ・大砲代なし（あみだ等のみ）
+  const activeCount = membersOf(r).length - attOf(r).filter(a => a.ochi).length;
+  const soloFinal = activeCount <= 1;
+
+  // 落ち済みでも出席/欠席は出席状況に表示する
+  const ochiList    = attOf(r).filter(a => a.ochi).map(a => a.name);
+  const presentList = attOf(r).filter(a => a.present === false).map(a => a.name);
+  const absentList  = attOf(r).filter(a => a.present === true).map(a => a.name);
+
+  let maxOpenResult = 0;
+  r.bids.forEach(b => {
+    if (b.opener && b.openResult !== '' && +b.openResult > maxOpenResult) maxOpenResult = +b.openResult;
+  });
+  const haitouUnit = c.haitouUnit || maxOpenResult;
+  const ketsuUnit  = c.ketsuUnit  || maxOpenResult;
+
+  const ochiNames   = new Set();
+  const taihouNames = new Set();
+  const ketsuNamesSet = new Set();
+  r.bids.forEach(b => {
+    if (b.result === '落ち' && b.opener) ochiNames.add(b.opener);
+    if (b.result === '大砲' && b.opener) taihouNames.add(b.opener);
+    if (b.result === 'ケツ' && b.opener) ketsuNamesSet.add(b.opener);
+  });
+  // 参加が実質2人だけ（落ち＋もう1人）のときは、その1人はケツにせず配当対象にする
+  const validOpenerCountPrint = r.bids.filter(b =>
+    b.opener && b.openResult !== '' && b.openResult !== null && b.openResult !== undefined
+  ).length;
+  if (validOpenerCountPrint > 2) {
+    let minOpenRes = Infinity;
+    r.bids.forEach(b => {
+      if (b.result === '落ち') return;
+      if (b.opener && b.openResult !== '' && b.openResult !== null && b.openResult !== undefined) {
+        if (+b.openResult < minOpenRes) minOpenRes = +b.openResult;
+      }
+    });
+    r.bids.forEach(b => {
+      if (b.result === '落ち') return;
+      if (!b.opener) return;
+      if (b.openResult === '' || b.openResult === null || b.openResult === undefined) return;
+      if (+b.openResult === minOpenRes) ketsuNamesSet.add(b.opener);
+    });
+  }
+
+  const callerOrOpenerNames = new Set();
+  r.bids.forEach(b => {
+    if (b.caller) callerOrOpenerNames.add(b.caller);
+    if (b.opener) callerOrOpenerNames.add(b.opener);
+  });
+  const absentForHaitou = new Set();
+  attOf(r).forEach(a => {
+    if (a.present && !a.ochi && !callerOrOpenerNames.has(a.name)) absentForHaitou.add(a.name);
+  });
+
+  let autoNormal = 0;
+  r.bids.forEach(b => {
+    if (!b.caller) return;
+    if (ochiNames.has(b.caller)) return;
+    if (ketsuNamesSet.has(b.caller)) return;
+    autoNormal++;
+  });
+  absentForHaitou.forEach(n => {
+    if (ochiNames.has(n)) return;
+    if (ketsuNamesSet.has(n)) return;
+    autoNormal++;
+  });
+  const normalCount = soloFinal ? 0 : (c.normalCount !== undefined ? c.normalCount : autoNormal);
+  const ketsuCount  = soloFinal ? 0 : (c.ketsuCount  !== undefined ? c.ketsuCount  : ketsuNamesSet.size);
+  const haitouNormal = haitouUnit * normalCount;
+  const haitouKetsu  = ketsuUnit  * ketsuCount;
+  const taihouExpense = soloFinal ? 0 : roundTaihou(r);
+  const totalExpense = haitouNormal + haitouKetsu + taihouExpense + (+c.amida||0) + (+c.ryouridai||0) + (+c.tsumitatekin||0);
+  const payout = pool - totalExpense;
+
+  const normalCallers = [];
+  r.bids.forEach(b => {
+    if (!b.caller) return;
+    if (ochiNames.has(b.caller)) return;
+    if (ketsuNamesSet.has(b.caller)) return;
+    normalCallers.push(b.caller);
+  });
+  absentForHaitou.forEach(n => {
+    if (ochiNames.has(n)) return;
+    if (ketsuNamesSet.has(n)) return;
+    normalCallers.push(n + '(欠席)');
+  });
+
+  // 手動調整した人数に合わせて対象の名前も追従（ケツ→配当へ移動）
+  const [dispNormal, dispKetsu] = adjustTargetsByCount(normalCallers, [...ketsuNamesSet], normalCount, ketsuCount);
+
+  const ochiCount2 = attOf(r).filter(a => a.ochi).length;
+  const slots = Math.max(1, membersOf(r).length - ochiCount2);
+  // 叫びも開きも入っていない行は共有画面に出さない（空行が並ぶと読みにくいため）
+  const bidRows = r.bids.slice(0, slots).filter(b => b.caller || b.opener).map((b, i) => {
+    const calls = [b.call1, b.call2].filter(x => x !== '' && x != null).join('+') || '—';
+    const resColor = b.result === '大砲' ? '#2e7d32' : b.result === 'ケツ' ? '#1565c0' : b.result === '落ち' ? '#e65100' : '#999';
+    const resBadge = b.result ? `<span style="background:${resColor};color:#fff;padding:1px 5px;border-radius:3px;font-size:10px;">${b.result}</span>` : '';
+    return `
+      <tr style="border-bottom:1px solid #eee;">
+        <td style="padding:3px 4px;font-size:11px;text-align:center;">${b.caller || '—'}</td>
+        <td style="padding:3px 4px;font-size:11px;text-align:center;color:#555;">${calls}</td>
+        <td style="padding:3px 4px;font-size:11px;text-align:center;">${b.opener || '—'}</td>
+        <td style="padding:3px 4px;font-size:11px;text-align:center;font-weight:600;">
+          ${b.openResult !== '' && b.openResult != null ? b.openResult : '—'}
+          ${b.card2 ? `<div style="font-size:9px;font-weight:700;color:#6a1b9a;">🃏${+b.card2}円</div>` : ''}
+        </td>
+        <td style="padding:3px 4px;font-size:11px;text-align:center;">${resBadge}</td>
+      </tr>
+    `;
+  }).join('');
+
+  // LINE／コピー用のテキスト版
+  const _sl = [];
+  _sl.push(`【楽晴会】第${r.num}回（${r.year}年${r.month}月）`);
+  _sl.push('──────────');
+  _sl.push(`●出席(${presentList.length}): ${presentList.join('・')||'—'}`);
+  _sl.push(`●欠席(${absentList.length}): ${absentList.join('・')||'—'}`);
+  _sl.push('──────────');
+  const _q = cardQuotaOf(r), _w = cardWinnersOf(r);
+  if (_q.c100 || _q.c50) {
+    _sl.push(`■ トランプ当たり（100円×${_q.c100}${_q.c50 ? '・50円×' + _q.c50 : ''}）`);
+    if (_q.c100) _sl.push(`・100円: ${_w.w100.join('・') || '—'}`);
+    if (_q.c50)  _sl.push(`・50円: ${_w.w50.join('・') || '—'}`);
+    _sl.push('──────────');
+  }
+  _sl.push('■ 精算・配当');
+  _sl.push(`・集金: ${kaihi.toLocaleString()}円 × ${paidCount}名 = ${pool.toLocaleString()}円`);
+  _sl.push(`・配当(${dispNormal.length}人): ${haitouUnit.toLocaleString()}×${normalCount}=${haitouNormal.toLocaleString()}円${dispNormal.length ? ' '+dispNormal.join('・') : ''}`);
+  _sl.push(`・ケツ(${dispKetsu.length}人): ${ketsuUnit.toLocaleString()}×${ketsuCount}=${haitouKetsu.toLocaleString()}円${dispKetsu.length ? ' '+dispKetsu.join('・') : ''}`);
+  if (taihouNames.size) _sl.push(`・大砲: ${[...taihouNames].join('・')}`);
+  if (ochiNames.size) _sl.push(`・落ち: ${[...ochiNames].join('・')}`);
+  if (taihouExpense) _sl.push(`・大砲: ${taihouExpense.toLocaleString()}円`);
+  if (c.amida) _sl.push(`・あみだ: ${(+c.amida).toLocaleString()}円`);
+  if (c.ryouridai) _sl.push(`・料理代: ${(+c.ryouridai).toLocaleString()}円`);
+  if (c.tsumitatekin) _sl.push(`・積立金: ${(+c.tsumitatekin).toLocaleString()}円`);
+  _sl.push('──────────');
+  _sl.push(`${ochiNames.size ? [...ochiNames].join('・')+'受取' : '差引精算'}: ${payout.toLocaleString()}円`);
+  lastShareText = _sl.join('\n');
+
+  el.innerHTML = `
+    <div style="background:#fff;border:2px solid #0d1b3e;border-radius:8px;padding:12px;font-family:sans-serif;">
+      <div style="text-align:center;border-bottom:2px solid #0d1b3e;padding-bottom:3px;margin-bottom:6px;">
+        <div style="font-size:16px;font-weight:700;color:#0d1b3e;">楽晴会 第${r.num}回</div>
+      </div>
+      <div style="margin-bottom:8px;">
+        <div style="font-size:11px;font-weight:700;color:#0d1b3e;margin-bottom:3px;">👥 出席状況</div>
+        <div style="font-size:11px;line-height:1.5;">
+          <div><span style="color:#2e7d32;">●出席(${presentList.length}):</span> ${presentList.join('・') || '—'}</div>
+          <div><span style="color:#c62828;">●欠席(${absentList.length}):</span> ${absentList.join('・') || '—'}</div>
+        </div>
+      </div>
+      <div style="margin-bottom:6px;">
+        <table style="width:100%;border-collapse:collapse;background:#fafbfd;">
+          <thead>
+            <tr style="background:#0d1b3e;color:#fff;">
+              <th style="padding:3px;font-size:10px;">叫び順</th>
+              <th style="padding:3px;font-size:10px;">叫び経過</th>
+              <th style="padding:3px;font-size:10px;">開順</th>
+              <th style="padding:3px;font-size:10px;">開き+トランプ</th>
+              <th style="padding:3px;font-size:10px;width:40px;">判定</th>
+            </tr>
+          </thead>
+          <tbody>${bidRows}</tbody>
+        </table>
+      </div>
+      ${(_q.c100 || _q.c50) ? `
+      <div style="margin-bottom:6px;background:#f8f2fb;border:1px solid #e1bee7;padding:8px;border-radius:5px;">
+        <div style="font-size:11px;font-weight:700;color:#6a1b9a;margin-bottom:3px;">
+          🃏 トランプ当たり <span style="font-weight:400;color:#999;">（100円×${_q.c100}${_q.c50 ? '・50円×' + _q.c50 : ''}）</span>
+        </div>
+        <div style="font-size:11px;line-height:1.7;">
+          ${_q.c100 ? `<div>● <span style="background:#6a1b9a;color:#fff;padding:1px 6px;border-radius:9px;font-size:10px;font-weight:700;">100円</span>
+            <strong style="color:#6a1b9a;">${_w.w100.join('・') || '—'}</strong>
+            ${_w.w100.length !== _q.c100 ? `<span style="font-size:10px;color:#c62828;">（${_w.w100.length}/${_q.c100}本）</span>` : ''}</div>` : ''}
+          ${_q.c50 ? `<div>● <span style="background:#9575cd;color:#fff;padding:1px 6px;border-radius:9px;font-size:10px;font-weight:700;">50円</span>
+            <strong style="color:#6a1b9a;">${_w.w50.join('・') || '—'}</strong>
+            ${_w.w50.length !== _q.c50 ? `<span style="font-size:10px;color:#c62828;">（${_w.w50.length}/${_q.c50}本）</span>` : ''}</div>` : ''}
+        </div>
+      </div>` : ''}
+      <div style="margin-bottom:6px;background:#f7f9fc;padding:8px;border-radius:5px;">
+        <div style="font-size:11px;font-weight:700;color:#0d1b3e;margin-bottom:4px;">💰 精算・配当内訳</div>
+        <div style="font-size:11px;line-height:1.6;">
+          <div>● 集金: ${kaihi.toLocaleString()}円 × ${paidCount}名 = <strong>${pool.toLocaleString()}円</strong></div>
+          <div>● 配当 (${dispNormal.length}人分): ${haitouUnit.toLocaleString()} × ${normalCount} = <strong>${haitouNormal.toLocaleString()}円</strong> <span style="font-size:10px;color:#555;">対象: ${dispNormal.join('・') || '—'}</span></div>
+          <div>● ケツ (${dispKetsu.length}人分): ${ketsuUnit.toLocaleString()} × ${ketsuCount} = <strong>${haitouKetsu.toLocaleString()}円</strong> <span style="font-size:10px;color:#1565c0;">対象: ${dispKetsu.join('・') || '—'}</span></div>
+          ${taihouNames.size ? `<div>● 大砲: <strong style="color:#2e7d32;">${[...taihouNames].join('・')}</strong></div>` : ''}
+          ${ochiNames.size  ? `<div>● 落ち: <strong style="color:#e65100;">${[...ochiNames].join('・')}</strong></div>` : ''}
+          ${taihouExpense  ? `<div>● 大砲: <strong>${taihouExpense.toLocaleString()}円</strong></div>` : ''}
+          ${c.amida        ? `<div>● あみだ: <strong>${(+c.amida).toLocaleString()}円</strong></div>` : ''}
+          ${c.ryouridai    ? `<div>● 料理代: <strong>${(+c.ryouridai).toLocaleString()}円</strong></div>` : ''}
+          ${c.tsumitatekin ? `<div>● 積立金: <strong>${(+c.tsumitatekin).toLocaleString()}円</strong></div>` : ''}
+        </div>
+        <div style="margin-top:6px;padding-top:6px;border-top:1px dashed #0d1b3e;font-size:13px;font-weight:700;color:#0d1b3e;text-align:right;">
+          ${ochiNames.size ? [...ochiNames].join('・') + '受取' : '差引精算'}: ${payout.toLocaleString()}円
+        </div>
+      </div>
+      <div style="text-align:center;font-size:9px;color:#999;margin-top:4px;">― 楽晴会管理アプリ ―</div>
+    </div>
+    <button onclick="openShot()" style="width:100%;margin-top:12px;padding:14px;border:none;border-radius:10px;background:#6a1b9a;color:#fff;font-size:15px;font-weight:700;cursor:pointer;">📷 1画面に収める（スクショ用）</button>
+    <div style="display:flex;gap:8px;margin-top:8px;">
+      <button onclick="copyShareText()" style="flex:1;padding:14px;border:none;border-radius:10px;background:#0d1b3e;color:#fff;font-size:15px;font-weight:700;cursor:pointer;">📋 コピー</button>
+      <button onclick="sendShareLine()" style="flex:1;padding:14px;border:none;border-radius:10px;background:#06C755;color:#fff;font-size:15px;font-weight:700;cursor:pointer;">💬 LINEで送る</button>
+    </div>
+  `;
+}
+
+let lastShareText = '';
+// 共有カードを画面の高さに収まるまで縮めて表示する（スマホで1回のスクショに収めるため）
+function openShot(){
+  const card = document.querySelector('#shareBody > div');
+  if (!card) { toast('共有の画面を開いてから押してください'); return; }
+  const ov = document.getElementById('shotOverlay');
+  const st = document.getElementById('shotStage');
+  const w = card.offsetWidth;
+  st.style.width = w + 'px';
+  st.style.transform = 'translateX(-50%) scale(1)';
+  st.innerHTML = card.outerHTML;
+  ov.style.display = 'block';
+  // 実際に置いてから高さを測って縮小率を決める
+  requestAnimationFrame(() => {
+    const h = st.offsetHeight;
+    const s = Math.min(1, (window.innerWidth - 12) / w, (window.innerHeight - 30) / h);
+    st.style.transform = `translateX(-50%) scale(${s})`;
+    document.getElementById('shotHint').textContent =
+      s < 1 ? `全体を ${Math.round(s * 100)}% に縮めています — タップで戻ります`
+            : 'スクリーンショットを撮ったら、画面をタップで戻ります';
+  });
+}
+function closeShot(){
+  const ov = document.getElementById('shotOverlay');
+  ov.style.display = 'none';
+  document.getElementById('shotStage').innerHTML = '';
+}
+
+function copyShareText(){
+  if(!lastShareText){ toast('共有データがありません'); return; }
+  if(navigator.clipboard && navigator.clipboard.writeText){
+    navigator.clipboard.writeText(lastShareText).then(()=>toast('📋 コピーしました（LINEに貼り付け）')).catch(()=>_fallbackCopy(lastShareText));
+  } else { _fallbackCopy(lastShareText); }
+}
+function _fallbackCopy(t){
+  try{ const ta=document.createElement('textarea'); ta.value=t; ta.style.position='fixed'; ta.style.opacity='0'; document.body.appendChild(ta); ta.focus(); ta.select(); document.execCommand('copy'); document.body.removeChild(ta); toast('📋 コピーしました（LINEに貼り付け）'); }catch(e){ toast('コピーできませんでした'); }
+}
+function sendShareLine(){
+  if(!lastShareText){ toast('共有データがありません'); return; }
+  window.open('https://line.me/R/share?text=' + encodeURIComponent(lastShareText), '_blank');
+}
+
+// ============================================================
+// EVENT
+// ============================================================
+// 純粋にルールを適用するだけ（描画/保存/トーストなし）
+// rr を渡すとその回に適用（省略時は現在の回）
+function applyResultRules(rr) {
+  const r = rr || round();
+  const ochiCount = attOf(r).filter(a => a.ochi).length;
+  const expectedSlots = Math.max(1, membersOf(r).length - ochiCount);
+  const slots = Math.min(expectedSlots, r.bids.length);
+  const valid = r.bids.slice(0, slots);
+
+  // 手動設定されたものは保持。それ以外をリセットして自動判定
+  valid.forEach(b => {
+    if (!b.manualResult) b.result = '';
+  });
+  // 手動設定された結果を取り出し、自動判定対象から除外する
+  const lockedOchi = new Set();
+  const lockedTaihou = new Set();
+  const lockedKetsu = new Set();
+  const lockedNone = new Set();
+  valid.forEach((b, i) => {
+    if (b.manualResult) {
+      if (b.result === '落ち') lockedOchi.add(i);
+      else if (b.result === '大砲') lockedTaihou.add(i);
+      else if (b.result === 'ケツ') lockedKetsu.add(i);
+      else lockedNone.add(i);
+    }
+  });
+
+  // 手動設定されたindexは自動判定から除外するヘルパ
+  const isLocked = (i) => lockedOchi.has(i) || lockedTaihou.has(i) || lockedKetsu.has(i) || lockedNone.has(i);
+
+  // 落ち: 手動設定があればそれを優先、なければ開結果が最大の人
+  let ochiIdx = -1;
+  if (lockedOchi.size > 0) {
+    ochiIdx = [...lockedOchi][0];
+  } else {
+    let maxRes = -Infinity;
+    valid.forEach((b, i) => {
+      if (isLocked(i)) return;
+      if (b.opener && b.openResult !== '' && b.openResult !== null && b.openResult !== undefined && +b.openResult > maxRes) {
+        maxRes = +b.openResult; ochiIdx = i;
+      }
+    });
+  }
+
+  // ケツ: 手動設定があればそれを使う。自動判定対象は残りから
+  let minRes = Infinity;
+  valid.forEach((b, i) => {
+    if (i === ochiIdx) return;
+    if (isLocked(i)) return;
+    if (b.opener && b.openResult !== '' && b.openResult !== null && b.openResult !== undefined && +b.openResult < minRes) {
+      minRes = +b.openResult;
+    }
+  });
+  const ketsuIdxs = [];
+  valid.forEach((b, i) => {
+    if (i === ochiIdx) return;
+    if (isLocked(i)) return;
+    if (b.opener && b.openResult !== '' && b.openResult !== null && b.openResult !== undefined && +b.openResult === minRes) {
+      ketsuIdxs.push(i);
+    }
+  });
+  // 手動ケツも合わせる
+  lockedKetsu.forEach(i => { if (!ketsuIdxs.includes(i)) ketsuIdxs.push(i); });
+
+  // 特例: 参加者が実質2人（落ち＋もう1人）だけのときは、
+  // 残った1人はケツにならず配当をもらえる（判定もケツにしない）。
+  const validOpenerCount = valid.filter(b =>
+    b.opener && b.openResult !== '' && b.openResult !== null && b.openResult !== undefined
+  ).length;
+  if (validOpenerCount <= 2) {
+    for (let k = ketsuIdxs.length - 1; k >= 0; k--) {
+      if (!lockedKetsu.has(ketsuIdxs[k])) ketsuIdxs.splice(k, 1);
+    }
+  }
+
+  // 大砲: 手動があればそれを優先
+  let taihouIdx = -1;
+  if (lockedTaihou.size > 0) {
+    taihouIdx = [...lockedTaihou][0];
+  } else {
+    let taihouRes = -Infinity;
+    valid.forEach((b, i) => {
+      if (i === ochiIdx || ketsuIdxs.includes(i)) return;
+      if (isLocked(i)) return;
+      const att = r.attendance.find(a => a.name === b.opener);
+      if (att && att.present) return;
+      if (b.opener && b.openResult !== '' && b.openResult !== null && b.openResult !== undefined && +b.openResult > taihouRes) {
+        taihouRes = +b.openResult; taihouIdx = i;
+      }
+    });
+  }
+
+  // 2人だけの特例: 落ち以外の1人は必ず大砲にする（ケツにはならない）。
+  // 手動で結果を指定している場合はそれを尊重。
+  if (validOpenerCount <= 2) {
+    const otherIdx = valid.findIndex((b, i) =>
+      i !== ochiIdx && !isLocked(i) &&
+      b.opener && b.openResult !== '' && b.openResult !== null && b.openResult !== undefined
+    );
+    if (otherIdx >= 0) taihouIdx = otherIdx;
+  }
+
+  // フラグリセット
+  valid.forEach(b => { b.taihouFromKetsu = false; });
+
+  // 特例: 通常ルールで大砲候補が0人かつ、ケツが2人以上いる場合
+  let promotedIdx = -1;
+  if (taihouIdx < 0 && ketsuIdxs.length >= 2) {
+    promotedIdx = ketsuIdxs.find(i => {
+      const att = r.attendance.find(a => a.name === valid[i].opener);
+      return !(att && att.present);
+    });
+    if (promotedIdx !== undefined && promotedIdx >= 0) {
+      taihouIdx = promotedIdx;
+    } else {
+      promotedIdx = -1;
+    }
+  }
+
+  // ラベル付け
+  if (ochiIdx >= 0) valid[ochiIdx].result = '落ち';
+  if (taihouIdx >= 0) valid[taihouIdx].result = '大砲';
+  ketsuIdxs.forEach(i => {
+    if (i !== taihouIdx) valid[i].result = 'ケツ';
+  });
+  // 手動の空（−）はそのまま空
+  lockedNone.forEach(i => { valid[i].result = ''; });
+  // 昇格した大砲には印を付ける
+  if (promotedIdx >= 0) valid[promotedIdx].taihouFromKetsu = true;
+}
+
+// ボタン用：ルール適用＋落ち者の ochi 伝播＋保存＋描画＋トースト
+function autoDetectResults() {
+  const r = round();
+  applyResultRules();
+  // 落ち判定者は「以降の回」の出席にのみ ochi=true で反映（過去回は変更しない）
+  r.bids.forEach(b => {
+    if (b.result === '落ち' && b.opener) {
+      const name = b.opener;
+      app.rounds.forEach((rd, idx) => {
+        if (idx <= curIdx) return; // 現在および過去の回は変更しない
+        const att = rd.attendance.find(a => a.name === name);
+        if (att) att.ochi = true;
+      });
+    }
+  });
+  saveAll();
+  render();
+  toast('結果を自動判定しました');
+}
+
+function getPrevTaihouName() {
+  if (curIdx <= 0) return null;
+  const prev = app.rounds[curIdx - 1];
+  if (!prev) return null;
+  const tb = prev.bids.find(b => b.result === '大砲');
+  return tb ? tb.opener : null;
+}
+
+function recalcOpenResults() {
+  const r = round();
+  const prevTaihouName = getPrevTaihouName();
+  // 叫び側の情報を名前ごとにマップ
+  const callerByName = {};
+  r.bids.forEach(cb => {
+    if (cb.caller) {
+      callerByName[cb.caller] = {
+        call1: +cb.call1 || 0,
+        call2: +cb.call2 || 0,
+      };
+    }
+  });
+  // 開き側の openResult = 叫1+叫2 + 前ケツ + 開き + カード + 前月大砲ボーナス(3000)
+  r.bids.forEach(b => {
+    if (b.opener) {
+      const c = callerByName[b.opener] || { call1: 0, call2: 0 };
+      const pk = +b.prevKetsu || 0;
+      const op = +b.open || 0;
+      const cd = +b.card2 || 0;
+      b.openResult = c.call1 + c.call2 + pk + op + cd;
+    }
+  });
+}
+
+function syncOchiFromResults() {
+  // 自動で「落ち済み」にしない（手動操作のみ）
+  return;
+}
+
+function onBidChange(el) {
+  const i = +el.dataset.bid;
+  const f = el.dataset.f;
+  const r = round();
+  if (el.type === 'number') {
+    r.bids[i][f] = el.value === '' ? '' : +el.value;
+  } else {
+    r.bids[i][f] = el.value;
+  }
+  recalcOpenResults();
+  applyResultRules(); // 入力のたびに自動判定
+  syncOchiFromResults(); // 落ち・大砲を出席タブのochiに自動反映
+  renderBids();
+  renderCalc();
+  renderAttendance();
+}
+
+function setResult(i, val) {
+  const b = round().bids[i];
+  if (val === '') {
+    // 「−」ボタン: 手動解除して自動判定に戻す
+    b.manualResult = false;
+    b.result = '';
+    applyResultRules();
+  } else if (b.result === val) {
+    // 同じボタンを再度押した: 結果を空にする（手動でロック）
+    b.result = '';
+    b.manualResult = true;
+  } else {
+    // 別の結果を選択: 手動上書き
+    b.result = val;
+    b.manualResult = true;
+  }
+  saveAll();
+  renderBids();
+  renderCalc();
+  renderAttendance();
+}
+
+function toggleAtt(i, field) {
+  const r = round();
+  r.attendance[i][field] = !r.attendance[i][field];
+  if (field === 'ochi') {
+    const newVal = r.attendance[i][field];
+    const name = r.attendance[i].name;
+    // 「落ち済み」は今の回から先だけに反映する（過去の回は変えない）
+    app.rounds.forEach((rd, idx) => {
+      if (idx < curIdx) return;
+      const att = rd.attendance.find(a => a.name === name);
+      if (att) att.ochi = newVal;
+    });
+  }
+  saveAll();
+  render();
+}
+
+function updateRoundMeta() {
+  const r = round();
+  r.year  = +document.getElementById('editYear').value  || r.year;
+  r.month = +document.getElementById('editMonth').value || r.month;
+  r.num   = +document.getElementById('editNum').value   || r.num;
+  persist();
+  renderRoundSelect();
+}
+
+// 回を開催順（年月の古い順）に並べた番号の一覧
+function roundOrder() {
+  return app.rounds.map((r, i) => i)
+    .sort((a, b) => (ymOf(app.rounds[a].year, app.rounds[a].month) - ymOf(app.rounds[b].year, app.rounds[b].month)) || (a - b));
+}
+// 開いたときに出す回: 今月の回 → なければ今月より前でいちばん新しい回 → それもなければ最後の回
+// （先の月の空の回が作ってあっても、そちらには飛ばない）
+function openIdx() {
+  const now = new Date();
+  const t = ymOf(now.getFullYear(), now.getMonth() + 1);
+  const order = roundOrder();
+  let pick = -1;
+  order.forEach(i => { if (ymOf(app.rounds[i].year, app.rounds[i].month) <= t) pick = i; });
+  return pick >= 0 ? pick : order[order.length - 1];
+}
+function renderRoundSelect() {
+  const sel = document.getElementById('roundSelect');
+  sel.innerHTML = roundOrder().slice().reverse().map(i => {
+    const r = app.rounds[i];
+    return `<option value="${i}"${i === curIdx ? ' selected' : ''}>${r.year}年${r.month}月　第${r.num}回</option>`;
+  }).join('');
+}
+function jumpRound(i) {
+  if (!app.rounds[i]) return;
+  curIdx = i;
+  toggleMetaEdit(false);
+  render();
+  window.scrollTo({ top: 0, behavior: 'instant' });
+}
+// ◀ は前の月の回、▶ は次の月の回へ（端で止まる。最新から最古へ一周しない）
+function navRound(dir) {
+  const order = roundOrder();
+  const pos = order.indexOf(curIdx) + dir;
+  if (pos < 0) { toast('いちばん古い回です'); return; }
+  if (pos >= order.length) { toast('いちばん新しい回です'); return; }
+  jumpRound(order[pos]);
+}
+function toggleMetaEdit(on) {
+  const box = document.getElementById('metaEdit');
+  const show = (on === undefined) ? box.style.display === 'none' : !!on;
+  box.style.display = show ? '' : 'none';
+  document.getElementById('metaEditBtn').classList.toggle('on', show);
+}
+
+function addNewRound() {
+  // 新しい回は「いちばん新しい回の次」として作る。
+  // 表示中の回を基準にすると、過去の回を開いたまま押したときに
+  // 日付がちぐはぐな回ができてしまうため。
+  const prev = app.rounds.reduce(
+    (a, b) => ymOf(b.year, b.month) >= ymOf(a.year, a.month) ? b : a, app.rounds[0]);
+  const nr = createEmptyRound(app.members);
+  if (prev.num >= 12) {
+    nr.num = 1;
+    nr.month = prev.month >= 12 ? 1 : prev.month + 1;
+    nr.year = prev.month >= 12 ? prev.year + 1 : prev.year;
+  } else {
+    nr.num = prev.num + 1;
+    nr.month = prev.month >= 12 ? 1 : prev.month + 1;
+    nr.year = prev.month >= 12 ? prev.year + 1 : prev.year;
+  }
+  nr.calc = { ...prev.calc };
+  // 手動で直した人数は新しい回に持ち込まない（自動判定に戻す）
+  delete nr.calc.normalCount; delete nr.calc.ketsuCount;
+  delete nr.calc.taihouCount; delete nr.calc.taihouUnit;
+
+  // 落ち済みの引き継ぎ
+  if (nr.num === 1) {
+    // 第1回＝新しいシーズンの始まり。全員リセットして仕切り直す
+    nr.attendance.forEach(a => { a.ochi = false; });
+  } else {
+    // 今のシーズン（直近の第1回以降）で落ちた人だけを引き継ぐ。
+    // 全部の回を見てしまうと、前のシーズンの落ちまで持ち越して全員落ち済みになる。
+    const ochiSet = new Set();
+    seasonRoundsBefore(nr).forEach(rd => {
+      rd.attendance.forEach(a => { if (a.ochi) ochiSet.add(a.name); });
+      rd.bids.forEach(b => { if (b.result === '落ち' && b.opener) ochiSet.add(b.opener); });
+    });
+    nr.attendance.forEach(a => { a.ochi = ochiSet.has(a.name); });
+  }
+  app.rounds.push(nr);
+  curIdx = app.rounds.length - 1;
+  saveAll();
+  render();
+  toast('新規回を追加しました');
+}
+
+function deleteRound() {
+  if (app.rounds.length <= 1) { toast('最後の回は削除不可'); return; }
+  const r = round();
+  const filled = r.bids.filter(b => b.caller || b.opener).length;
+  const same = app.rounds.filter(x => x.year === r.year && x.month === r.month).length;
+  const msg = `${r.year}年${r.month}月 第${r.num}回 を削除します。\n\n`
+            + (filled
+                ? `⚠️ この回には入札が ${filled}行 入っています。\n　消すと元に戻せません。\n\n`
+                : `この回はまだ入札が入力されていません。\n\n`)
+            + (same > 1 ? `※${r.year}年${r.month}月の回は ${same}つ あります。いま開いている方だけ消えます。\n\n` : '')
+            + `よろしいですか？`;
+  if (!confirm(msg)) return;
+  app.rounds.splice(curIdx, 1);
+  if (curIdx >= app.rounds.length) curIdx = app.rounds.length - 1;
+  render();
+  saveAll();
+}
+
+function deleteMonth() {
+  // 月ごとに集計
+  const monthMap = {};
+  app.rounds.forEach((r, i) => {
+    const key = r.year + '-' + r.month;
+    if (!monthMap[key]) monthMap[key] = { year: r.year, month: r.month, count: 0, indices: [] };
+    monthMap[key].count++;
+    monthMap[key].indices.push(i);
+  });
+  const months = Object.values(monthMap).sort((a,b) => a.year !== b.year ? a.year - b.year : a.month - b.month);
+  if (months.length === 0) { toast('削除可能な月がありません'); return; }
+  if (months.length === app.rounds.length && app.rounds.length === 1) {
+    toast('最後の回は削除不可'); return;
+  }
+
+  // 選択肢を提示
+  let msg = '削除したい月の番号を入力してください:\n\n';
+  months.forEach((m, i) => {
+    msg += `${i+1}. ${m.year}年${m.month}月 (${m.count}回)\n`;
+  });
+  msg += '\n（キャンセルで中止）';
+  const input = prompt(msg);
+  if (!input) return;
+  const sel = parseInt(input) - 1;
+  if (isNaN(sel) || sel < 0 || sel >= months.length) { toast('無効な番号です'); return; }
+
+  const target = months[sel];
+  if (target.indices.length >= app.rounds.length) {
+    toast('全ての回を削除することはできません'); return;
+  }
+  if (!confirm(`${target.year}年${target.month}月 (${target.count}回) を全て削除しますか？`)) return;
+
+  // 後ろから削除（インデックスがずれないように）
+  target.indices.sort((a,b) => b - a).forEach(idx => {
+    app.rounds.splice(idx, 1);
+  });
+  if (curIdx >= app.rounds.length) curIdx = app.rounds.length - 1;
+  if (curIdx < 0) curIdx = 0;
+  render();
+  saveAll();
+  toast(`${target.year}年${target.month}月を削除しました`);
+}
+
+function addMember() {
+  const input = document.getElementById('newMemberInput');
+  const name = input.value.trim();
+  if (!name) return;
+  if (app.members.includes(name)) {
+    const rt = app.retired ? app.retired[name] : null;
+    if (rt) {
+      if (confirm(name + ' さんは ' + rt.year + '年' + rt.month + '月からの退会になっています。\n復帰させますか？')) {
+        delete app.retired[name];
+        input.value = '';
+        persist(); render();
+        toast(name + ' を復帰させました');
+      }
+    } else {
+      toast('既に登録されています');
+    }
+    return;
+  }
+  app.members.push(name);
+  // いま開いている回からの加入として記録する（それより前の回には出さない）
+  const cur = round();
+  if (!app.joined) app.joined = {};
+  app.joined[name] = { year: cur.year, month: cur.month };
+  app.rounds.forEach(r => {
+    r.attendance.push({ name, paid: false, present: false, ochi: false });
+    r.bids.push({ card:'', caller:'', call1:'', call2:'', opener:'', prevKetsu:'', open:'', openResult:'', card2:'', result:'' });
+  });
+  input.value = '';
+  persist();
+  render();
+  toast(name + ' を追加しました');
+}
+
+// メンバーを抜ける扱いにする（名簿からも過去の回からも消さない）。
+// 名簿ごと消すと、その人が写っている過去の回の記録まで消えてしまうため。
+function removeMember(idx) {
+  const name = app.members[idx];
+  if (!app.retired) app.retired = {};
+  const rt = app.retired[name];
+
+  if (rt) {   // すでに退会 → 復帰させる
+    if (!confirm(name + ' さんは ' + rt.year + '年' + rt.month + '月からの退会になっています。\n復帰させますか？')) return;
+    delete app.retired[name];
+    persist();
+    render();
+    toast(name + ' を復帰させました');
+    return;
+  }
+
+  const r = round();
+  const msg = name + ' さんを ' + r.year + '年' + r.month + '月の回から退会にします。\n\n'
+            + '・' + r.year + '年' + r.month + '月より前の回の記録はそのまま残ります\n'
+            + '・あとで「↩」を押せば復帰できます\n\nよろしいですか？';
+  if (!confirm(msg)) return;
+  app.retired[name] = { year: r.year, month: r.month };
+  persist();
+  render();
+  toast(name + ' を' + r.year + '年' + r.month + '月から退会にしました');
+}
+
+function onKaihiChange() {
+  // 会費はこの回だけに保存する（他の回や過去の記録は変わらない）
+  round().kaihi = +document.getElementById('kaihiInput').value || 0;
+  persist();
+  renderCalc();
+  renderShare();
+}
+
+function esc(s) { return String(s||'').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'})[c]); }
+
+function toast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), 1500);
+}
+
+// ============================================================
+// INIT
+// ============================================================
+// ============================================================
+// クラウド同期
+// ============================================================
+const SYNC_URL = 'https://script.google.com/macros/s/AKfycbxwL19mAenATUMILRsQYrDL0ThjU2C583Cj729OfzNHEH3drMcZCExYULRp4VGOZ11J/exec';
+
+async function syncUpload() {
+  if (!SYNC_URL) { toast('同期URLが未設定です'); return; }
+  app.curIdx = curIdx;
+  toast('アップロード中...');
+  try {
+    const res = await fetch(SYNC_URL + '?action=save&key=rakuseikai_data', {
+      method: 'POST',
+      body: JSON.stringify(app)
+    });
+    const json = await res.json();
+    if (json.success) toast('クラウドに保存しました');
+    else toast('エラー: ' + json.message);
+  } catch(e) { toast('通信エラー: ' + e.message); }
+}
+
+async function syncDownload() {
+  if (!SYNC_URL) { toast('同期URLが未設定です'); return; }
+  toast('ダウンロード中...');
+  let stage = 'fetch';
+  try {
+    const res = await fetch(SYNC_URL + '?action=load&key=rakuseikai_data');
+    stage = 'parse';
+    const json = await res.json();
+    if (!json.success || !json.data) {
+      toast('クラウドにデータがありません');
+      return;
+    }
+    stage = 'validate';
+    // データが文字列で返る場合はパース
+    let d = json.data;
+    if (typeof d === 'string') {
+      try { d = JSON.parse(d); } catch(e) { toast('データ形式エラー'); return; }
+    }
+    // ネスト形式に対応（d.data や d.value にラップされてる可能性）
+    if (d && !Array.isArray(d.rounds)) {
+      if (d.data && Array.isArray(d.data.rounds)) d = d.data;
+      else if (d.value && Array.isArray(d.value.rounds)) d = d.value;
+      else if (d.app && Array.isArray(d.app.rounds)) d = d.app;
+    }
+    // d 自体が配列（古い形式：rounds 配列のみ保存）の場合はラップ
+    if (Array.isArray(d)) d = { rounds: d };
+    if (!d || typeof d !== 'object' || !Array.isArray(d.rounds) || d.rounds.length === 0) {
+      // 不正なデータの構造をユーザーに見せる
+      const keys = d && typeof d === 'object' ? Object.keys(d).join(',') : typeof d;
+      toast('データ不正 keys=[' + keys + ']');
+      return;
+    }
+    stage = 'normalize';
+    // 各ラウンドの必須フィールド補完
+    d.rounds.forEach(r => {
+      if (!Array.isArray(r.attendance)) r.attendance = [];
+      if (!Array.isArray(r.bids)) r.bids = [];
+      if (!r.calc) r.calc = {};
+      if (r.year == null) r.year = new Date().getFullYear();
+      if (r.month == null) r.month = new Date().getMonth() + 1;
+      if (r.num == null) r.num = 1;
+    });
+    if (!Array.isArray(d.members)) d.members = [...DEFAULT_MEMBERS];
+    if (!d.retired || typeof d.retired !== 'object') d.retired = {};
+    if (!d.joined  || typeof d.joined  !== 'object') d.joined  = {};
+    if (d.kaihi == null) d.kaihi = 18000;
+    let ci = d.curIdx || 0;
+    if (ci < 0 || ci >= d.rounds.length) ci = 0;
+    d.curIdx = ci;
+    stage = 'apply';
+    app = d;
+    curIdx = ci;
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(app));
+    stage = 'render';
+    render();
+    toast('クラウドから読み込みました');
+  } catch(e) {
+    toast('エラー[' + stage + ']: ' + (e && e.message ? e.message : e));
+  }
+}
+
+// ===== 自動同期（開いたら読込・編集で自動保存・閉じたら保存）=====
+let cloudReady = false, cloudTimer = null;
+function scheduleCloudSave(){
+  if (!cloudReady) return;                 // 起動直後の誤上書き防止
+  clearTimeout(cloudTimer);
+  cloudTimer = setTimeout(pushCloudSilent, 1500);
+}
+async function pushCloudSilent(){
+  clearTimeout(cloudTimer); cloudTimer = null;   // 送信待ちなし、に戻す
+  try{
+    app.curIdx = curIdx;
+    const res = await fetch(SYNC_URL + '?action=save&key=rakuseikai_data', { method:'POST', body: JSON.stringify(app) });
+    const j = await res.json();
+    if (j && j.success) toast('☁ 自動保存しました');
+  }catch(e){ /* オフライン等は端末内に保存済み */ }
+}
+function flushCloudSave(){    // 閉じる瞬間に確実に送る（編集していない画面からは送らない）
+  if (!dirty) return;
+  try{ app.curIdx = curIdx; navigator.sendBeacon(SYNC_URL + '?action=save&key=rakuseikai_data', JSON.stringify(app)); }catch(e){}
+}
+// 開いたとき・スマホで画面に戻ってきたときにクラウドから最新を読む。
+// keepView=true（画面に戻ってきたとき）は、見ていた回をそのまま開いておく。
+let lastRestore = 0;
+async function autoRestore(keepView){
+  lastRestore = Date.now();
+  const viewKey = keepView && round() ? [round().year, round().month, round().num].join('-') : null;
+  const before = JSON.stringify(app && app.rounds);
+  try{
+    const res = await fetch(SYNC_URL + '?action=load&key=rakuseikai_data');
+    const json = await res.json();
+    if (!json || !json.success || !json.data) return;
+    let d = json.data;
+    if (typeof d === 'string'){ try{ d = JSON.parse(d); }catch(e){ return; } }
+    if (d && !Array.isArray(d.rounds)){
+      if (d.data && Array.isArray(d.data.rounds)) d = d.data;
+      else if (d.value && Array.isArray(d.value.rounds)) d = d.value;
+      else if (d.app && Array.isArray(d.app.rounds)) d = d.app;
+    }
+    if (Array.isArray(d)) d = { rounds: d };
+    if (!d || typeof d !== 'object' || !Array.isArray(d.rounds) || d.rounds.length === 0) return;
+    // ローカルの方が新しい場合はクラウドで上書きせず、逆にローカルをクラウドへ送る
+    if (d.savedAt && app && app.savedAt && app.savedAt > d.savedAt) {
+      pushCloudSilent();
+      return;
+    }
+    d.rounds.forEach(r => { if(!Array.isArray(r.attendance)) r.attendance=[]; if(!Array.isArray(r.bids)) r.bids=[]; if(!r.calc) r.calc={}; if(r.year==null) r.year=new Date().getFullYear(); if(r.month==null) r.month=new Date().getMonth()+1; if(r.num==null) r.num=1; });
+    if (!Array.isArray(d.members)) d.members = [...DEFAULT_MEMBERS];
+    if (!d.retired || typeof d.retired !== 'object') d.retired = {};
+    if (!d.joined  || typeof d.joined  !== 'object') d.joined  = {};
+    if (d.kaihi == null) d.kaihi = 18000;
+    app = d;
+    // ほかの端末で最後に見ていた回（d.curIdx）ではなく、今月の回を開く
+    const same = viewKey ? app.rounds.findIndex(r => [r.year, r.month, r.num].join('-') === viewKey) : -1;
+    curIdx = same >= 0 ? same : openIdx();
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(app));
+    render();
+    if (keepView && JSON.stringify(app.rounds) !== before) toast('☁ 最新の内容に更新しました');
+  }catch(e){ /* オフライン等は端末内データのまま */ }
+}
+
+
+// ############################################################
+// ここから新アプリ（v2）で足した部分
+//   ・下のタブ／進み具合の表示
+//   ・入札をタップで選ぶ（大きな選択肢・続けて次の欄へ）
+//   ・入札も自動保存、↶戻す、保存履歴15世代
+//   ・ほかの人の入力を上書きしない同期（最後にそろえた中身と比べる）
+//   ・年間タブに「お金のまとめ」
+// ゲームの判定・精算の計算は、上の元のコードをそのまま使っている。
+// ############################################################
+const HIST_KEY   = 'rakuseikai_hist_v2';      // 保存履歴（この端末だけ）
+const BASE_KEY   = 'rakuseikai_syncbase_v2';  // 最後にクラウドとそろえた中身の指紋
+const DIRTY_KEY  = 'rakuseikai_dirty_v2';     // まだクラウドに送っていない編集がある
+const BEACON_KEY = 'rakuseikai_beacon_v2';    // 閉じる瞬間に送った中身の指紋
+
+function storageOK() {
+  try { localStorage.setItem('__rk_t', '1'); localStorage.removeItem('__rk_t'); return true; }
+  catch (e) { return false; }
+}
+function lsGet(k) { try { return localStorage.getItem(k); } catch (e) { return null; } }
+function lsSet(k, v) { try { localStorage.setItem(k, v); } catch (e) {} }
+function lsDel(k) { try { localStorage.removeItem(k); } catch (e) {} }
+
+// 中身の指紋（表示中の回・保存時刻は除く）
+function fpOf(d) {
+  try { return JSON.stringify({ m: d.members, r: d.rounds, rt: d.retired || {}, jn: d.joined || {}, k: d.kaihi }); }
+  catch (e) { return ''; }
+}
+function isDirty() { return lsGet(DIRTY_KEY) === '1'; }
+let editSeq = 0;
+function clearDirty() { dirty = false; lsDel(DIRTY_KEY); }
+
+// ===== ↶ 戻す =====
+let undoStack = [], lastSnap = null;
+function updateUndoBtn() {
+  const b = document.getElementById('undoBtn');
+  if (b) b.classList.toggle('off', !undoStack.length);
+}
+function viewKey() { const r = round(); return r ? [r.year, r.month, r.num].join('-') : ''; }
+function idxOfView(k) {
+  const i = app.rounds.findIndex(r => [r.year, r.month, r.num].join('-') === k);
+  return i >= 0 ? i : openIdx();
+}
+function undo() {
+  if (!undoStack.length) { toast('戻せる操作がありません'); return; }
+  const k = viewKey();
+  app = JSON.parse(undoStack.pop());
+  curIdx = idxOfView(k);
+  lastSnap = null;
+  persist({ noUndo: true });
+  render();
+  toast('↶ ひとつ前に戻しました');
+}
+
+// 保存（編集のたびに呼ばれる）。元の persist() の置き換え
+function persist(opts) {
+  if (!(opts && opts.noUndo)) {
+    const now = JSON.stringify(app);
+    if (lastSnap && lastSnap !== now) { undoStack.push(lastSnap); if (undoStack.length > 30) undoStack.shift(); }
+  }
+  dirty = true;
+  editSeq++;
+  app.curIdx = curIdx;
+  app.savedAt = Date.now();
+  lastSnap = JSON.stringify(app);
+  if (!storageOK()) return;        // プレビュー等、保存できない画面からはクラウドにも送らない
+  localStorage.setItem(STORAGE_KEY, lastSnap);
+  lsSet(DIRTY_KEY, '1');
+  autoHistory();
+  scheduleCloudSave();
+  updateUndoBtn();
+  updateSyncBadge('wait');
+}
+
+// ===== 保存履歴（15世代） =====
+function readHist() { try { return JSON.parse(lsGet(HIST_KEY)) || []; } catch (e) { return []; } }
+function addHist(label, json) {
+  const h = readHist();
+  if (h.length && h[0].data === json) return;
+  h.unshift({ at: Date.now(), label, data: json });
+  while (h.length > 15) h.pop();
+  while (h.length) {   // 入りきらなければ古いものから捨てる
+    try { localStorage.setItem(HIST_KEY, JSON.stringify(h)); return; } catch (e) { h.pop(); }
+  }
+}
+function autoHistory() {
+  const h = readHist();
+  if (h.length && Date.now() - h[0].at < 10 * 60 * 1000) return;
+  addHist('自動の控え', undoStack.length ? undoStack[undoStack.length - 1] : JSON.stringify(app));
+}
+function histSummary(json) {
+  try {
+    const d = JSON.parse(json);
+    const filled = d.rounds.filter(r => (r.bids || []).some(b => b.caller || b.opener));
+    const last = filled.sort((a, b) => ymOf(a.year, a.month) - ymOf(b.year, b.month)).pop();
+    if (!last) return `回 ${d.rounds.length}つ`;
+    const n = last.bids.filter(b => b.caller || b.opener).length;
+    return `入力のある最新: ${last.year}年${last.month}月 第${last.num}回（入札${n}行）／回 ${d.rounds.length}つ`;
+  } catch (e) { return ''; }
+}
+function fmtTime(t) {
+  const d = new Date(t);
+  return `${d.getMonth() + 1}/${d.getDate()} ${d.getHours()}:${String(d.getMinutes()).padStart(2, '0')}`;
+}
+function openHistory() {
+  const h = readHist();
+  document.getElementById('sheet').innerHTML = `
+    <div class="sh-title"><span>🕘 保存履歴（この端末）</span><button class="sh-x" onclick="closeSheet()">✕</button></div>
+    <div style="font-size:12px;color:#666;margin-bottom:6px;line-height:1.6;">戻すと、その時点の内容がクラウドにも送られます（いまの内容も履歴に残ります）。</div>
+    ${h.length ? h.map((x, k) => `
+      <div class="hist-row">
+        <div class="hist-main"><div class="hist-t">${fmtTime(x.at)}　<span style="font-weight:600;color:#6a1b9a;">${esc(x.label)}</span></div>
+          <div class="hist-s">${esc(histSummary(x.data))}</div></div>
+        <button onclick="restoreHist(${k})">この時点に戻す</button>
+      </div>`).join('') : '<div style="padding:20px;text-align:center;color:#999;">まだ履歴がありません</div>'}`;
+  openSheet();
+}
+function restoreHist(k) {
+  const x = readHist()[k];
+  if (!x) return;
+  if (!confirm(`${fmtTime(x.at)}（${x.label}）の内容に戻します。\n\n${histSummary(x.data)}\n\nよろしいですか？`)) return;
+  addHist('履歴から戻す前', JSON.stringify(app));
+  const k2 = viewKey();
+  app = JSON.parse(x.data);
+  curIdx = idxOfView(k2);
+  persist();
+  render();
+  closeSheet();
+  toast('🕘 その時点の内容に戻しました');
+}
+
+// ===== クラウド同期（ほかの人の入力を上書きしない） =====
+// 「最後にクラウドとそろえた中身(base)」を覚えておき、
+//   クラウドだけ変わった → 読み込む
+//   この端末だけ変わった → 送る
+//   両方変わった         → どちらにするか聞く（この端末の分は履歴に残す）
+function normalizeCloud(d) {
+  if (typeof d === 'string') { try { d = JSON.parse(d); } catch (e) { return null; } }
+  if (d && !Array.isArray(d.rounds)) {
+    if (d.data && Array.isArray(d.data.rounds)) d = d.data;
+    else if (d.value && Array.isArray(d.value.rounds)) d = d.value;
+    else if (d.app && Array.isArray(d.app.rounds)) d = d.app;
+  }
+  if (Array.isArray(d)) d = { rounds: d };
+  if (!d || typeof d !== 'object' || !Array.isArray(d.rounds) || d.rounds.length === 0) return null;
+  d.rounds.forEach(r => {
+    if (!Array.isArray(r.attendance)) r.attendance = []; if (!Array.isArray(r.bids)) r.bids = []; if (!r.calc) r.calc = {};
+    if (r.year == null) r.year = new Date().getFullYear(); if (r.month == null) r.month = new Date().getMonth() + 1; if (r.num == null) r.num = 1;
+  });
+  if (!Array.isArray(d.members)) d.members = [...DEFAULT_MEMBERS];
+  if (!d.retired || typeof d.retired !== 'object') d.retired = {};
+  if (!d.joined  || typeof d.joined  !== 'object') d.joined  = {};
+  if (d.kaihi == null) d.kaihi = 18000;
+  return d;
+}
+async function fetchCloud() {
+  const res = await fetch(SYNC_URL + '?action=load&key=rakuseikai_data', { cache: 'no-store' });
+  const json = await res.json();
+  if (!json || !json.success || !json.data) return null;
+  return normalizeCloud(json.data);
+}
+function takeCloud(d, keepView) {
+  const k = keepView ? viewKey() : null;
+  const before = JSON.stringify(app && app.rounds);
+  if (isDirty() && app) addHist('クラウドを読み込む前', JSON.stringify(app));
+  lsSet(BASE_KEY, fpOf(d));          // 画面に出す前（表示で中身が整えられる前）の指紋
+  app = d;
+  curIdx = k ? idxOfView(k) : openIdx();
+  if (storageOK()) localStorage.setItem(STORAGE_KEY, JSON.stringify(app));
+  clearDirty();
+  undoStack = [];
+  render();
+  lastSnap = JSON.stringify(app);
+  updateUndoBtn();
+  updateSyncBadge('ok');
+  if (keepView && JSON.stringify(app.rounds) !== before) toast('☁ ほかの人の入力を読み込みました');
+}
+const CONFLICT_MSG = '⚠️ ほかの人（ほかの端末）も、さっきからデータを更新しています。\n\n'
+  + 'OK＝ほかの人の最新を読み込む（この端末の変更は🕘履歴に残します）\n'
+  + 'キャンセル＝この端末の内容で上書きする';
+let pushing = false;
+async function pushNow(skipCheck) {
+  clearTimeout(cloudTimer); cloudTimer = null;
+  if (!storageOK() || pushing) return;
+  pushing = true;
+  try {
+    if (!skipCheck) {
+      let c = null;
+      try { c = await fetchCloud(); } catch (e) { updateSyncBadge('off'); return; }
+      const base = lsGet(BASE_KEY);
+      if (c && base !== null && fpOf(c) !== base) {
+        if (confirm(CONFLICT_MSG)) { takeCloud(c, true); return; }
+      }
+    }
+    app.curIdx = curIdx;
+    const body = JSON.stringify(app), seq = editSeq;
+    const res = await fetch(SYNC_URL + '?action=save&key=rakuseikai_data', { method: 'POST', body });
+    const j = await res.json();
+    if (j && j.success) {
+      lsSet(BASE_KEY, fpOf(JSON.parse(body)));
+      if (seq === editSeq) { clearDirty(); updateSyncBadge('ok'); }
+      else scheduleCloudSave();          // 送っている間に入力があった → もう一度送る
+      toast('☁ 自動保存しました');
+    } else updateSyncBadge('off');
+  } catch (e) { updateSyncBadge('off'); }
+  finally { pushing = false; }
+}
+function pushCloudSilent() { return pushNow(false); }
+function scheduleCloudSave() {
+  if (!cloudReady) return;
+  clearTimeout(cloudTimer);
+  cloudTimer = setTimeout(pushCloudSilent, 1500);
+}
+function flushCloudSave() {   // 閉じる瞬間に送る（まだ送っていない編集があるときだけ）
+  if (!isDirty() || !storageOK()) return;
+  try {
+    app.curIdx = curIdx;
+    const body = JSON.stringify(app);
+    if (navigator.sendBeacon(SYNC_URL + '?action=save&key=rakuseikai_data', body)) lsSet(BEACON_KEY, fpOf(JSON.parse(body)));
+  } catch (e) {}
+}
+async function autoRestore(keepView) {
+  lastRestore = Date.now();
+  if (!storageOK()) return;
+  let c;
+  try { c = await fetchCloud(); } catch (e) { updateSyncBadge('off'); return; }
+  if (!c) { if (isDirty()) await pushNow(true); return; }
+  const cloudFp = fpOf(c);
+  // 閉じる瞬間に送った分がクラウドに届いていた
+  const bfp = lsGet(BEACON_KEY);
+  if (bfp) {
+    lsDel(BEACON_KEY);
+    if (bfp === cloudFp) { lsSet(BASE_KEY, cloudFp); if (fpOf(app) === cloudFp) clearDirty(); }
+  }
+  const base = lsGet(BASE_KEY);
+  if (base === null) {
+    // この端末で新アプリを初めて開いた：これまでと同じく保存時刻の新しい方を使う
+    if (isDirty() && app.savedAt && c.savedAt && app.savedAt > c.savedAt) { await pushNow(true); return; }
+    takeCloud(c, keepView);
+    return;
+  }
+  const cloudChanged = cloudFp !== base;
+  if (!cloudChanged) {
+    if (isDirty()) await pushNow(true); else updateSyncBadge('ok');
+    return;
+  }
+  if (!isDirty()) { takeCloud(c, keepView); return; }
+  if (confirm(CONFLICT_MSG)) takeCloud(c, keepView);
+  else await pushNow(true);
+}
+async function syncUpload() {
+  if (!confirm('この端末の内容をクラウドへ保存します（クラウドの内容は上書きされます）。よろしいですか？')) return;
+  persist({ noUndo: true });
+  toast('アップロード中...');
+  await pushNow(true);
+}
+async function syncDownload() {
+  if (!confirm('クラウドから読み込みます（この端末の内容は🕘履歴に残します）。よろしいですか？')) return;
+  toast('ダウンロード中...');
+  try {
+    const c = await fetchCloud();
+    if (!c) { toast('クラウドにデータがありません'); return; }
+    addHist('☁↓の前', JSON.stringify(app));
+    takeCloud(c, true);
+    toast('クラウドから読み込みました');
+  } catch (e) { toast('通信エラー: ' + (e && e.message ? e.message : e)); updateSyncBadge('off'); }
+}
+function updateSyncBadge(st) {
+  const el = document.getElementById('syncBadge');
+  if (!el) return;
+  const m = { ok: ['☁ 保存済み', 'ok'], wait: ['⏳ 送信待ち', 'wait'], off: ['⚠ 未送信', 'off'], load: ['☁ 確認中…', ''] }[st];
+  if (!m) return;
+  el.textContent = m[0];
+  el.className = 'sync-badge ' + m[1];
+}
+
+// ===== 入札：入力のたびに保存 ＋ 進み具合 =====
+function onBidChange(el) {
+  const i = +el.dataset.bid;
+  const f = el.dataset.f;
+  const r = round();
+  if (el.type === 'number') r.bids[i][f] = el.value === '' ? '' : +el.value;
+  else r.bids[i][f] = el.value;
+  recalcOpenResults();
+  applyResultRules();
+  syncOchiFromResults();
+  renderBids();
+  renderCalc();
+  renderAttendance();
+  renderShare();
+  persist();
+}
+
+// ===== 下から出るシート =====
+function openSheet() {
+  document.getElementById('sheetBg').style.display = 'block';
+  requestAnimationFrame(() => document.getElementById('sheet').classList.add('open'));
+}
+function closeSheet() {
+  document.getElementById('sheet').classList.remove('open');
+  document.getElementById('sheetBg').style.display = 'none';
+  document.querySelectorAll('.pick-btn.hl').forEach(b => b.classList.remove('hl'));
+}
+
+// ===== 入札：選ぶ欄をタップ式に =====
+const PICK_TITLES = { caller: '叫ぶ人', card: 'カード', call1: '叫1', call2: '叫2', opener: '開く人', prevKetsu: '前ケツ', open: '開き', card2: 'トランプの当たり' };
+// 選んだあと続けて開く欄（空のときだけ）
+const AUTO_NEXT = { caller: 'call1', call1: 'call2', call2: '@caller', opener: 'open', open: '@opener' };
+let autoNext = lsGet('rk_autonext') !== '0';
+function setAutoNext(on) { autoNext = on; lsSet('rk_autonext', on ? '1' : '0'); }
+function selOf(i, f) { return document.querySelector(`#bidList select[data-bid="${i}"][data-f="${f}"]`); }
+function enhanceSelects() {
+  document.querySelectorAll('#bidList select.bid-select').forEach(sel => {
+    const f = sel.dataset.f, isName = f === 'caller' || f === 'opener';
+    const opt = sel.options[sel.selectedIndex];
+    const txt = opt && opt.value !== '' ? opt.textContent : '';
+    const btn = document.createElement('button');
+    btn.type = 'button';
+    btn.className = 'pick-btn' + (isName ? ' name' : '') + (sel.classList.contains('dup') ? ' dup' : '');
+    const st = sel.getAttribute('style') || '';
+    if (/flex:\s*1/.test(st)) btn.style.flex = '1';
+    btn.innerHTML = txt ? esc(txt) : `<span class="ph">${isName ? 'タップして選ぶ' : '—'}</span>`;
+    btn.onclick = () => openPicker(+sel.dataset.bid, f);
+    sel.style.display = 'none';
+    sel.after(btn);
+  });
+}
+function openPicker(i, f) {
+  const sel = selOf(i, f);
+  if (!sel) return;
+  const isName = f === 'caller' || f === 'opener';
+  const side = ['caller', 'card', 'call1', 'call2'].includes(f) ? '叫' : '開';
+  const b = round().bids[i] || {};
+  const who = side === '叫' ? b.caller : b.opener;
+  const opts = [...sel.options].filter(o => o.value !== '');
+  const cols = isName ? 3 : Math.min(4, opts.length);
+  document.querySelectorAll('.pick-btn.hl').forEach(x => x.classList.remove('hl'));
+  if (sel.nextElementSibling) sel.nextElementSibling.classList.add('hl');
+  document.getElementById('sheet').innerHTML = `
+    <div class="sh-title"><span>${side} No.${i + 1}${who && !isName ? '（' + esc(who) + '）' : ''}・${PICK_TITLES[f] || f}</span>
+      <button class="sh-x" onclick="closeSheet()">✕</button></div>
+    <div class="sh-grid" style="grid-template-columns:repeat(${cols},1fr)">
+      ${opts.map(o => `<button class="sh-opt${o.value === sel.value ? ' cur' : ''}${/（済）$/.test(o.textContent) ? ' used' : ''}"
+         data-v="${esc(o.value)}" onclick="pickVal(${i},'${f}',this.dataset.v)">${esc(o.textContent)}</button>`).join('')}
+    </div>
+    <div class="sh-foot">
+      <button style="background:#eef1f6;color:#555;" onclick="pickVal(${i},'${f}','')">空欄にする</button>
+      ${AUTO_NEXT[f] ? `<label class="sh-auto"><input type="checkbox" ${autoNext ? 'checked' : ''} onchange="setAutoNext(this.checked)">続けて次の欄へ</label>` : ''}
+    </div>
+    ${isName ? '<div style="font-size:11px;color:#999;margin-top:8px;">うすい名前＝もう入っている人（叫びは一人2回まで）</div>' : ''}`;
+  openSheet();
+}
+function pickVal(i, f, v) {
+  const sel = selOf(i, f);
+  if (!sel) { closeSheet(); return; }
+  sel.value = v;
+  onBidChange(sel);
+  const nx = AUTO_NEXT[f];
+  if (autoNext && v !== '' && nx) {
+    const ti = nx[0] === '@' ? i + 1 : i, tf = nx[0] === '@' ? nx.slice(1) : nx;
+    const t = selOf(ti, tf);
+    if (t && t.value === '') {
+      if (t.nextElementSibling) t.nextElementSibling.scrollIntoView({ block: 'center', behavior: 'smooth' });
+      openPicker(ti, tf);
+      return;
+    }
+  }
+  closeSheet();
+}
+
+// ===== 進み具合（出欠 → 叫び → 開き → 精算 → 共有） =====
+function renderSteps() {
+  const el = document.getElementById('stepBar');
+  if (!el || !app || !round()) return;
+  if (!['att', 'bid', 'calc', 'share'].includes(curPage)) { el.style.display = 'none'; return; }
+  el.style.display = '';
+  const r = round();
+  const slots = Math.max(1, membersOf(r).length - attOf(r).filter(a => a.ochi).length);
+  const bids = r.bids.slice(0, slots);
+  const nC = bids.filter(b => b.caller).length, nO = bids.filter(b => b.opener).length;
+  const absent = attOf(r).filter(a => a.present).length;
+  const ochi = bids.find(b => b.result === '落ち' && b.opener);
+  const solo = activeCountOf(r) <= 1;
+  const steps = [
+    ['att',   '📋', '出欠', absent ? `欠席${absent}人` : '全員出席', true],
+    ['bid',   '📢', '叫び', solo ? 'なし' : `${nC}/${slots}`, solo || nC >= slots],
+    ['bid',   '🃏', '開き', solo ? 'なし' : `${nO}/${slots}`, solo || nO >= slots],
+    ['calc',  '💰', '精算', solo ? '最終回' : ochi ? esc(ochi.opener) + '落ち' : 'まだ', solo || !!ochi],
+    ['share', '📤', '共有', 'LINEへ', false],
+  ];
+  const nowAt = steps.findIndex(x => !x[4]);
+  el.innerHTML = steps.map((x, k) =>
+    `<div class="step${x[4] ? ' done' : ''}${k === nowAt ? ' now' : ''}" onclick="showPage('${x[0]}')">
+       <div class="si">${x[1]}</div><div class="sl">${x[2]}</div><div class="sv">${x[3]}</div></div>`).join('');
+}
+
+// ===== 年間：お金のまとめ =====
+// 共有画面と同じ計算を、指定した回について行う（表示中の回を切り替えずに）
+function settlementOf(src) {
+  const r = JSON.parse(JSON.stringify(src));
+  try { applyResultRules(r); } catch (e) {}
+  ['落ち', '大砲'].forEach(res => {   // 年間タブと同じく、落ち・大砲は各1名に絞る
+    const marked = r.bids.filter(b => b.result === res && b.opener);
+    if (marked.length <= 1) return;
+    let best = marked[0];
+    marked.forEach(b => { if ((+b.openResult || 0) > (+best.openResult || 0)) best = b; });
+    marked.forEach(b => { if (b !== best) b.result = ''; });
+  });
+  const c = r.calc || {};
+  const has = b => b.opener && b.openResult !== '' && b.openResult !== null && b.openResult !== undefined;
+  const paidCount = attOf(r).length, kaihi = roundKaihi(r), pool = kaihi * paidCount;
+  const soloFinal = activeCountOf(r) <= 1;
+  let maxOpen = 0;
+  r.bids.forEach(b => { if (b.opener && b.openResult !== '' && +b.openResult > maxOpen) maxOpen = +b.openResult; });
+  const haitouUnit = maxOpen > 0 ? maxOpen : (+c.haitouUnit || 0);   // 精算画面が単価を開結果の最大に合わせるのと同じ
+  const ketsuUnit  = maxOpen > 0 ? maxOpen : (+c.ketsuUnit  || 0);
+  const ochi = new Set(), taihou = new Set(), ketsu = new Set();
+  r.bids.forEach(b => {
+    if (b.result === '落ち' && b.opener) ochi.add(b.opener);
+    if (b.result === '大砲' && b.opener) taihou.add(b.opener);
+    if (b.result === 'ケツ' && b.opener) ketsu.add(b.opener);
+  });
+  if (r.bids.filter(has).length > 2) {
+    let mn = Infinity;
+    r.bids.forEach(b => { if (b.result !== '落ち' && has(b) && +b.openResult < mn) mn = +b.openResult; });
+    r.bids.forEach(b => { if (b.result !== '落ち' && has(b) && +b.openResult === mn) ketsu.add(b.opener); });
+  }
+  const inBids = new Set();
+  r.bids.forEach(b => { if (b.caller) inBids.add(b.caller); if (b.opener) inBids.add(b.opener); });
+  const absentForHaitou = attOf(r).filter(a => a.present && !a.ochi && !inBids.has(a.name)).map(a => a.name);
+  let autoNormal = 0;
+  r.bids.forEach(b => { if (b.caller && !ochi.has(b.caller) && !ketsu.has(b.caller)) autoNormal++; });
+  absentForHaitou.forEach(n => { if (!ochi.has(n) && !ketsu.has(n)) autoNormal++; });
+  const normalCount = soloFinal ? 0 : (c.normalCount !== undefined ? c.normalCount : autoNormal);
+  const ketsuCount  = soloFinal ? 0 : (c.ketsuCount  !== undefined ? c.ketsuCount  : ketsu.size);
+  const haitou = haitouUnit * normalCount, ketsuYen = ketsuUnit * ketsuCount;
+  const taihouYen = soloFinal ? 0 : roundTaihou(r);
+  const amida = +c.amida || 0, ryouri = +c.ryouridai || 0, tsumi = +c.tsumitatekin || 0;
+  const total = haitou + ketsuYen + taihouYen + amida + ryouri + tsumi;
+  return { pool, payout: pool - total, ochi: [...ochi], taihou: [...taihou], ketsu: [...ketsu],
+           haitou, ketsuYen, taihouYen, amida, ryouri, tsumi, kaihi, paidCount,
+           absent: attOf(r).filter(a => a.present).map(a => a.name) };
+}
+function cyclesForYear() {   // 年間タブと同じ区切り（回の数字が戻ったら次の周）
+  const cycles = [];
+  let prev = Infinity;
+  app.rounds.forEach(r => { if (r.num <= prev) cycles.push([]); cycles[cycles.length - 1].push(r); prev = r.num; });
+  return cycles.reverse();
+}
+function moneyCardHtml(cycle) {
+  const rows = cycle.slice().sort((a, b) => a.num - b.num)
+    .filter(r => r.bids.some(b => b.caller || b.opener))
+    .map(r => ({ r, s: settlementOf(r) }));
+  if (!rows.length) return '';
+  const sum = k => rows.reduce((t, x) => t + x.s[k], 0);
+  const yen = v => v.toLocaleString() + '円';
+  const maxPay = Math.max(1, ...rows.map(x => x.s.payout));
+  // メンバー別：落ちて受け取った額・欠席回数
+  const per = {};
+  rows.forEach(({ r, s }) => {
+    membersOf(r).forEach(m => { per[m] = per[m] || { got: 0, month: '', absent: 0 }; });
+    s.ochi.forEach(n => { per[n] = per[n] || { got: 0, month: '', absent: 0 }; per[n].got += s.payout; per[n].month = r.month + '月'; });
+    s.absent.forEach(n => { per[n] = per[n] || { got: 0, month: '', absent: 0 }; per[n].absent++; });
+  });
+  const names = app.members.filter(m => per[m]);
+  return `
+  <div class="card">
+    <div class="card-h">💴 お金のまとめ <span style="font-weight:400;color:#888;font-size:11px;">入力のある${rows.length}回分</span></div>
+    <div class="money-sum">
+      <div>集金の合計<b>${yen(sum('pool'))}</b></div>
+      <div>落ちた人の受取の合計<b>${yen(sum('payout'))}</b></div>
+      <div>料理代の合計<b>${yen(sum('ryouri'))}</b></div>
+      <div>積立金の合計<b>${yen(sum('tsumi'))}</b></div>
+      <div>配当・ケツの合計<b>${yen(sum('haitou') + sum('ketsuYen'))}</b></div>
+      <div>大砲・あみだの合計<b>${yen(sum('taihouYen') + sum('amida'))}</b></div>
+    </div>
+    <div style="font-size:12px;font-weight:700;color:#0d1b3e;margin:4px 0 2px;">回ごとの受取（落ちた人がもらう差し引き額）</div>
+    ${rows.map(({ r, s }) => `
+      <div class="money-row">
+        <div style="font-weight:700;color:#0d1b3e;">第${r.num}回<div style="font-size:10px;font-weight:400;color:#888;">${r.year % 100}年${r.month}月</div></div>
+        <div><span style="font-weight:700;">${s.ochi.map(esc).join('・') || '—'}</span>
+          <div class="money-bar" style="width:${Math.max(4, s.payout / maxPay * 100).toFixed(0)}%"></div></div>
+        <div class="money-yen">${yen(s.payout)}</div>
+      </div>`).join('')}
+    <div style="font-size:12px;font-weight:700;color:#0d1b3e;margin:12px 0 4px;">👤 メンバー別</div>
+    <table style="width:100%;border-collapse:collapse;font-size:12px;">
+      <thead><tr style="background:#0d1b3e;color:#fff;">
+        <th style="padding:5px;font-size:11px;">名前</th><th style="padding:5px;font-size:11px;">落ちた月</th>
+        <th style="padding:5px;font-size:11px;">受取</th><th style="padding:5px;font-size:11px;">欠席</th></tr></thead>
+      <tbody>${names.map(m => `<tr style="border-bottom:1px solid #eee;">
+        <td style="padding:5px;text-align:center;font-weight:600;">${esc(m)}</td>
+        <td style="padding:5px;text-align:center;color:#e65100;font-weight:700;">${per[m].month || '<span style="color:#ccc;">まだ</span>'}</td>
+        <td style="padding:5px;text-align:right;font-weight:700;">${per[m].got ? yen(per[m].got) : '<span style="color:#ccc;">—</span>'}</td>
+        <td style="padding:5px;text-align:center;">${per[m].absent ? per[m].absent + '回' : '<span style="color:#ccc;">0</span>'}</td></tr>`).join('')}</tbody>
+    </table>
+    <div style="font-size:10px;color:#999;margin-top:6px;">※ 共有画面の「○○受取」と同じ計算です</div>
+  </div>`;
+}
+function addMoneyCards() {
+  const el = document.getElementById('yearBody');
+  if (!el) return;
+  const cycles = cyclesForYear();
+  const cards = [...el.children];
+  for (let k = cycles.length - 1; k >= 0; k--) {   // 各周の「回ごとの結果」カードの前に入れる
+    const html = moneyCardHtml(cycles[k]);
+    if (!html || !cards[2 * k]) continue;
+    cards[2 * k].insertAdjacentHTML('beforebegin', html);
+  }
+}
+
+// ===== 元の関数に後から足す =====
+function v2Wrap() {
+  const _renderBids = renderBids;
+  window.renderBids = function () { _renderBids(); enhanceSelects(); renderSteps(); };
+  const _renderYear = renderYear;
+  window.renderYear = function () { _renderYear(); addMoneyCards(); };
+  const _renderCalc = renderCalc;
+  window.renderCalc = function () {
+    _renderCalc();
+    const ochi = round().bids.find(b => b.result === '落ち' && b.opener);
+    const fc = document.querySelector('#finalBox .final-card');
+    if (fc && ochi) fc.insertAdjacentHTML('afterbegin', `<div class="final-who">🎉 ${esc(ochi.opener)} さん受取</div>`);
+  };
+  const _render = render;
+  window.render = function () { _render(); renderSteps(); };
+  const _showPage = showPage;
+  window.showPage = function (n) { closeSheet(); _showPage(n); renderSteps(); };
+  // 大きな操作の前に履歴へ控える（実際に中身が変わったときだけ）
+  [['deleteRound', '回を削除する前'], ['deleteMonth', '月ごと削除の前'], ['recalcOchi', '落ち済み計算し直しの前'],
+   ['removeMember', '退会・復帰の前'], ['addNewRound', '新しい回を作る前']].forEach(([n, label]) => {
+    const f = window[n];
+    window[n] = function () {
+      const before = JSON.stringify(app);
+      const ret = f.apply(this, arguments);
+      if (JSON.stringify(app) !== before) addHist(label, before);
+      return ret;
+    };
+  });
+}
+
+v2Wrap();
+loadApp();
+render();
+lastSnap = JSON.stringify(app);
+updateUndoBtn();
+updateSyncBadge(isDirty() ? 'wait' : 'load');
+// 開いたら自動でクラウドと突き合わせ → その後ユーザー編集の自動保存を有効化
+autoRestore().finally(()=>{ cloudReady = true; });
+// 閉じる・離れるときに最新を確実に保存
+window.addEventListener('beforeunload', flushCloudSave);
+window.addEventListener('pagehide', flushCloudSave);
+// スマホで別のアプリから戻ってきたときも最新を読む（開きっぱなしでも、ほかの人の入力が反映される）
+document.addEventListener('visibilitychange', () => {
+  if (document.visibilityState === 'hidden') {
+    // 送る前の編集が残っていたら、離れる前に送っておく
+    if (cloudTimer) { clearTimeout(cloudTimer); cloudTimer = null; flushCloudSave(); }
+    return;
+  }
+  if (!cloudReady || cloudTimer) return;             // 起動中・送信待ちの編集があるときは読まない
+  if (Date.now() - lastRestore < 30 * 1000) return;   // 短い間の行ったり来たりでは読み直さない
+  autoRestore(true);
+});
+</script>
+</body>
+</html>
