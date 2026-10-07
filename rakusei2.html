@@ -1819,7 +1819,10 @@ function autoPrevKetsu(r, force) {
   if (!force && ymOf(r.year, r.month) < ymOf(now.getFullYear(), now.getMonth() + 1)) return;
   const ks = prevKetsuNames(r);
   r.bids.forEach(b => {
-    if (!b.opener) return;
+    if (!b.opener) {   // 開く人を空欄にしたら、自動で入れた100も外す
+      if (b.pkAuto) { b.prevKetsu = ''; b.pkAuto = false; }
+      return;
+    }
     if (ks.has(b.opener)) {
       if ((b.prevKetsu === '' || b.prevKetsu == null) && !b.pkOff) { b.prevKetsu = 100; b.pkAuto = true; }
     } else if (b.pkAuto) { b.prevKetsu = ''; b.pkAuto = false; }
@@ -1848,6 +1851,8 @@ function recalcOpenResults() {
       const op = +b.open || 0;
       const cd = +b.card2 || 0;
       b.openResult = c.call1 + c.call2 + pk + op + cd;
+    } else {
+      b.openResult = '';   // 開く人が空欄なら開結果も空（前の数字が残らないように）
     }
   });
 }
