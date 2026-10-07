@@ -1110,6 +1110,7 @@ function renderBids() {
       </div>`;
     }
   }
+  const pkSet = prevKetsuNames(r);
   for (let i = 0; i < slots; i++) {
     const b = r.bids[i];
     const sum = (b.openResult !== '' && b.openResult !== undefined && b.openResult !== null)
@@ -1136,7 +1137,7 @@ function renderBids() {
       </div>
       <div style="display:grid; grid-template-columns:1fr 1fr 1fr 1fr; gap:6px; margin-bottom:8px;">
         <div>
-          <div style="font-size:11px; color:#666; margin-bottom:2px;">前ケツ</div>
+          <div style="font-size:11px; color:#666; margin-bottom:2px;">前ケツ${b.opener && pkSet.has(b.opener) ? ' <span style="color:#1565c0;font-weight:700;">前回ケツ</span>' : ''}</div>
           <select class="bid-select" data-bid="${i}" data-f="prevKetsu" onchange="onBidChange(this)" style="padding:8px 4px;">
             <option value="">—</option><option value="100"${b.prevKetsu==100?' selected':''}>100</option>
           </select>
@@ -1800,8 +1801,34 @@ function getPrevTaihouName() {
   return tb ? tb.opener : null;
 }
 
+// ===== 前回ケツ → 次の回は「前ケツ100」を自動で入れる =====
+// 前の回（年月順）でケツだった人＝精算と同じ判定（settlementOf）
+function prevKetsuNames(r) {
+  const order = roundOrder();
+  const k = order.indexOf(app.rounds.indexOf(r));
+  if (k <= 0) return new Set();
+  const prev = app.rounds[order[k - 1]];
+  if (!prev || !prev.bids.some(b => b.opener)) return new Set();
+  try { return new Set(settlementOf(prev).ketsu); } catch (e) { return new Set(); }
+}
+// 開く人が前回ケツなら前ケツ=100。手で「—」にした行（pkOff）は触らない。
+// 自動で入れた100は、開く人を別の人に変えたら外す。
+// 先月以前の回は記録を変えないよう、開く人を選び直したとき（force）だけ反映。
+function autoPrevKetsu(r, force) {
+  const now = new Date();
+  if (!force && ymOf(r.year, r.month) < ymOf(now.getFullYear(), now.getMonth() + 1)) return;
+  const ks = prevKetsuNames(r);
+  r.bids.forEach(b => {
+    if (!b.opener) return;
+    if (ks.has(b.opener)) {
+      if ((b.prevKetsu === '' || b.prevKetsu == null) && !b.pkOff) { b.prevKetsu = 100; b.pkAuto = true; }
+    } else if (b.pkAuto) { b.prevKetsu = ''; b.pkAuto = false; }
+  });
+}
+
 function recalcOpenResults() {
   const r = round();
+  autoPrevKetsu(r);
   const prevTaihouName = getPrevTaihouName();
   // 叫び側の情報を名前ごとにマップ
   const callerByName = {};
@@ -2546,6 +2573,8 @@ function onBidChange(el) {
   const r = round();
   if (el.type === 'number') r.bids[i][f] = el.value === '' ? '' : +el.value;
   else r.bids[i][f] = el.value;
+  if (f === 'prevKetsu') { r.bids[i].pkAuto = false; r.bids[i].pkOff = el.value === ''; }
+  if (f === 'opener') { r.bids[i].pkOff = false; autoPrevKetsu(r, true); }
   recalcOpenResults();
   applyResultRules();
   syncOchiFromResults();
