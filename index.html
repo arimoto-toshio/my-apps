@@ -192,14 +192,115 @@
   }
   .bb-save { background: #f0c040; color: #1a1a2e; }
   .bb-add { background: #0d1b3e; color: white; }
+
+  /* ================= 新アプリ（v2）の見た目 ================= */
+  body { background: #eef1f6; padding-bottom: calc(80px + env(safe-area-inset-bottom)); }
+  .hdr { padding: 10px 12px; }
+  .hdr-top { margin-bottom: 8px; }
+  .hdr-title { display: flex; align-items: center; gap: 6px; white-space: nowrap; }
+  .hdr-btns { gap: 5px; }
+  .hdr-btn { padding: 6px 9px; }
+  #undoBtn.off { opacity: .35; }
+  .sync-badge { font-size: 10px; font-weight: 700; padding: 2px 8px; border-radius: 10px; background: rgba(255,255,255,.15); }
+  .sync-badge.ok   { background: rgba(46,204,113,.35); }
+  .sync-badge.wait { background: rgba(240,192,64,.55); color: #1a1a2e; }
+  .sync-badge.off  { background: rgba(231,76,60,.75); }
+
+  /* 下のタブ（親指で押しやすく） */
+  .tabs {
+    position: fixed; top: auto; bottom: 0; left: 0; right: 0; z-index: 95;
+    border-top: 1px solid #e1e6ee; box-shadow: 0 -2px 10px rgba(0,0,0,.07);
+    padding-bottom: env(safe-area-inset-bottom); overflow: visible;
+  }
+  .tab {
+    padding: 6px 2px 7px; font-size: 10.5px; border-bottom: none; border-top: 3px solid transparent;
+    display: flex; flex-direction: column; align-items: center; gap: 1px;
+  }
+  .tab b { font-size: 21px; line-height: 1.15; font-weight: 400; }
+  .tab.active { border-top-color: #f0c040; background: #fffbea; color: #0d1b3e; }
+  .bottom-bar { display: none !important; }
+
+  .card { border-radius: 14px; padding: 14px; box-shadow: 0 1px 6px rgba(13,27,62,.07); }
+  .card-h { font-size: 14px; }
+  .final-card { border-radius: 16px; }
+  .final-who { font-size: 15px; font-weight: 800; color: #0d1b3e; margin-bottom: 6px; }
+
+  /* 進み具合 */
+  .step-bar { display: flex; gap: 5px; padding: 10px 12px 0; }
+  .step {
+    flex: 1; min-width: 0; background: #fff; border-radius: 10px; padding: 6px 3px 5px; text-align: center;
+    box-shadow: 0 1px 3px rgba(0,0,0,.06); border: 2px solid transparent; cursor: pointer; position: relative;
+  }
+  .step .si { font-size: 15px; line-height: 1.2; }
+  .step .sl { font-size: 10px; color: #667; font-weight: 700; }
+  .step .sv { font-size: 11px; font-weight: 800; color: #0d1b3e; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .step.done { background: #e8f5e9; }
+  .step.done .sv { color: #2e7d32; }
+  .step.done::after { content: '✓'; position: absolute; top: 2px; right: 5px; font-size: 10px; color: #2e7d32; font-weight: 900; }
+  .step.now { border-color: #f0c040; background: #fffbea; }
+  .step.now .sl::after { content: ' ←いま'; color: #b8860b; }
+
+  /* 入札：選ぶ欄をボタンに（タップで大きな選択肢が出る） */
+  .pick-btn {
+    width: 100%; min-height: 42px; padding: 8px 6px; font-size: 16px; font-weight: 700;
+    border: 1px solid #c9d1de; border-radius: 8px; background: #fff; color: #0d1b3e;
+    cursor: pointer; font-family: inherit; text-align: center;
+  }
+  .pick-btn.name { text-align: left; padding-left: 12px; font-size: 17px; }
+  .pick-btn .ph { color: #a8b0bd; font-weight: 500; font-size: 13px; }
+  .pick-btn.dup { border: 2px solid #c62828; background: #fff5f5; }
+  .pick-btn.hl { outline: 3px solid #f0c040; outline-offset: 1px; }
+
+  /* 下から出るシート */
+  #sheetBg { position: fixed; inset: 0; background: rgba(13,27,62,.45); z-index: 2000; display: none; }
+  #sheet {
+    position: fixed; left: 0; right: 0; bottom: 0; z-index: 2001; background: #fff;
+    border-radius: 18px 18px 0 0; padding: 14px 14px calc(16px + env(safe-area-inset-bottom));
+    transform: translateY(105%); transition: transform .2s ease; max-height: 82vh; overflow-y: auto;
+    box-shadow: 0 -6px 24px rgba(0,0,0,.2);
+  }
+  #sheet.open { transform: none; }
+  .sh-title { font-size: 15px; font-weight: 800; color: #0d1b3e; margin-bottom: 10px; display: flex; justify-content: space-between; align-items: center; gap: 8px; }
+  .sh-x { border: none; background: #eef1f6; border-radius: 50%; width: 32px; height: 32px; font-size: 15px; cursor: pointer; flex: none; }
+  .sh-grid { display: grid; gap: 8px; }
+  .sh-opt {
+    padding: 14px 4px; font-size: 17px; font-weight: 700; border-radius: 10px; border: 1.5px solid #d5dbe6;
+    background: #f7f9fc; color: #0d1b3e; cursor: pointer; font-family: inherit;
+  }
+  .sh-opt.used { color: #9aa3b2; background: #f0f1f4; font-weight: 500; font-size: 14px; }
+  .sh-opt.cur { background: #0d1b3e; color: #fff; border-color: #0d1b3e; }
+  .sh-foot { display: flex; gap: 8px; margin-top: 12px; align-items: center; }
+  .sh-foot > button { flex: 1; padding: 12px; border-radius: 10px; border: none; font-weight: 700; font-size: 14px; cursor: pointer; font-family: inherit; }
+  .sh-auto { font-size: 13px; color: #445; display: flex; align-items: center; gap: 5px; white-space: nowrap; }
+  .sh-auto input { width: 18px; height: 18px; }
+
+  /* 保存履歴 */
+  .hist-row { display: flex; align-items: center; gap: 8px; padding: 10px 2px; border-bottom: 1px solid #eee; }
+  .hist-row:last-child { border-bottom: none; }
+  .hist-main { flex: 1; min-width: 0; }
+  .hist-t { font-weight: 800; font-size: 14px; color: #0d1b3e; }
+  .hist-s { font-size: 11px; color: #777; margin-top: 2px; }
+  .hist-row button { padding: 8px 12px; border-radius: 8px; border: 1px solid #6a1b9a; background: #fff; color: #6a1b9a; font-weight: 700; font-size: 12px; cursor: pointer; }
+
+  /* 年間：お金のまとめ */
+  .money-sum { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; margin-bottom: 10px; }
+  .money-sum div { background: #f7f9fc; border-radius: 8px; padding: 7px 8px; font-size: 11px; color: #667; }
+  .money-sum b { display: block; font-size: 15px; color: #0d1b3e; }
+  .money-row { display: grid; grid-template-columns: 62px 1fr 92px; gap: 6px; align-items: center; padding: 5px 0; border-bottom: 1px solid #f0f0f0; font-size: 12px; }
+  .money-row:last-child { border-bottom: none; }
+  .money-bar { height: 9px; background: linear-gradient(90deg, #f0c040, #e6a100); border-radius: 5px; margin-top: 3px; }
+  .money-yen { text-align: right; font-weight: 800; color: #0d1b3e; font-variant-numeric: tabular-nums; }
+
 </style>
 </head>
 <body>
 
 <div class="hdr">
   <div class="hdr-top">
-    <div class="hdr-title">🎴 楽晴会</div>
+    <div class="hdr-title">🎴 楽晴会 <span id="syncBadge" class="sync-badge">☁ 確認中…</span></div>
     <div class="hdr-btns">
+      <button class="hdr-btn" id="undoBtn" onclick="undo()" title="ひとつ前に戻す">↶ 戻す</button>
+      <button class="hdr-btn" onclick="openHistory()" title="保存履歴">🕘</button>
       <button class="hdr-btn" onclick="syncUpload()" style="background:rgba(46,204,113,0.3);font-size:11px;">☁↑</button>
       <button class="hdr-btn" onclick="syncDownload()" style="background:rgba(52,152,219,0.3);font-size:11px;">☁↓</button>
     </div>
@@ -220,13 +321,16 @@
 </div>
 
 <div class="tabs">
-  <div class="tab active" data-page="att" onclick="showPage('att')">📋 出席</div>
-  <div class="tab" data-page="bid" onclick="showPage('bid')">🃏 入札</div>
-  <div class="tab" data-page="calc" onclick="showPage('calc')">💰 精算</div>
-  <div class="tab" data-page="year" onclick="showPage('year')">📅 年間</div>
-  <div class="tab" data-page="mem" onclick="showPage('mem')">👥 メンバー</div>
-  <div class="tab" data-page="share" onclick="showPage('share')">📤 共有</div>
+  <div class="tab active" data-page="att" onclick="showPage('att')"><b>📋</b>出席</div>
+  <div class="tab" data-page="bid" onclick="showPage('bid')"><b>🃏</b>入札</div>
+  <div class="tab" data-page="calc" onclick="showPage('calc')"><b>💰</b>精算</div>
+  <div class="tab" data-page="year" onclick="showPage('year')"><b>📅</b>年間</div>
+  <div class="tab" data-page="mem" onclick="showPage('mem')"><b>👥</b>メンバー</div>
+  <div class="tab" data-page="share" onclick="showPage('share')"><b>📤</b>共有</div>
 </div>
+
+<!-- 進み具合（出欠→叫び→開き→精算→共有） -->
+<div id="stepBar" class="step-bar"></div>
 
 <!-- 出席ページ -->
 <div id="page-att" class="page active">
@@ -289,6 +393,11 @@
     <input type="file" id="importFile" accept=".json,application/json" style="display:none;" onchange="importData(event)">
     <div style="font-size:11px; color:#888; margin-top:4px;">クラウド同期とは別に、手元にJSONファイルとして残せます</div>
   </div>
+  <div class="card">
+    <div class="card-h">🕘 保存履歴（この端末）</div>
+    <button class="hdr-btn" style="background:#6a1b9a; color:white; padding:10px 16px; margin:0 8px 8px 0;" onclick="openHistory()">🕘 履歴を見る・戻す</button>
+    <div style="font-size:11px; color:#888; margin-top:4px; line-height:1.6;">10分ごと、それと回の削除・クラウドの読み込みなど大きな操作の前に、この端末に控えを残します（15世代）。<br>入力をひとつ取り消すときは、上の「↶ 戻す」。</div>
+  </div>
 </div>
 
 <!-- スクショ用: 共有カードだけを1画面に収めて出す -->
@@ -305,6 +414,8 @@
   <button class="bb-add" onclick="addNewRound()">＋ 新規回</button>
 </div>
 
+<div id="sheetBg" onclick="closeSheet()"></div>
+<div id="sheet"></div>
 <div id="toast"></div>
 
 <script>
@@ -317,13 +428,13 @@
     if (!res.ok) return;
     const html = await res.text();
     const hash = html.length + ':' + html.slice(0, 200);
-    const stored = localStorage.getItem('app_version_hash');
+    const stored = localStorage.getItem('app_version_hash_v2');
     if (stored && stored !== hash) {
-      localStorage.setItem('app_version_hash', hash);
+      localStorage.setItem('app_version_hash_v2', hash);
       window.location.reload();
       return;
     }
-    if (!stored) localStorage.setItem('app_version_hash', hash);
+    if (!stored) localStorage.setItem('app_version_hash_v2', hash);
   } catch (e) { /* ignore */ }
 })();
 
@@ -1203,7 +1314,7 @@ function renderCalc() {
       <span class="calc-mini" style="background:#f7f9fc; border:1px solid #ddd; border-radius:4px; padding:6px; font-weight:700; color:#0d1b3e; text-align:center; min-width:50px;">${c.haitouUnit}</span>
       <span style="font-size:10px; color:#888;">(自動)</span>
       <span>×</span>
-      <input class="calc-mini" type="number" min="0" value="${normalCount}" onchange="round().calc.normalCount=+this.value; renderCalc();">
+      <input class="calc-mini" type="number" min="0" value="${normalCount}" onchange="round().calc.normalCount=+this.value; persist(); renderCalc(); renderShare();">
       <span>人 =</span>
       <span class="calc-val" style="flex:1;">${haitouNormal.toLocaleString()}</span>
     </div>
@@ -1212,7 +1323,7 @@ function renderCalc() {
       <span class="calc-mini" style="background:#f7f9fc; border:1px solid #ddd; border-radius:4px; padding:6px; font-weight:700; color:#0d1b3e; text-align:center; min-width:50px;">${c.ketsuUnit}</span>
       <span style="font-size:10px; color:#888;">(自動)</span>
       <span>×</span>
-      <input class="calc-mini" type="number" min="0" value="${ketsuCount}" onchange="round().calc.ketsuCount=+this.value; renderCalc();">
+      <input class="calc-mini" type="number" min="0" value="${ketsuCount}" onchange="round().calc.ketsuCount=+this.value; persist(); renderCalc(); renderShare();">
       <span>人 =</span>
       <span class="calc-val" style="flex:1;">${haitouKetsu.toLocaleString()}</span>
     </div>
@@ -1223,19 +1334,19 @@ function renderCalc() {
           ${TAIHOU_FIXED.amount.toLocaleString()}
           <span style="font-size:10px;font-weight:400;color:#888;">(固定)</span>
         </span>`
-      : `<input class="calc-input" type="number" value="${taihouExpense}" onchange="round().calc.taihou=+this.value; renderCalc();">`}
+      : `<input class="calc-input" type="number" value="${taihouExpense}" onchange="round().calc.taihou=+this.value; persist(); renderCalc(); renderShare();">`}
     </div>
     <div class="calc-row">
       <span class="calc-label">あみだ</span>
-      <input class="calc-input" type="number" value="${c.amida}" onchange="round().calc.amida=+this.value; renderCalc();">
+      <input class="calc-input" type="number" value="${c.amida}" onchange="round().calc.amida=+this.value; persist(); renderCalc(); renderShare();">
     </div>
     <div class="calc-row">
       <span class="calc-label">料理代</span>
-      <input class="calc-input" type="number" value="${c.ryouridai}" onchange="round().calc.ryouridai=+this.value; renderCalc();">
+      <input class="calc-input" type="number" value="${c.ryouridai}" onchange="round().calc.ryouridai=+this.value; persist(); renderCalc(); renderShare();">
     </div>
     <div class="calc-row">
       <span class="calc-label">積立金</span>
-      <input class="calc-input" type="number" value="${c.tsumitatekin}" onchange="round().calc.tsumitatekin=+this.value; renderCalc();">
+      <input class="calc-input" type="number" value="${c.tsumitatekin}" onchange="round().calc.tsumitatekin=+this.value; persist(); renderCalc(); renderShare();">
     </div>
     <div class="calc-row" style="border-top:2px solid #0d1b3e; padding-top:12px; margin-top:6px;">
       <span class="calc-label" style="font-weight:700;">合計</span>
@@ -2152,9 +2263,553 @@ async function autoRestore(keepView){
   }catch(e){ /* オフライン等は端末内データのまま */ }
 }
 
+
+// ############################################################
+// ここから新アプリ（v2）で足した部分
+//   ・下のタブ／進み具合の表示
+//   ・入札をタップで選ぶ（大きな選択肢・続けて次の欄へ）
+//   ・入札も自動保存、↶戻す、保存履歴15世代
+//   ・ほかの人の入力を上書きしない同期（最後にそろえた中身と比べる）
+//   ・年間タブに「お金のまとめ」
+// ゲームの判定・精算の計算は、上の元のコードをそのまま使っている。
+// ############################################################
+const HIST_KEY   = 'rakuseikai_hist_v2';      // 保存履歴（この端末だけ）
+const BASE_KEY   = 'rakuseikai_syncbase_v2';  // 最後にクラウドとそろえた中身の指紋
+const DIRTY_KEY  = 'rakuseikai_dirty_v2';     // まだクラウドに送っていない編集がある
+const BEACON_KEY = 'rakuseikai_beacon_v2';    // 閉じる瞬間に送った中身の指紋
+
+function storageOK() {
+  try { localStorage.setItem('__rk_t', '1'); localStorage.removeItem('__rk_t'); return true; }
+  catch (e) { return false; }
+}
+function lsGet(k) { try { return localStorage.getItem(k); } catch (e) { return null; } }
+function lsSet(k, v) { try { localStorage.setItem(k, v); } catch (e) {} }
+function lsDel(k) { try { localStorage.removeItem(k); } catch (e) {} }
+
+// 中身の指紋（表示中の回・保存時刻は除く）
+function fpOf(d) {
+  try { return JSON.stringify({ m: d.members, r: d.rounds, rt: d.retired || {}, jn: d.joined || {}, k: d.kaihi }); }
+  catch (e) { return ''; }
+}
+function isDirty() { return lsGet(DIRTY_KEY) === '1'; }
+let editSeq = 0;
+function clearDirty() { dirty = false; lsDel(DIRTY_KEY); }
+
+// ===== ↶ 戻す =====
+let undoStack = [], lastSnap = null;
+function updateUndoBtn() {
+  const b = document.getElementById('undoBtn');
+  if (b) b.classList.toggle('off', !undoStack.length);
+}
+function viewKey() { const r = round(); return r ? [r.year, r.month, r.num].join('-') : ''; }
+function idxOfView(k) {
+  const i = app.rounds.findIndex(r => [r.year, r.month, r.num].join('-') === k);
+  return i >= 0 ? i : openIdx();
+}
+function undo() {
+  if (!undoStack.length) { toast('戻せる操作がありません'); return; }
+  const k = viewKey();
+  app = JSON.parse(undoStack.pop());
+  curIdx = idxOfView(k);
+  lastSnap = null;
+  persist({ noUndo: true });
+  render();
+  toast('↶ ひとつ前に戻しました');
+}
+
+// 保存（編集のたびに呼ばれる）。元の persist() の置き換え
+function persist(opts) {
+  if (!(opts && opts.noUndo)) {
+    const now = JSON.stringify(app);
+    if (lastSnap && lastSnap !== now) { undoStack.push(lastSnap); if (undoStack.length > 30) undoStack.shift(); }
+  }
+  dirty = true;
+  editSeq++;
+  app.curIdx = curIdx;
+  app.savedAt = Date.now();
+  lastSnap = JSON.stringify(app);
+  if (!storageOK()) return;        // プレビュー等、保存できない画面からはクラウドにも送らない
+  localStorage.setItem(STORAGE_KEY, lastSnap);
+  lsSet(DIRTY_KEY, '1');
+  autoHistory();
+  scheduleCloudSave();
+  updateUndoBtn();
+  updateSyncBadge('wait');
+}
+
+// ===== 保存履歴（15世代） =====
+function readHist() { try { return JSON.parse(lsGet(HIST_KEY)) || []; } catch (e) { return []; } }
+function addHist(label, json) {
+  const h = readHist();
+  if (h.length && h[0].data === json) return;
+  h.unshift({ at: Date.now(), label, data: json });
+  while (h.length > 15) h.pop();
+  while (h.length) {   // 入りきらなければ古いものから捨てる
+    try { localStorage.setItem(HIST_KEY, JSON.stringify(h)); return; } catch (e) { h.pop(); }
+  }
+}
+function autoHistory() {
+  const h = readHist();
+  if (h.length && Date.now() - h[0].at < 10 * 60 * 1000) return;
+  addHist('自動の控え', undoStack.length ? undoStack[undoStack.length - 1] : JSON.stringify(app));
+}
+function histSummary(json) {
+  try {
+    const d = JSON.parse(json);
+    const filled = d.rounds.filter(r => (r.bids || []).some(b => b.caller || b.opener));
+    const last = filled.sort((a, b) => ymOf(a.year, a.month) - ymOf(b.year, b.month)).pop();
+    if (!last) return `回 ${d.rounds.length}つ`;
+    const n = last.bids.filter(b => b.caller || b.opener).length;
+    return `入力のある最新: ${last.year}年${last.month}月 第${last.num}回（入札${n}行）／回 ${d.rounds.length}つ`;
+  } catch (e) { return ''; }
+}
+function fmtTime(t) {
+  const d = new Date(t);
+  return `${d.getMonth() + 1}/${d.getDate()} ${d.getHours()}:${String(d.getMinutes()).padStart(2, '0')}`;
+}
+function openHistory() {
+  const h = readHist();
+  document.getElementById('sheet').innerHTML = `
+    <div class="sh-title"><span>🕘 保存履歴（この端末）</span><button class="sh-x" onclick="closeSheet()">✕</button></div>
+    <div style="font-size:12px;color:#666;margin-bottom:6px;line-height:1.6;">戻すと、その時点の内容がクラウドにも送られます（いまの内容も履歴に残ります）。</div>
+    ${h.length ? h.map((x, k) => `
+      <div class="hist-row">
+        <div class="hist-main"><div class="hist-t">${fmtTime(x.at)}　<span style="font-weight:600;color:#6a1b9a;">${esc(x.label)}</span></div>
+          <div class="hist-s">${esc(histSummary(x.data))}</div></div>
+        <button onclick="restoreHist(${k})">この時点に戻す</button>
+      </div>`).join('') : '<div style="padding:20px;text-align:center;color:#999;">まだ履歴がありません</div>'}`;
+  openSheet();
+}
+function restoreHist(k) {
+  const x = readHist()[k];
+  if (!x) return;
+  if (!confirm(`${fmtTime(x.at)}（${x.label}）の内容に戻します。\n\n${histSummary(x.data)}\n\nよろしいですか？`)) return;
+  addHist('履歴から戻す前', JSON.stringify(app));
+  const k2 = viewKey();
+  app = JSON.parse(x.data);
+  curIdx = idxOfView(k2);
+  persist();
+  render();
+  closeSheet();
+  toast('🕘 その時点の内容に戻しました');
+}
+
+// ===== クラウド同期（ほかの人の入力を上書きしない） =====
+// 「最後にクラウドとそろえた中身(base)」を覚えておき、
+//   クラウドだけ変わった → 読み込む
+//   この端末だけ変わった → 送る
+//   両方変わった         → どちらにするか聞く（この端末の分は履歴に残す）
+function normalizeCloud(d) {
+  if (typeof d === 'string') { try { d = JSON.parse(d); } catch (e) { return null; } }
+  if (d && !Array.isArray(d.rounds)) {
+    if (d.data && Array.isArray(d.data.rounds)) d = d.data;
+    else if (d.value && Array.isArray(d.value.rounds)) d = d.value;
+    else if (d.app && Array.isArray(d.app.rounds)) d = d.app;
+  }
+  if (Array.isArray(d)) d = { rounds: d };
+  if (!d || typeof d !== 'object' || !Array.isArray(d.rounds) || d.rounds.length === 0) return null;
+  d.rounds.forEach(r => {
+    if (!Array.isArray(r.attendance)) r.attendance = []; if (!Array.isArray(r.bids)) r.bids = []; if (!r.calc) r.calc = {};
+    if (r.year == null) r.year = new Date().getFullYear(); if (r.month == null) r.month = new Date().getMonth() + 1; if (r.num == null) r.num = 1;
+  });
+  if (!Array.isArray(d.members)) d.members = [...DEFAULT_MEMBERS];
+  if (!d.retired || typeof d.retired !== 'object') d.retired = {};
+  if (!d.joined  || typeof d.joined  !== 'object') d.joined  = {};
+  if (d.kaihi == null) d.kaihi = 18000;
+  return d;
+}
+async function fetchCloud() {
+  const res = await fetch(SYNC_URL + '?action=load&key=rakuseikai_data', { cache: 'no-store' });
+  const json = await res.json();
+  if (!json || !json.success || !json.data) return null;
+  return normalizeCloud(json.data);
+}
+function takeCloud(d, keepView) {
+  const k = keepView ? viewKey() : null;
+  const before = JSON.stringify(app && app.rounds);
+  if (isDirty() && app) addHist('クラウドを読み込む前', JSON.stringify(app));
+  lsSet(BASE_KEY, fpOf(d));          // 画面に出す前（表示で中身が整えられる前）の指紋
+  app = d;
+  curIdx = k ? idxOfView(k) : openIdx();
+  if (storageOK()) localStorage.setItem(STORAGE_KEY, JSON.stringify(app));
+  clearDirty();
+  undoStack = [];
+  render();
+  lastSnap = JSON.stringify(app);
+  updateUndoBtn();
+  updateSyncBadge('ok');
+  if (keepView && JSON.stringify(app.rounds) !== before) toast('☁ ほかの人の入力を読み込みました');
+}
+const CONFLICT_MSG = '⚠️ ほかの人（ほかの端末）も、さっきからデータを更新しています。\n\n'
+  + 'OK＝ほかの人の最新を読み込む（この端末の変更は🕘履歴に残します）\n'
+  + 'キャンセル＝この端末の内容で上書きする';
+let pushing = false;
+async function pushNow(skipCheck) {
+  clearTimeout(cloudTimer); cloudTimer = null;
+  if (!storageOK() || pushing) return;
+  pushing = true;
+  try {
+    if (!skipCheck) {
+      let c = null;
+      try { c = await fetchCloud(); } catch (e) { updateSyncBadge('off'); return; }
+      const base = lsGet(BASE_KEY);
+      if (c && base !== null && fpOf(c) !== base) {
+        if (confirm(CONFLICT_MSG)) { takeCloud(c, true); return; }
+      }
+    }
+    app.curIdx = curIdx;
+    const body = JSON.stringify(app), seq = editSeq;
+    const res = await fetch(SYNC_URL + '?action=save&key=rakuseikai_data', { method: 'POST', body });
+    const j = await res.json();
+    if (j && j.success) {
+      lsSet(BASE_KEY, fpOf(JSON.parse(body)));
+      if (seq === editSeq) { clearDirty(); updateSyncBadge('ok'); }
+      else scheduleCloudSave();          // 送っている間に入力があった → もう一度送る
+      toast('☁ 自動保存しました');
+    } else updateSyncBadge('off');
+  } catch (e) { updateSyncBadge('off'); }
+  finally { pushing = false; }
+}
+function pushCloudSilent() { return pushNow(false); }
+function scheduleCloudSave() {
+  if (!cloudReady) return;
+  clearTimeout(cloudTimer);
+  cloudTimer = setTimeout(pushCloudSilent, 1500);
+}
+function flushCloudSave() {   // 閉じる瞬間に送る（まだ送っていない編集があるときだけ）
+  if (!isDirty() || !storageOK()) return;
+  try {
+    app.curIdx = curIdx;
+    const body = JSON.stringify(app);
+    if (navigator.sendBeacon(SYNC_URL + '?action=save&key=rakuseikai_data', body)) lsSet(BEACON_KEY, fpOf(JSON.parse(body)));
+  } catch (e) {}
+}
+async function autoRestore(keepView) {
+  lastRestore = Date.now();
+  if (!storageOK()) return;
+  let c;
+  try { c = await fetchCloud(); } catch (e) { updateSyncBadge('off'); return; }
+  if (!c) { if (isDirty()) await pushNow(true); return; }
+  const cloudFp = fpOf(c);
+  // 閉じる瞬間に送った分がクラウドに届いていた
+  const bfp = lsGet(BEACON_KEY);
+  if (bfp) {
+    lsDel(BEACON_KEY);
+    if (bfp === cloudFp) { lsSet(BASE_KEY, cloudFp); if (fpOf(app) === cloudFp) clearDirty(); }
+  }
+  const base = lsGet(BASE_KEY);
+  if (base === null) {
+    // この端末で新アプリを初めて開いた：これまでと同じく保存時刻の新しい方を使う
+    if (isDirty() && app.savedAt && c.savedAt && app.savedAt > c.savedAt) { await pushNow(true); return; }
+    takeCloud(c, keepView);
+    return;
+  }
+  const cloudChanged = cloudFp !== base;
+  if (!cloudChanged) {
+    if (isDirty()) await pushNow(true); else updateSyncBadge('ok');
+    return;
+  }
+  if (!isDirty()) { takeCloud(c, keepView); return; }
+  if (confirm(CONFLICT_MSG)) takeCloud(c, keepView);
+  else await pushNow(true);
+}
+async function syncUpload() {
+  if (!confirm('この端末の内容をクラウドへ保存します（クラウドの内容は上書きされます）。よろしいですか？')) return;
+  persist({ noUndo: true });
+  toast('アップロード中...');
+  await pushNow(true);
+}
+async function syncDownload() {
+  if (!confirm('クラウドから読み込みます（この端末の内容は🕘履歴に残します）。よろしいですか？')) return;
+  toast('ダウンロード中...');
+  try {
+    const c = await fetchCloud();
+    if (!c) { toast('クラウドにデータがありません'); return; }
+    addHist('☁↓の前', JSON.stringify(app));
+    takeCloud(c, true);
+    toast('クラウドから読み込みました');
+  } catch (e) { toast('通信エラー: ' + (e && e.message ? e.message : e)); updateSyncBadge('off'); }
+}
+function updateSyncBadge(st) {
+  const el = document.getElementById('syncBadge');
+  if (!el) return;
+  const m = { ok: ['☁ 保存済み', 'ok'], wait: ['⏳ 送信待ち', 'wait'], off: ['⚠ 未送信', 'off'], load: ['☁ 確認中…', ''] }[st];
+  if (!m) return;
+  el.textContent = m[0];
+  el.className = 'sync-badge ' + m[1];
+}
+
+// ===== 入札：入力のたびに保存 ＋ 進み具合 =====
+function onBidChange(el) {
+  const i = +el.dataset.bid;
+  const f = el.dataset.f;
+  const r = round();
+  if (el.type === 'number') r.bids[i][f] = el.value === '' ? '' : +el.value;
+  else r.bids[i][f] = el.value;
+  recalcOpenResults();
+  applyResultRules();
+  syncOchiFromResults();
+  renderBids();
+  renderCalc();
+  renderAttendance();
+  renderShare();
+  persist();
+}
+
+// ===== 下から出るシート =====
+function openSheet() {
+  document.getElementById('sheetBg').style.display = 'block';
+  requestAnimationFrame(() => document.getElementById('sheet').classList.add('open'));
+}
+function closeSheet() {
+  document.getElementById('sheet').classList.remove('open');
+  document.getElementById('sheetBg').style.display = 'none';
+  document.querySelectorAll('.pick-btn.hl').forEach(b => b.classList.remove('hl'));
+}
+
+// ===== 入札：選ぶ欄をタップ式に =====
+const PICK_TITLES = { caller: '叫ぶ人', card: 'カード', call1: '叫1', call2: '叫2', opener: '開く人', prevKetsu: '前ケツ', open: '開き', card2: 'トランプの当たり' };
+// 選んだあと続けて開く欄（空のときだけ）
+const AUTO_NEXT = { caller: 'call1', call1: 'call2', call2: '@caller', opener: 'open', open: '@opener' };
+let autoNext = lsGet('rk_autonext') !== '0';
+function setAutoNext(on) { autoNext = on; lsSet('rk_autonext', on ? '1' : '0'); }
+function selOf(i, f) { return document.querySelector(`#bidList select[data-bid="${i}"][data-f="${f}"]`); }
+function enhanceSelects() {
+  document.querySelectorAll('#bidList select.bid-select').forEach(sel => {
+    const f = sel.dataset.f, isName = f === 'caller' || f === 'opener';
+    const opt = sel.options[sel.selectedIndex];
+    const txt = opt && opt.value !== '' ? opt.textContent : '';
+    const btn = document.createElement('button');
+    btn.type = 'button';
+    btn.className = 'pick-btn' + (isName ? ' name' : '') + (sel.classList.contains('dup') ? ' dup' : '');
+    const st = sel.getAttribute('style') || '';
+    if (/flex:\s*1/.test(st)) btn.style.flex = '1';
+    btn.innerHTML = txt ? esc(txt) : `<span class="ph">${isName ? 'タップして選ぶ' : '—'}</span>`;
+    btn.onclick = () => openPicker(+sel.dataset.bid, f);
+    sel.style.display = 'none';
+    sel.after(btn);
+  });
+}
+function openPicker(i, f) {
+  const sel = selOf(i, f);
+  if (!sel) return;
+  const isName = f === 'caller' || f === 'opener';
+  const side = ['caller', 'card', 'call1', 'call2'].includes(f) ? '叫' : '開';
+  const b = round().bids[i] || {};
+  const who = side === '叫' ? b.caller : b.opener;
+  const opts = [...sel.options].filter(o => o.value !== '');
+  const cols = isName ? 3 : Math.min(4, opts.length);
+  document.querySelectorAll('.pick-btn.hl').forEach(x => x.classList.remove('hl'));
+  if (sel.nextElementSibling) sel.nextElementSibling.classList.add('hl');
+  document.getElementById('sheet').innerHTML = `
+    <div class="sh-title"><span>${side} No.${i + 1}${who && !isName ? '（' + esc(who) + '）' : ''}・${PICK_TITLES[f] || f}</span>
+      <button class="sh-x" onclick="closeSheet()">✕</button></div>
+    <div class="sh-grid" style="grid-template-columns:repeat(${cols},1fr)">
+      ${opts.map(o => `<button class="sh-opt${o.value === sel.value ? ' cur' : ''}${/（済）$/.test(o.textContent) ? ' used' : ''}"
+         data-v="${esc(o.value)}" onclick="pickVal(${i},'${f}',this.dataset.v)">${esc(o.textContent)}</button>`).join('')}
+    </div>
+    <div class="sh-foot">
+      <button style="background:#eef1f6;color:#555;" onclick="pickVal(${i},'${f}','')">空欄にする</button>
+      ${AUTO_NEXT[f] ? `<label class="sh-auto"><input type="checkbox" ${autoNext ? 'checked' : ''} onchange="setAutoNext(this.checked)">続けて次の欄へ</label>` : ''}
+    </div>
+    ${isName ? '<div style="font-size:11px;color:#999;margin-top:8px;">うすい名前＝もう入っている人（叫びは一人2回まで）</div>' : ''}`;
+  openSheet();
+}
+function pickVal(i, f, v) {
+  const sel = selOf(i, f);
+  if (!sel) { closeSheet(); return; }
+  sel.value = v;
+  onBidChange(sel);
+  const nx = AUTO_NEXT[f];
+  if (autoNext && v !== '' && nx) {
+    const ti = nx[0] === '@' ? i + 1 : i, tf = nx[0] === '@' ? nx.slice(1) : nx;
+    const t = selOf(ti, tf);
+    if (t && t.value === '') {
+      if (t.nextElementSibling) t.nextElementSibling.scrollIntoView({ block: 'center', behavior: 'smooth' });
+      openPicker(ti, tf);
+      return;
+    }
+  }
+  closeSheet();
+}
+
+// ===== 進み具合（出欠 → 叫び → 開き → 精算 → 共有） =====
+function renderSteps() {
+  const el = document.getElementById('stepBar');
+  if (!el || !app || !round()) return;
+  if (!['att', 'bid', 'calc', 'share'].includes(curPage)) { el.style.display = 'none'; return; }
+  el.style.display = '';
+  const r = round();
+  const slots = Math.max(1, membersOf(r).length - attOf(r).filter(a => a.ochi).length);
+  const bids = r.bids.slice(0, slots);
+  const nC = bids.filter(b => b.caller).length, nO = bids.filter(b => b.opener).length;
+  const absent = attOf(r).filter(a => a.present).length;
+  const ochi = bids.find(b => b.result === '落ち' && b.opener);
+  const solo = activeCountOf(r) <= 1;
+  const steps = [
+    ['att',   '📋', '出欠', absent ? `欠席${absent}人` : '全員出席', true],
+    ['bid',   '📢', '叫び', solo ? 'なし' : `${nC}/${slots}`, solo || nC >= slots],
+    ['bid',   '🃏', '開き', solo ? 'なし' : `${nO}/${slots}`, solo || nO >= slots],
+    ['calc',  '💰', '精算', solo ? '最終回' : ochi ? esc(ochi.opener) + '落ち' : 'まだ', solo || !!ochi],
+    ['share', '📤', '共有', 'LINEへ', false],
+  ];
+  const nowAt = steps.findIndex(x => !x[4]);
+  el.innerHTML = steps.map((x, k) =>
+    `<div class="step${x[4] ? ' done' : ''}${k === nowAt ? ' now' : ''}" onclick="showPage('${x[0]}')">
+       <div class="si">${x[1]}</div><div class="sl">${x[2]}</div><div class="sv">${x[3]}</div></div>`).join('');
+}
+
+// ===== 年間：お金のまとめ =====
+// 共有画面と同じ計算を、指定した回について行う（表示中の回を切り替えずに）
+function settlementOf(src) {
+  const r = JSON.parse(JSON.stringify(src));
+  try { applyResultRules(r); } catch (e) {}
+  ['落ち', '大砲'].forEach(res => {   // 年間タブと同じく、落ち・大砲は各1名に絞る
+    const marked = r.bids.filter(b => b.result === res && b.opener);
+    if (marked.length <= 1) return;
+    let best = marked[0];
+    marked.forEach(b => { if ((+b.openResult || 0) > (+best.openResult || 0)) best = b; });
+    marked.forEach(b => { if (b !== best) b.result = ''; });
+  });
+  const c = r.calc || {};
+  const has = b => b.opener && b.openResult !== '' && b.openResult !== null && b.openResult !== undefined;
+  const paidCount = attOf(r).length, kaihi = roundKaihi(r), pool = kaihi * paidCount;
+  const soloFinal = activeCountOf(r) <= 1;
+  let maxOpen = 0;
+  r.bids.forEach(b => { if (b.opener && b.openResult !== '' && +b.openResult > maxOpen) maxOpen = +b.openResult; });
+  const haitouUnit = maxOpen > 0 ? maxOpen : (+c.haitouUnit || 0);   // 精算画面が単価を開結果の最大に合わせるのと同じ
+  const ketsuUnit  = maxOpen > 0 ? maxOpen : (+c.ketsuUnit  || 0);
+  const ochi = new Set(), taihou = new Set(), ketsu = new Set();
+  r.bids.forEach(b => {
+    if (b.result === '落ち' && b.opener) ochi.add(b.opener);
+    if (b.result === '大砲' && b.opener) taihou.add(b.opener);
+    if (b.result === 'ケツ' && b.opener) ketsu.add(b.opener);
+  });
+  if (r.bids.filter(has).length > 2) {
+    let mn = Infinity;
+    r.bids.forEach(b => { if (b.result !== '落ち' && has(b) && +b.openResult < mn) mn = +b.openResult; });
+    r.bids.forEach(b => { if (b.result !== '落ち' && has(b) && +b.openResult === mn) ketsu.add(b.opener); });
+  }
+  const inBids = new Set();
+  r.bids.forEach(b => { if (b.caller) inBids.add(b.caller); if (b.opener) inBids.add(b.opener); });
+  const absentForHaitou = attOf(r).filter(a => a.present && !a.ochi && !inBids.has(a.name)).map(a => a.name);
+  let autoNormal = 0;
+  r.bids.forEach(b => { if (b.caller && !ochi.has(b.caller) && !ketsu.has(b.caller)) autoNormal++; });
+  absentForHaitou.forEach(n => { if (!ochi.has(n) && !ketsu.has(n)) autoNormal++; });
+  const normalCount = soloFinal ? 0 : (c.normalCount !== undefined ? c.normalCount : autoNormal);
+  const ketsuCount  = soloFinal ? 0 : (c.ketsuCount  !== undefined ? c.ketsuCount  : ketsu.size);
+  const haitou = haitouUnit * normalCount, ketsuYen = ketsuUnit * ketsuCount;
+  const taihouYen = soloFinal ? 0 : roundTaihou(r);
+  const amida = +c.amida || 0, ryouri = +c.ryouridai || 0, tsumi = +c.tsumitatekin || 0;
+  const total = haitou + ketsuYen + taihouYen + amida + ryouri + tsumi;
+  return { pool, payout: pool - total, ochi: [...ochi], taihou: [...taihou], ketsu: [...ketsu],
+           haitou, ketsuYen, taihouYen, amida, ryouri, tsumi, kaihi, paidCount,
+           absent: attOf(r).filter(a => a.present).map(a => a.name) };
+}
+function cyclesForYear() {   // 年間タブと同じ区切り（回の数字が戻ったら次の周）
+  const cycles = [];
+  let prev = Infinity;
+  app.rounds.forEach(r => { if (r.num <= prev) cycles.push([]); cycles[cycles.length - 1].push(r); prev = r.num; });
+  return cycles.reverse();
+}
+function moneyCardHtml(cycle) {
+  const rows = cycle.slice().sort((a, b) => a.num - b.num)
+    .filter(r => r.bids.some(b => b.caller || b.opener))
+    .map(r => ({ r, s: settlementOf(r) }));
+  if (!rows.length) return '';
+  const sum = k => rows.reduce((t, x) => t + x.s[k], 0);
+  const yen = v => v.toLocaleString() + '円';
+  const maxPay = Math.max(1, ...rows.map(x => x.s.payout));
+  // メンバー別：落ちて受け取った額・欠席回数
+  const per = {};
+  rows.forEach(({ r, s }) => {
+    membersOf(r).forEach(m => { per[m] = per[m] || { got: 0, month: '', absent: 0 }; });
+    s.ochi.forEach(n => { per[n] = per[n] || { got: 0, month: '', absent: 0 }; per[n].got += s.payout; per[n].month = r.month + '月'; });
+    s.absent.forEach(n => { per[n] = per[n] || { got: 0, month: '', absent: 0 }; per[n].absent++; });
+  });
+  const names = app.members.filter(m => per[m]);
+  return `
+  <div class="card">
+    <div class="card-h">💴 お金のまとめ <span style="font-weight:400;color:#888;font-size:11px;">入力のある${rows.length}回分</span></div>
+    <div class="money-sum">
+      <div>集金の合計<b>${yen(sum('pool'))}</b></div>
+      <div>落ちた人の受取の合計<b>${yen(sum('payout'))}</b></div>
+      <div>料理代の合計<b>${yen(sum('ryouri'))}</b></div>
+      <div>積立金の合計<b>${yen(sum('tsumi'))}</b></div>
+      <div>配当・ケツの合計<b>${yen(sum('haitou') + sum('ketsuYen'))}</b></div>
+      <div>大砲・あみだの合計<b>${yen(sum('taihouYen') + sum('amida'))}</b></div>
+    </div>
+    <div style="font-size:12px;font-weight:700;color:#0d1b3e;margin:4px 0 2px;">回ごとの受取（落ちた人がもらう差し引き額）</div>
+    ${rows.map(({ r, s }) => `
+      <div class="money-row">
+        <div style="font-weight:700;color:#0d1b3e;">第${r.num}回<div style="font-size:10px;font-weight:400;color:#888;">${r.year % 100}年${r.month}月</div></div>
+        <div><span style="font-weight:700;">${s.ochi.map(esc).join('・') || '—'}</span>
+          <div class="money-bar" style="width:${Math.max(4, s.payout / maxPay * 100).toFixed(0)}%"></div></div>
+        <div class="money-yen">${yen(s.payout)}</div>
+      </div>`).join('')}
+    <div style="font-size:12px;font-weight:700;color:#0d1b3e;margin:12px 0 4px;">👤 メンバー別</div>
+    <table style="width:100%;border-collapse:collapse;font-size:12px;">
+      <thead><tr style="background:#0d1b3e;color:#fff;">
+        <th style="padding:5px;font-size:11px;">名前</th><th style="padding:5px;font-size:11px;">落ちた月</th>
+        <th style="padding:5px;font-size:11px;">受取</th><th style="padding:5px;font-size:11px;">欠席</th></tr></thead>
+      <tbody>${names.map(m => `<tr style="border-bottom:1px solid #eee;">
+        <td style="padding:5px;text-align:center;font-weight:600;">${esc(m)}</td>
+        <td style="padding:5px;text-align:center;color:#e65100;font-weight:700;">${per[m].month || '<span style="color:#ccc;">まだ</span>'}</td>
+        <td style="padding:5px;text-align:right;font-weight:700;">${per[m].got ? yen(per[m].got) : '<span style="color:#ccc;">—</span>'}</td>
+        <td style="padding:5px;text-align:center;">${per[m].absent ? per[m].absent + '回' : '<span style="color:#ccc;">0</span>'}</td></tr>`).join('')}</tbody>
+    </table>
+    <div style="font-size:10px;color:#999;margin-top:6px;">※ 共有画面の「○○受取」と同じ計算です</div>
+  </div>`;
+}
+function addMoneyCards() {
+  const el = document.getElementById('yearBody');
+  if (!el) return;
+  const cycles = cyclesForYear();
+  const cards = [...el.children];
+  for (let k = cycles.length - 1; k >= 0; k--) {   // 各周の「回ごとの結果」カードの前に入れる
+    const html = moneyCardHtml(cycles[k]);
+    if (!html || !cards[2 * k]) continue;
+    cards[2 * k].insertAdjacentHTML('beforebegin', html);
+  }
+}
+
+// ===== 元の関数に後から足す =====
+function v2Wrap() {
+  const _renderBids = renderBids;
+  window.renderBids = function () { _renderBids(); enhanceSelects(); renderSteps(); };
+  const _renderYear = renderYear;
+  window.renderYear = function () { _renderYear(); addMoneyCards(); };
+  const _renderCalc = renderCalc;
+  window.renderCalc = function () {
+    _renderCalc();
+    const ochi = round().bids.find(b => b.result === '落ち' && b.opener);
+    const fc = document.querySelector('#finalBox .final-card');
+    if (fc && ochi) fc.insertAdjacentHTML('afterbegin', `<div class="final-who">🎉 ${esc(ochi.opener)} さん受取</div>`);
+  };
+  const _render = render;
+  window.render = function () { _render(); renderSteps(); };
+  const _showPage = showPage;
+  window.showPage = function (n) { closeSheet(); _showPage(n); renderSteps(); };
+  // 大きな操作の前に履歴へ控える（実際に中身が変わったときだけ）
+  [['deleteRound', '回を削除する前'], ['deleteMonth', '月ごと削除の前'], ['recalcOchi', '落ち済み計算し直しの前'],
+   ['removeMember', '退会・復帰の前'], ['addNewRound', '新しい回を作る前']].forEach(([n, label]) => {
+    const f = window[n];
+    window[n] = function () {
+      const before = JSON.stringify(app);
+      const ret = f.apply(this, arguments);
+      if (JSON.stringify(app) !== before) addHist(label, before);
+      return ret;
+    };
+  });
+}
+
+v2Wrap();
 loadApp();
 render();
-// 開いたら自動でクラウドから最新を読込 → その後ユーザー編集の自動保存を有効化
+lastSnap = JSON.stringify(app);
+updateUndoBtn();
+updateSyncBadge(isDirty() ? 'wait' : 'load');
+// 開いたら自動でクラウドと突き合わせ → その後ユーザー編集の自動保存を有効化
 autoRestore().finally(()=>{ cloudReady = true; });
 // 閉じる・離れるときに最新を確実に保存
 window.addEventListener('beforeunload', flushCloudSave);
