@@ -101,6 +101,13 @@
 
   .hidden { display: none !important; }
 
+  /* 今日の参加メンバー */
+  .att-chips { display: flex; flex-wrap: wrap; gap: 6px; }
+  .att-chip { border: 1.5px solid #2e7d32; background: #e8f5e9; color: #1b5e20; border-radius: 999px; padding: 7px 12px; font-size: 14px; font-weight: 700; cursor: pointer; font-family: inherit; }
+  .att-chip.off { border-color: #ccc; background: #f5f5f5; color: #aaa; text-decoration: line-through; font-weight: 400; }
+  .att-note { font-size: 11px; color: #888; margin-top: 8px; }
+  .pm-table tr.pm-absent td { opacity: 0.45; }
+
   .month-header { display: flex; justify-content: space-between; align-items: center; padding: 10px 12px; background: #2a4a2a; color: white; font-weight: 700; font-size: 15px; margin: 12px 0 0; border-radius: 6px 6px 0 0; }
   .month-header span:last-child { font-size: 16px; }
   .history-item { padding: 10px; border-bottom: 1px solid #eee; cursor: pointer; }
@@ -152,17 +159,24 @@
     <datalist id="memberNames"></datalist>
   </div>
 
+  <!-- 👥 今日の参加（お休みの人はカードを畳む） -->
+  <div class="card">
+    <div class="card-h">👥 今日の参加 <span id="attCount" style="margin-left:auto;font-size:12px;color:#666;font-weight:400;"></span></div>
+    <div class="att-chips" id="attChips"></div>
+    <div class="att-note">名前を押すと「お休み」⇄「参加」。お休みの人はスコア欄を出しません</div>
+  </div>
+
   <!-- 有本（基準） -->
   <div class="card arimoto-card">
     <div class="card-h">⭐ 有本（基準）</div>
     <div class="score-grid">
       <div class="score-cell">
         <div class="score-label">午前スコア</div>
-        <input type="number" class="score-input am" id="arimoto-am" oninput="recalc()" inputmode="numeric">
+        <input type="number" class="score-input am" id="arimoto-am" oninput="recalc()" inputmode="numeric" enterkeyhint="next">
       </div>
       <div class="score-cell">
         <div class="score-label">午後スコア</div>
-        <input type="number" class="score-input pm" id="arimoto-pm" oninput="recalc()" inputmode="numeric">
+        <input type="number" class="score-input pm" id="arimoto-pm" oninput="recalc()" inputmode="numeric" enterkeyhint="next">
       </div>
     </div>
     <div class="name-row" style="margin-bottom: 8px;">
@@ -238,6 +252,7 @@
 <div id="page-members" class="page hidden">
   <div class="card">
     <div class="card-h">👥 メンバー登録（ハンデは年単位で更新）</div>
+    <div style="font-size:11px;color:#888;margin:-4px 0 6px;">ここで変えたハンデは<b>これから作る試合</b>に使われます。過去の試合の金額は変わりません（その試合のハンデはスコア画面のカードで直せます）</div>
     <div id="memEditList"></div>
     <div style="display: flex; gap: 8px; margin-top: 10px;">
       <input type="text" id="newMemName" placeholder="名前" class="name-input" style="flex:2;padding:10px;border:1.5px solid #ddd;border-radius:6px;font-size:14px;">
@@ -338,6 +353,17 @@ function loadApp() {
         if (g.year == null) g.year = new Date(g.date).getFullYear() || new Date().getFullYear();
         if (g.month == null) g.month = (new Date(g.date).getMonth() + 1) || (new Date().getMonth() + 1);
         if (g.num == null) g.num = 1;
+        // その日のハンデ（以前はメンバーの今のハンデで全試合を計算し直していた）。
+        // 記録の無い試合は今のハンデで固定する＝今まで表示されていた金額のまま変わらない
+        if (!g.handis || typeof g.handis !== 'object') {
+          g.handis = {};
+          d.members.forEach(m => { g.handis[m.name] = +m.handi || 0; });
+        }
+        // お休みの人：記録の無い試合は「スコアが1つも無い人」をお休みにする（新しい試合は全員参加から）
+        if (!Array.isArray(g.absent)) {
+          const anyScore = d.members.some(m => { const sc = g.scores[m.name]; return sc && ((sc.am !== '' && sc.am != null) || (sc.pm !== '' && sc.pm != null)); });
+          g.absent = anyScore ? d.members.filter(m => { const sc = g.scores[m.name]; return !(sc && ((sc.am !== '' && sc.am != null) || (sc.pm !== '' && sc.pm != null))); }).map(m => m.name) : [];
+        }
       });
       // 互換のため current を curIdx と同期
       d.current = d.games[d.curIdx];
@@ -365,6 +391,12 @@ function defaultMembers() {
   ];
 }
 
+// 今日の日付（端末の時刻で。toISOString は世界標準時なので朝9時前は前日になる）
+function todayStr() {
+  const t = new Date();
+  return t.getFullYear() + '-' + String(t.getMonth() + 1).padStart(2, '0') + '-' + String(t.getDate()).padStart(2, '0');
+}
+
 function newGameData(year, month, num) {
   const today = new Date();
   return {
@@ -372,7 +404,7 @@ function newGameData(year, month, num) {
     year: year != null ? year : today.getFullYear(),
     month: month != null ? month : (today.getMonth() + 1),
     num: num != null ? num : 1,
-    date: today.toISOString().slice(0, 10),
+    date: todayStr(),
     memo: '',
     arimotoHandi: 36,
     arimotoAm: '',
@@ -381,8 +413,43 @@ function newGameData(year, month, num) {
     winner: '',
     extraPrize: '',
     extraUma: '',
-    extraNigiri: ''
+    extraNigiri: '',
+    handis: {},   // その日のハンデ { 名前: ハンデ }
+    absent: []    // お休みの人の名前
   };
+}
+
+// その試合でのハンデ（記録が無ければメンバーの今のハンデ）
+function hOf(g, m) {
+  const h = g && g.handis ? g.handis[m.name] : null;
+  return h != null && h !== '' ? (+h || 0) : (+m.handi || 0);
+}
+function isAbsent(g, m) { return !!(g && Array.isArray(g.absent) && g.absent.includes(m.name)); }
+function hasScore(g, m) {
+  const sc = g && g.scores ? g.scores[m.name] : null;
+  return !!(sc && ((sc.am !== '' && sc.am != null) || (sc.pm !== '' && sc.pm != null)));
+}
+
+// 👥 参加⇄お休み
+function renderAttendance() {
+  const c = app.current;
+  const n = app.members.filter(m => !isAbsent(c, m)).length;
+  document.getElementById('attCount').textContent = `参加 ${n}人 ／ お休み ${app.members.length - n}人`;
+  document.getElementById('attChips').innerHTML = app.members.map((m, i) =>
+    `<button class="att-chip ${isAbsent(c, m) ? 'off' : ''}" onclick="toggleAbsent(${i})">${esc(m.name)}</button>`).join('');
+}
+function toggleAbsent(i) {
+  const c = app.current, m = app.members[i];
+  if (!Array.isArray(c.absent)) c.absent = [];
+  if (isAbsent(c, m)) {
+    c.absent = c.absent.filter(n => n !== m.name);
+  } else {
+    if (hasScore(c, m) && !confirm(`${m.name} さんにはスコアが入っています。\nスコアを消して「お休み」にしますか？`)) return;
+    delete c.scores[m.name];
+    c.absent.push(m.name);
+  }
+  save();
+  render();
 }
 
 let booted = false;   // 起動時の初期描画では savedAt を進めない
@@ -437,7 +504,9 @@ function render() {
 
   // メンバーカード
   const wrap = document.getElementById('memCards');
+  renderAttendance();
   wrap.innerHTML = app.members.map((m, i) => {
+    if (isAbsent(c, m)) return '';
     const sc = c.scores[m.name] || { am: '', pm: '' };
     return `
       <div class="card mem-card" id="card-${i}">
@@ -445,17 +514,17 @@ function render() {
           <div class="name">${esc(m.name)}</div>
           <div class="handi-box">
             <label>ハンデ</label>
-            <input type="number" class="handi-input" value="${m.handi}" onchange="updateHandi(${i}, this.value)" inputmode="numeric">
+            <input type="number" class="handi-input" value="${hOf(c, m)}" onchange="updateHandi(${i}, this.value)" inputmode="numeric" enterkeyhint="next">
           </div>
         </div>
         <div class="score-grid">
           <div class="score-cell">
             <div class="score-label">午前スコア</div>
-            <input type="number" class="score-input am" value="${sc.am}" oninput="updateScore('${esc(m.name)}', 'am', this.value)" inputmode="numeric">
+            <input type="number" class="score-input am" value="${sc.am}" oninput="updateScore(${i}, 'am', this.value)" inputmode="numeric" enterkeyhint="next">
           </div>
           <div class="score-cell">
             <div class="score-label">午後スコア</div>
-            <input type="number" class="score-input pm" value="${sc.pm}" oninput="updateScore('${esc(m.name)}', 'pm', this.value)" inputmode="numeric">
+            <input type="number" class="score-input pm" value="${sc.pm}" oninput="updateScore(${i}, 'pm', this.value)" inputmode="numeric" enterkeyhint="next">
           </div>
         </div>
         <div class="result-row">
@@ -485,7 +554,7 @@ function gameNets(g) {
   let net = 0;
   app.members.forEach(m => {
     const sc = (g.scores && g.scores[m.name]) || { am: '', pm: '' };
-    const half = (+m.handi || 0) / 2;
+    const half = hOf(g, m) / 2;
     const amRes = (sc.am === '' || sc.am == null) ? null : +sc.am - half;
     const pmRes = (sc.pm === '' || sc.pm == null) ? null : +sc.pm - half;
     net += calcMoney(compare(aAmRes, amRes), compare(aPmRes, pmRes));
@@ -501,7 +570,7 @@ function memberGameMoney(g, m) {
   const aAmRes = (g.arimotoAm === '' || g.arimotoAm == null) ? null : +g.arimotoAm - aHalf;
   const aPmRes = (g.arimotoPm === '' || g.arimotoPm == null) ? null : +g.arimotoPm - aHalf;
   const sc = (g.scores && g.scores[m.name]) || { am: '', pm: '' };
-  const half = (+m.handi || 0) / 2;
+  const half = hOf(g, m) / 2;
   const amRes = (sc.am === '' || sc.am == null) ? null : +sc.am - half;
   const pmRes = (sc.pm === '' || sc.pm == null) ? null : +sc.pm - half;
   return calcMoney(compare(aAmRes, amRes), compare(aPmRes, pmRes));
@@ -528,7 +597,7 @@ function renderPM() {
       if (g.year === c.year) year += v;
     });
     tNow += now; tYear += year; tAll += all;
-    return `<tr onclick="document.getElementById('card-${i}')?.scrollIntoView({behavior:'smooth',block:'center'})">
+    return `<tr class="${isAbsent(c, m) ? 'pm-absent' : ''}" onclick="document.getElementById('card-${i}')?.scrollIntoView({behavior:'smooth',block:'center'})">
       <td class="nm${now > 0 ? ' nm-plus' : now < 0 ? ' nm-minus' : ''}">${esc(m.name)}</td><td>${fmt(now)}</td><td>${fmt(year)}</td><td>${fmt(all)}</td></tr>`;
   }).join('');
   foot.innerHTML = `<tr><td class="nm">合計</td><td>${fmt(tNow)}</td><td>${fmt(tYear)}</td><td>${fmt(tAll)}</td></tr>`;
@@ -585,7 +654,7 @@ function renderMembers() {
   const wrap = document.getElementById('memEditList');
   wrap.innerHTML = app.members.map((m, i) => `
     <div class="mem-edit-row">
-      <input class="name-input" type="text" value="${esc(m.name)}" oninput="app.members[${i}].name=this.value;save();">
+      <input class="name-input" type="text" value="${esc(m.name)}" onchange="renameMember(${i}, this)">
       <input class="handi-input2" type="number" value="${m.handi}" oninput="app.members[${i}].handi=parseFloat(this.value)||0;save();" inputmode="numeric">
       <button class="btn btn-del" onclick="removeMember(${i})">削除</button>
     </div>
@@ -614,7 +683,8 @@ function recalc() {
 
   app.members.forEach((m, i) => {
     const sc = c.scores[m.name] || { am: '', pm: '' };
-    const handi = +m.handi || 0;
+    if (!document.getElementById('card-' + i)) return;   // お休みの人はカードが無い
+    const handi = hOf(c, m);
     const half = handi / 2;
     const am = sc.am === '' ? null : +sc.am;
     const pm = sc.pm === '' ? null : +sc.pm;
@@ -718,14 +788,22 @@ function esc(s) {
 }
 
 // ========== ACTIONS ==========
-function updateScore(name, field, val) {
+function updateScore(i, field, val) {
+  const name = app.members[i].name;
   if (!app.current.scores[name]) app.current.scores[name] = { am: '', pm: '' };
+  // スコアを入れた時点のハンデをこの試合に固定（あとでメンバーのハンデを変えても動かない）
+  if (!app.current.handis) app.current.handis = {};
+  if (app.current.handis[name] == null) app.current.handis[name] = +app.members[i].handi || 0;
   app.current.scores[name][field] = val;
   recalc();
 }
 
+// スコア画面のハンデ：この試合のハンデを変え、次に作る試合の初期値にもする（過去の試合は変わらない）
 function updateHandi(i, val) {
-  app.members[i].handi = parseFloat(val) || 0;
+  const h = parseFloat(val) || 0;
+  if (!app.current.handis) app.current.handis = {};
+  app.current.handis[app.members[i].name] = h;
+  app.members[i].handi = h;
   save();
   recalc();
 }
@@ -750,6 +828,23 @@ function addMember() {
   toast(name + ' を追加');
 }
 
+// 名前の変更：全試合のスコアと優勝者も新しい名前へ付け替える（以前は過去のスコアが消えて見えた）
+function renameMember(i, el) {
+  const oldName = app.members[i].name;
+  const name = el.value.trim();
+  if (!name || name === oldName) { el.value = oldName; return; }
+  if (app.members.some((m, j) => j !== i && m.name === name)) { toast('既に登録されています'); el.value = oldName; return; }
+  app.games.forEach(g => {
+    if (g.scores && g.scores[oldName]) { g.scores[name] = g.scores[oldName]; delete g.scores[oldName]; }
+    if (g.winner === oldName) g.winner = name;
+    if (g.handis && g.handis[oldName] != null) { g.handis[name] = g.handis[oldName]; delete g.handis[oldName]; }
+    if (Array.isArray(g.absent)) g.absent = g.absent.map(n => n === oldName ? name : n);
+  });
+  app.members[i].name = name;
+  save();
+  toast(oldName + ' → ' + name + '（過去の試合も変更）');
+}
+
 function resetMembers() {
   if (!confirm('初期メンバー11名で上書きします。よろしいですか？')) return;
   app.members = defaultMembers();
@@ -768,10 +863,15 @@ function removeMember(i) {
 }
 
 function newGame() {
-  // 現在の試合と同じ年月の試合数を数えて回数を決定
-  const cur = app.current;
-  const sameMonthCount = app.games.filter(g => g.year === cur.year && g.month === cur.month).length;
-  const ng = newGameData(cur.year, cur.month, sameMonthCount + 1);
+  // 今日の年月で作り、回数はその年の通し番号（第1回〜）
+  const t = new Date();
+  const y = t.getFullYear(), mo = t.getMonth() + 1;
+  const num = app.games.filter(g => g.year === y).length + 1;
+  if (!confirm(`${y}年${mo}月 第${num}回 の試合を新しく作りますか？`)) return;
+  const ord = orderedIdx();
+  const cur = app.games[ord[ord.length - 1]] || app.current;   // いちばん新しい試合
+  const ng = newGameData(y, mo, num);
+  app.members.forEach(m => { ng.handis[m.name] = +m.handi || 0; });
   // 追加収支（賞金・馬・にぎり）は累計なので前の試合から引き継ぐ
   ng.extraPrize = cur.extraPrize;
   ng.extraUma = cur.extraUma;
@@ -785,9 +885,21 @@ function newGame() {
 }
 
 // ========== 試合ナビゲーション ==========
+// 試合を古い順に並べた番号の一覧（年→月→回）
+function orderedIdx() {
+  return app.games.map((g, i) => i).sort((a, b) => {
+    const x = app.games[a], y = app.games[b];
+    return (x.year - y.year) || (x.month - y.month) || (x.num - y.num) || String(x.date).localeCompare(String(y.date));
+  });
+}
+
 function navGame(dir) {
   if (!app.games.length) return;
-  app.curIdx = (app.curIdx + dir + app.games.length) % app.games.length;
+  const ord = orderedIdx();
+  const pos = ord.indexOf(app.curIdx) + dir;
+  if (pos < 0) { toast('これより前の試合はありません'); return; }
+  if (pos >= ord.length) { toast('これが最新の試合です'); return; }
+  app.curIdx = ord[pos];
   app.current = app.games[app.curIdx];
   save();
   render();
@@ -801,7 +913,7 @@ function updateGameMeta(sfx = '') {
   app.current.month = m;
   app.current.num = n;
   // 日付も合わせて更新（既存の日にちを保持）
-  const oldDate = app.current.date || new Date().toISOString().slice(0, 10);
+  const oldDate = app.current.date || todayStr();
   const day = oldDate.split('-')[2] || '01';
   app.current.date = `${y}-${String(m).padStart(2,'0')}-${day}`;
   save();
@@ -832,6 +944,25 @@ function toast(msg) {
   setTimeout(() => el.classList.remove('show'), 2000);
 }
 
+// スコアは2桁入れたら次の欄へ（午前：有本→メンバーの順、最後まで行ったら午後の先頭へ）
+function nextScoreInput(el) {
+  const list = [...document.querySelectorAll('#page-game .score-input.am'), ...document.querySelectorAll('#page-game .score-input.pm')];
+  const nx = list[list.indexOf(el) + 1];
+  if (!nx) { el.blur(); return; }
+  nx.focus();
+  try { nx.select(); } catch (e) {}
+}
+document.getElementById('page-game').addEventListener('input', e => {
+  const el = e.target;
+  if (el.classList.contains('score-input') && String(el.value).length === 2) nextScoreInput(el);
+});
+document.getElementById('page-game').addEventListener('keydown', e => {
+  if (e.key === 'Enter' && e.target.classList.contains('score-input')) { e.preventDefault(); nextScoreInput(e.target); }
+});
+document.getElementById('page-game').addEventListener('focusin', e => {
+  if (e.target.classList.contains('score-input')) { try { e.target.select(); } catch (err) {} }
+});
+
 // 入力時
 document.getElementById('gameDate').addEventListener('change', recalc);
 document.getElementById('gameMemo').addEventListener('input', recalc);
@@ -843,12 +974,16 @@ const SYNC_URL = 'https://script.google.com/macros/s/AKfycbxwL19mAenATUMILRsQYrD
 const SYNC_KEY = 'golf_score';
 
 let cloudReady = false, cloudTimer = null;
+function storageOK() {
+  try { localStorage.setItem('__synctest', '1'); localStorage.removeItem('__synctest'); return true; } catch (e) { return false; }
+}
 function scheduleCloudSave() {
   if (!cloudReady) return;
   clearTimeout(cloudTimer);
   cloudTimer = setTimeout(pushCloudSilent, 1500);
 }
 async function pushCloudSilent() {
+  if (!storageOK()) return;
   try {
     const res = await fetch(SYNC_URL + '?action=save&key=' + SYNC_KEY, { method: 'POST', body: JSON.stringify(app) });
     const j = await res.json();
@@ -856,7 +991,7 @@ async function pushCloudSilent() {
   } catch(e) { /* オフライン等は端末内に保存済み */ }
 }
 function flushCloudSave() {   // 閉じる瞬間に送る（編集していない画面からは送らない）
-  if (!dirty) return;
+  if (!dirty || !storageOK()) return;
   try { navigator.sendBeacon(SYNC_URL + '?action=save&key=' + SYNC_KEY, JSON.stringify(app)); } catch(e) {}
 }
 // クラウドデータの検証（ゴルフのデータ以外で上書きしない）
