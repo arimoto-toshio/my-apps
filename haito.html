@@ -1,0 +1,1946 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>💰 高配当株ポートフォリオ</title>
+<style>
+  * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+  body {
+    font-family: 'Hiragino Sans', 'Meiryo', sans-serif;
+    background: linear-gradient(135deg, #0f2027 0%, #203a43 50%, #2c5364 100%);
+    background-attachment: fixed;
+    color: #fff;
+    margin: 0;
+    padding: 12px;
+    min-height: 100vh;
+  }
+  .container { max-width: 980px; margin: 0 auto; }
+
+  /* ヘッダー（マスコットつき） */
+  .header {
+    background: linear-gradient(135deg, #c9a227 0%, #e8c547 60%, #f3d977 100%);
+    color: #2c1810;
+    border-radius: 16px;
+    padding: 12px 14px;
+    margin-bottom: 14px;
+    box-shadow: 0 4px 14px rgba(0,0,0,0.3);
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    position: relative;
+  }
+  .header h1 { margin: 0; font-size: 19px; }
+  .header .sub { font-size: 11px; color: #5d4037; margin-top: 2px; }
+  .header .sync { font-size: 10px; color: #6d4c41; margin-top: 4px; }
+  .header .title-box { flex: 1; min-width: 0; }
+  .menu-btn {
+    background: rgba(255,255,255,0.55); border: none; border-radius: 10px;
+    width: 38px; height: 38px; font-size: 18px; cursor: pointer; color: #5d4037; flex-shrink: 0;
+  }
+  .menu {
+    display: none; position: absolute; right: 10px; top: 56px; z-index: 50;
+    background: #fff; color: #1a2832; border-radius: 12px; box-shadow: 0 8px 24px rgba(0,0,0,0.35);
+    overflow: hidden; min-width: 220px;
+  }
+  .menu.open { display: block; }
+  .menu div { padding: 12px 16px; font-size: 14px; cursor: pointer; border-bottom: 1px solid #eceff1; }
+  .menu div:hover { background: #fff8e1; }
+
+  /* 金のにわとり */
+  .hen { width: 64px; height: 64px; flex-shrink: 0; cursor: pointer; }
+  .hen svg { width: 100%; height: 100%; animation: hop 2.6s ease-in-out infinite; transform-origin: 50% 90%; }
+  .hen.big { width: 96px; height: 96px; }
+  @keyframes hop {
+    0%, 70%, 100% { transform: translateY(0) rotate(0); }
+    78% { transform: translateY(-6px) rotate(-4deg); }
+    86% { transform: translateY(0) rotate(3deg); }
+  }
+  @media (prefers-reduced-motion: reduce) { .hen svg { animation: none; } }
+  .mascot-card {
+    display: flex; align-items: center; gap: 12px;
+    background: linear-gradient(135deg, #fffdf3, #fff3c4);
+    color: #4e342e; border-radius: 16px; padding: 12px 14px; margin-bottom: 14px;
+    box-shadow: 0 4px 14px rgba(0,0,0,0.25);
+  }
+  .bubble {
+    flex: 1; background: #fff; border: 2px solid #f0c94a; border-radius: 14px;
+    padding: 10px 12px; font-size: 14px; line-height: 1.6; position: relative; font-weight: bold;
+  }
+  .bubble::before {
+    content: ''; position: absolute; left: -10px; top: 50%; transform: translateY(-50%);
+    border: 8px solid transparent; border-right-color: #f0c94a; border-left: 0;
+  }
+  .bubble .who { font-size: 10px; color: #b08900; font-weight: bold; display: block; margin-bottom: 2px; }
+
+  /* サマリーカード */
+  .summary {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+    gap: 10px;
+    margin-bottom: 14px;
+  }
+  .stat-card {
+    background: rgba(255,255,255,0.08);
+    border: 1px solid rgba(255,255,255,0.15);
+    border-radius: 12px;
+    padding: 12px 14px;
+  }
+  .stat-label { font-size: 11px; color: #b0bec5; margin-bottom: 4px; }
+  .stat-value { font-size: 18px; font-weight: bold; color: #ffd54f; }
+  .stat-value.green { color: #66bb6a; }
+  .stat-value.red { color: #ef5350; }
+  .stat-value.white { color: #fff; }
+  .stat-sub { font-size: 11px; color: #90a4ae; margin-top: 2px; }
+
+  /* タブ */
+  .tabs {
+    display: flex;
+    background: rgba(0,0,0,0.3);
+    border-radius: 12px;
+    padding: 4px;
+    margin-bottom: 14px;
+    overflow-x: auto;
+    position: sticky; top: 0; z-index: 20;
+    backdrop-filter: blur(8px);
+  }
+  .tab {
+    flex: 1 0 auto;
+    padding: 10px 12px;
+    text-align: center;
+    cursor: pointer;
+    border-radius: 8px;
+    font-size: 13px;
+    font-weight: bold;
+    color: #b0bec5;
+    white-space: nowrap;
+  }
+  .tab.active { background: #c9a227; color: #2c1810; }
+  .tab .dot { display: inline-block; background: #e53935; color: #fff; border-radius: 9px; font-size: 10px; padding: 0 5px; margin-left: 3px; }
+
+  /* セクション */
+  .section {
+    background: rgba(255,255,255,0.97);
+    color: #1a2832;
+    border-radius: 14px;
+    padding: 14px;
+    margin-bottom: 14px;
+    box-shadow: 0 4px 14px rgba(0,0,0,0.3);
+  }
+  .section-title {
+    font-size: 16px;
+    font-weight: bold;
+    color: #2c5364;
+    margin-bottom: 12px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 8px;
+    flex-wrap: wrap;
+  }
+  .btn {
+    border: none;
+    padding: 8px 14px;
+    border-radius: 8px;
+    font-size: 13px;
+    font-weight: bold;
+    cursor: pointer;
+  }
+  .btn-primary { background: #2c5364; color: #fff; }
+  .btn-gold { background: #c9a227; color: #fff; }
+  .btn-danger { background: #ef5350; color: #fff; }
+  .btn-light { background: #eceff1; color: #2c5364; }
+  .btn-small { padding: 4px 10px; font-size: 12px; }
+
+  /* テーブル */
+  .stock-table { width: 100%; border-collapse: collapse; font-size: 13px; }
+  .stock-table th {
+    background: #2c5364; color: #fff; padding: 8px 6px; font-size: 11px; text-align: center; white-space: nowrap;
+  }
+  .stock-table td { border-bottom: 1px solid #e0e0e0; padding: 10px 6px; text-align: right; white-space: nowrap; }
+  .stock-table td.name { text-align: left; font-weight: bold; }
+  .stock-table .code { color: #888; font-size: 11px; font-weight: normal; }
+  .stock-table tr:hover { background: #f5f9fc; cursor: pointer; }
+  .stock-table .yield-cell { color: #c9a227; font-weight: bold; }
+  .stock-table .profit-cell.plus { color: #2e7d32; font-weight: bold; }
+  .stock-table .profit-cell.minus { color: #c62828; font-weight: bold; }
+  .stock-table tr.total td { background: #fff8e1; font-weight: bold; }
+  .delete-btn {
+    background: #ef5350; color: #fff; border: none; width: 22px; height: 22px;
+    border-radius: 50%; font-size: 12px; cursor: pointer;
+  }
+  .scroll-x { overflow-x: auto; }
+
+  /* モーダル */
+  .modal-overlay {
+    display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.7); z-index: 100;
+    align-items: center; justify-content: center; padding: 16px;
+  }
+  .modal-overlay.open { display: flex; }
+  .modal-box {
+    background: #fff; color: #1a2832; border-radius: 14px; padding: 18px;
+    width: 100%; max-width: 440px; max-height: 90vh; overflow-y: auto;
+  }
+  .modal-box.wide { max-width: 640px; }
+  .modal-title { font-size: 17px; font-weight: bold; margin-bottom: 14px; color: #2c5364; }
+  .form-group { margin-bottom: 12px; }
+  .form-group label { display: block; font-size: 12px; color: #555; margin-bottom: 4px; font-weight: bold; }
+  .form-group .hint { font-size: 11px; color: #90a4ae; margin-top: 3px; }
+  .form-group input, .form-group select {
+    width: 100%; padding: 8px 10px; border: 1.5px solid #ccc; border-radius: 8px; font-size: 16px; outline: none;
+  }
+  .form-group input:focus { border-color: #2c5364; }
+  .form-group input[type=checkbox] { width: auto; }
+  .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+  .modal-footer { display: flex; gap: 10px; justify-content: flex-end; margin-top: 16px; }
+
+  /* 配当カレンダー */
+  .calendar-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; }
+  .month-card { background: #f5f9fc; border-radius: 10px; padding: 10px; text-align: center; border: 2px solid transparent; }
+  .month-card.has-dividend { background: #fff8e1; border-color: #c9a227; }
+  .month-card.now { box-shadow: 0 0 0 3px #2c5364 inset; }
+  .month-num { font-size: 11px; color: #888; }
+  .month-amt { font-size: 14px; font-weight: bold; color: #c9a227; margin-top: 4px; }
+  .month-stocks { font-size: 10px; color: #555; margin-top: 4px; line-height: 1.4; }
+
+  /* 予定リスト */
+  .plan-row {
+    display: grid; grid-template-columns: 1fr auto auto; gap: 8px; align-items: center;
+    padding: 10px 4px; border-bottom: 1px solid #eceff1; font-size: 14px;
+  }
+  .plan-row .amt { font-weight: bold; color: #b08900; text-align: right; }
+  .plan-row .sub { font-size: 11px; color: #90a4ae; font-weight: normal; }
+  .got { background: #e8f5e9; color: #2e7d32; border-radius: 8px; padding: 4px 10px; font-size: 12px; font-weight: bold; }
+
+  /* ホーム */
+  .home-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+  .home-grid .section { margin-bottom: 0; }
+  .ring-wrap { display: flex; align-items: center; gap: 14px; }
+  .ring-wrap svg { width: 130px; height: 130px; flex-shrink: 0; }
+  .ring-info { font-size: 13px; line-height: 1.9; }
+  .ring-info b { color: #b08900; font-size: 16px; }
+  .cand-mini { padding: 8px 4px; border-bottom: 1px solid #eceff1; font-size: 13px; display: flex; justify-content: space-between; gap: 8px; cursor: pointer; }
+  .stale { background: #fff3e0; color: #e65100; border-radius: 10px; padding: 10px 12px; font-size: 13px; margin-bottom: 14px; display: flex; justify-content: space-between; align-items: center; gap: 8px; }
+
+  /* 買い時ナビ */
+  .cand-card { border: 2px solid #f0c94a; background: #fffdf3; border-radius: 12px; padding: 12px; margin-bottom: 10px; }
+  .cand-card .top { display: flex; justify-content: space-between; align-items: baseline; gap: 8px; flex-wrap: wrap; }
+  .cand-card .nm { font-weight: bold; font-size: 15px; }
+  .cand-card .px { font-size: 13px; color: #546e7a; }
+  .cand-card .buy { font-size: 13px; margin-top: 8px; line-height: 1.7; }
+  .cand-card .acts { margin-top: 8px; display: flex; gap: 8px; flex-wrap: wrap; }
+
+  /* 価格まとめて更新 */
+  .px-row { display: grid; grid-template-columns: 1fr 96px 80px; gap: 6px; align-items: center; padding: 8px 0; border-bottom: 1px solid #eceff1; font-size: 13px; }
+  .px-row input { width: 100%; padding: 7px; border: 1.5px solid #ccc; border-radius: 6px; font-size: 16px; text-align: right; }
+  .px-row a { font-size: 11px; color: #1565c0; margin-right: 6px; }
+  .px-head { font-size: 11px; color: #888; }
+
+  /* メモ */
+  .memo-area {
+    width: 100%; min-height: 160px; padding: 10px; border: 1.5px solid #ccc; border-radius: 8px;
+    font-size: 15px; resize: vertical; font-family: inherit; outline: none;
+  }
+
+  .empty { text-align: center; padding: 30px 20px; color: #888; }
+  .empty-icon { font-size: 40px; margin-bottom: 8px; }
+  .chip { display: inline-block; background: #e3f2fd; color: #1565c0; padding: 2px 8px; border-radius: 12px; font-size: 11px; margin: 2px 4px 2px 0; }
+  .chip.gold { background: #fff8e1; color: #b08900; }
+  .chip.green { background: #e8f5e9; color: #2e7d32; }
+  .chip.red { background: #ffebee; color: #c62828; }
+  .chip.purple { background: #f3e5f5; color: #7b1fa2; }
+
+  /* 銘柄チェック・分散・シミュレーション */
+  .note { font-size: 12px; color: #607d8b; line-height: 1.6; margin-bottom: 10px; }
+  .crit { display: grid; grid-template-columns: 1fr auto; align-items: center; gap: 8px; padding: 9px 4px; border-bottom: 1px solid #eceff1; font-size: 13px; }
+  .crit .hint { font-size: 11px; color: #90a4ae; }
+  .crit input[type=number] { width: 80px; padding: 6px; border: 1.5px solid #ccc; border-radius: 6px; font-size: 16px; text-align: right; }
+  .mark { display: inline-block; min-width: 26px; text-align: center; font-weight: bold; }
+  .mark.ok { color: #2e7d32; } .mark.mid { color: #ef6c00; } .mark.ng { color: #c62828; }
+  .score-box { margin-top: 12px; padding: 12px; border-radius: 10px; text-align: center; font-weight: bold; font-size: 16px; }
+  .score-box.ok { background: #e8f5e9; color: #2e7d32; }
+  .score-box.mid { background: #fff3e0; color: #ef6c00; }
+  .score-box.ng { background: #ffebee; color: #c62828; }
+  .badge { display: inline-block; padding: 1px 7px; border-radius: 10px; font-size: 11px; font-weight: bold; }
+  .badge.ok { background: #e8f5e9; color: #2e7d32; }
+  .badge.mid { background: #fff3e0; color: #ef6c00; }
+  .badge.ng { background: #ffebee; color: #c62828; }
+  .badge.none { background: #eceff1; color: #90a4ae; }
+  .badge.nisa { background: #e3f2fd; color: #1565c0; }
+  .bar-row { display: grid; grid-template-columns: 110px 1fr 54px; align-items: center; gap: 8px; font-size: 12px; margin-bottom: 6px; }
+  .bar-track { background: #eceff1; border-radius: 6px; height: 16px; overflow: hidden; }
+  .bar-fill { height: 100%; border-radius: 6px; }
+  .warn { padding: 8px 10px; border-radius: 8px; font-size: 13px; margin-bottom: 6px; }
+  .warn.ng { background: #ffebee; color: #c62828; }
+  .warn.ok { background: #e8f5e9; color: #2e7d32; }
+  .rule-input { width: 56px; padding: 4px; border: 1.5px solid #ccc; border-radius: 6px; text-align: right; font-size: 14px; }
+  .sim-result { font-size: 15px; font-weight: bold; color: #2c5364; background: #fff8e1; border-radius: 10px; padding: 12px; margin: 10px 0; line-height: 1.7; }
+
+  /* 履歴 */
+  .hist-item { display: flex; align-items: center; gap: 8px; padding: 8px 2px; border-bottom: 1px solid #eceff1; font-size: 13px; }
+  .hist-item .when { font-weight: bold; min-width: 90px; }
+  .hist-item .info { flex: 1; color: #607d8b; font-size: 12px; }
+  .hist-item button { border: none; background: #2c5364; color: #fff; border-radius: 6px; padding: 5px 8px; font-size: 12px; cursor: pointer; }
+
+  @media (max-width: 680px) {
+    .home-grid { grid-template-columns: 1fr; }
+  }
+  @media (max-width: 600px) {
+    body { padding: 10px; }
+    .stock-table { font-size: 11px; }
+    .stock-table th, .stock-table td { padding: 6px 3px; }
+    .calendar-grid { grid-template-columns: repeat(3, 1fr); }
+    .hen { width: 52px; height: 52px; }
+    .header h1 { font-size: 16px; }
+    .ring-wrap svg { width: 110px; height: 110px; }
+  }
+
+  .toast {
+    position: fixed; bottom: 80px; left: 50%; transform: translateX(-50%);
+    background: rgba(0,0,0,0.85); color: #fff; padding: 10px 20px; border-radius: 24px;
+    font-size: 13px; z-index: 200; display: none; max-width: 90vw; text-align: center;
+  }
+  .toast.show { display: block; animation: fadein 0.3s; }
+  @keyframes fadein { from { opacity:0; transform:translate(-50%, 10px); } to { opacity:1; transform:translate(-50%, 0); } }
+</style>
+</head>
+<body>
+<div class="container">
+
+  <div class="header">
+    <div class="hen" onclick="showTab('home')" title="ホームへ"><svg id="hen-head"></svg></div>
+    <div class="title-box">
+      <h1>高配当株ポートフォリオ</h1>
+      <div class="sub">金の卵（配当）を育てる 🥚</div>
+      <div class="sync" id="syncSt">読み込み中…</div>
+    </div>
+    <button class="menu-btn" onclick="toggleMenu(event)">☰</button>
+    <div class="menu" id="menu">
+      <div onclick="syncNow(true)">☁️ 今すぐ同期</div>
+      <div onclick="cloudDownload()">☁️ クラウドから読み込む</div>
+      <div onclick="openHist()">🕘 保存履歴から戻す</div>
+      <div onclick="exportJson()">📤 ファイルに書き出す</div>
+      <div onclick="document.getElementById('import-file').click()">📥 ファイルから読み込む</div>
+    </div>
+    <input type="file" id="import-file" accept=".json,application/json" style="display:none" onchange="importJson(this)">
+  </div>
+
+  <!-- タブ -->
+  <div class="tabs" id="tabs">
+    <div class="tab active" data-tab="home" onclick="showTab('home')">🏠 ホーム</div>
+    <div class="tab" data-tab="holdings" onclick="showTab('holdings')">📊 保有銘柄</div>
+    <div class="tab" data-tab="dividend" onclick="showTab('dividend')">🥚 配当<span id="dot-div"></span></div>
+    <div class="tab" data-tab="watch" onclick="showTab('watch')">🛒 買い時ナビ<span id="dot-watch"></span></div>
+    <div class="tab" data-tab="check" onclick="showTab('check')">🔍 銘柄チェック</div>
+    <div class="tab" data-tab="balance" onclick="showTab('balance')">🥧 分散</div>
+    <div class="tab" data-tab="sim" onclick="showTab('sim')">🎯 目標シミュ</div>
+    <div class="tab" data-tab="memo" onclick="showTab('memo')">📝 メモ</div>
+  </div>
+
+  <!-- ホーム -->
+  <div id="page-home" class="page">
+    <div class="mascot-card">
+      <div class="hen big" onclick="nextMsg()"><svg id="hen-big"></svg></div>
+      <div class="bubble" onclick="nextMsg()"><span class="who">金のにわとり・コッコ（タップで次へ）</span><span id="hen-msg"></span></div>
+    </div>
+    <div id="stale-box"></div>
+    <div class="summary">
+      <div class="stat-card">
+        <div class="stat-label">📦 評価額</div>
+        <div class="stat-value white" id="stat-value">¥0</div>
+        <div class="stat-sub" id="stat-cost">取得額 ¥0</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-label">📈 評価損益</div>
+        <div class="stat-value" id="stat-profit">¥0</div>
+        <div class="stat-sub" id="stat-profit-pct">+0.0%</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-label">🥚 年間配当（税引後）</div>
+        <div class="stat-value" id="stat-dividend">¥0</div>
+        <div class="stat-sub" id="stat-dividend-month">月平均 ¥0</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-label">⭐ 利回り（取得）</div>
+        <div class="stat-value" id="stat-yield-cost">0.00%</div>
+        <div class="stat-sub" id="stat-yield-now">時価 0.00%</div>
+      </div>
+    </div>
+    <div class="home-grid">
+      <div class="section">
+        <div class="section-title"><span>🎯 目標まで</span><button class="btn btn-light btn-small" onclick="editGoal()">目標を変える</button></div>
+        <div class="ring-wrap" id="home-ring"></div>
+      </div>
+      <div class="section">
+        <div class="section-title"><span>🥚 今月・来月の配当</span><button class="btn btn-light btn-small" onclick="showTab('dividend')">くわしく</button></div>
+        <div id="home-plan"></div>
+      </div>
+      <div class="section">
+        <div class="section-title"><span>📅 月別の配当（予定・税引後）</span></div>
+        <div id="home-month-chart"></div>
+      </div>
+      <div class="section">
+        <div class="section-title"><span>📈 年ごとの受取実績</span></div>
+        <div id="home-year-chart"></div>
+      </div>
+    </div>
+    <div class="section" style="margin-top:14px;">
+      <div class="section-title"><span>🛒 買い時候補</span><button class="btn btn-light btn-small" onclick="showTab('watch')">買い時ナビへ</button></div>
+      <div id="home-cand"></div>
+    </div>
+  </div>
+
+  <!-- 保有銘柄 -->
+  <div id="page-holdings" class="page" style="display:none;">
+    <div class="section">
+      <div class="section-title">
+        <span>📊 保有銘柄</span>
+        <span>
+          <button class="btn btn-gold btn-small" onclick="openPriceModal()">📈 株価をまとめて更新</button>
+          <button class="btn btn-primary btn-small" onclick="openHoldingModal()">＋ 追加</button>
+        </span>
+      </div>
+      <div id="holdings-list"></div>
+      <div class="note" style="margin-top:8px;">行をタップで編集。年配当は税引前、<span class="badge nisa">NISA</span>の銘柄は非課税で計算します。</div>
+    </div>
+  </div>
+
+  <!-- 配当 -->
+  <div id="page-dividend" class="page" style="display:none;">
+    <div class="section">
+      <div class="section-title"><span>🥚 配当の予定</span>
+        <span>
+          <button class="btn btn-light btn-small" onclick="planShift(-1)">◀</button>
+          <b id="plan-label" style="margin:0 6px;"></b>
+          <button class="btn btn-light btn-small" onclick="planShift(1)">▶</button>
+        </span>
+      </div>
+      <div id="plan-list"></div>
+      <div class="note" style="margin-top:8px;">配当が入ったら「受け取った」を押すと受取履歴に記録されます（金額は通帳・証券口座の手取りに直せます）。<br>
+        予定は保有銘柄の「配当月」で出しています。<b>入金される月</b>を入れておくと正確です（3月決算なら入金はたいてい6月）。</div>
+    </div>
+    <div class="section">
+      <div class="section-title"><span>📅 月別 配当金（年間・税引後）</span></div>
+      <div class="calendar-grid" id="calendar-grid"></div>
+    </div>
+    <div class="section">
+      <div class="section-title">
+        <span>💸 受取履歴</span>
+        <button class="btn btn-primary btn-small" onclick="openHistoryModal()">＋ 手で追加</button>
+      </div>
+      <div id="history-list"></div>
+    </div>
+  </div>
+
+  <!-- 買い時ナビ -->
+  <div id="page-watch" class="page" style="display:none;">
+    <div class="section">
+      <div class="section-title"><span>🛒 買い時候補</span></div>
+      <div class="note" style="display:flex;flex-wrap:wrap;gap:6px 14px;align-items:center;">
+        <span>今月の予算 <input type="number" class="rule-input" style="width:100px;" id="navi-budget" onchange="saveNavi()"> 円</span>
+        <span>利回り <input type="number" step="0.05" class="rule-input" id="navi-yield" onchange="saveNavi()"> % 以上</span>
+        <label><input type="checkbox" id="navi-hold" onchange="saveNavi()"> 保有銘柄の買い増しも候補に</label>
+      </div>
+      <div id="cand-list"></div>
+      <div class="note">候補になる条件：目標株価以下になった、または利回りが上の％以上。銘柄チェックで5点未満の銘柄は外します。<br>
+        株価が古いと判定もずれるので、「📈 株価をまとめて更新」でときどき直してください。</div>
+    </div>
+    <div class="section">
+      <div class="section-title">
+        <span>👀 監視リスト</span>
+        <span>
+          <button class="btn btn-gold btn-small" onclick="openPriceModal()">📈 株価更新</button>
+          <button class="btn btn-primary btn-small" onclick="openWatchModal()">＋ 追加</button>
+        </span>
+      </div>
+      <div id="watch-list"></div>
+      <div style="margin-top:12px;text-align:right;">
+        <button class="btn btn-light btn-small" onclick="addCandidates()">⭐ よく名前の挙がる高配当株をまとめて追加</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- 銘柄チェック -->
+  <div id="page-check" class="page" style="display:none;">
+    <div class="section">
+      <div class="section-title"><span>🔍 学長流 8つの指標チェック</span></div>
+      <div class="note">
+        利回りランキングの上から買うと「罠銘柄」を拾いがち。財務の8項目で守りの強さを見ます。<br>
+        数字は株探・IR BANK・会社の決算資料などで確認して入れてください（過去10年くらいを見るのが目安）。
+      </div>
+      <div class="form-group">
+        <label>チェックする銘柄（保有＋監視リストから）</label>
+        <select id="ck-target" onchange="loadCheck()"></select>
+      </div>
+      <div id="ck-form"></div>
+    </div>
+    <div class="section">
+      <div class="section-title"><span>📋 チェック結果の一覧</span></div>
+      <div id="ck-list"></div>
+    </div>
+  </div>
+
+  <!-- 分散 -->
+  <div id="page-balance" class="page" style="display:none;">
+    <div class="section">
+      <div class="section-title"><span>🚦 偏りチェック</span></div>
+      <div id="bal-warn"></div>
+      <div class="note" style="margin-top:8px;">
+        目安（変えられます）：1銘柄の配当構成比 <input type="number" class="rule-input" id="rule-stock" onchange="saveRules()">% 以下 ／
+        景気敏感（金融含む）<input type="number" class="rule-input" id="rule-cyc" onchange="saveRules()">% 以下 ／
+        金融 <input type="number" class="rule-input" id="rule-fin" onchange="saveRules()">% 以下<br>
+        ※学長・こびと株さんの考え方を参考にした目安です。景気敏感からディフェンシブまで色々混ぜて、ポートフォリオ全体の利回りで考えるのがコツ。
+      </div>
+    </div>
+    <div class="section">
+      <div class="section-title"><span>🥧 業種別（年間配当の割合）</span></div>
+      <div id="bal-sector"></div>
+    </div>
+    <div class="section">
+      <div class="section-title"><span>🧺 銘柄別（年間配当の割合）</span></div>
+      <div id="bal-stock"></div>
+    </div>
+  </div>
+
+  <!-- 目標シミュレーション -->
+  <div id="page-sim" class="page" style="display:none;">
+    <div class="section">
+      <div class="section-title"><span>🎯 配当目標シミュレーション</span></div>
+      <div class="form-row">
+        <div class="form-group"><label>今の評価額（円）</label><input type="number" id="sim-start" oninput="runSim()"></div>
+        <div class="form-group"><label>毎月の買い付け額（円）</label><input type="number" id="sim-monthly" oninput="runSim()"></div>
+      </div>
+      <div class="form-row">
+        <div class="form-group"><label>平均利回り（税引前・%）</label><input type="number" id="sim-yield" step="0.1" oninput="runSim()"></div>
+        <div class="form-group"><label>増配率・株価の伸び（年%）</label><input type="number" id="sim-growth" step="0.1" oninput="runSim()"></div>
+      </div>
+      <div class="form-row">
+        <div class="form-group"><label>目標の年間配当（税引後・円）</label><input type="number" id="sim-target" oninput="runSim()"></div>
+        <div class="form-group"><label>何年分みる</label><input type="number" id="sim-years" oninput="runSim()"></div>
+      </div>
+      <div class="form-row">
+        <div class="form-group"><label><input type="checkbox" id="sim-reinvest" onchange="runSim()"> 配当を再投資する</label></div>
+        <div class="form-group"><label><input type="checkbox" id="sim-nisa" onchange="runSim()"> NISAで非課税</label></div>
+      </div>
+      <button class="btn btn-light btn-small" onclick="simFromPortfolio()">↺ 今のポートフォリオの数字を入れる</button>
+      <div class="sim-result" id="sim-result"></div>
+      <div id="sim-chart"></div>
+      <div class="scroll-x" id="sim-table" style="margin-top:10px;"></div>
+      <div class="note" style="margin-top:8px;">
+        ※株価は増配率と同じペースで伸びる（＝利回り一定）と仮定した、ざっくり計算です。税金は20.315%で計算。NISAの枠の上限は考慮していません。目標はホームの「目標まで」と共通です。
+      </div>
+    </div>
+  </div>
+
+  <!-- メモ -->
+  <div id="page-memo" class="page" style="display:none;">
+    <div class="section">
+      <div class="section-title"><span>📝 投資方針・メモ</span></div>
+      <textarea class="memo-area" id="memo-area" placeholder="例：
+・年間配当目標 100万円
+・利回り3.75%以上で買い増し
+・1銘柄あたり投資額は上限○○円
+・毎月5万円ずつコツコツ買う
+"></textarea>
+    </div>
+  </div>
+
+</div>
+
+<!-- 保有銘柄モーダル -->
+<div class="modal-overlay" id="holding-modal">
+  <div class="modal-box">
+    <div class="modal-title" id="holding-modal-title">📊 銘柄を追加</div>
+    <div class="form-row">
+      <div class="form-group"><label>銘柄コード</label><input type="text" id="h-code" placeholder="例: 9433" inputmode="numeric"></div>
+      <div class="form-group"><label>銘柄名</label><input type="text" id="h-name" placeholder="例: KDDI"></div>
+    </div>
+    <div class="form-row">
+      <div class="form-group"><label>保有株数</label><input type="number" id="h-qty" placeholder="100" step="1"></div>
+      <div class="form-group"><label>取得単価（円）</label><input type="number" id="h-cost" placeholder="4500" step="0.01"></div>
+    </div>
+    <div class="form-row">
+      <div class="form-group"><label>現在株価（円）</label><input type="number" id="h-price" placeholder="4800" step="0.01"></div>
+      <div class="form-group"><label>1株配当（年・円）</label><input type="number" id="h-dps" placeholder="145" step="0.01"></div>
+    </div>
+    <div class="form-group">
+      <label>配当が入る月（カンマ区切り）</label>
+      <input type="text" id="h-months" placeholder="例: 6,12（6月と12月）">
+      <div class="hint">権利確定月ではなく入金月（3月・9月決算なら たいてい 6月・12月）</div>
+    </div>
+    <div class="form-row">
+      <div class="form-group"><label>業種</label><select id="h-sector" class="sector-select"></select></div>
+      <div class="form-group"><label>口座</label><label style="font-weight:normal;font-size:14px;margin-top:8px;"><input type="checkbox" id="h-nisa"> NISA（配当が非課税）</label></div>
+    </div>
+    <div class="form-group"><label>メモ（任意）</label><input type="text" id="h-memo" placeholder="例: 優待あり"></div>
+    <div class="modal-footer">
+      <button class="btn btn-light" onclick="closeModal('holding-modal')">キャンセル</button>
+      <button class="btn btn-primary" id="h-save-btn" onclick="saveHolding()">追加</button>
+    </div>
+  </div>
+</div>
+
+<!-- 受取履歴モーダル -->
+<div class="modal-overlay" id="history-modal">
+  <div class="modal-box">
+    <div class="modal-title">💸 配当受取を追加</div>
+    <div class="form-row">
+      <div class="form-group"><label>受取日</label><input type="date" id="hist-date"></div>
+      <div class="form-group"><label>銘柄</label><input type="text" id="hist-name" placeholder="例: KDDI" list="name-list"></div>
+    </div>
+    <div class="form-row">
+      <div class="form-group"><label>受取額（税引後・円）</label><input type="number" id="hist-amt" placeholder="11551" step="1"></div>
+      <div class="form-group"><label>株数</label><input type="number" id="hist-qty" placeholder="100" step="1"></div>
+    </div>
+    <datalist id="name-list"></datalist>
+    <div class="modal-footer">
+      <button class="btn btn-light" onclick="closeModal('history-modal')">キャンセル</button>
+      <button class="btn btn-primary" onclick="saveHistory()">追加</button>
+    </div>
+  </div>
+</div>
+
+<!-- 監視リストモーダル -->
+<div class="modal-overlay" id="watch-modal">
+  <div class="modal-box">
+    <div class="modal-title" id="watch-modal-title">👀 監視銘柄を追加</div>
+    <div class="form-row">
+      <div class="form-group"><label>銘柄コード</label><input type="text" id="w-code" placeholder="例: 8058" inputmode="numeric"></div>
+      <div class="form-group"><label>銘柄名</label><input type="text" id="w-name" placeholder="例: 三菱商事"></div>
+    </div>
+    <div class="form-row">
+      <div class="form-group"><label>現在株価</label><input type="number" id="w-price" placeholder="3200" step="0.01"></div>
+      <div class="form-group"><label>1株配当（年）</label><input type="number" id="w-dps" placeholder="100" step="0.01"></div>
+    </div>
+    <div class="form-row">
+      <div class="form-group"><label>買い目標株価（円）</label><input type="number" id="w-target" placeholder="3000" step="0.01"></div>
+      <div class="form-group"><label>業種</label><select id="w-sector" class="sector-select"></select></div>
+    </div>
+    <div class="form-group"><label>メモ</label><input type="text" id="w-memo" placeholder="例: 3000円まで下がったら買う"></div>
+    <div class="modal-footer">
+      <button class="btn btn-light" onclick="closeModal('watch-modal')">キャンセル</button>
+      <button class="btn btn-primary" id="w-save-btn" onclick="saveWatch()">追加</button>
+    </div>
+  </div>
+</div>
+
+<!-- 株価まとめて更新 -->
+<div class="modal-overlay" id="price-modal">
+  <div class="modal-box wide">
+    <div class="modal-title">📈 株価・配当をまとめて更新</div>
+    <div class="note">リンクから株探・Yahoo!ファイナンスを開いて、今の株価を写してください。変えた所だけ保存されます。</div>
+    <div class="px-row px-head"><div>銘柄</div><div style="text-align:right;">株価（円）</div><div style="text-align:right;">1株配当</div></div>
+    <div id="price-rows"></div>
+    <div class="modal-footer">
+      <button class="btn btn-light" onclick="closeModal('price-modal')">キャンセル</button>
+      <button class="btn btn-primary" onclick="savePrices()">保存</button>
+    </div>
+  </div>
+</div>
+
+<!-- 保存履歴 -->
+<div class="modal-overlay" id="hist-modal">
+  <div class="modal-box wide">
+    <div class="modal-title">🕘 保存履歴（最大15世代・10分ごと）</div>
+    <div id="hist-body"></div>
+    <div class="modal-footer"><button class="btn btn-light" onclick="closeModal('hist-modal')">閉じる</button></div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+const KEY = 'dividend_portfolio_v1';
+const HIST_KEY = 'dividend_portfolio_hist_v1';
+const BASE_KEY = 'dividend_portfolio_syncbase_v1';
+const SYNC_URL = 'https://script.google.com/macros/s/AKfycbxwL19mAenATUMILRsQYrDL0ThjU2C583Cj729OfzNHEH3drMcZCExYULRp4VGOZ11J/exec';
+const SYNC_KEY = 'dividend_portfolio_data';
+const TAX = 0.20315;
+
+let data; // 業種の定義を読み込んだ後（一番下）で load する
+let editingHoldingId = null, editingWatchId = null, pendingWatchRemove = null;
+let curTab = 'home';
+
+// ===== 金のにわとり（SVG） =====
+function henSvg() {
+  return `<svg viewBox="0 0 120 120" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <radialGradient id="hg" cx="40%" cy="35%" r="70%">
+      <stop offset="0" stop-color="#fff6c8"/><stop offset="0.45" stop-color="#ffd54f"/><stop offset="1" stop-color="#e0a100"/>
+    </radialGradient>
+    <radialGradient id="eg" cx="35%" cy="30%" r="75%">
+      <stop offset="0" stop-color="#fffbe6"/><stop offset="0.5" stop-color="#ffd54f"/><stop offset="1" stop-color="#d49b00"/>
+    </radialGradient>
+    <linearGradient id="wg" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#f6c33b"/><stop offset="1" stop-color="#c98b00"/></linearGradient>
+  </defs>
+  <ellipse cx="60" cy="110" rx="40" ry="5" fill="rgba(0,0,0,0.15)"/>
+  <ellipse cx="97" cy="94" rx="12" ry="15" fill="url(#eg)" stroke="#c48a00" stroke-width="1"/>
+  <ellipse cx="93" cy="88" rx="3" ry="5" fill="#fff" opacity=".7"/>
+  <g fill="url(#wg)">
+    <ellipse cx="22" cy="58" rx="9" ry="17" transform="rotate(-35 22 58)"/>
+    <ellipse cx="17" cy="70" rx="8" ry="14" transform="rotate(-65 17 70)"/>
+  </g>
+  <path d="M54 107 l-4 6 M54 107 l0 7 M54 107 l4 6 M70 107 l-4 6 M70 107 l0 7 M70 107 l4 6" stroke="#f57c00" stroke-width="3" stroke-linecap="round"/>
+  <line x1="54" y1="98" x2="54" y2="107" stroke="#f57c00" stroke-width="3.5" stroke-linecap="round"/>
+  <line x1="70" y1="98" x2="70" y2="107" stroke="#f57c00" stroke-width="3.5" stroke-linecap="round"/>
+  <ellipse cx="58" cy="76" rx="36" ry="27" fill="url(#hg)" stroke="#d29a00" stroke-width="1.2"/>
+  <circle cx="74" cy="44" r="22" fill="url(#hg)" stroke="#d29a00" stroke-width="1.2"/>
+  <g fill="#e53935">
+    <circle cx="64" cy="24" r="6"/><circle cx="73" cy="20" r="7"/><circle cx="82" cy="24" r="6"/>
+  </g>
+  <path d="M94 42 l12 5 l-12 5 z" fill="#ff9800" stroke="#e65100" stroke-width="1" stroke-linejoin="round"/>
+  <ellipse cx="92" cy="57" rx="4" ry="6" fill="#e53935"/>
+  <circle cx="82" cy="40" r="4" fill="#3e2723"/><circle cx="83.5" cy="38.5" r="1.4" fill="#fff"/>
+  <ellipse cx="78" cy="52" rx="5" ry="3" fill="#ff8a80" opacity=".6"/>
+  <path d="M38 74 q14 -12 30 0 q-6 14 -30 0 z" fill="url(#wg)" opacity=".9"/>
+  <path d="M44 76 q8 -5 16 0" stroke="#b07a00" stroke-width="1.2" fill="none"/>
+  <g fill="#fff8d0">
+    <path d="M30 30 l2 5 l5 2 l-5 2 l-2 5 l-2 -5 l-5 -2 l5 -2 z"/>
+    <path d="M108 70 l1.4 3.4 l3.4 1.4 l-3.4 1.4 l-1.4 3.4 l-1.4 -3.4 l-3.4 -1.4 l3.4 -1.4 z"/>
+  </g>
+</svg>`;
+}
+
+// ===== 共通 =====
+function storageOK() { try { localStorage.setItem('__synctest', '1'); localStorage.removeItem('__synctest'); return true; } catch(e) { return false; } }
+function load() {
+  try {
+    return normalize(JSON.parse(localStorage.getItem(KEY)) || {});
+  } catch(e) {
+    return normalize({});
+  }
+}
+function normalize(d) {
+  d = d && typeof d === 'object' ? d : {};
+  if (!Array.isArray(d.holdings)) d.holdings = [];
+  if (!Array.isArray(d.history)) d.history = [];
+  if (!Array.isArray(d.watchlist)) d.watchlist = [];
+  if (typeof d.memo !== 'string') d.memo = '';
+  if (!d.checks || typeof d.checks !== 'object') d.checks = {};
+  d.rules = Object.assign({ stock: 20, cyc: 50, fin: 15 }, d.rules || {});
+  d.sim = d.sim || null;
+  if (!(+d.goal > 0)) d.goal = (d.sim && +d.sim.target > 0) ? +d.sim.target : 1000000;
+  if (d.sim) delete d.sim.target;
+  d.navi = Object.assign({ budget: 100000, minYield: 3.75, hold: false }, d.navi || {});
+  if (!d.priceAt) d.priceAt = 0;
+  // 業種が未設定の銘柄は、知っている名前なら自動で入れる
+  [...d.holdings, ...d.watchlist].forEach(x => { if (!x.sector) x.sector = guessSector(x.name, x.code); });
+  d.holdings.forEach(h => { h.nisa = !!h.nisa; if (!Array.isArray(h.months)) h.months = []; });
+  return d;
+}
+function hasRealData(d) { return !!(d && (d.holdings.length || d.watchlist.length || d.history.length || d.memo)); }
+function save() {
+  data.savedAt = Date.now();
+  try { localStorage.setItem(KEY, JSON.stringify(data)); } catch(e) {}
+  snapshot();
+  cloudAutoSave();
+}
+function toast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  clearTimeout(toast._t);
+  toast._t = setTimeout(() => t.classList.remove('show'), 2000);
+}
+function escapeHtml(s) {
+  return String(s == null ? '' : s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+}
+function fmt(n) { return '¥' + Math.round(n || 0).toLocaleString(); }
+function man(n) { return n >= 10000 ? (Math.round(n / 1000) / 10).toLocaleString() + '万円' : Math.round(n).toLocaleString() + '円'; }
+function hhmm(d) { return d.toLocaleTimeString('ja-JP', { hour: '2-digit', minute: '2-digit' }); }
+function setSyncSt(s) { document.getElementById('syncSt').textContent = s; }
+function pad2(n) { return String(n).padStart(2, '0'); }
+function todayStr() { const d = new Date(); return `${d.getFullYear()}-${pad2(d.getMonth() + 1)}-${pad2(d.getDate())}`; }
+
+// 税引前の年配当 / 税引後
+function annualGross(h) { return (h.qty || 0) * (h.dps || 0); }
+function annualNet(h) { return annualGross(h) * (h.nisa ? 1 : 1 - TAX); }
+function totals() {
+  let value = 0, cost = 0, gross = 0, net = 0;
+  data.holdings.forEach(h => {
+    value += (h.qty || 0) * (h.price || 0);
+    cost += (h.qty || 0) * (h.cost || 0);
+    gross += annualGross(h);
+    net += annualNet(h);
+  });
+  return { value, cost, gross, net };
+}
+
+// ===== タブ =====
+function showTab(name) {
+  curTab = name;
+  document.querySelectorAll('.tab').forEach(t => {
+    const on = t.dataset.tab === name;
+    t.classList.toggle('active', on);
+    if (on) { const bar = t.parentElement; bar.scrollTo({ left: Math.max(0, t.offsetLeft - bar.clientWidth / 2 + t.offsetWidth / 2), behavior: 'smooth' }); }
+  });
+  document.querySelectorAll('.page').forEach(p => p.style.display = p.id === 'page-' + name ? 'block' : 'none');
+  renderCurrent();
+  closeMenu();
+}
+function renderCurrent() {
+  renderDots();
+  if (curTab === 'home') renderHome();
+  if (curTab === 'holdings') renderHoldings();
+  if (curTab === 'dividend') { renderPlan(); renderCalendar(); renderHistory(); }
+  if (curTab === 'watch') { renderNavi(); renderWatch(); }
+  if (curTab === 'check') renderCheckPage();
+  if (curTab === 'balance') renderBalance();
+  if (curTab === 'sim') renderSim();
+  if (curTab === 'memo') document.getElementById('memo-area').value = data.memo;
+}
+function renderDots() {
+  const notYet = planFor(ymOf(new Date())).filter(p => !p.got).length;
+  document.getElementById('dot-div').innerHTML = notYet ? `<span class="dot">${notYet}</span>` : '';
+  const c = navi().length;
+  document.getElementById('dot-watch').innerHTML = c ? `<span class="dot">${c}</span>` : '';
+}
+
+function openModal(id) { document.getElementById(id).classList.add('open'); }
+function closeModal(id) { document.getElementById(id).classList.remove('open'); }
+function toggleMenu(ev) { ev.stopPropagation(); document.getElementById('menu').classList.toggle('open'); }
+function closeMenu() { document.getElementById('menu').classList.remove('open'); }
+document.addEventListener('click', e => { if (!e.target.closest('.menu')) closeMenu(); });
+document.addEventListener('keydown', e => {
+  if (e.key === 'Escape') { document.querySelectorAll('.modal-overlay.open').forEach(m => m.classList.remove('open')); closeMenu(); }
+});
+
+// ===== ホーム =====
+let msgIdx = 0;
+function henMessages() {
+  const t = totals(), msgs = [];
+  if (!data.holdings.length) {
+    msgs.push('はじめまして！金のにわとりのコッコだコケ🐔 まずは「保有銘柄」に持っている株を入れてね。');
+    msgs.push('まだ株がなければ「買い時ナビ」で気になる銘柄を監視するところから始めるコケ。');
+  } else {
+    const ym = ymOf(new Date()), plan = planFor(ym);
+    const sum = plan.reduce((s, p) => s + p.net, 0), notYet = plan.filter(p => !p.got);
+    if (sum > 0) msgs.push(`今月は ${fmt(sum)} の金の卵🥚が届く予定コケ！` + (notYet.length ? `（まだ${notYet.length}件）` : '　ぜんぶ受け取り済みコケ✨'));
+    else {
+      const nx = nextPayMonth();
+      if (nx) msgs.push(`今月の配当はお休みコケ。次は${nx.m}月に ${fmt(nx.sum)} 届く予定だコケ。`);
+    }
+    const pct = data.goal > 0 ? t.net / data.goal * 100 : 0;
+    msgs.push(`年間配当は税引後 ${fmt(t.net)}。目標 ${man(data.goal)} まで ${pct.toFixed(1)}% コケ！コツコツが一番コケ。`);
+    msgs.push(`月にならすと ${fmt(t.net / 12)} のおこづかいを産んでるコケ🥚`);
+    const yr = new Date().getFullYear();
+    const got = data.history.filter(h => (h.date || '').startsWith(String(yr))).reduce((s, h) => s + (+h.amt || 0), 0);
+    if (got > 0) msgs.push(`${yr}年はもう ${fmt(got)} 受け取ったコケ。えらいコケ！`);
+  }
+  const days = data.priceAt ? Math.floor((Date.now() - data.priceAt) / 86400000) : null;
+  if ((data.holdings.length || data.watchlist.length) && (days === null || days >= 7)) msgs.push(days === null ? '株価をまだ一度も更新してないコケ。「📈 株価をまとめて更新」で直すと数字が正確になるコケ。' : `株価が ${days}日前のままコケ。そろそろ更新しよう！`);
+  const c = navi();
+  if (c.length) msgs.push(`買い時候補が ${c.length}件 あるコケ👀 「${c[0].x.name}」が一番手コケ。`);
+  const bw = balanceWarnings();
+  if (bw.length) msgs.push('分散チェックで気になる所があるコケ。「🥧 分散」を見てね。');
+  msgs.push('学長いわく、利回りランキングの上から買うのは罠銘柄に注意コケ。減配しない会社を選ぶコケ。');
+  msgs.push('業種をバラけさせると、不景気でもまとめて減配しにくいコケ。');
+  msgs.push('NISAの配当は非課税。証券会社で「株式数比例配分方式」にしておくのを忘れずにコケ！');
+  msgs.push('暴落は金の卵を安く仕入れるチャンスでもあるコケ。慌てて売らないコケ。');
+  return msgs;
+}
+function nextMsg() { msgIdx++; renderMsg(); }
+function renderMsg() {
+  const m = henMessages();
+  document.getElementById('hen-msg').textContent = m[msgIdx % m.length];
+}
+function nextPayMonth() {
+  const d = new Date();
+  for (let i = 1; i <= 12; i++) {
+    const dt = new Date(d.getFullYear(), d.getMonth() + i, 1);
+    const p = planFor(ymOf(dt)), sum = p.reduce((s, x) => s + x.net, 0);
+    if (sum > 0) return { m: dt.getMonth() + 1, sum };
+  }
+  return null;
+}
+function editGoal() {
+  const v = prompt('年間配当の目標（税引後・円）', data.goal);
+  if (v === null) return;
+  const n = parseFloat(String(v).replace(/[,，円]/g, ''));
+  if (!(n > 0)) { alert('数字で入れてください'); return; }
+  data.goal = n;
+  save();
+  renderCurrent();
+}
+function renderSummary() {
+  const t = totals();
+  const profit = t.value - t.cost;
+  const profitPct = t.cost > 0 ? profit / t.cost * 100 : 0;
+  document.getElementById('stat-value').textContent = fmt(t.value);
+  document.getElementById('stat-cost').textContent = '取得額 ' + fmt(t.cost);
+  const pe = document.getElementById('stat-profit');
+  pe.textContent = (profit >= 0 ? '+' : '') + fmt(profit);
+  pe.className = 'stat-value ' + (profit >= 0 ? 'green' : 'red');
+  document.getElementById('stat-profit-pct').textContent = (profit >= 0 ? '+' : '') + profitPct.toFixed(2) + '%';
+  document.getElementById('stat-dividend').textContent = fmt(t.net);
+  document.getElementById('stat-dividend-month').textContent = `月平均 ${fmt(t.net / 12)}・税引前 ${fmt(t.gross)}`;
+  document.getElementById('stat-yield-cost').textContent = (t.cost > 0 ? t.gross / t.cost * 100 : 0).toFixed(2) + '%';
+  document.getElementById('stat-yield-now').textContent = '時価 ' + (t.value > 0 ? t.gross / t.value * 100 : 0).toFixed(2) + '%';
+}
+function renderHome() {
+  renderSummary();
+  renderMsg();
+  const t = totals();
+  // 株価が古い
+  const days = data.priceAt ? Math.floor((Date.now() - data.priceAt) / 86400000) : null;
+  document.getElementById('stale-box').innerHTML = (data.holdings.length && (days === null || days >= 7))
+    ? `<div class="stale"><span>⏰ 株価の更新が${days === null ? 'まだです' : days + '日前です'}</span><button class="btn btn-gold btn-small" onclick="openPriceModal()">📈 まとめて更新</button></div>` : '';
+  // 目標リング
+  const pct = data.goal > 0 ? Math.min(100, t.net / data.goal * 100) : 0;
+  const R = 52, C = 2 * Math.PI * R;
+  document.getElementById('home-ring').innerHTML = `
+    <svg viewBox="0 0 130 130">
+      <circle cx="65" cy="65" r="${R}" fill="none" stroke="#eceff1" stroke-width="14"/>
+      <circle cx="65" cy="65" r="${R}" fill="none" stroke="#c9a227" stroke-width="14" stroke-linecap="round"
+        stroke-dasharray="${(C * pct / 100).toFixed(1)} ${C.toFixed(1)}" transform="rotate(-90 65 65)"/>
+      <text x="65" y="62" text-anchor="middle" font-size="22" font-weight="bold" fill="#2c5364">${pct.toFixed(1)}%</text>
+      <text x="65" y="82" text-anchor="middle" font-size="10" fill="#90a4ae">達成</text>
+    </svg>
+    <div class="ring-info">
+      目標 <b>${man(data.goal)}</b>／年<br>
+      いま ${fmt(t.net)}（月 ${fmt(t.net / 12)}）<br>
+      あと <b>${fmt(Math.max(0, data.goal - t.net))}</b><br>
+      <span style="font-size:11px;color:#90a4ae;">${yearsToGoalText()}</span>
+    </div>`;
+  // 今月・来月
+  const now = new Date();
+  let html = '';
+  [0, 1].forEach(i => {
+    const dt = new Date(now.getFullYear(), now.getMonth() + i, 1), ym = ymOf(dt);
+    const p = planFor(ym), sum = p.reduce((s, x) => s + x.net, 0);
+    html += `<div style="font-weight:bold;color:#2c5364;margin:${i ? 12 : 0}px 0 4px;">${dt.getMonth() + 1}月 ${sum ? fmt(sum) : '— なし'}</div>`;
+    p.forEach(x => {
+      html += `<div class="plan-row" style="padding:6px 2px;"><div>${escapeHtml(x.h.name)}</div><div class="amt">${fmt(x.net)}</div>
+        <div>${x.got ? '<span class="got">✓ 受取済</span>' : (i === 0 ? `<button class="btn btn-gold btn-small" onclick="receive(${x.h.id},'${ym}')">受け取った</button>` : '')}</div></div>`;
+    });
+  });
+  document.getElementById('home-plan').innerHTML = data.holdings.length ? html : '<div class="note">保有銘柄を入れると予定が出ます</div>';
+  // 月別グラフ
+  const monthly = monthlyNet();
+  document.getElementById('home-month-chart').innerHTML = barChart(
+    monthly.slice(1).map((v, i) => ({ label: (i + 1) + '', v, hi: i === now.getMonth() })), '月');
+  // 年別実績
+  const byYear = {};
+  data.history.forEach(h => { const y = (h.date || '').slice(0, 4); if (y) byYear[y] = (byYear[y] || 0) + (+h.amt || 0); });
+  const ys = Object.keys(byYear).sort();
+  const yr = String(now.getFullYear());
+  const items = ys.map(y => ({ label: y, v: byYear[y], hi: y === yr }));
+  if (t.net > 0) items.push({ label: '見込', v: t.net, ghost: true });
+  document.getElementById('home-year-chart').innerHTML = items.length > (t.net > 0 ? 1 : 0)
+    ? barChart(items, '') + '<div class="note" style="margin-top:6px;">点線＝今の保有のまま1年もった場合の見込み（税引後）</div>'
+    : '<div class="note">配当を受け取って「受け取った」を押すと、年ごとの伸びがここに出ます。' + (t.net > 0 ? `<br>今の見込みは年 ${fmt(t.net)}（税引後）です。` : '') + '</div>';
+  // 買い時候補
+  const c = navi().slice(0, 3);
+  document.getElementById('home-cand').innerHTML = c.length
+    ? c.map(x => `<div class="cand-mini" onclick="showTab('watch')"><span><b>${escapeHtml(x.x.name)}</b> ${x.reasons.map(r => `<span class="chip ${r[1]}">${r[0]}</span>`).join('')}</span><span style="white-space:nowrap;">${x.x.price ? '¥' + x.x.price.toLocaleString() : ''}</span></div>`).join('')
+    : '<div class="note">いまは候補なし。監視リストに銘柄と目標株価を入れておくと、届いたときにここへ出ます。</div>';
+}
+function yearsToGoalText() {
+  const s = data.sim;
+  if (!s || !(s.monthly > 0)) return '「目標シミュ」で毎月の買い付け額を入れると、届く年がわかります';
+  const r = simulate(s);
+  if (r.reached === 0) return '🎉 目標達成済み！';
+  return r.reached ? `毎月${man(s.monthly)}買うと ${r.reached}年後（${new Date().getFullYear() + r.reached}年）に到達見込み` : `毎月${man(s.monthly)}だと${s.years}年では届かない見込み`;
+}
+// 汎用の棒グラフ
+function barChart(items, unit) {
+  const W = 360, H = 120, top = 16, n = items.length;
+  if (!n) return '';
+  const maxV = Math.max(...items.map(x => x.v), 1);
+  const bw = W / n;
+  let s = `<svg viewBox="0 0 ${W} ${H + 18}" style="width:100%;height:auto;">`;
+  items.forEach((x, i) => {
+    const h = x.v / maxV * (H - top);
+    const X = i * bw + bw * 0.15, w = bw * 0.7, Y = H - h;
+    if (x.ghost) s += `<rect x="${X}" y="${Y}" width="${w}" height="${h}" rx="3" fill="#fff8e1" stroke="#c9a227" stroke-dasharray="4 3"/>`;
+    else s += `<rect x="${X}" y="${Y}" width="${w}" height="${Math.max(h, x.v > 0 ? 1 : 0)}" rx="3" fill="${x.hi ? '#c9a227' : '#2c5364'}"><title>${x.label}${unit} ${fmt(x.v)}</title></rect>`;
+    if (x.v > 0 && n <= 12) s += `<text x="${X + w / 2}" y="${Y - 3}" font-size="${n > 8 ? 8 : 10}" text-anchor="middle" fill="#607d8b">${x.v >= 10000 ? (x.v / 10000).toFixed(x.v >= 100000 ? 0 : 1) + '万' : Math.round(x.v / 1000) + '千'}</text>`;
+    s += `<text x="${X + w / 2}" y="${H + 13}" font-size="10" text-anchor="middle" fill="#888">${x.label}</text>`;
+  });
+  return s + '</svg>';
+}
+
+// ===== 配当予定 =====
+function ymOf(d) { return d.getFullYear() + '-' + (d.getMonth() + 1); }
+function planFor(ym) {
+  const m = +ym.split('-')[1];
+  return data.holdings.filter(h => h.qty > 0 && h.dps > 0 && (h.months || []).includes(m)).map(h => {
+    const per = annualGross(h) / h.months.length;
+    return {
+      h, gross: per, net: per * (h.nisa ? 1 : 1 - TAX),
+      got: data.history.find(x => x.hid === h.id && x.ym === ym) || null
+    };
+  });
+}
+function monthlyNet() {
+  const monthly = Array(13).fill(0);
+  data.holdings.forEach(h => {
+    if (!h.months || !h.months.length) return;
+    h.months.forEach(m => monthly[m] += annualNet(h) / h.months.length);
+  });
+  return monthly;
+}
+let planOffset = 0;
+function planShift(n) { planOffset += n; renderPlan(); }
+function renderPlan() {
+  const now = new Date(), dt = new Date(now.getFullYear(), now.getMonth() + planOffset, 1), ym = ymOf(dt);
+  document.getElementById('plan-label').textContent = `${dt.getFullYear()}年${dt.getMonth() + 1}月`;
+  const p = planFor(ym);
+  if (!p.length) {
+    document.getElementById('plan-list').innerHTML = '<div class="empty"><div class="empty-icon">🥚</div><div>この月の配当予定はありません</div></div>';
+    return;
+  }
+  const sum = p.reduce((s, x) => s + x.net, 0), got = p.filter(x => x.got).reduce((s, x) => s + (+x.got.amt || 0), 0);
+  let html = `<div class="note">予定 ${fmt(sum)}（税引後）　受取済 ${fmt(got)}</div>`;
+  p.forEach(x => {
+    html += `<div class="plan-row">
+      <div>${escapeHtml(x.h.name)} ${x.h.nisa ? '<span class="badge nisa">NISA</span>' : ''}<div class="sub">${x.h.qty.toLocaleString()}株 × ${x.h.dps}円 ÷ 年${x.h.months.length}回</div></div>
+      <div class="amt">${fmt(x.got ? x.got.amt : x.net)}<div class="sub">${x.got ? '実際の受取額' : '税引前 ' + fmt(x.gross)}</div></div>
+      <div>${x.got ? `<span class="got" onclick="undoReceive(${x.got.id})" title="取り消し">✓ 受取済</span>` : `<button class="btn btn-gold btn-small" onclick="receive(${x.h.id},'${ym}')">受け取った</button>`}</div>
+    </div>`;
+  });
+  document.getElementById('plan-list').innerHTML = html;
+}
+function receive(hid, ym) {
+  const h = data.holdings.find(x => x.id === hid);
+  if (!h) return;
+  const per = Math.round(annualNet(h) / h.months.length);
+  const v = prompt(`${h.name} の受取額（税引後・円）\n通帳や証券口座の金額と違えば直してください`, per);
+  if (v === null) return;
+  const amt = parseFloat(String(v).replace(/[,，円]/g, ''));
+  if (!(amt > 0)) { alert('数字で入れてください'); return; }
+  const [y, m] = ym.split('-').map(Number);
+  const now = new Date();
+  const date = (now.getFullYear() === y && now.getMonth() + 1 === m) ? todayStr() : `${y}-${pad2(m)}-15`;
+  data.history.push({ id: Date.now(), date, name: h.name, amt, qty: h.qty, hid: h.id, ym });
+  data.history.sort((a, b) => b.date.localeCompare(a.date));
+  save();
+  renderCurrent();
+  toast(`🥚 ${h.name} ${fmt(amt)} を記録しました`);
+}
+function undoReceive(id) {
+  if (!confirm('この受取記録を取り消しますか？')) return;
+  data.history = data.history.filter(x => x.id !== id);
+  save();
+  renderCurrent();
+}
+
+// ===== 保有銘柄 =====
+function openHoldingModal(id) {
+  editingHoldingId = null;
+  pendingWatchRemove = null;
+  ['h-code','h-name','h-qty','h-cost','h-price','h-dps','h-months','h-memo'].forEach(k => document.getElementById(k).value = '');
+  document.getElementById('h-sector').value = '未設定';
+  document.getElementById('h-nisa').checked = false;
+  document.getElementById('holding-modal-title').textContent = '📊 銘柄を追加';
+  document.getElementById('h-save-btn').textContent = '追加';
+  if (id) {
+    const h = data.holdings.find(x => x.id === id);
+    if (h) {
+      editingHoldingId = id;
+      document.getElementById('h-code').value = h.code;
+      document.getElementById('h-name').value = h.name;
+      document.getElementById('h-qty').value = h.qty;
+      document.getElementById('h-cost').value = h.cost;
+      document.getElementById('h-price').value = h.price;
+      document.getElementById('h-dps').value = h.dps;
+      document.getElementById('h-months').value = (h.months || []).join(',');
+      document.getElementById('h-memo').value = h.memo || '';
+      document.getElementById('h-sector').value = h.sector || '未設定';
+      document.getElementById('h-nisa').checked = !!h.nisa;
+      document.getElementById('holding-modal-title').textContent = '📊 銘柄を編集';
+      document.getElementById('h-save-btn').textContent = '保存';
+    }
+  }
+  openModal('holding-modal');
+}
+function saveHolding() {
+  const name = document.getElementById('h-name').value.trim();
+  if (!name) { alert('銘柄名を入力してください'); return; }
+  const old = editingHoldingId ? data.holdings.find(x => x.id === editingHoldingId) : null;
+  const obj = {
+    id: editingHoldingId || Date.now(),
+    code: document.getElementById('h-code').value.trim(),
+    name: name,
+    qty: parseFloat(document.getElementById('h-qty').value) || 0,
+    cost: parseFloat(document.getElementById('h-cost').value) || 0,
+    price: parseFloat(document.getElementById('h-price').value) || 0,
+    dps: parseFloat(document.getElementById('h-dps').value) || 0,
+    months: document.getElementById('h-months').value.replace(/[０-９]/g, c => String.fromCharCode(c.charCodeAt(0) - 0xFEE0))
+      .split(/[,，、\s]+/).map(s => parseInt(s)).filter(n => n >= 1 && n <= 12),
+    memo: document.getElementById('h-memo').value.trim(),
+    sector: document.getElementById('h-sector').value,
+    nisa: document.getElementById('h-nisa').checked
+  };
+  obj.months = [...new Set(obj.months)].sort((a, b) => a - b);
+  if (obj.sector === '未設定') obj.sector = guessSector(obj.name, obj.code);
+  // 銘柄チェックの記録をコード・名前の変更に合わせて引き継ぐ
+  if (old && stockKey(old) !== stockKey(obj) && data.checks[stockKey(old)] && !data.checks[stockKey(obj)]) {
+    data.checks[stockKey(obj)] = data.checks[stockKey(old)];
+    delete data.checks[stockKey(old)];
+  }
+  if (old) data.holdings[data.holdings.indexOf(old)] = obj;
+  else data.holdings.push(obj);
+  if (pendingWatchRemove) {
+    data.watchlist = data.watchlist.filter(x => x.id !== pendingWatchRemove);
+    pendingWatchRemove = null;
+  }
+  save();
+  closeModal('holding-modal');
+  renderCurrent();
+}
+function deleteHolding(id, ev) {
+  ev.stopPropagation();
+  if (!confirm('この銘柄を削除しますか？')) return;
+  data.holdings = data.holdings.filter(x => x.id !== id);
+  save();
+  renderCurrent();
+}
+function renderHoldings() {
+  const list = document.getElementById('holdings-list');
+  if (!data.holdings.length) {
+    list.innerHTML = '<div class="empty"><div class="empty-icon">📊</div><div>銘柄を追加してください</div></div>';
+    return;
+  }
+  let html = '<div class="scroll-x"><table class="stock-table"><tr>' +
+    '<th>銘柄</th><th>株数</th><th>取得</th><th>現在</th><th>評価額</th>' +
+    '<th>損益</th><th>年配当</th><th>利回り</th><th></th></tr>';
+  data.holdings.forEach(h => {
+    const value = h.qty * h.price, cost = h.qty * h.cost, profit = value - cost;
+    const yieldNow = h.price > 0 ? h.dps / h.price * 100 : 0;
+    html += `<tr onclick="openHoldingModal(${h.id})">
+      <td class="name">${escapeHtml(h.name)} ${checkBadge(h)} ${h.nisa ? '<span class="badge nisa">NISA</span>' : ''}<br><span class="code">${escapeHtml(h.code)} ${escapeHtml(h.sector || '')}</span></td>
+      <td>${h.qty.toLocaleString()}</td>
+      <td>¥${h.cost.toLocaleString()}</td>
+      <td>¥${h.price.toLocaleString()}</td>
+      <td>${fmt(value)}</td>
+      <td class="profit-cell ${profit >= 0 ? 'plus' : 'minus'}">${profit >= 0 ? '+' : ''}${fmt(profit)}</td>
+      <td>${fmt(annualGross(h))}</td>
+      <td class="yield-cell">${yieldNow.toFixed(2)}%</td>
+      <td><button class="delete-btn" onclick="deleteHolding(${h.id}, event)">✕</button></td>
+    </tr>`;
+  });
+  const t = totals();
+  html += `<tr class="total"><td class="name">合計 ${data.holdings.length}銘柄</td><td></td><td></td><td></td><td>${fmt(t.value)}</td>
+    <td class="profit-cell ${t.value - t.cost >= 0 ? 'plus' : 'minus'}">${t.value - t.cost >= 0 ? '+' : ''}${fmt(t.value - t.cost)}</td>
+    <td>${fmt(t.gross)}</td><td class="yield-cell">${(t.value > 0 ? t.gross / t.value * 100 : 0).toFixed(2)}%</td><td></td></tr>`;
+  list.innerHTML = html + '</table></div>';
+}
+
+// ===== 株価まとめて更新 =====
+function openPriceModal() {
+  const rows = [
+    ...data.holdings.map(x => ({ x, kind: 'h', from: '保有' })),
+    ...data.watchlist.map(x => ({ x, kind: 'w', from: '監視' }))
+  ];
+  if (!rows.length) { toast('先に銘柄を入れてください'); return; }
+  document.getElementById('price-rows').innerHTML = rows.map(r => {
+    const c = encodeURIComponent((r.x.code || '').trim());
+    const links = r.x.code ? `<a href="https://kabutan.jp/stock/?code=${c}" target="_blank" rel="noopener">株探</a><a href="https://finance.yahoo.co.jp/quote/${c}.T" target="_blank" rel="noopener">Yahoo</a>` : '<span style="font-size:11px;color:#aaa;">コード未入力</span>';
+    return `<div class="px-row" data-kind="${r.kind}" data-id="${r.x.id}">
+      <div><b>${escapeHtml(r.x.name)}</b> <span style="font-size:10px;color:#90a4ae;">${r.from}</span><br>${links}</div>
+      <input type="number" step="0.1" inputmode="decimal" class="px-price" value="${r.x.price || ''}" placeholder="—">
+      <input type="number" step="0.1" inputmode="decimal" class="px-dps" value="${r.x.dps || ''}" placeholder="—">
+    </div>`;
+  }).join('');
+  openModal('price-modal');
+}
+function savePrices() {
+  let changed = 0;
+  document.querySelectorAll('#price-rows .px-row').forEach(row => {
+    const list = row.dataset.kind === 'h' ? data.holdings : data.watchlist;
+    const x = list.find(v => String(v.id) === row.dataset.id);
+    if (!x) return;
+    const p = parseFloat(row.querySelector('.px-price').value) || 0;
+    const d = parseFloat(row.querySelector('.px-dps').value) || 0;
+    if (p !== (x.price || 0)) { x.price = p; changed++; }
+    if (d !== (x.dps || 0)) { x.dps = d; changed++; }
+  });
+  data.priceAt = Date.now();
+  save();
+  closeModal('price-modal');
+  renderCurrent();
+  toast(changed ? `📈 ${changed}か所を更新しました` : '📈 更新日だけ今日にしました');
+}
+
+// ===== 受取履歴 =====
+function openHistoryModal() {
+  document.getElementById('hist-date').value = todayStr();
+  ['hist-name','hist-amt','hist-qty'].forEach(k => document.getElementById(k).value = '');
+  document.getElementById('name-list').innerHTML = data.holdings.map(h => `<option value="${escapeHtml(h.name)}">`).join('');
+  openModal('history-modal');
+}
+function saveHistory() {
+  const name = document.getElementById('hist-name').value.trim();
+  const amt = parseFloat(document.getElementById('hist-amt').value);
+  if (!name || !amt) { alert('銘柄名と金額を入力'); return; }
+  data.history.push({
+    id: Date.now(),
+    date: document.getElementById('hist-date').value,
+    name: name,
+    amt: amt,
+    qty: parseFloat(document.getElementById('hist-qty').value) || 0
+  });
+  data.history.sort((a, b) => b.date.localeCompare(a.date));
+  save();
+  closeModal('history-modal');
+  renderCurrent();
+}
+function deleteHistory(id) {
+  if (!confirm('削除しますか？')) return;
+  data.history = data.history.filter(x => x.id !== id);
+  save();
+  renderCurrent();
+}
+function renderHistory() {
+  const list = document.getElementById('history-list');
+  if (!data.history.length) {
+    list.innerHTML = '<div class="empty"><div class="empty-icon">💸</div><div>配当受取を記録しましょう</div></div>';
+    return;
+  }
+  const byYear = {};
+  data.history.forEach(h => { const y = h.date.slice(0, 4); byYear[y] = (byYear[y] || 0) + h.amt; });
+  let summary = '<div style="margin-bottom:10px;display:flex;gap:8px;flex-wrap:wrap;">';
+  Object.entries(byYear).sort((a, b) => b[0].localeCompare(a[0])).forEach(([y, amt]) => {
+    summary += `<span class="chip gold">${y}年 ${fmt(amt)}</span>`;
+  });
+  summary += '</div>';
+  let html = '<div class="scroll-x"><table class="stock-table"><tr><th>受取日</th><th>銘柄</th><th>株数</th><th>受取額</th><th></th></tr>';
+  data.history.forEach(h => {
+    html += `<tr>
+      <td class="name">${escapeHtml(h.date)}</td>
+      <td style="text-align:left;">${escapeHtml(h.name)}</td>
+      <td>${h.qty || ''}</td>
+      <td class="profit-cell plus">${fmt(h.amt)}</td>
+      <td><button class="delete-btn" onclick="deleteHistory(${h.id})">✕</button></td>
+    </tr>`;
+  });
+  list.innerHTML = summary + html + '</table></div>';
+}
+
+// ===== 配当カレンダー =====
+function renderCalendar() {
+  const names = Array(13).fill(null).map(() => []);
+  data.holdings.forEach(h => (h.months || []).forEach(m => names[m].push(h.name)));
+  const monthly = monthlyNet(), nowM = new Date().getMonth() + 1;
+  let html = '';
+  for (let m = 1; m <= 12; m++) {
+    const has = monthly[m] > 0;
+    html += `<div class="month-card${has ? ' has-dividend' : ''}${m === nowM ? ' now' : ''}">
+      <div class="month-num">${m}月</div>
+      <div class="month-amt">${has ? fmt(monthly[m]) : '—'}</div>
+      <div class="month-stocks">${names[m].map(s => escapeHtml(s)).join('<br>') || '—'}</div>
+    </div>`;
+  }
+  document.getElementById('calendar-grid').innerHTML = html;
+}
+
+// ===== 監視リスト =====
+function openWatchModal(id) {
+  editingWatchId = null;
+  ['w-code','w-name','w-price','w-dps','w-target','w-memo'].forEach(k => document.getElementById(k).value = '');
+  document.getElementById('w-sector').value = '未設定';
+  document.getElementById('watch-modal-title').textContent = '👀 監視銘柄を追加';
+  document.getElementById('w-save-btn').textContent = '追加';
+  const w = id ? data.watchlist.find(x => x.id === id) : null;
+  if (w) {
+    editingWatchId = id;
+    document.getElementById('w-code').value = w.code;
+    document.getElementById('w-name').value = w.name;
+    document.getElementById('w-price').value = w.price || '';
+    document.getElementById('w-dps').value = w.dps || '';
+    document.getElementById('w-target').value = w.target || '';
+    document.getElementById('w-memo').value = w.memo || '';
+    document.getElementById('w-sector').value = w.sector || '未設定';
+    document.getElementById('watch-modal-title').textContent = '👀 監視銘柄を編集';
+    document.getElementById('w-save-btn').textContent = '保存';
+  }
+  openModal('watch-modal');
+}
+function saveWatch() {
+  const name = document.getElementById('w-name').value.trim();
+  if (!name) { alert('銘柄名を入力'); return; }
+  const obj = {
+    id: editingWatchId || Date.now(),
+    code: document.getElementById('w-code').value.trim(),
+    name: name,
+    price: parseFloat(document.getElementById('w-price').value) || 0,
+    dps: parseFloat(document.getElementById('w-dps').value) || 0,
+    target: parseFloat(document.getElementById('w-target').value) || 0,
+    memo: document.getElementById('w-memo').value.trim(),
+    sector: document.getElementById('w-sector').value
+  };
+  if (obj.sector === '未設定') obj.sector = guessSector(obj.name, obj.code);
+  const i = data.watchlist.findIndex(x => x.id === editingWatchId);
+  if (i >= 0) data.watchlist[i] = obj; else data.watchlist.push(obj);
+  save();
+  closeModal('watch-modal');
+  renderCurrent();
+}
+function deleteWatch(id, ev) {
+  if (ev) ev.stopPropagation();
+  if (!confirm('削除しますか？')) return;
+  data.watchlist = data.watchlist.filter(x => x.id !== id);
+  save();
+  renderCurrent();
+}
+function moveToHoldings(id, ev) {
+  if (ev) ev.stopPropagation();
+  const w = data.watchlist.find(x => x.id === id);
+  if (!w) return;
+  openHoldingModal();
+  document.getElementById('h-code').value = w.code;
+  document.getElementById('h-name').value = w.name;
+  document.getElementById('h-cost').value = w.price || '';
+  document.getElementById('h-price').value = w.price || '';
+  document.getElementById('h-dps').value = w.dps || '';
+  document.getElementById('h-memo').value = w.memo === '参考候補' ? '' : (w.memo || '');
+  document.getElementById('h-sector').value = w.sector || '未設定';
+  document.getElementById('holding-modal-title').textContent = '🛒 買った！（監視→保有へ）';
+  document.getElementById('h-save-btn').textContent = '保有に追加';
+  pendingWatchRemove = id;   // 保存したときだけ監視リストから外す
+}
+function renderWatch() {
+  const list = document.getElementById('watch-list');
+  if (!data.watchlist.length) {
+    list.innerHTML = '<div class="empty"><div class="empty-icon">👀</div><div>気になる銘柄を追加</div></div>';
+    return;
+  }
+  let html = '<div class="scroll-x"><table class="stock-table"><tr>' +
+    '<th>銘柄</th><th>現在</th><th>目標</th><th>差</th><th>配当</th><th>利回り</th><th></th></tr>';
+  data.watchlist.forEach(w => {
+    const y = w.price > 0 ? (w.dps / w.price * 100) : 0;
+    const diff = w.target > 0 ? (w.price - w.target) : 0;
+    const reached = diff <= 0 && w.target > 0 && w.price > 0;
+    html += `<tr onclick="openWatchModal(${w.id})">
+      <td class="name">${escapeHtml(w.name)} ${checkBadge(w)}<br><span class="code">${escapeHtml(w.code)} ${escapeHtml(w.sector || '')} ${w.memo ? '・' + escapeHtml(w.memo) : ''}</span></td>
+      <td>${w.price ? '¥' + w.price.toLocaleString() : '—'}</td>
+      <td>${w.target ? '¥' + w.target.toLocaleString() : '—'}</td>
+      <td class="profit-cell ${reached ? 'plus' : 'minus'}">${!w.target || !w.price ? '—' : reached ? '🎯 達成' : '+' + fmt(diff)}</td>
+      <td>${w.dps ? '¥' + w.dps : '—'}</td>
+      <td class="yield-cell">${w.price && w.dps ? y.toFixed(2) + '%' : '—'}</td>
+      <td>
+        <button class="btn btn-gold btn-small" onclick="moveToHoldings(${w.id}, event)">買</button>
+        <button class="delete-btn" onclick="deleteWatch(${w.id}, event)">✕</button>
+      </td>
+    </tr>`;
+  });
+  list.innerHTML = html + '</table></div><div class="note" style="margin-top:6px;">行をタップで編集（目標株価もここで）。「買」で保有銘柄へ移せます。</div>';
+}
+
+// ===== 買い時ナビ =====
+function saveNavi() {
+  data.navi.budget = parseFloat(document.getElementById('navi-budget').value) || 0;
+  data.navi.minYield = parseFloat(document.getElementById('navi-yield').value) || 0;
+  data.navi.hold = document.getElementById('navi-hold').checked;
+  save();
+  renderCurrent();
+}
+function navi() {
+  if (!data) return [];
+  const pool = data.watchlist.map(x => ({ x, kind: 'w' }));
+  if (data.navi.hold) data.holdings.forEach(x => pool.push({ x, kind: 'h' }));
+  const out = [];
+  pool.forEach(p => {
+    const x = p.x;
+    if (!(x.price > 0)) return;
+    const y = x.dps > 0 ? x.dps / x.price * 100 : 0;
+    const sc = scoreOf(x);
+    if (sc && sc.pt < 5) return;                      // チェックで×の銘柄は外す
+    const reached = p.kind === 'w' && x.target > 0 && x.price <= x.target;
+    const high = data.navi.minYield > 0 && y >= data.navi.minYield;
+    if (!reached && !high) return;
+    const reasons = [];
+    if (reached) reasons.push(['🎯 目標株価以下', 'green']);
+    if (high) reasons.push([`💰 利回り${y.toFixed(2)}%`, 'gold']);
+    if (sc && sc.pt >= 7) reasons.push([`✅ チェック${sc.pt}点`, 'green']);
+    else if (sc) reasons.push([`△ チェック${sc.pt}点`, 'red']);
+    else reasons.push(['🔍 未チェック', '']);
+    if (p.kind === 'h') reasons.unshift(['買い増し', 'purple']);
+    const rank = (reached ? 2 : 0) + (high ? 1 : 0) + (sc && sc.pt >= 7 ? 1.5 : 0) + y / 100;
+    out.push({ ...p, y, sc, reasons, rank });
+  });
+  return out.sort((a, b) => b.rank - a.rank);
+}
+function sectorShare(sector) {
+  const total = data.holdings.reduce((s, h) => s + annualGross(h), 0);
+  if (!(total > 0)) return 0;
+  return data.holdings.filter(h => (h.sector || '未設定') === sector).reduce((s, h) => s + annualGross(h), 0) / total * 100;
+}
+let naviRows = [];
+function naviCheck(i) { ckSel = stockKey(naviRows[i].x); showTab('check'); window.scrollTo(0, 0); }
+function renderNavi() {
+  document.getElementById('navi-budget').value = data.navi.budget;
+  document.getElementById('navi-yield').value = data.navi.minYield;
+  document.getElementById('navi-hold').checked = data.navi.hold;
+  const c = navi(), budget = data.navi.budget;
+  if (!c.length) {
+    document.getElementById('cand-list').innerHTML = '<div class="empty"><div class="empty-icon">🐔</div><div>いまは買い時候補なし。あせらず待つのも投資コケ。</div></div>';
+    return;
+  }
+  naviRows = c;
+  document.getElementById('cand-list').innerHTML = c.map((r, i) => {
+    const x = r.x, unit = x.price * 100;
+    const units = budget > 0 ? Math.floor(budget / unit) : 0;
+    const shares = budget > 0 ? Math.floor(budget / x.price) : 0;
+    let buy;
+    if (!(budget > 0)) buy = `100株で ${fmt(unit)}`;
+    else if (units > 0) buy = `予算 ${fmt(budget)} で <b>${units * 100}株</b>（${fmt(units * unit)}）→ 年配当 +${fmt(units * 100 * x.dps * (1 - TAX))}（税引後）`;
+    else buy = `100株は ${fmt(unit)} で予算オーバー。1株から買えるサービスなら <b>${shares}株</b>（${fmt(shares * x.price)}）→ 年配当 +${fmt(shares * x.dps * (1 - TAX))}`;
+    const share = sectorShare(x.sector || '未設定');
+    const over = r.kind === 'w' && share > 0 ? `<div class="note" style="margin:6px 0 0;">${share > data.rules.stock ? '⚠️' : 'ℹ️'} 同じ業種（${escapeHtml(x.sector)}）がいま配当の ${share.toFixed(0)}%</div>` : '';
+    return `<div class="cand-card">
+      <div class="top"><span class="nm">${escapeHtml(x.name)} <span style="font-size:11px;color:#90a4ae;">${escapeHtml(x.code || '')}</span></span>
+        <span class="px">株価 ¥${x.price.toLocaleString()}${r.kind === 'w' && x.target ? `／目標 ¥${x.target.toLocaleString()}` : ''}・配当 ¥${x.dps || 0}</span></div>
+      <div>${r.reasons.map(t => `<span class="chip ${t[1]}">${t[0]}</span>`).join('')}</div>
+      <div class="buy">🛒 ${buy}</div>${over}
+      <div class="acts">
+        ${r.kind === 'w' ? `<button class="btn btn-gold btn-small" onclick="moveToHoldings(${x.id})">買った！保有へ</button>` : `<button class="btn btn-gold btn-small" onclick="openHoldingModal(${x.id})">買い増した（株数を直す）</button>`}
+        <button class="btn btn-light btn-small" onclick="naviCheck(${i})">🔍 チェック</button>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+// === 参考候補をまとめて監視リストへ ===
+const CANDIDATES = [
+  ['9433','KDDI'],['9432','NTT'],['8058','三菱商事'],['8001','伊藤忠商事'],
+  ['8306','三菱UFJフィナンシャル・グループ'],['8316','三井住友フィナンシャルグループ'],['8766','東京海上ホールディングス'],
+  ['2914','JT（日本たばこ産業）'],['1605','INPEX'],['8591','オリックス'],['8593','三菱HCキャピタル'],
+  ['4502','武田薬品工業'],['1928','積水ハウス'],['5108','ブリヂストン'],
+  ['1489','NF日経高配当株50 ETF'],['1478','iシェアーズ MSCIジャパン高配当利回り ETF']
+];
+function addCandidates() {
+  const have = [...data.holdings, ...data.watchlist];
+  const add = CANDIDATES.filter(([c, n]) => !have.some(x => x.code === c || x.name === n));
+  if (!add.length) { toast('すでに全部入っています'); return; }
+  if (!confirm(`高配当株でよく名前の挙がる ${add.length} 銘柄を監視リストに入れます。\n（学長の推奨リストではありません。株価・配当は自分で入れてください）`)) return;
+  let id = Date.now();
+  add.forEach(([c, n]) => data.watchlist.push({
+    id: id++, code: c, name: n, price: 0, dps: 0, target: 0,
+    memo: '参考候補', sector: guessSector(n, c)
+  }));
+  save();
+  renderCurrent();
+  toast(`${add.length}銘柄を追加しました`);
+}
+
+// ===== 業種 =====
+// type: D=ディフェンシブ C=景気敏感 F=金融 E=ETF・投信 O=その他
+const SECTORS = [
+  ['通信','D'],['食品・たばこ','D'],['医薬品','D'],['電力・ガス','D'],['小売・サービス','D'],['陸運・インフラ','D'],
+  ['銀行','F'],['保険','F'],['証券・その他金融','F'],['リース','F'],
+  ['商社','C'],['資源・エネルギー','C'],['鉄鋼・非鉄','C'],['化学・素材','C'],['自動車・機械','C'],['建設・不動産','C'],['海運','C'],['電機・精密','C'],
+  ['ETF・投信','E'],['その他','O'],['未設定','O']
+];
+const TYPE_LABEL = { D: 'ディフェンシブ', C: '景気敏感', F: '金融', E: 'ETF・投信', O: 'その他・未設定' };
+const TYPE_COLOR = { D: '#43a047', C: '#fb8c00', F: '#1e88e5', E: '#8e24aa', O: '#90a4ae' };
+function sectorType(s) { const f = SECTORS.find(x => x[0] === s); return f ? f[1] : 'O'; }
+const KNOWN = {
+  '9433':'通信','9432':'通信','9434':'通信','2914':'食品・たばこ','4502':'医薬品','4503':'医薬品',
+  '8058':'商社','8001':'商社','8031':'商社','8053':'商社','8002':'商社','2768':'商社',
+  '8306':'銀行','8316':'銀行','8411':'銀行','8766':'保険','8725':'保険','8630':'保険','8750':'保険',
+  '8591':'リース','8593':'リース','8604':'証券・その他金融','1605':'資源・エネルギー','5020':'資源・エネルギー',
+  '7203':'自動車・機械','7267':'自動車・機械','5108':'自動車・機械','1928':'建設・不動産','1925':'建設・不動産',
+  '9101':'海運','9104':'海運','9107':'海運','5401':'鉄鋼・非鉄','4188':'化学・素材','4005':'化学・素材',
+  '1489':'ETF・投信','1478':'ETF・投信','1577':'ETF・投信','2564':'ETF・投信'
+};
+const KNOWN_NAME = [
+  ['KDDI','通信'],['NTT','通信'],['ソフトバンク','通信'],['JT','食品・たばこ'],['日本たばこ','食品・たばこ'],['武田','医薬品'],
+  ['三菱商事','商社'],['伊藤忠','商社'],['三井物産','商社'],['住友商事','商社'],['丸紅','商社'],['双日','商社'],
+  ['三菱UFJ','銀行'],['三井住友FG','銀行'],['みずほ','銀行'],['東京海上','保険'],['MS&AD','保険'],['SOMPO','保険'],['第一生命','保険'],
+  ['オリックス','リース'],['三菱HC','リース'],['INPEX','資源・エネルギー'],['ENEOS','資源・エネルギー'],
+  ['トヨタ','自動車・機械'],['ホンダ','自動車・機械'],['ブリヂストン','自動車・機械'],['積水ハウス','建設・不動産'],['大和ハウス','建設・不動産'],
+  ['日本郵船','海運'],['商船三井','海運'],['川崎汽船','海運'],['ETF','ETF・投信'],['高配当50','ETF・投信']
+];
+function guessSector(name, code) {
+  if (code && KNOWN[String(code).trim()]) return KNOWN[String(code).trim()];
+  const hit = KNOWN_NAME.find(([k]) => String(name || '').includes(k));
+  return hit ? hit[1] : '未設定';
+}
+function fillSectorSelects() {
+  const opts = SECTORS.map(([s, t]) => `<option value="${s}">${s}（${TYPE_LABEL[t].replace('・未設定','')}）</option>`).join('');
+  document.querySelectorAll('.sector-select').forEach(el => el.innerHTML = opts);
+}
+
+// ===== 銘柄チェック（学長流8指標） =====
+const CRITERIA = [
+  { k: 'sales',  label: '① 売上高', hint: '激しく増減せず、右肩上がりか', type: 'ox' },
+  { k: 'eps',    label: '② EPS（1株利益）', hint: '右肩上がりか', type: 'ox' },
+  { k: 'opm',    label: '③ 営業利益率', hint: '10%以上で優秀', type: 'num', unit: '%' },
+  { k: 'equity', label: '④ 自己資本比率', hint: '40%以上・60%で安心・80%で優良（銀行・保険は対象外）', type: 'num', unit: '%' },
+  { k: 'cf',     label: '⑤ 営業キャッシュフロー', hint: '毎年黒字（10年で赤字ゼロ）', type: 'ox' },
+  { k: 'cash',   label: '⑥ 現金等', hint: '長い目で増えているか', type: 'ox' },
+  { k: 'dps',    label: '⑦ 1株配当', hint: '減配・無配がないか（リーマン時も）', type: 'ox' },
+  { k: 'payout', label: '⑧ 配当性向', hint: '30〜50%が健全・70%超は続かないかも', type: 'num', unit: '%' }
+];
+let ckSel = null;
+function stockKey(x) { return x.code ? 'c:' + x.code : 'n:' + x.name; }
+function allStocks() {
+  return [
+    ...data.holdings.map(x => ({ x, from: '保有' })),
+    ...data.watchlist.map(x => ({ x, from: '監視' }))
+  ];
+}
+function judge(c, ck, stock) {
+  const v = ck[c.k];
+  if (v === undefined || v === '' || v === null) return { st: 'none', mark: '・' };
+  if (c.type === 'ox') return v === 'o' ? { st: 'ok', mark: '○' } : { st: 'ng', mark: '×' };
+  const n = parseFloat(v);
+  if (c.k === 'opm') return n >= 10 ? { st: 'ok', mark: '○' } : n >= 5 ? { st: 'mid', mark: '△' } : { st: 'ng', mark: '×' };
+  if (c.k === 'equity') {
+    if (stock && sectorType(stock.sector) === 'F') return { st: 'ok', mark: '－' };
+    return n >= 80 ? { st: 'ok', mark: '◎' } : n >= 40 ? { st: 'ok', mark: '○' } : n >= 30 ? { st: 'mid', mark: '△' } : { st: 'ng', mark: '×' };
+  }
+  if (c.k === 'payout') return n > 0 && n <= 50 ? { st: 'ok', mark: '○' } : n > 0 && n <= 70 ? { st: 'mid', mark: '△' } : { st: 'ng', mark: '×' };
+  return { st: 'none', mark: '・' };
+}
+function scoreOf(stock) {
+  const ck = data.checks[stockKey(stock)];
+  if (!ck) return null;
+  let pt = 0, done = 0;
+  CRITERIA.forEach(c => {
+    const j = judge(c, ck, stock);
+    if (j.st === 'none') return;
+    done++;
+    pt += j.st === 'ok' ? 1 : j.st === 'mid' ? 0.5 : 0;
+  });
+  if (!done) return null;
+  const cls = pt >= 7 ? 'ok' : pt >= 5 ? 'mid' : 'ng';
+  const word = pt >= 7 ? '◎ 合格ライン' : pt >= 5 ? '△ 要検討' : '× 見送り候補';
+  return { pt, done, cls, word };
+}
+function checkBadge(x) {
+  const s = scoreOf(x);
+  return s ? `<span class="badge ${s.cls}">${s.pt}/8</span>` : '';
+}
+function renderCheckPage() {
+  const sel = document.getElementById('ck-target');
+  const list = allStocks();
+  if (!list.length) {
+    sel.innerHTML = '';
+    document.getElementById('ck-form').innerHTML = '<div class="empty"><div class="empty-icon">🔍</div><div>先に保有銘柄か監視リストに銘柄を入れてください</div></div>';
+    document.getElementById('ck-list').innerHTML = '';
+    return;
+  }
+  if (!ckSel || !list.some(s => stockKey(s.x) === ckSel)) ckSel = stockKey(list[0].x);
+  sel.innerHTML = list.map(s => `<option value="${escapeHtml(stockKey(s.x))}">${s.from}｜${escapeHtml(s.x.name)}</option>`).join('');
+  sel.value = ckSel;
+  loadCheck();
+  renderCheckList();
+}
+function curCheckStock() {
+  const s = allStocks().find(s => stockKey(s.x) === ckSel);
+  return s ? s.x : null;
+}
+function loadCheck() {
+  ckSel = document.getElementById('ck-target').value;
+  const stock = curCheckStock();
+  const ck = data.checks[ckSel] || {};
+  const y = stock && stock.price > 0 && stock.dps > 0 ? stock.dps / stock.price * 100 : 0;
+  const c = stock && stock.code ? encodeURIComponent(stock.code) : '';
+  let html = c ? `<div class="note">調べる：<a href="https://irbank.net/${c}" target="_blank" rel="noopener">IR BANK</a>　<a href="https://kabutan.jp/stock/finance?code=${c}" target="_blank" rel="noopener">株探（決算）</a></div>` : '';
+  CRITERIA.forEach(c => {
+    const v = ck[c.k] === undefined ? '' : ck[c.k];
+    const input = c.type === 'ox'
+      ? `<select id="ck-${c.k}" onchange="ckChange()" style="padding:6px;border-radius:6px;font-size:16px;">
+           <option value=""${v === '' ? ' selected' : ''}>未確認</option>
+           <option value="o"${v === 'o' ? ' selected' : ''}>○ OK</option>
+           <option value="x"${v === 'x' ? ' selected' : ''}>× NG</option>
+         </select>`
+      : `<input type="number" step="0.1" id="ck-${c.k}" value="${escapeHtml(v)}" oninput="ckChange()" placeholder="—">${c.unit}`;
+    html += `<div class="crit">
+      <div>${c.label}<div class="hint">${c.hint}</div></div>
+      <div>${input} <span class="mark" id="ckm-${c.k}"></span></div>
+    </div>`;
+  });
+  html += `<div class="note" style="margin-top:10px;">参考：配当利回り ${y ? '<b>' + y.toFixed(2) + '%</b>' : '（株価と1株配当を入れると出ます）'}
+    ・学長は3.75%以上を一つの目安にしつつ、全銘柄に求めず「ポートフォリオ全体」で見ればOKとしています。</div>
+    <div class="score-box" id="ck-score"></div>`;
+  document.getElementById('ck-form').innerHTML = html;
+  updateCheckMarks();
+}
+function ckChange() {
+  const ck = {};
+  CRITERIA.forEach(c => {
+    const v = document.getElementById('ck-' + c.k).value;
+    if (v !== '') ck[c.k] = v;
+  });
+  if (Object.keys(ck).length) data.checks[ckSel] = ck; else delete data.checks[ckSel];
+  save();
+  updateCheckMarks();
+  renderCheckList();
+  renderDots();
+}
+function updateCheckMarks() {
+  const stock = curCheckStock();
+  const ck = data.checks[ckSel] || {};
+  CRITERIA.forEach(c => {
+    const j = judge(c, ck, stock);
+    const el = document.getElementById('ckm-' + c.k);
+    el.textContent = j.mark;
+    el.className = 'mark ' + j.st;
+  });
+  const box = document.getElementById('ck-score');
+  const s = stock ? scoreOf(stock) : null;
+  if (!s) { box.className = 'score-box'; box.style.background = '#eceff1'; box.style.color = '#90a4ae'; box.textContent = 'まだ何も入っていません'; return; }
+  box.style.background = ''; box.style.color = '';
+  box.className = 'score-box ' + s.cls;
+  box.textContent = `${s.pt} / 8 点　${s.word}` + (s.done < 8 ? `（未確認 ${8 - s.done}項目）` : '');
+}
+let ckRows = [];
+function ckPick(i) {
+  ckSel = stockKey(ckRows[i].x);
+  renderCheckPage();
+  window.scrollTo(0, 0);
+}
+function renderCheckList() {
+  const rows = allStocks().map(s => ({ ...s, sc: scoreOf(s.x) }))
+    .sort((a, b) => (b.sc ? b.sc.pt : -1) - (a.sc ? a.sc.pt : -1));
+  ckRows = rows;
+  let html = '<div class="scroll-x"><table class="stock-table"><tr><th>銘柄</th><th>区分</th>' +
+    CRITERIA.map(c => `<th>${c.label.slice(0, 1)}</th>`).join('') + '<th>点数</th></tr>';
+  rows.forEach((r, i) => {
+    const ck = data.checks[stockKey(r.x)] || {};
+    html += `<tr onclick="ckPick(${i})">
+      <td class="name">${escapeHtml(r.x.name)}</td><td style="text-align:center;">${r.from}</td>` +
+      CRITERIA.map(c => { const j = judge(c, ck, r.x); return `<td style="text-align:center;"><span class="mark ${j.st}">${j.mark}</span></td>`; }).join('') +
+      `<td style="text-align:center;">${r.sc ? `<span class="badge ${r.sc.cls}">${r.sc.pt}</span>` : '<span class="badge none">—</span>'}</td></tr>`;
+  });
+  html += '</table></div><div class="note" style="margin-top:6px;">行をタップするとその銘柄のチェック画面へ。7点以上＝合格ライン、5点以上＝要検討、それ未満＝見送り候補（△は0.5点）。</div>';
+  document.getElementById('ck-list').innerHTML = html;
+}
+
+// ===== 分散チェック =====
+function saveRules() {
+  data.rules.stock = parseFloat(document.getElementById('rule-stock').value) || 20;
+  data.rules.cyc = parseFloat(document.getElementById('rule-cyc').value) || 50;
+  data.rules.fin = parseFloat(document.getElementById('rule-fin').value) || 15;
+  save();
+  renderBalance();
+}
+function barRows(entries, total, colorOf) {
+  return entries.map(([label, amt]) => {
+    const pct = total > 0 ? amt / total * 100 : 0;
+    return `<div class="bar-row"><div>${escapeHtml(label)}</div>
+      <div class="bar-track"><div class="bar-fill" style="width:${pct.toFixed(1)}%;background:${colorOf(label)};"></div></div>
+      <div style="text-align:right;">${pct.toFixed(1)}%</div></div>`;
+  }).join('');
+}
+function balanceWarnings() {
+  const hs = data.holdings.filter(h => h.qty > 0);
+  const total = hs.reduce((s, h) => s + annualGross(h), 0);
+  if (!hs.length || total <= 0) return [];
+  const byType = { D: 0, C: 0, F: 0, E: 0, O: 0 };
+  hs.forEach(h => byType[sectorType(h.sector || '未設定')] += annualGross(h));
+  const pct = v => v / total * 100, warns = [];
+  hs.forEach(h => {
+    const p = pct(annualGross(h));
+    if (p > data.rules.stock) warns.push(`⚠️ ${h.name} が配当の ${p.toFixed(1)}%（目安 ${data.rules.stock}%以下）。この1社が減配すると響きます`);
+  });
+  const cyc = pct(byType.C + byType.F), fin = pct(byType.F);
+  if (cyc > data.rules.cyc) warns.push(`⚠️ 景気敏感（金融含む）が ${cyc.toFixed(1)}%（目安 ${data.rules.cyc}%以下）。不景気でまとめて減配しやすい形です`);
+  if (fin > data.rules.fin) warns.push(`⚠️ 金融が ${fin.toFixed(1)}%（目安 ${data.rules.fin}%以下）`);
+  if (byType.O > 0) warns.push('業種「未設定」の銘柄があります。保有銘柄の編集で業種を選ぶと正確になります');
+  return warns;
+}
+function renderBalance() {
+  document.getElementById('rule-stock').value = data.rules.stock;
+  document.getElementById('rule-cyc').value = data.rules.cyc;
+  document.getElementById('rule-fin').value = data.rules.fin;
+  const hs = data.holdings.filter(h => h.qty > 0);
+  const total = hs.reduce((s, h) => s + annualGross(h), 0);
+  if (!hs.length || total <= 0) {
+    document.getElementById('bal-warn').innerHTML = '<div class="empty"><div class="empty-icon">🥧</div><div>保有銘柄（株数と1株配当）を入れると表示されます</div></div>';
+    document.getElementById('bal-sector').innerHTML = '';
+    document.getElementById('bal-stock').innerHTML = '';
+    return;
+  }
+  const bySector = {}, byType = { D: 0, C: 0, F: 0, E: 0, O: 0 };
+  hs.forEach(h => {
+    const d = annualGross(h), s = h.sector || '未設定';
+    bySector[s] = (bySector[s] || 0) + d;
+    byType[sectorType(s)] += d;
+  });
+  const pct = v => v / total * 100;
+  const warns = balanceWarnings();
+  const cyc = pct(byType.C + byType.F), fin = pct(byType.F);
+  document.getElementById('bal-warn').innerHTML =
+    (warns.length ? warns.map(t => `<div class="warn ng">${escapeHtml(t)}</div>`).join('')
+      : `<div class="warn ok">✅ 目安の範囲内です（${hs.length}銘柄・景気敏感 ${cyc.toFixed(0)}%・金融 ${fin.toFixed(0)}%）</div>`) +
+    '<div style="margin-top:10px;">' +
+    barRows(Object.entries(byType).filter(([, v]) => v > 0).map(([t, v]) => [TYPE_LABEL[t], v]), total,
+      l => TYPE_COLOR[Object.keys(TYPE_LABEL).find(k => TYPE_LABEL[k] === l)]) + '</div>';
+  document.getElementById('bal-sector').innerHTML =
+    barRows(Object.entries(bySector).sort((a, b) => b[1] - a[1]), total, s => TYPE_COLOR[sectorType(s)]);
+  document.getElementById('bal-stock').innerHTML =
+    barRows(hs.map(h => [h.name, annualGross(h)]).sort((a, b) => b[1] - a[1]), total,
+      n => { const h = hs.find(x => x.name === n); return pct(annualGross(h)) > data.rules.stock ? '#e53935' : TYPE_COLOR[sectorType(h.sector)]; });
+}
+
+// ===== 目標シミュレーション =====
+function portfolioNow() {
+  const t = totals();
+  return { value: t.value, yieldPct: t.value > 0 ? t.gross / t.value * 100 : 0 };
+}
+function renderSim() {
+  if (!data.sim) {
+    const p = portfolioNow();
+    data.sim = { start: Math.round(p.value), monthly: 50000, yieldPct: p.yieldPct ? +p.yieldPct.toFixed(2) : 4,
+      growth: 1, years: 30, reinvest: true, nisa: false };
+  }
+  const s = data.sim;
+  document.getElementById('sim-start').value = s.start;
+  document.getElementById('sim-monthly').value = s.monthly;
+  document.getElementById('sim-yield').value = s.yieldPct;
+  document.getElementById('sim-growth').value = s.growth;
+  document.getElementById('sim-target').value = data.goal;
+  document.getElementById('sim-years').value = s.years;
+  document.getElementById('sim-reinvest').checked = s.reinvest;
+  document.getElementById('sim-nisa').checked = s.nisa;
+  runSim(true);
+}
+function simFromPortfolio() {
+  const p = portfolioNow();
+  document.getElementById('sim-start').value = Math.round(p.value);
+  if (p.yieldPct) document.getElementById('sim-yield').value = p.yieldPct.toFixed(2);
+  runSim();
+  toast('今のポートフォリオの数字を入れました');
+}
+function simulate(s) {
+  const y = s.yieldPct / 100, g = s.growth / 100, keep = s.nisa ? 1 : 1 - TAX, target = data.goal;
+  let V = s.start, principal = s.start, reached = null;
+  const rows = [{ t: 0, principal, V, net: V * y * keep }];
+  for (let t = 1; t <= s.years; t++) {
+    const net = V * y * keep;
+    V = V * (1 + g) + s.monthly * 12 + (s.reinvest ? net : 0);
+    principal += s.monthly * 12;
+    const pace = V * y * keep;
+    rows.push({ t, principal, V, net: pace });
+    if (reached === null && target > 0 && pace >= target) reached = t;
+  }
+  if (target > 0 && rows[0].net >= target) reached = 0;
+  return { rows, reached };
+}
+function runSim(noSave) {
+  const num = id => parseFloat(document.getElementById(id).value) || 0;
+  const s = data.sim = {
+    start: num('sim-start'), monthly: num('sim-monthly'), yieldPct: num('sim-yield'),
+    growth: num('sim-growth'),
+    years: Math.min(60, Math.max(1, Math.round(num('sim-years')) || 30)),
+    reinvest: document.getElementById('sim-reinvest').checked,
+    nisa: document.getElementById('sim-nisa').checked
+  };
+  if (num('sim-target') > 0) data.goal = num('sim-target');
+  if (!noSave) save();
+  const { rows, reached } = simulate(s);
+  const thisYear = new Date().getFullYear();
+  const last = rows[rows.length - 1];
+  let msg;
+  if (reached === 0) msg = `🎉 もう目標の年間 ${fmt(data.goal)}（税引後）に届いています！`;
+  else if (reached) msg = `🎯 <b>${reached}年後（${thisYear + reached}年）</b>に年間配当 ${fmt(rows[reached].net)}（税引後・月 ${fmt(rows[reached].net / 12)}）で目標達成<br>その時の投資元本 ${fmt(rows[reached].principal)}・評価額 ${fmt(rows[reached].V)}`;
+  else msg = `${s.years}年後の年間配当は ${fmt(last.net)}（税引後・月 ${fmt(last.net / 12)}）。目標 ${fmt(data.goal)} にはまだ届きません。<br>毎月の買い付け額か年数を増やしてみてください。`;
+  document.getElementById('sim-result').innerHTML = msg;
+
+  const W = 600, H = 180, pad = 30;
+  const maxV = Math.max(data.goal, ...rows.map(r => r.net)) || 1;
+  const bw = (W - pad) / rows.length;
+  let svg = `<svg viewBox="0 0 ${W} ${H + 20}" style="width:100%;height:auto;">`;
+  rows.forEach((r, i) => {
+    const h = r.net / maxV * H;
+    const ok = data.goal > 0 && r.net >= data.goal;
+    svg += `<rect x="${pad + i * bw + 1}" y="${H - h}" width="${Math.max(1, bw - 2)}" height="${h}" rx="2" fill="${ok ? '#c9a227' : '#2c5364'}"><title>${thisYear + r.t}年 ${fmt(r.net)}</title></rect>`;
+    if (r.t % 5 === 0) svg += `<text x="${pad + i * bw + bw / 2}" y="${H + 14}" font-size="10" text-anchor="middle" fill="#888">${r.t}年</text>`;
+  });
+  if (data.goal > 0) {
+    const ty = H - data.goal / maxV * H;
+    svg += `<line x1="${pad}" x2="${W}" y1="${ty}" y2="${ty}" stroke="#e53935" stroke-dasharray="5 4"/><text x="${pad}" y="${ty - 4}" font-size="10" fill="#e53935">目標 ${fmt(data.goal)}</text>`;
+  }
+  document.getElementById('sim-chart').innerHTML = svg + '</svg>';
+
+  let html = '<table class="stock-table"><tr><th>年</th><th>投資元本</th><th>評価額</th><th>年間配当<br>(税引後)</th><th>月あたり</th></tr>';
+  rows.forEach(r => {
+    const hit = reached !== null && r.t === reached;
+    html += `<tr style="${hit ? 'background:#fff8e1;font-weight:bold;' : ''}"><td class="name">${r.t === 0 ? '今' : (thisYear + r.t) + '年'}</td>
+      <td>${fmt(r.principal)}</td><td>${fmt(r.V)}</td><td class="yield-cell">${fmt(r.net)}</td><td>${fmt(r.net / 12)}</td></tr>`;
+  });
+  document.getElementById('sim-table').innerHTML = html + '</table>';
+}
+
+// ===== メモ =====
+document.addEventListener('input', (e) => {
+  if (e.target.id === 'memo-area') {
+    data.memo = e.target.value;
+    save();
+  }
+});
+
+// ===== 保存履歴（最大15世代・10分間隔） =====
+function histList() { try { return JSON.parse(localStorage.getItem(HIST_KEY)) || []; } catch(e) { return []; } }
+function snapshot(force) {
+  try {
+    const h = histList(), now = Date.now(), s = JSON.stringify(data);
+    if (h.length && h[0].d === s) return;
+    if (!force && h.length && now - h[0].t < 10 * 60 * 1000) return;
+    h.unshift({ t: now, d: s });
+    if (h.length > 15) h.length = 15;
+    localStorage.setItem(HIST_KEY, JSON.stringify(h));
+  } catch(e) {}
+}
+function openHist() {
+  closeMenu();
+  const h = histList();
+  let html = h.length ? '' : '<div class="note">まだ履歴がありません（入力すると自動で貯まります）</div>';
+  h.forEach((e, i) => {
+    let info = '';
+    try { const d = JSON.parse(e.d); info = `保有${(d.holdings || []).length}・監視${(d.watchlist || []).length}・受取${(d.history || []).length}件`; } catch(_) {}
+    const when = new Date(e.t).toLocaleString('ja-JP', { month: 'numeric', day: 'numeric', hour: '2-digit', minute: '2-digit' });
+    html += `<div class="hist-item"><span class="when">${when}</span><span class="info">${info}</span><button onclick="restoreHist(${i})">この時点に戻す</button></div>`;
+  });
+  document.getElementById('hist-body').innerHTML = html;
+  openModal('hist-modal');
+}
+function restoreHist(i) {
+  const e = histList()[i];
+  if (!e) return;
+  if (!confirm('この時点のデータに戻しますか？\n（今の内容も履歴に残るので、あとで戻せます）')) return;
+  snapshot(true);
+  data = normalize(JSON.parse(e.d));
+  save();
+  closeModal('hist-modal');
+  renderCurrent();
+  toast('🕘 復元しました');
+}
+
+// ===== ファイルに書き出し・読み込み =====
+function exportJson() {
+  closeMenu();
+  const d = new Date();
+  const blob = new Blob([JSON.stringify(data, null, 1)], { type: 'application/json' });
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = `高配当株_${d.getFullYear()}${pad2(d.getMonth() + 1)}${pad2(d.getDate())}.json`;
+  document.body.appendChild(a); a.click(); a.remove();
+  setTimeout(() => URL.revokeObjectURL(a.href), 2000);
+}
+function importJson(input) {
+  const f = input.files[0];
+  input.value = '';
+  if (!f) return;
+  const r = new FileReader();
+  r.onload = () => {
+    try {
+      const d = normalize(JSON.parse(r.result));
+      if (!confirm(`このファイルを読み込みますか？\n保有${d.holdings.length}・監視${d.watchlist.length}・受取${d.history.length}件\n（今の内容は履歴に残ります）`)) return;
+      snapshot(true);
+      data = d;
+      save();
+      renderCurrent();
+      toast('📥 読み込みました');
+    } catch(e) { alert('読み込めないファイルです'); }
+  };
+  r.readAsText(f);
+}
+
+// ===== Macとスマホの自動同期（Google） =====
+// 最後にクラウドとそろえた時点の中身（base）を覚えておき、
+//   クラウドだけ変わっていた → クラウドを読み込む（ほかの端末で入れた分）
+//   手元だけ変わっていた     → クラウドへ送る
+//   両方変わっていた         → どちらを残すか聞く（読み込む前の状態は履歴に残る）
+function stable(o) {
+  if (Array.isArray(o)) return o.map(stable);
+  if (o && typeof o === 'object') { const r = {}; Object.keys(o).sort().forEach(k => { if (k !== 'savedAt') r[k] = stable(o[k]); }); return r; }
+  return o;
+}
+function fpOf(d) { return JSON.stringify(stable(d)); }
+function getBase() { try { return localStorage.getItem(BASE_KEY); } catch(e) { return null; } }
+function setBase(d) { try { localStorage.setItem(BASE_KEY, fpOf(d)); } catch(e) {} }
+let autoCloudTimer = null, syncing = false, cloudReady = false, lastSync = 0, pendingPush = false;
+function cloudAutoSave() {
+  if (!cloudReady) { pendingPush = true; return; }   // 起動時の突き合わせが終わってから送る
+  clearTimeout(autoCloudTimer); autoCloudTimer = setTimeout(syncNow, 2500);
+}
+async function fetchCloud() {
+  const res = await fetch(SYNC_URL + '?action=load&key=' + SYNC_KEY, { cache: 'no-store' });
+  const j = await res.json();
+  let d = j && j.data; if (typeof d === 'string') { try { d = JSON.parse(d); } catch(e) { d = null; } }
+  return (d && Array.isArray(d.holdings)) ? normalize(d) : null;
+}
+function takeCloud(d, msg) {
+  snapshot(true);   // 読み込む前の手元の状態を履歴へ
+  data = d;
+  try { localStorage.setItem(KEY, JSON.stringify(data)); } catch(e) {}
+  setBase(data);
+  renderCurrent();
+  if (msg) toast(msg);
+}
+async function syncNow(manual) {
+  if (manual === true) closeMenu();
+  if (syncing) return;
+  syncing = true; lastSync = Date.now();
+  clearTimeout(autoCloudTimer); autoCloudTimer = null;
+  try {
+    const cloud = await fetchCloud();
+    let hasLocal = false; try { hasLocal = localStorage.getItem(KEY) !== null; } catch(e) {}
+    const local = fpOf(data), base = getBase();
+    if (!cloud) {
+      if (hasLocal && hasRealData(data)) await pushCloud(true);                        // クラウドが空なら手元を送る
+    } else {
+      const cs = fpOf(cloud);
+      if (cs === local) setBase(data);                                                   // 同じ
+      else if (!hasLocal || (!hasRealData(data) && hasRealData(cloud))) takeCloud(cloud, '☁️ クラウドから読み込みました');  // この端末では初めて
+      else {
+        const cloudChanged = base === null || cs !== base;
+        const localChanged = base === null || local !== base;
+        if (cloudChanged && !localChanged) takeCloud(cloud, '☁️ ほかの端末で入れた分を読み込みました');
+        else if (!cloudChanged && localChanged) await pushCloud(true);
+        else if (confirm('⚠️ この画面とクラウド（ほかの端末）の両方に、違う内容があります。\n\n'
+                       + 'OK＝クラウドの内容を読み込む（この画面の内容は履歴に残ります）\n'
+                       + 'キャンセル＝この画面の内容でクラウドを上書きする')) takeCloud(cloud, '☁️ クラウドの内容を読み込みました');
+        else await pushCloud(true);
+      }
+    }
+    setSyncSt('☁️ クラウドOK ' + hhmm(new Date()));
+    if (manual === true) toast('☁️ 同期しました');
+  } catch(e) { setSyncSt('💾 この端末に保存済み（クラウド未接続）'); }
+  syncing = false;
+  if (!cloudReady) { cloudReady = true; if (pendingPush) { pendingPush = false; cloudAutoSave(); } }
+}
+async function pushCloud(silent) {
+  if (!storageOK()) return false;   // localStorage が使えない画面（プレビュー等）からは送らない
+  try {
+    const sent = JSON.stringify(data);
+    const res = await fetch(SYNC_URL + '?action=save&key=' + SYNC_KEY, { method: 'POST', body: sent });
+    const j = await res.json();
+    if (j.success) { setBase(JSON.parse(sent)); setSyncSt('☁️ クラウドOK ' + hhmm(new Date())); if (!silent) toast('☁️ クラウドに保存しました'); return true; }
+    if (!silent) toast('エラー: ' + (j.message || ''));
+  } catch(e) { if (!silent) toast('通信エラー: ' + e.message); }
+  setSyncSt('💾 この端末に保存済み（クラウド送信できず）');
+  return false;
+}
+document.addEventListener('visibilitychange', () => {
+  if (document.visibilityState === 'hidden') { if (autoCloudTimer) syncNow(); return; }   // 送る前の編集があれば送っておく
+  if (cloudReady && !autoCloudTimer && Date.now() - lastSync > 30 * 1000) syncNow();
+});
+async function cloudDownload() {
+  closeMenu();
+  toast('☁️ ダウンロード中...');
+  try {
+    const d = await fetchCloud();
+    if (!d) { toast('クラウドにデータがありません'); return; }
+    if (!confirm('クラウドのデータを読み込みますか？\n今の内容は上書きされます（今の内容は履歴に残ります）。')) return;
+    takeCloud(d, '☁️ クラウドから読み込みました');
+  } catch(e) { toast('エラー: ' + (e && e.message ? e.message : e)); }
+}
+
+// ===== 起動 =====
+data = load();
+document.getElementById('hen-head').outerHTML = henSvg();
+document.getElementById('hen-big').outerHTML = henSvg().replace(/id="(hg|eg|wg)"/g, 'id="$1b"').replace(/url\(#(hg|eg|wg)\)/g, 'url(#$1b)');
+fillSectorSelects();
+if (!storageOK()) setSyncSt('⚠️ この画面では保存できません（プライベートモード等）');
+showTab('home');
+syncNow();
+</script>
+</body>
+</html>
