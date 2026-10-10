@@ -1,0 +1,1298 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>メルカリ出品ガイド</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Kosugi+Maru&family=Mochiy+Pop+One&display=swap" rel="stylesheet">
+<style>
+  *{margin:0;padding:0;box-sizing:border-box;}
+  :root{--mer:#ff5252;--mer2:#ff7a7a;--ink:#333;--soft:#fff5f5;--ok:#3fbf57;}
+  body{font-family:'Kosugi Maru',sans-serif;color:var(--ink);
+    background:linear-gradient(180deg,#fff0f0,#fff);min-height:100vh;
+    padding-bottom:90px;-webkit-tap-highlight-color:transparent;}
+  .wrap{max-width:560px;margin:0 auto;padding:0 14px;}
+  input,select,textarea,button{font-family:inherit;}
+
+  /* ヘッダー */
+  header{background:linear-gradient(135deg,var(--mer),var(--mer2));color:#fff;
+    padding:16px 16px 14px;text-align:center;position:sticky;top:0;z-index:20;
+    box-shadow:0 4px 14px rgba(255,82,82,.35);}
+  header h1{font-family:'Mochiy Pop One',sans-serif;font-size:21px;letter-spacing:1px;}
+  header p{font-size:12px;opacity:.95;margin-top:3px;}
+
+  /* 下のタブ */
+  nav.tabs{position:fixed;left:0;right:0;bottom:0;z-index:30;background:#fff;
+    display:flex;justify-content:center;box-shadow:0 -3px 14px rgba(0,0,0,.08);
+    padding-bottom:env(safe-area-inset-bottom);}
+  nav.tabs .in{display:flex;max-width:560px;width:100%;}
+  nav.tabs button{flex:1;border:none;background:none;padding:8px 0 9px;cursor:pointer;
+    color:#aaa;font-size:11px;display:flex;flex-direction:column;align-items:center;gap:2px;position:relative;}
+  nav.tabs button .ic{font-size:21px;filter:grayscale(1);opacity:.6;}
+  nav.tabs button.on{color:var(--mer);font-weight:bold;}
+  nav.tabs button.on .ic{filter:none;opacity:1;}
+  nav.tabs .badge{position:absolute;top:4px;left:calc(50% + 8px);background:var(--mer);color:#fff;
+    font-size:10px;border-radius:10px;padding:0 5px;line-height:16px;}
+  .page{display:none;}
+  .page.on{display:block;animation:fade .25s;}
+  @keyframes fade{from{opacity:0;transform:translateY(6px);}to{opacity:1;transform:none;}}
+
+  /* 進捗バー */
+  .progress-box{background:#fff;padding:10px 14px;border-radius:14px;margin-top:14px;
+    box-shadow:0 2px 8px rgba(0,0,0,.06);}
+  .progress-box .label{display:flex;justify-content:space-between;font-size:12px;
+    color:#888;margin-bottom:5px;}
+  .bar{height:12px;background:#ffe0e0;border-radius:20px;overflow:hidden;}
+  .bar > i{display:block;height:100%;width:0;border-radius:20px;
+    background:linear-gradient(90deg,#ff8a8a,var(--mer));transition:width .4s;}
+
+  /* ステップカード */
+  .step{background:#fff;border-radius:18px;margin-top:14px;overflow:hidden;
+    box-shadow:0 4px 14px rgba(0,0,0,.07);border:2px solid #fff;}
+  .step.done{border-color:#9fe0a8;}
+  .step-head{display:flex;align-items:center;gap:12px;padding:15px 16px;cursor:pointer;}
+  .num{flex:none;width:38px;height:38px;border-radius:50%;background:var(--soft);
+    border:2px solid var(--mer);color:var(--mer);font-family:'Mochiy Pop One',sans-serif;
+    font-size:16px;display:flex;align-items:center;justify-content:center;}
+  .step.done .num{background:var(--ok);border-color:var(--ok);color:#fff;}
+  .step.done .num::after{content:'✓';}
+  .step.done .num span{display:none;}
+  .num.q{border-color:#ffb74a;color:#e08a00;background:#fff8e6;}
+  .step-head .t{flex:1;}
+  .step-head .t b{font-size:16px;display:block;}
+  .step-head .t small{font-size:11px;color:#999;}
+  .chev{flex:none;color:#ccc;font-size:18px;transition:transform .3s;}
+  .step.open .chev{transform:rotate(90deg);}
+
+  .body{max-height:0;overflow:hidden;transition:max-height .4s ease;}
+  .step.open .body{max-height:3000px;}
+  .body-in{padding:2px 16px 16px;}
+  .body-in ul{list-style:none;margin:6px 0;}
+  .body-in li{position:relative;padding:7px 0 7px 26px;font-size:14px;line-height:1.55;
+    border-bottom:1px dashed #f0e0e0;}
+  .body-in li:last-child{border-bottom:none;}
+  .body-in li::before{content:'●';position:absolute;left:4px;top:7px;color:var(--mer2);font-size:11px;}
+  .tip{background:#fff8e6;border-left:4px solid #ffce4a;border-radius:8px;
+    padding:9px 12px;font-size:13px;margin:10px 0;line-height:1.6;}
+  .tip b{color:#c98a00;}
+  .warn{background:#fff0f0;border-left:4px solid var(--mer);border-radius:8px;
+    padding:9px 12px;font-size:13px;margin:10px 0;line-height:1.6;}
+  .jump{display:inline-block;margin-top:4px;background:var(--mer);color:#fff;border:none;
+    border-radius:20px;padding:6px 14px;font-size:12px;cursor:pointer;}
+
+  /* 比較ボックス（発送方法） */
+  .shipbox{display:flex;flex-direction:column;gap:10px;margin:10px 0;}
+  .scard{border:2px solid #ffe0e0;border-radius:14px;padding:12px;}
+  .scard h4{font-size:14px;color:var(--mer);margin-bottom:6px;}
+  .scard .row{display:flex;justify-content:space-between;font-size:13px;
+    padding:4px 0;border-bottom:1px dashed #f3e3e3;}
+  .scard .row:last-child{border-bottom:none;}
+  .scard .row span:last-child{color:#666;text-align:right;}
+  .places{display:flex;flex-wrap:wrap;gap:6px;margin-top:8px;}
+  .places span{background:var(--soft);color:#d94545;font-size:12px;
+    padding:3px 10px;border-radius:20px;}
+
+  .check{display:flex;align-items:center;gap:10px;margin-top:14px;
+    background:var(--soft);border-radius:12px;padding:12px;cursor:pointer;
+    font-size:14px;font-weight:bold;color:#d94545;user-select:none;}
+  .check input{width:22px;height:22px;accent-color:var(--mer);}
+
+  /* 汎用カード・フォーム */
+  .card{background:#fff;border-radius:18px;margin-top:14px;padding:16px;
+    box-shadow:0 4px 14px rgba(0,0,0,.07);}
+  .card h2{font-family:'Mochiy Pop One',sans-serif;font-size:16px;color:var(--mer);margin-bottom:4px;}
+  .card .lead{font-size:12px;color:#999;margin-bottom:10px;line-height:1.5;}
+  .sec-title{font-family:'Mochiy Pop One',sans-serif;font-size:15px;color:#555;margin:24px 4px 0;}
+  .f{margin-top:10px;}
+  .f label{display:block;font-size:12px;color:#888;margin-bottom:4px;}
+  .f input,.f select,.f textarea{width:100%;border:2px solid #ffe0e0;border-radius:12px;
+    padding:10px 12px;font-size:16px;background:#fffafa;color:var(--ink);outline:none;}
+  .f input:focus,.f select:focus,.f textarea:focus{border-color:var(--mer2);background:#fff;}
+  .f textarea{resize:vertical;min-height:70px;line-height:1.5;}
+  .grid2{display:grid;grid-template-columns:1fr 1fr;gap:10px;}
+  .grid3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;}
+  .grid2 .f,.grid3 .f{margin-top:10px;}
+  .yen{position:relative;}
+  .yen input{padding-right:34px;}
+  .yen::after{content:'円';position:absolute;right:12px;bottom:12px;color:#aaa;font-size:14px;}
+  .unit{position:relative;}
+  .unit input{padding-right:34px;}
+  .unit::after{content:attr(data-u);position:absolute;right:10px;bottom:12px;color:#aaa;font-size:13px;}
+  .seg{display:flex;background:var(--soft);border-radius:12px;padding:4px;gap:4px;}
+  .seg button{flex:1;border:none;background:none;padding:8px 4px;border-radius:9px;font-size:13px;
+    color:#c77;cursor:pointer;}
+  .seg button.on{background:#fff;color:var(--mer);font-weight:bold;box-shadow:0 2px 6px rgba(0,0,0,.08);}
+  .chips{display:flex;flex-wrap:wrap;gap:6px;margin-top:6px;}
+  .chips button{border:1.5px solid #ffd0d0;background:#fff;color:#d94545;border-radius:20px;
+    padding:5px 11px;font-size:12px;cursor:pointer;}
+  .chips button.on{background:var(--mer);border-color:var(--mer);color:#fff;}
+  .btn{display:inline-flex;align-items:center;justify-content:center;gap:6px;border:none;
+    background:linear-gradient(135deg,var(--mer),var(--mer2));color:#fff;border-radius:14px;
+    padding:12px 16px;font-size:15px;cursor:pointer;box-shadow:0 3px 10px rgba(255,82,82,.3);}
+  .btn.full{width:100%;margin-top:14px;}
+  .btn.sub{background:#fff;color:var(--mer);border:2px solid #ffd0d0;box-shadow:none;}
+  .btn.sm{padding:7px 12px;font-size:13px;border-radius:10px;}
+
+  /* 計算結果 */
+  .result{margin-top:14px;border-radius:16px;background:linear-gradient(135deg,#fff3f3,#fff9ec);padding:14px;}
+  .result .line{display:flex;justify-content:space-between;font-size:14px;padding:5px 0;
+    border-bottom:1px dashed #f3dada;}
+  .result .line:last-of-type{border-bottom:none;}
+  .result .line .m{color:#c55;}
+  .result .big{display:flex;justify-content:space-between;align-items:baseline;margin-top:8px;
+    padding-top:10px;border-top:2px solid #ffd0d0;}
+  .result .big b{font-family:'Mochiy Pop One',sans-serif;font-size:28px;color:var(--mer);}
+  .result .big span{font-size:13px;color:#888;}
+  .note{font-size:11px;color:#aaa;margin-top:8px;line-height:1.6;}
+  table.mini{width:100%;border-collapse:collapse;font-size:13px;margin-top:8px;}
+  table.mini th,table.mini td{padding:6px 4px;border-bottom:1px dashed #f0e0e0;text-align:right;}
+  table.mini th{color:#999;font-weight:normal;font-size:11px;}
+  table.mini td:first-child,table.mini th:first-child{text-align:left;}
+  table.mini tr.hl td{color:var(--mer);font-weight:bold;}
+
+  /* 送料候補 */
+  .opt{display:flex;align-items:center;gap:10px;border:2px solid #f3e6e6;border-radius:14px;
+    padding:10px 12px;margin-top:8px;background:#fff;}
+  .opt.best{border-color:var(--mer);background:#fff6f6;}
+  .opt .co{flex:none;font-size:22px;}
+  .opt .nm{flex:1;}
+  .opt .nm b{font-size:14px;display:block;}
+  .opt .nm small{font-size:11px;color:#999;line-height:1.4;display:block;}
+  .opt .pr{text-align:right;}
+  .opt .pr b{font-family:'Mochiy Pop One',sans-serif;font-size:18px;color:var(--mer);}
+  .opt .pr small{display:block;font-size:10px;color:#aaa;}
+  .tag{display:inline-block;font-size:10px;background:var(--mer);color:#fff;border-radius:6px;
+    padding:1px 6px;margin-left:4px;vertical-align:2px;}
+  .ng{opacity:.45;}
+  .ng .pr b{color:#999;font-size:13px;font-family:inherit;}
+
+  /* 説明文出力 */
+  .out{margin-top:12px;border:2px dashed #ffc4c4;border-radius:14px;padding:12px;background:#fffdfd;}
+  .out .hd{display:flex;justify-content:space-between;align-items:center;font-size:12px;color:#999;margin-bottom:6px;}
+  .out pre{white-space:pre-wrap;word-break:break-all;font-family:inherit;font-size:14px;line-height:1.65;}
+  .count.over{color:var(--mer);font-weight:bold;}
+
+  /* 管理 */
+  .stats{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-top:14px;}
+  .stat{background:#fff;border-radius:14px;padding:10px 6px;text-align:center;box-shadow:0 3px 10px rgba(0,0,0,.06);}
+  .stat small{display:block;font-size:11px;color:#999;}
+  .stat b{font-family:'Mochiy Pop One',sans-serif;font-size:17px;color:var(--mer);}
+  .stat b.g{color:var(--ok);}
+  .filter{display:flex;gap:6px;overflow-x:auto;margin-top:14px;padding-bottom:2px;}
+  .filter button{flex:none;border:none;background:#fff;color:#999;border-radius:20px;padding:6px 12px;
+    font-size:12px;cursor:pointer;box-shadow:0 2px 6px rgba(0,0,0,.05);}
+  .filter button.on{background:var(--mer);color:#fff;}
+  .item{background:#fff;border-radius:16px;margin-top:10px;padding:12px 14px;box-shadow:0 3px 12px rgba(0,0,0,.06);
+    border-left:6px solid #ddd;}
+  .item.s-listed{border-left-color:#ffb74a;}
+  .item.s-sold{border-left-color:var(--mer);}
+  .item.s-shipped{border-left-color:#4aa3ff;}
+  .item.s-done{border-left-color:var(--ok);}
+  .item .top{display:flex;justify-content:space-between;align-items:flex-start;gap:8px;}
+  .item .top b{font-size:15px;line-height:1.4;}
+  .item .st{flex:none;font-size:11px;border-radius:8px;padding:2px 8px;background:#f2f2f2;color:#777;}
+  .s-listed .st{background:#fff3df;color:#d48300;}
+  .s-sold .st{background:#ffe5e5;color:var(--mer);}
+  .s-shipped .st{background:#e3f1ff;color:#2f7fd1;}
+  .s-done .st{background:#e3f7e6;color:#2d9c45;}
+  .item .meta{font-size:12px;color:#888;margin-top:5px;line-height:1.6;}
+  .item .meta b{color:var(--ink);}
+  .item .alert{margin-top:6px;font-size:12px;border-radius:8px;padding:5px 9px;background:#fff0f0;color:var(--mer);font-weight:bold;}
+  .item .alert.y{background:#fff8e6;color:#c98a00;font-weight:normal;}
+  .item .acts{display:flex;gap:6px;margin-top:9px;flex-wrap:wrap;}
+  .item .acts button{border:1.5px solid #ffd0d0;background:#fff;color:#d94545;border-radius:10px;padding:5px 10px;font-size:12px;cursor:pointer;}
+  .item .acts button.main{background:var(--mer);color:#fff;border-color:var(--mer);}
+  .empty{text-align:center;color:#bbb;font-size:13px;padding:30px 0;}
+  .fab{position:fixed;right:max(16px,calc(50% - 264px));bottom:84px;z-index:25;width:56px;height:56px;border-radius:50%;
+    border:none;background:linear-gradient(135deg,var(--mer),var(--mer2));color:#fff;font-size:28px;
+    box-shadow:0 6px 16px rgba(255,82,82,.45);cursor:pointer;display:none;}
+  .fab.on{display:block;}
+
+  /* モーダル */
+  .modal{position:fixed;inset:0;z-index:50;background:rgba(0,0,0,.4);display:none;align-items:flex-end;justify-content:center;}
+  .modal.on{display:flex;}
+  .sheet{background:#fff;width:100%;max-width:560px;max-height:90vh;overflow-y:auto;border-radius:22px 22px 0 0;
+    padding:18px 16px calc(20px + env(safe-area-inset-bottom));animation:up .25s;}
+  @keyframes up{from{transform:translateY(40px);opacity:0;}to{transform:none;opacity:1;}}
+  .sheet h3{font-family:'Mochiy Pop One',sans-serif;font-size:17px;color:var(--mer);}
+  .sheet .row2{display:flex;gap:8px;margin-top:16px;}
+  .sheet .row2 .btn{flex:1;}
+
+  /* 例文 */
+  .tmpl{border:2px solid #f6e3e3;border-radius:14px;padding:10px 12px;margin-top:8px;}
+  .tmpl .hd{display:flex;justify-content:space-between;align-items:center;}
+  .tmpl .hd b{font-size:13px;}
+  .tmpl p{font-size:13px;color:#666;margin-top:6px;line-height:1.6;white-space:pre-wrap;}
+
+  .toast{position:fixed;left:50%;bottom:96px;transform:translateX(-50%) translateY(20px);background:#333;color:#fff;
+    font-size:13px;padding:9px 18px;border-radius:20px;opacity:0;transition:.3s;z-index:60;pointer-events:none;}
+  .toast.on{opacity:.92;transform:translateX(-50%);}
+
+  /* リセット */
+  .reset{display:block;margin:24px auto 10px;background:none;border:1px solid #ddd;
+    color:#999;font-size:12px;padding:8px 18px;border-radius:20px;cursor:pointer;}
+  .footer{text-align:center;font-size:11px;color:#bbb;padding:8px 0 20px;line-height:1.6;}
+
+  /* お祝い */
+  .celebrate{display:none;text-align:center;background:linear-gradient(135deg,#fff0f0,#fff7e6);
+    border-radius:18px;padding:22px 16px;margin-top:14px;box-shadow:0 4px 14px rgba(0,0,0,.07);}
+  .celebrate.show{display:block;animation:pop .5s;}
+  @keyframes pop{from{transform:scale(.9);opacity:0;}to{transform:scale(1);opacity:1;}}
+  .celebrate .big{font-size:40px;}
+  .celebrate b{font-family:'Mochiy Pop One',sans-serif;color:var(--mer);font-size:18px;}
+
+  /* クラウド */
+  .syncst{font-size:10px;opacity:.9;margin-top:2px;min-height:12px;}
+
+  /* 相場 */
+  .mk3{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-top:12px;}
+  .mk3 button{border:2px solid #ffe0e0;background:#fff;border-radius:14px;padding:10px 4px;cursor:pointer;text-align:center;color:var(--ink);}
+  .mk3 button.rec{border-color:var(--mer);background:#fff6f6;}
+  .mk3 small{display:block;font-size:11px;color:#999;}
+  .mk3 b{display:block;font-family:'Mochiy Pop One',sans-serif;font-size:17px;color:var(--mer);margin:3px 0;}
+  .mk3 span{font-size:11px;color:#2d9c45;}
+
+  /* 撮影チェック */
+  .photos{display:flex;flex-wrap:wrap;gap:6px;margin-top:6px;}
+  .photos label{display:flex;align-items:center;gap:5px;font-size:12px;background:#fffafa;border:1.5px solid #ffe0e0;
+    border-radius:10px;padding:5px 9px;cursor:pointer;}
+  .photos label.on{background:#e3f7e6;border-color:#9fe0a8;color:#2d9c45;}
+  .f .photos input{accent-color:var(--ok);width:16px;height:16px;padding:0;margin:0;border:none;flex:none;}
+  .f .photos label{display:flex;margin:0;color:#888;}
+  .f .photos label.on{color:#2d9c45;}
+
+  /* やることチェック */
+  .todo{display:flex;flex-wrap:wrap;gap:5px;margin-top:8px;}
+  .todo button{border:1.5px dashed #ccc;background:#fff;color:#999;border-radius:8px;padding:3px 8px;font-size:11px;cursor:pointer;}
+  .todo button.on{border:1.5px solid #9fe0a8;background:#e3f7e6;color:#2d9c45;}
+
+  /* レポート */
+  .bars{display:flex;align-items:flex-end;gap:6px;height:130px;margin-top:12px;padding-top:16px;border-bottom:2px solid #f3dada;}
+  .bars .b{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:flex-end;height:100%;}
+  .bars .b i{display:block;width:70%;max-width:34px;background:linear-gradient(180deg,var(--mer2),var(--mer));border-radius:6px 6px 0 0;min-height:2px;}
+  .bars .b.now i{background:linear-gradient(180deg,#7bd88a,var(--ok));}
+  .bars .b em{font-style:normal;font-size:10px;color:#888;margin-bottom:3px;white-space:nowrap;}
+  .bars-lb{display:flex;gap:6px;}
+  .bars-lb span{flex:1;text-align:center;font-size:11px;color:#999;padding-top:4px;}
+  .kv{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:12px;}
+  .kv div{background:#fffafa;border-radius:12px;padding:8px 10px;}
+  .kv small{display:block;font-size:11px;color:#999;}
+  .kv b{font-size:16px;}
+</style>
+</head>
+<body>
+<header>
+  <h1>📦 メルカリ 出品ガイド</h1>
+  <p id="subtitle">はじめてでも順番どおりに進めればOK！</p>
+  <p class="syncst" id="syncSt"></p>
+</header>
+
+<!-- ========== ① ガイド ========== -->
+<section class="page" id="p-guide">
+  <div class="wrap">
+    <div class="progress-box">
+      <div class="label"><span id="pct">0% かんりょう</span><span id="cnt">0 / 8</span></div>
+      <div class="bar"><i id="barfill"></i></div>
+    </div>
+    <div id="steps"></div>
+
+    <div class="celebrate" id="celebrate">
+      <div class="big">🎉✨🎊</div>
+      <b>ぜんぶ完了！おつかれさまでした</b>
+      <p style="font-size:13px;color:#777;margin-top:8px;">これでメルカリ出品はバッチリ。<br>売上は「メルペイ」で使うか、銀行に振込申請できます。<br>次からは下の「📋管理」で出品を記録していきましょう。</p>
+    </div>
+
+    <div class="sec-title">💬 そのまま使える例文</div>
+    <div class="card" id="tmpls" style="padding-top:8px;"></div>
+
+    <div class="sec-title">❓ こまったときは</div>
+    <div id="faq"></div>
+
+    <button class="reset" onclick="resetAll()">↺ ガイドのチェックをさいしょからやり直す</button>
+  </div>
+</section>
+
+<!-- ========== ② 手取り計算 ========== -->
+<section class="page" id="p-calc">
+  <div class="wrap">
+    <div class="card">
+      <h2>🔎 相場しらべ</h2>
+      <div class="lead">「売り切れ」の値段＝本当に売れた値段です。メルカリで見て、3〜5個メモすると出品価格の目安を出します。</div>
+      <div class="f"><label>調べる商品（キーワード）</label><input id="mkKw" placeholder="例）ユニクロ ダウンジャケット L"></div>
+      <div class="grid2" style="margin-top:10px;">
+        <button class="btn sm" onclick="openMercari('sold_out')">🔴 売れた値段を見る</button>
+        <button class="btn sm sub" onclick="openMercari('on_sale')">出品中を見る</button>
+      </div>
+      <div class="f"><label>売れた値段をメモ（スペース・改行・読点で区切る）</label><textarea id="mkPrices" placeholder="例）2800 3200 2500 3000 2900"></textarea></div>
+      <div id="mkResult"></div>
+    </div>
+
+    <div class="card">
+      <h2>💴 手取り計算</h2>
+      <div class="lead">売れたら実際にいくら入る？　手数料10％と送料を引いて計算します。</div>
+      <div class="seg" id="calcMode">
+        <button data-m="fwd" class="on">値段 → 手取り</button>
+        <button data-m="rev">ほしい手取り → 値段</button>
+      </div>
+      <div class="f yen" id="fPrice"><label>販売価格</label><input type="number" inputmode="numeric" id="cPrice" placeholder="例）3000"></div>
+      <div class="f yen" id="fWant" style="display:none;"><label>手元に残したい金額</label><input type="number" inputmode="numeric" id="cWant" placeholder="例）2000"></div>
+      <div class="f"><label>送料（出品者負担）</label>
+        <select id="cShipSel"></select>
+      </div>
+      <div class="f yen" id="fShipFree" style="display:none;"><label>送料を自分で入力</label><input type="number" inputmode="numeric" id="cShip" placeholder="0"></div>
+      <div class="f yen"><label>仕入れ値・買った値段（わかれば。もうけ計算用）</label><input type="number" inputmode="numeric" id="cCost" placeholder="空欄でOK"></div>
+      <div class="result" id="cResult"></div>
+    </div>
+
+    <div class="card">
+      <h2>📉 値下げしたら？</h2>
+      <div class="lead">値下げ交渉が来たときの早見表。今の値段から下げた場合の手取りです。</div>
+      <div id="cDown"></div>
+    </div>
+  </div>
+</section>
+
+<!-- ========== ③ 送料えらび ========== -->
+<section class="page" id="p-ship">
+  <div class="wrap">
+    <div class="card">
+      <h2>🚚 送料えらび</h2>
+      <div class="lead">梱包したあとのサイズと重さを入れると、使える発送方法を安い順に並べます。</div>
+      <div class="grid3">
+        <div class="f unit" data-u="cm"><label>縦（長い辺）</label><input type="number" inputmode="decimal" id="sL" placeholder="30"></div>
+        <div class="f unit" data-u="cm"><label>横</label><input type="number" inputmode="decimal" id="sW" placeholder="20"></div>
+        <div class="f unit" data-u="cm"><label>厚さ・高さ</label><input type="number" inputmode="decimal" id="sH" placeholder="3"></div>
+      </div>
+      <div class="grid2">
+        <div class="f unit" data-u="kg"><label>重さ（梱包込み）</label><input type="number" inputmode="decimal" id="sKg" placeholder="0.5"></div>
+        <div class="f"><label>よく使うもの</label>
+          <select id="sPreset">
+            <option value="">サイズ例から選ぶ…</option>
+            <option value="25,18,1,0.1">トレカ・小物（封筒）</option>
+            <option value="30,21,2,0.4">本・漫画1冊／Tシャツ</option>
+            <option value="30,22,3,0.8">漫画数冊・薄手の服</option>
+            <option value="25,20,5,1">小さめの箱物（コンパクト箱）</option>
+            <option value="35,25,10,1.5">スニーカー（箱なし）／パーカー</option>
+            <option value="35,25,15,2">靴（箱あり）</option>
+            <option value="40,30,25,4">家電・まとめ売り</option>
+          </select>
+        </div>
+      </div>
+      <div class="note" id="sSum"></div>
+      <div id="sList"></div>
+      <div class="note">※送料はらくらく／ゆうゆうメルカリ便の目安（2026年時点）。梱包資材代（専用箱など）を含めた合計で並べています。最新はアプリ内でご確認ください。</div>
+    </div>
+
+    <div class="card">
+      <h2>📮 どこから出せる？</h2>
+      <div class="shipbox">
+        <div class="scard">
+          <h4>🐱 らくらくメルカリ便（ヤマト運輸）</h4>
+          <div class="places"><span>セブンイレブン</span><span>ファミリーマート</span><span>ヤマト営業所</span><span>PUDO（宅配ロッカー）</span></div>
+        </div>
+        <div class="scard">
+          <h4>📮 ゆうゆうメルカリ便（日本郵便）</h4>
+          <div class="places"><span>郵便局</span><span>ローソン</span><span>ミニストップ</span><span>スマリボックス</span></div>
+          <div style="font-size:12px;color:#888;margin-top:8px;">※ゆうパケットポストは<b>郵便ポストに投函</b>（24時間いつでも）</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ========== ④ 説明文づくり ========== -->
+<section class="page" id="p-desc">
+  <div class="wrap">
+    <div class="card">
+      <h2>✏️ 商品名・説明文づくり</h2>
+      <div class="lead">わかるところだけ埋めればOK。下に出品用の文章ができるので、コピーしてメルカリに貼り付けます。</div>
+      <div class="f"><label>なんの仲間？（カテゴリー）</label><div class="chips" id="dCats"></div></div>
+      <div class="f"><label>📷 撮る写真チェック（タップで✓）</label><div class="photos" id="dPhotos"></div></div>
+      <div class="f"><label>なにを売る？（商品名）</label><input id="dName" placeholder="例）ダウンジャケット"></div>
+      <div class="grid2">
+        <div class="f"><label>ブランド</label><input id="dBrand" placeholder="例）ユニクロ"></div>
+        <div class="f"><label>型番・品番</label><input id="dModel" placeholder="わかれば"></div>
+      </div>
+      <div class="grid2">
+        <div class="f"><label>サイズ</label><input id="dSize" placeholder="例）L／26cm"></div>
+        <div class="f"><label>色</label><input id="dColor" placeholder="例）ネイビー"></div>
+      </div>
+      <div class="f"><label>寸法（服なら実寸）</label><input id="dDim" placeholder="例）着丈70 身幅55 肩幅48 袖丈62"></div>
+      <div class="f"><label>商品の状態</label>
+        <select id="dCond">
+          <option>新品、未使用</option>
+          <option>未使用に近い</option>
+          <option selected>目立った傷や汚れなし</option>
+          <option>やや傷や汚れあり</option>
+          <option>傷や汚れあり</option>
+          <option>全体的に状態が悪い</option>
+        </select>
+      </div>
+      <div class="grid2">
+        <div class="f"><label>買った時期</label><input id="dWhen" placeholder="例）2024年冬"></div>
+        <div class="f"><label>使った回数・期間</label><input id="dUse" placeholder="例）数回着用"></div>
+      </div>
+      <div class="f"><label>気になるところ（キズ・汚れなど）</label><textarea id="dFlaw" placeholder="例）袖口に少し毛玉があります（写真4枚目）"></textarea></div>
+      <div class="f"><label>付属品</label><input id="dAcc" placeholder="例）箱・説明書・保証書"></div>
+      <div class="f"><label>あてはまるものをタップ</label>
+        <div class="chips" id="dChips"></div>
+      </div>
+      <div class="f"><label>ひとこと（任意）</label><input id="dMsg" placeholder="例）サイズが合わなくなったので出品します"></div>
+
+      <div class="out">
+        <div class="hd"><span>🏷 商品名 <span class="count" id="tCount"></span></span><button class="btn sm sub" onclick="copyOut('tOut')">コピー</button></div>
+        <pre id="tOut"></pre>
+      </div>
+      <div class="out">
+        <div class="hd"><span>📝 商品の説明 <span class="count" id="bCount"></span></span><button class="btn sm sub" onclick="copyOut('bOut')">コピー</button></div>
+        <pre id="bOut"></pre>
+      </div>
+      <div class="grid2">
+        <button class="btn full sub" onclick="clearDesc()">クリア</button>
+        <button class="btn full" onclick="descToItem()">📋 管理に追加</button>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ========== ⑤ 出品管理 ========== -->
+<section class="page" id="p-list">
+  <div class="wrap">
+    <div class="stats">
+      <div class="stat"><small>出品中</small><b id="stListed">0</b></div>
+      <div class="stat"><small>今月の手取り</small><b class="g" id="stMonth">0</b></div>
+      <div class="stat"><small>これまでの手取り</small><b class="g" id="stTotal">0</b></div>
+    </div>
+    <div id="urgent"></div>
+    <button class="btn full sub" style="margin-top:12px;" onclick="openBulk()">📝 売りたい物をまとめて追加（片付けリスト）</button>
+    <div class="filter" id="filter"></div>
+    <div id="items"></div>
+
+    <div class="card" style="margin-top:22px;">
+      <h2>📊 売上レポート</h2>
+      <div class="lead">「発送した」以降の商品を、売れた日の月で集計します。</div>
+      <div class="seg" id="repMode">
+        <button data-r="year" class="on">今年</button>
+        <button data-r="all">これまで全部</button>
+      </div>
+      <div id="report"></div>
+    </div>
+
+    <div class="card" style="margin-top:22px;">
+      <h2>💾 データの保存</h2>
+      <div class="lead">記録はこの端末とクラウドに自動で保存され、Macとスマホで同じ内容が見られます。念のため、ときどきファイルに書き出しておくと安心です。</div>
+      <div class="grid2" style="margin-bottom:10px;">
+        <button class="btn sm sub" onclick="syncNow(true)">☁️ いま同期する</button>
+        <button class="btn sm sub" onclick="cloudDownload()">☁️ クラウドから読み込む</button>
+      </div>
+      <div class="grid2">
+        <button class="btn sm sub" onclick="exportData()">⬇️ ファイルに書き出す</button>
+        <button class="btn sm sub" onclick="document.getElementById('imp').click()">⬆️ ファイルから戻す</button>
+      </div>
+      <input type="file" id="imp" accept=".json,application/json" style="display:none" onchange="importData(this)">
+    </div>
+  </div>
+</section>
+
+<div class="wrap"><div class="footer">※料金・送料・手数料は2026年時点の目安です。最新はアプリ内でご確認ください。<br>スマホ版：arimoto-toshio.github.io/my-apps/mercari-m.html</div></div>
+
+<button class="fab" id="fab" onclick="openItem()">＋</button>
+
+<!-- 商品編集シート -->
+<div class="modal" id="modal" onclick="if(event.target===this)closeItem()">
+  <div class="sheet">
+    <h3 id="mTitle">商品を追加</h3>
+    <div class="f"><label>商品名</label><input id="mName" placeholder="例）ユニクロ ダウンジャケット L"></div>
+    <div class="grid2">
+      <div class="f yen"><label>販売価格</label><input type="number" inputmode="numeric" id="mPrice"></div>
+      <div class="f yen"><label>送料（出品者負担）</label><input type="number" inputmode="numeric" id="mShip"></div>
+    </div>
+    <div class="f"><label>発送方法（選ぶと送料が入ります）</label><select id="mMethod"></select></div>
+    <div class="grid2">
+      <div class="f"><label>状況</label>
+        <select id="mStatus">
+          <option value="draft">準備中</option>
+          <option value="listed">出品中</option>
+          <option value="sold">売れた（発送待ち）</option>
+          <option value="shipped">発送した（評価待ち）</option>
+          <option value="done">取引完了</option>
+        </select>
+      </div>
+      <div class="f"><label>発送までの日数</label>
+        <select id="mDays">
+          <option value="2">1〜2日</option>
+          <option value="3" selected>2〜3日</option>
+          <option value="7">4〜7日</option>
+        </select>
+      </div>
+    </div>
+    <div class="grid2">
+      <div class="f"><label>出品した日</label><input type="date" id="mListed"></div>
+      <div class="f"><label>売れた日</label><input type="date" id="mSold"></div>
+    </div>
+    <div class="f"><label>メモ</label><textarea id="mMemo" placeholder="例）ゆうパケットポストで発送予定"></textarea></div>
+    <div class="note" id="mNet"></div>
+    <div class="row2">
+      <button class="btn sub" id="mDel" onclick="delItem()">削除</button>
+      <button class="btn" onclick="saveItem()">保存</button>
+    </div>
+  </div>
+</div>
+
+<!-- 取引メッセージ -->
+<div class="modal" id="msgModal" onclick="if(event.target===this)this.classList.remove('on')">
+  <div class="sheet">
+    <h3>💬 取引メッセージ</h3>
+    <div class="lead" id="msgFor" style="font-size:12px;color:#999;margin-top:4px;"></div>
+    <div id="msgList"></div>
+    <div class="row2"><button class="btn sub" onclick="$('msgModal').classList.remove('on')">とじる</button></div>
+  </div>
+</div>
+
+<!-- まとめて追加 -->
+<div class="modal" id="bulkModal" onclick="if(event.target===this)this.classList.remove('on')">
+  <div class="sheet">
+    <h3>📝 売りたい物をまとめて追加</h3>
+    <div class="note" style="font-size:12px;color:#888;">家の中で「使わないけど売れそうな物」を、1行に1つずつ書きます。全部「準備中」で入るので、あとで1つずつ出品していけばOK。</div>
+    <div class="f"><textarea id="bulkText" style="min-height:160px" placeholder="例）&#10;ユニクロ ダウンジャケット&#10;子どもの絵本 10冊&#10;使ってないホットプレート"></textarea></div>
+    <div class="row2">
+      <button class="btn sub" onclick="$('bulkModal').classList.remove('on')">やめる</button>
+      <button class="btn" onclick="saveBulk()">追加する</button>
+    </div>
+  </div>
+</div>
+
+<nav class="tabs"><div class="in">
+  <button data-t="guide"><span class="ic">📖</span>ガイド</button>
+  <button data-t="calc"><span class="ic">💴</span>手取り計算</button>
+  <button data-t="ship"><span class="ic">🚚</span>送料えらび</button>
+  <button data-t="desc"><span class="ic">✏️</span>説明文</button>
+  <button data-t="list"><span class="ic">📋</span>管理<span class="badge" id="navBadge" style="display:none"></span></button>
+</div></nav>
+
+<div class="toast" id="toast"></div>
+
+<script>
+/* ---------- 保存まわり（使えない環境でも動くように） ---------- */
+function load(k,def){ try{ const v=localStorage.getItem(k); return v?JSON.parse(v):def; }catch(e){ return def; } }
+function store(k,v){ try{ localStorage.setItem(k,JSON.stringify(v)); }catch(e){} }
+const KEY='mercari_guide_progress_v1';      // ガイドの進み具合（旧版と共通）
+const KEY_ITEMS='mercari_items_v1';
+const KEY_DESC='mercari_desc_draft_v1';
+const KEY_UI='mercari_ui_v1';
+const yen=n=>Math.round(n).toLocaleString('ja-JP');
+const $=id=>document.getElementById(id);
+function toast(msg){ const t=$('toast'); t.textContent=msg; t.classList.add('on'); clearTimeout(t._t); t._t=setTimeout(()=>t.classList.remove('on'),1800); }
+function esc(s){ return String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
+function today(){ const d=new Date(); return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0'); }
+function copyText(txt){
+  const done=()=>toast('コピーしました ✓');
+  if(navigator.clipboard&&window.isSecureContext){ navigator.clipboard.writeText(txt).then(done).catch(()=>fallbackCopy(txt,done)); }
+  else fallbackCopy(txt,done);
+}
+function fallbackCopy(txt,cb){ const ta=document.createElement('textarea'); ta.value=txt; ta.style.position='fixed'; ta.style.opacity='0';
+  document.body.appendChild(ta); ta.select(); try{document.execCommand('copy');}catch(e){} ta.remove(); cb(); }
+
+/* ---------- 送料データ（目安・2026年時点） ---------- */
+// box: 専用資材の内寸 [長,短,厚]。flat: 長辺/短辺/厚さの上限。sum: 3辺合計の上限
+const SHIPS=[
+  {id:'ypmini', co:'📮', name:'ゆうパケットポストmini', price:160, mat:20, matName:'専用封筒20円', box:[21,17,3], kg:2, where:'ポスト投函'},
+  {id:'nekopos',co:'🐱', name:'ネコポス', price:210, mat:0, flat:[31.2,22.8,3], kg:1, where:'セブン・ファミマ・PUDO'},
+  {id:'ypp',    co:'📮', name:'ゆうパケットポスト', price:215, mat:5, matName:'発送用シール約5円（専用箱なら65円）', flat:[32.7,22.8,3], kg:2, where:'ポスト投函'},
+  {id:'yupa',   co:'📮', name:'ゆうパケット', price:230, mat:0, sum:60, maxL:34, maxT:3, kg:1, where:'郵便局・ローソン'},
+  {id:'compact',co:'🐱', name:'宅急便コンパクト', price:450, mat:70, matName:'専用箱70円', box:[25,20,5], alt:[34,24.8,2.5], where:'セブン・ファミマ・PUDO'},
+  {id:'ypplus', co:'📮', name:'ゆうパケットプラス', price:455, mat:65, matName:'専用箱65円', box:[24,17,7], kg:2, where:'郵便局・ローソン'},
+];
+const TQ=[[60,2,750],[80,5,850],[100,10,1050],[120,15,1200],[140,20,1450],[160,25,1700],[180,30,2100],[200,30,2500]];
+const YP=[[60,25,750],[80,25,870],[100,25,1070],[120,25,1200],[140,25,1450],[160,25,1470],[170,25,1700]];
+
+function fitsBox(d,b){ const bb=[...b].sort((a,c)=>c-a); return d[0]<=bb[0]&&d[1]<=bb[1]&&d[2]<=bb[2]; }
+function shipOptions(L,W,H,kg){
+  const d=[L,W,H].sort((a,b)=>b-a); const sum=L+W+H; const out=[];
+  SHIPS.forEach(s=>{
+    let ok=true, why='';
+    if(s.box){ ok=fitsBox(d,s.box)||(s.alt&&fitsBox(d,s.alt)); if(!ok) why='専用資材に入らない'; }
+    if(s.flat){ ok=fitsBox(d,s.flat); if(!ok) why=(d[2]>s.flat[2]?'厚さ'+s.flat[2]+'cm超え':'大きさオーバー'); }
+    if(s.sum){ ok=sum<=s.sum&&d[0]<=s.maxL&&d[2]<=s.maxT; if(!ok) why=(d[2]>s.maxT?'厚さ'+s.maxT+'cm超え':'大きさオーバー'); }
+    if(ok&&s.kg&&kg>s.kg){ ok=false; why=s.kg+'kg超え'; }
+    out.push({co:s.co,name:s.name,price:s.price,mat:s.mat,total:s.price+s.mat,sub:(s.matName?'＋'+s.matName+'　':'')+s.where,ok,why});
+  });
+  const tq=TQ.find(([sz,w])=>sum<=sz&&kg<=w);
+  out.push(tq?{co:'🐱',name:'宅急便 '+tq[0]+'サイズ',price:tq[2],mat:0,total:tq[2],sub:'箱・袋は自分で用意　セブン・ファミマ・PUDO',ok:true}
+             :{co:'🐱',name:'宅急便',ok:false,why:'200サイズ・30kg超え'});
+  const yp=YP.find(([sz,w])=>sum<=sz&&kg<=w);
+  out.push(yp?{co:'📮',name:'ゆうパック '+yp[0]+'サイズ',price:yp[2],mat:0,total:yp[2],sub:'箱・袋は自分で用意　郵便局・ローソン',ok:true}
+             :{co:'📮',name:'ゆうパック',ok:false,why:'170サイズ・25kg超え'});
+  const okList=out.filter(o=>o.ok).sort((a,b)=>a.total-b.total);
+  return {okList, ngList:out.filter(o=>!o.ok), sum};
+}
+
+/* ---------- ① ガイド ---------- */
+const STEPS=[
+{ icon:'📱', title:'アプリを準備する', sub:'登録は最初の1回だけ',
+  body:`<ul>
+    <li>スマホに「メルカリ」アプリを入れる（App Store / Google Play で無料）</li>
+    <li>電話番号またはメールで会員登録（招待コードがあれば入力でポイントがもらえる）</li>
+    <li>本人情報（名前・住所）を登録 ＝ 発送伝票に使われます</li>
+    <li>売上を受け取る方法（メルペイ／銀行口座）を後で設定できます</li>
+  </ul>
+  <div class="tip"><b>ポイント：</b>住所は発送ラベルに自動で入るので、正確に入れておくと後がラクです。</div>`,
+  check:'アプリの準備ができた' },
+
+{ icon:'🔍', title:'売るものを決めて、相場を調べる', sub:'いくらで売れるか先に確認',
+  body:`<ul>
+    <li>家にある「使わないけど捨てるのはもったいない物」を選ぶ</li>
+    <li>メルカリで同じ商品を検索 → 「売り切れ（SOLD）」で絞ると<b>実際に売れた値段</b>がわかる</li>
+    <li>その相場を参考に、自分の値段の目安を決める</li>
+  </ul>
+  <div class="tip"><b>コツ：</b>「売り切れ」の値段が本当に売れる金額。出品中の値段は希望価格なので参考程度に。</div>
+  <button class="jump" onclick="go('calc')">💴 手取りを計算してみる</button>`,
+  check:'売るものと、だいたいの値段を決めた' },
+
+{ icon:'📷', title:'写真を撮る', sub:'明るく・正直に',
+  body:`<ul>
+    <li>明るい場所（窓の近く）で撮る。背景はシンプルに（白い布や床）</li>
+    <li>最大20枚。1枚目は全体がわかる写真にする（これが一覧に出る顔）</li>
+    <li>正面・横・裏・ブランドタグ・サイズ表示などを撮る</li>
+    <li><b>キズ・汚れ・使用感は隠さず正直に撮る</b>（トラブル防止）</li>
+  </ul>
+  <div class="warn"><b>注意：</b>他人の写真やネット画像の使い回しはNG。必ず現物を自分で撮ります。</div>`,
+  check:'写真を撮った' },
+
+{ icon:'📏', title:'採寸・状態をメモする', sub:'説明文に使う情報集め',
+  body:`<ul>
+    <li>服なら「肩幅・身幅・着丈・袖丈」をメジャーで測る</li>
+    <li>箱物なら「縦・横・高さ」を測る（後で送料の計算に使えます）</li>
+    <li>状態を決める：新品 / 未使用に近い / 目立った傷なし / やや傷汚れあり / 全体的に状態が悪い</li>
+    <li>ブランド名・型番・購入時期なども分かればメモ</li>
+  </ul>
+  <div class="tip"><b>サイズの3辺合計</b>（縦＋横＋高さ）と<b>重さ</b>を知っておくと、あとで発送方法がすぐ選べます。</div>
+  <button class="jump" onclick="go('ship')">🚚 サイズから送料を調べる</button>`,
+  check:'サイズと状態をメモした' },
+
+{ icon:'✏️', title:'出品する（説明・値段を入力）', sub:'アプリの案内どおりでOK',
+  body:`<ul>
+    <li>アプリの「出品」ボタン → 写真を選ぶ</li>
+    <li>カテゴリー・ブランド・商品の状態を選ぶ</li>
+    <li>商品名と説明文を書く（サイズ・状態・気になる点を正直に）</li>
+    <li><b>配送料の負担</b>を選ぶ：ふつうは「送料込み（出品者負担）」が売れやすい</li>
+    <li><b>発送元の地域</b>を選ぶ（あなたの住んでいる都道府県でOK）</li>
+    <li><b>発送までの日数</b>を選ぶ（1〜2日 / 2〜3日 / 4〜7日）</li>
+    <li>値段を入力（送料込みなら、送料ぶんを足した金額に）→ 出品！</li>
+  </ul>
+  <div class="tip"><b>手数料：</b>売れた時に販売価格の<b>10%</b>がメルカリ手数料。送料込みなら送料も差し引かれるので、値段に含めて考えましょう。</div>
+  <button class="jump" onclick="go('desc')">✏️ 説明文を作る</button>`,
+  check:'出品ボタンを押して、出品できた' },
+
+{ icon:'💰', title:'売れた！購入の連絡が来たら', sub:'あわてず確認',
+  body:`<ul>
+    <li>売れると通知が来る。取引画面が開きます</li>
+    <li>購入者にあいさつメッセージを送ると印象アップ（任意・下に例文あり）</li>
+    <li>選んだ「発送までの日数」内に送る準備をする</li>
+    <li>取引画面に<b>発送方法</b>と<b>送り方</b>の案内が出ます</li>
+  </ul>
+  <div class="tip"><b>安心：</b>お金は一度メルカリが預かります。あなたに入るのは購入者が「受取評価」をした後なので、先に発送してOKです。</div>
+  <button class="jump" onclick="go('list')">📋 管理で「売れた」にする（発送期限が出ます）</button>`,
+  check:'売れて、取引画面をひらいた' },
+
+{ icon:'📦', title:'梱包（包装）する', sub:'濡れ・キズから守る',
+  body:`<ul>
+    <li>こわれ物・電子機器 → プチプチ（緩衝材）で包む</li>
+    <li>本・書類 → 水濡れ防止にビニール袋やOPP袋に入れる</li>
+    <li>服 → たたんでビニール袋へ。圧縮袋だとコンパクト</li>
+    <li>外側の袋・箱：宅配ビニール袋、紙袋、ダンボールなど。<b>100均やコンビニで買えます</b></li>
+    <li>梱包材は再利用でOK（きれいなら届いた箱の使い回しも可）</li>
+  </ul>
+  <div class="tip"><b>サイズ別おすすめ：</b><br>・小物 → 厚さ3cm以内なら「ネコポス／ゆうパケットポスト」が安い<br>・少し厚い → 「宅急便コンパクト」専用箱（70円）<br>・大きい → ダンボールで「宅急便／ゆうパック」</div>
+  <div class="warn"><b>注意：</b>送り状（ラベル）を貼る平らな面を残しておきましょう。</div>`,
+  check:'梱包できた' },
+
+{ icon:'🚚', title:'発送する（どこから送る？）', sub:'コンビニ・郵便局・ロッカー',
+  body:`
+  <p style="font-size:13px;margin:4px 0 8px;">メルカリの送り方は大きく2つ。どちらも<b>住所を書かなくてOK・匿名配送・追跡あり</b>で初心者でも安心です。取引画面に出る方を選びます。</p>
+  <div class="tip"><b>送り方（カンタン3手順）：</b><br>① 取引画面で発送方法を選ぶ → <b>2次元コード（QRコード）</b>が出る<br>② コンビニ／郵便局の端末（レジやゆうプリタッチ）にQRをかざす<br>③ 出てきた送り状を荷物に貼って、店員さんに渡す or ロッカーへ。<b>お店で集荷してくれます</b></div>
+  <div class="warn"><b>大事：</b>渡したら、必ずアプリの<b>「発送しました」ボタン</b>を押して購入者に通知します。</div>
+  <button class="jump" onclick="go('ship')">🚚 送料と出せる場所を見る</button>`,
+  check:'発送して「発送しました」を押した' }
+];
+
+const TMPLS=[
+  {t:'🙏 購入してもらったら',x:'ご購入ありがとうございます。\n○日までに発送いたしますので、到着まで今しばらくお待ちください。\n最後までよろしくお願いいたします。'},
+  {t:'📦 発送したら',x:'本日発送いたしました。\n到着まで今しばらくお待ちください。\n商品が届きましたら、受取評価をお願いいたします。'},
+  {t:'⭐ 評価するとき',x:'スムーズなお取引ありがとうございました。\nまたご縁がありましたらよろしくお願いいたします。'},
+  {t:'💬 値下げOKのとき',x:'コメントありがとうございます。\n○○円でしたらお受けできます。価格を変更しますので、変更後にご購入ください。'},
+  {t:'🙅 値下げおことわり',x:'コメントありがとうございます。\n申し訳ありませんが、こちらの価格が最低ラインとなっております。\nご検討いただけますと幸いです。'},
+  {t:'❓ 質問への返事',x:'ご質問ありがとうございます。\n（回答）\nほかにも気になる点があれば、お気軽にお聞きください。'}
+];
+
+const FAQ=[
+  {q:'値下げしてと言われたら？',a:`<ul><li>応じるかは自由。断ってもマナー違反ではありません</li><li>「💴 手取り計算」の値下げ早見表で、下げても手取りが納得できるか確認</li><li>OKなら価格を編集 → 相手に「変更しました」と伝えるだけ</li></ul>`},
+  {q:'なかなか売れない…',a:`<ul><li>出品から2週間ほど反応がなければ、<b>100〜300円の値下げ</b>が効きます（いいねした人に通知が行く）</li><li>1枚目の写真を明るく撮り直す・商品名にブランドやサイズを入れる</li><li>夜20〜23時は見る人が多い時間帯です</li></ul>`},
+  {q:'受取評価してもらえない',a:`<ul><li>発送通知から一定期間（目安9日ほど）たっても評価がないと、メルカリが自動で取引を完了してくれます</li><li>心配なら取引メッセージで「届きましたでしょうか」とやさしく確認</li></ul>`},
+  {q:'キャンセルしたい・されたい',a:`<ul><li>取引画面の「キャンセル申請」から。相手の同意が必要です</li><li>出品者都合のキャンセルは評価に響くことがあるので、在庫と状態は出品前にしっかり確認</li></ul>`},
+  {q:'売上金はどうやって使う？',a:`<ul><li>メルペイでそのままお買い物に使えます</li><li>銀行に振り込む場合は<b>振込手数料200円</b>がかかります（まとめて申請がおトク）</li><li>売上金には有効期限があるので、ほったらかしにしないよう注意</li></ul>`},
+  {q:'税金はかかる？',a:`<ul><li>家にある服や日用品など<b>生活用品を売ったお金は原則非課税</b></li><li>ただし、転売目的で仕入れた物や、30万円を超える貴金属・美術品などは課税の対象になることがあります</li><li>迷ったら税理士さん・税務署に確認を</li></ul>`},
+  {q:'出品してはいけない物は？',a:`<ul><li>偽物・コピー品、医薬品、たばこ、チケットの高額転売、現金・金券類など</li><li>ブランド物は本物でも、購入証明がないと説明しにくいので、レシートや保証書があれば一緒に</li></ul>`}
+];
+
+let state=load(KEY,{});
+function renderGuide(){
+  const wrap=$('steps'); wrap.innerHTML='';
+  STEPS.forEach((s,i)=>{
+    const done=!!state['c'+i];
+    const open=state.open===i;
+    const el=document.createElement('div');
+    el.className='step'+(done?' done':'')+(open?' open':'');
+    el.innerHTML=`
+      <div class="step-head" onclick="toggle(${i})">
+        <div class="num"><span>${i+1}</span></div>
+        <div class="t"><b>${s.icon} ${s.title}</b><small>${s.sub}</small></div>
+        <div class="chev">›</div>
+      </div>
+      <div class="body"><div class="body-in">
+        ${s.body}
+        <label class="check">
+          <input type="checkbox" ${done?'checked':''} onchange="setDone(${i},this.checked)">
+          <span>${s.check}</span>
+        </label>
+      </div></div>`;
+    wrap.appendChild(el);
+  });
+  updateBar();
+}
+function toggle(i){ state.open=(state.open===i?-1:i); store(KEY,state); renderGuide(); }
+function setDone(i,v){
+  state['c'+i]=v;
+  if(v){ const n=STEPS.findIndex((s,j)=>!state['c'+j]); state.open=(n>=0?n:-1); }
+  store(KEY,state); renderGuide(); cloudAutoSave();
+}
+function updateBar(){
+  const total=STEPS.length;
+  let d=0; for(let i=0;i<total;i++) if(state['c'+i]) d++;
+  const pct=Math.round(d/total*100);
+  $('barfill').style.width=pct+'%';
+  $('pct').textContent=pct+'% かんりょう';
+  $('cnt').textContent=d+' / '+total;
+  $('celebrate').classList.toggle('show',d===total);
+}
+function resetAll(){
+  if(confirm('ガイドのチェックを全部消して、さいしょからやり直しますか？\n（📋管理の記録は消えません）')){
+    state={open:0}; store(KEY,state); renderGuide(); cloudAutoSave();
+    window.scrollTo({top:0,behavior:'smooth'});
+  }
+}
+function renderExtras(){
+  $('tmpls').innerHTML=TMPLS.map((m,i)=>`<div class="tmpl"><div class="hd"><b>${m.t}</b><button class="btn sm sub" onclick="copyText(TMPLS[${i}].x)">コピー</button></div><p>${esc(m.x)}</p></div>`).join('');
+  $('faq').innerHTML=FAQ.map((f,i)=>`<div class="step" id="faq${i}"><div class="step-head" onclick="this.parentNode.classList.toggle('open')">
+    <div class="num q">？</div><div class="t"><b style="font-size:15px">${f.q}</b></div><div class="chev">›</div></div>
+    <div class="body"><div class="body-in">${f.a}</div></div></div>`).join('');
+}
+
+/* ---------- ② 手取り計算 ---------- */
+let calcMode='fwd';
+function feeOf(p){ return Math.floor(p*0.1); }
+function priceFor(net,ship){ let p=Math.max(300,Math.ceil((net+ship)/0.9)); while(p-feeOf(p)-ship<net) p++; while(p>300&&(p-1)-feeOf(p-1)-ship>=net) p--; return p; }
+function fillShipSelect(){
+  const sel=$('cShipSel');
+  const opts=[['0','送料なし（着払い・手渡し）']];
+  SHIPS.forEach(s=>opts.push([s.price+s.mat, s.name+'　'+yen(s.price+s.mat)+'円'+(s.mat?'（資材込み）':'')]));
+  TQ.forEach(t=>opts.push([t[2],'宅急便 '+t[0]+'サイズ　'+yen(t[2])+'円']));
+  YP.forEach(t=>opts.push([t[2],'ゆうパック '+t[0]+'サイズ　'+yen(t[2])+'円']));
+  opts.push(['free','自分で入力する']);
+  sel.innerHTML=opts.map(([v,l])=>`<option value="${v}">${l}</option>`).join('');
+  sel.value='210';
+}
+function curShip(){ const v=$('cShipSel').value; return v==='free'?(+$('cShip').value||0):+v; }
+function calc(){
+  $('fShipFree').style.display=$('cShipSel').value==='free'?'':'none';
+  const ship=curShip(); const cost=+$('cCost').value||0;
+  let price;
+  if(calcMode==='fwd'){ price=+$('cPrice').value||0; }
+  else { const want=+$('cWant').value||0; price=want?priceFor(want+cost,ship):0; }
+  const r=$('cResult');
+  if(!price){ r.innerHTML='<div class="note" style="margin:0;text-align:center;">金額を入れると、ここに結果が出ます</div>'; $('cDown').innerHTML='<div class="note">上で販売価格を入れると表示されます</div>'; saveUI(); return; }
+  const fee=feeOf(price), net=price-fee-ship, profit=net-cost;
+  let h='';
+  if(calcMode==='rev') h+=`<div class="line"><span>この値段で出品すればOK</span><b style="color:var(--mer);font-size:18px">${yen(price)}円</b></div>`;
+  else h+=`<div class="line"><span>販売価格</span><span>${yen(price)}円</span></div>`;
+  h+=`<div class="line"><span>メルカリ手数料（10％）</span><span class="m">−${yen(fee)}円</span></div>
+      <div class="line"><span>送料</span><span class="m">−${yen(ship)}円</span></div>`;
+  h+=`<div class="big"><span>手元に残る金額</span><b>${yen(net)}円</b></div>`;
+  if(cost) h+=`<div class="line" style="margin-top:6px"><span>買った値段を引いた<b>もうけ</b></span><b style="color:${profit>=0?'var(--ok)':'var(--mer)'}">${profit>=0?'+':''}${yen(profit)}円</b></div>`;
+  if(price<300) h+=`<div class="warn" style="margin-bottom:0">メルカリは<b>300円から</b>しか出品できません。</div>`;
+  else if(net<=0) h+=`<div class="warn" style="margin-bottom:0">送料と手数料で<b>赤字</b>です。値段を上げるか、安い発送方法を選びましょう。</div>`;
+  else if(net<price*0.5) h+=`<div class="tip" style="margin-bottom:0">送料の割合が大きめです。「🚚送料えらび」でもっと安い送り方がないか確認を。</div>`;
+  r.innerHTML=h;
+  // 値下げ早見表
+  const steps=[0,100,200,300,500,1000].filter(d=>price-d>=300);
+  $('cDown').innerHTML=`<table class="mini"><tr><th>値下げ</th><th>販売価格</th><th>手数料</th><th>手取り</th>${cost?'<th>もうけ</th>':''}</tr>`+
+    steps.map(d=>{ const p=price-d,f=feeOf(p),n=p-f-ship; return `<tr class="${d===0?'hl':''}"><td>${d?'−'+yen(d)+'円':'いまの値段'}</td><td>${yen(p)}</td><td>${yen(f)}</td><td>${yen(n)}</td>${cost?`<td style="color:${n-cost>=0?'var(--ok)':'var(--mer)'}">${yen(n-cost)}</td>`:''}</tr>`; }).join('')+
+    `</table><div class="note">値下げ1割あたり、手取りは約9割ぶん減ります（手数料も一緒に下がるため）。</div>`;
+  saveUI();
+}
+
+/* ---------- 相場しらべ ---------- */
+function openMercari(st){
+  const kw=$('mkKw').value.trim(); if(!kw) return toast('キーワードを入れてください');
+  window.open('https://jp.mercari.com/search?keyword='+encodeURIComponent(kw)+'&status='+st,'_blank');
+}
+function quant(a,q){ const p=(a.length-1)*q, i=Math.floor(p); return a[i]+(a[Math.min(i+1,a.length-1)]-a[i])*(p-i); }
+function mkCalc(){
+  const raw=$('mkPrices').value.replace(/[０-９]/g,c=>String.fromCharCode(c.charCodeAt(0)-0xFEE0)).replace(/(\d),(?=\d{3})/g,'$1');
+  const a=(raw.match(/\d+/g)||[]).map(Number).filter(n=>n>=300&&n<=9999999).sort((x,y)=>x-y);
+  const r=$('mkResult'); saveUI();
+  if(!a.length){ r.innerHTML=''; return; }
+  const r10=n=>Math.max(300,Math.round(n/10)*10);
+  const lo=r10(quant(a,0.25)), mid=r10(quant(a,0.5)), hi=r10(quant(a,0.75)), ship=curShip();
+  const box=(lb,p,rec)=>`<button class="${rec?'rec':''}" onclick="usePrice(${p})"><small>${lb}</small><b>${yen(p)}円</b><span>手取り${yen(p-feeOf(p)-ship)}円</span></button>`;
+  r.innerHTML=`<div class="note">${a.length}件　いちばん安い ${yen(a[0])}円 ／ 高い ${yen(a[a.length-1])}円　平均 ${yen(a.reduce((s,n)=>s+n,0)/a.length)}円</div>
+    <div class="mk3">${box('🏃 早く売る',lo)}${box('⭐ おすすめ',mid,1)}${box('🐢 じっくり',hi)}</div>
+    <div class="note">タップすると下の手取り計算に入ります（送料は下で選んだもの）。${a.length<3?'<br>もう少し数を集めると目安が正確になります。':''}値下げ交渉を見込むなら、おすすめより1〜2割上で出して様子を見るのも手です。</div>`;
+}
+function usePrice(p){ setMode('fwd'); $('cPrice').value=p; calc(); $('cResult').scrollIntoView({behavior:'smooth',block:'center'}); }
+
+/* ---------- ③ 送料えらび ---------- */
+function shipCalc(){
+  const L=+$('sL').value, W=+$('sW').value, H=+$('sH').value, kg=+$('sKg').value||0;
+  if(!L||!W||!H){ $('sSum').textContent=''; $('sList').innerHTML='<div class="empty">📐 縦・横・厚さを入れてください<br><span style="font-size:11px">（重さは空欄なら0.5kg以下として計算）</span></div>'; saveUI(); return; }
+  const r=shipOptions(L,W,H,kg||0.5);
+  $('sSum').innerHTML=`3辺合計 <b>${Math.round(r.sum*10)/10}cm</b>　／　重さ <b>${kg||'0.5（仮）'}kg</b>`;
+  let h=r.okList.map((o,i)=>`<div class="opt ${i===0?'best':''}"><div class="co">${o.co}</div>
+      <div class="nm"><b>${o.name}${i===0?'<span class="tag">いちばん安い</span>':''}</b><small>${o.sub}</small></div>
+      <div class="pr"><b>${yen(o.total)}円</b><small>${o.mat?'送料'+yen(o.price)+'＋資材'+yen(o.mat):'送料'}</small></div></div>`).join('');
+  if(r.okList.length) h+=`<button class="btn full sub" onclick="useShip(${r.okList[0].total})">💴 ${yen(r.okList[0].total)}円で手取りを計算する</button>`;
+  if(r.ngList.length) h+=`<div class="note" style="margin-top:14px">使えない発送方法</div>`+r.ngList.map(o=>`<div class="opt ng"><div class="co">${o.co}</div><div class="nm"><b>${o.name}</b></div><div class="pr"><b>${o.why}</b></div></div>`).join('');
+  $('sList').innerHTML=h;
+  saveUI();
+}
+function useShip(v){
+  const sel=$('cShipSel');
+  if([...sel.options].some(o=>o.value===String(v))) sel.value=String(v); else { sel.value='free'; $('cShip').value=v; }
+  go('calc'); calc();
+}
+
+/* ---------- ④ 説明文 ---------- */
+const CHIPS=['喫煙者なし','ペットなし','自宅保管','一度だけ使用','まとめ買い歓迎','即購入OK','値下げ交渉OK'];
+const DEAL=['即購入OK','値下げ交渉OK','まとめ買い歓迎'];
+// カテゴリーごとの「寸法の書き方・よく使う項目・撮る写真・説明文に足す一文」
+const CATS={
+  fuku:{n:'👕 服',dim:'例）着丈70 身幅55 肩幅48 袖丈62',dimLb:'実寸',chips:['試着のみ','タグ付き','手洗い済み','クリーニング済み'],
+    photo:['全体（表）','全体（裏）','ブランドタグ','サイズ・洗濯タグ','生地のアップ','キズ・毛玉・汚れ'],note:'平置きで測っていますので、多少の誤差はご了承ください。'},
+  kutsu:{n:'👟 靴・バッグ',dim:'例）26.5cm／幅30×高さ25×マチ12cm',dimLb:'サイズ',chips:['箱あり','中敷ききれい','試し履きのみ','保存袋あり'],
+    photo:['全体（左右・前後）','つま先・かかと・角','靴底・底面','中敷き・内側','サイズ表記・ロゴ','箱・付属品'],note:''},
+  hon:{n:'📚 本・CD',dim:'例）全10巻セット',dimLb:'巻数など',chips:['書き込みなし','帯付き','ディスク傷なし','初版'],
+    photo:['表紙','背表紙（巻数がわかるように）','裏表紙','ページのヤケ・汚れ','ディスク面'],note:'中古品のため、多少のヤケ・スレはご了承ください。'},
+  kaden:{n:'🔌 家電',dim:'例）幅30×奥行20×高さ15cm',dimLb:'大きさ',chips:['動作確認済み','説明書あり','元箱あり','リモコン付き'],
+    photo:['全体','電源が入っている様子','型番シール','付属品を並べて','キズ・汚れ'],note:'動作確認をしてから発送いたします。'},
+  toy:{n:'🧸 おもちゃ・雑貨',dim:'例）高さ20cm',dimLb:'大きさ',chips:['箱なし','パーツそろってます','非売品'],
+    photo:['全体','箱・パッケージ','付属品・パーツ','キズ・汚れ'],note:''},
+  etc:{n:'📦 その他',dim:'例）縦30×横20×高さ10cm',dimLb:'大きさ',chips:['箱なし','動作確認済み'],
+    photo:['全体','ブランド・型番','付属品','キズ・汚れ'],note:''}
+};
+let desc=load(KEY_DESC,{chips:[]});
+if(!CATS[desc.cat]) desc.cat='fuku';
+if(!Array.isArray(desc.photo)) desc.photo=[];
+const DF=['dName','dBrand','dModel','dSize','dColor','dDim','dCond','dWhen','dUse','dFlaw','dAcc','dMsg'];
+function renderChips(){
+  const c=CATS[desc.cat];
+  $('dCats').innerHTML=Object.entries(CATS).map(([k,v])=>`<button class="${desc.cat===k?'on':''}" onclick="setCat('${k}')">${v.n}</button>`).join('');
+  $('dPhotos').innerHTML=c.photo.map((p,i)=>{ const on=desc.photo.includes(p); return `<label class="${on?'on':''}"><input type="checkbox" ${on?'checked':''} onchange="togglePhoto(${i})">${p}</label>`; }).join('');
+  $('dDim').placeholder=c.dim; $('dDim').previousElementSibling.textContent=c.dimLb==='実寸'?'寸法（服なら実寸）':c.dimLb;
+  const list=[...c.chips,...CHIPS.filter(x=>!c.chips.includes(x))];
+  desc.chips.filter(x=>!list.includes(x)).forEach(x=>list.push(x));   // 別カテゴリーで選んだものも消さずに出す
+  $('dChips').innerHTML=list.map(x=>`<button class="${desc.chips.includes(x)?'on':''}" onclick="toggleChip('${x}')">${x}</button>`).join('');
+}
+function setCat(k){ desc.cat=k; renderChips(); buildDesc(); }
+function togglePhoto(i){ const p=CATS[desc.cat].photo[i], j=desc.photo.indexOf(p); if(j>=0) desc.photo.splice(j,1); else desc.photo.push(p); renderChips(); store(KEY_DESC,desc); }
+function toggleChip(c){ const i=desc.chips.indexOf(c); if(i>=0) desc.chips.splice(i,1); else desc.chips.push(c); renderChips(); buildDesc(); }
+function buildDesc(){
+  DF.forEach(k=>desc[k]=$(k).value.trim());
+  store(KEY_DESC,desc);
+  const v=desc, ch=v.chips;
+  const title=[v.dBrand,v.dName,v.dModel,v.dColor,v.dSize].filter(Boolean).join(' ')
+    +(v.dCond==='新品、未使用'?' 新品':v.dCond==='未使用に近い'?' 美品':'');
+  let b=[];
+  if(v.dMsg) b.push(v.dMsg,'');
+  const info=[];
+  if(v.dBrand) info.push('ブランド：'+v.dBrand);
+  if(v.dName) info.push('商品名：'+v.dName);
+  if(v.dModel) info.push('型番：'+v.dModel);
+  if(v.dSize) info.push('サイズ：'+v.dSize);
+  if(v.dColor) info.push('カラー：'+v.dColor);
+  const cat=CATS[v.cat]||CATS.etc;
+  if(v.dDim) info.push(cat.dimLb+'：'+v.dDim+(v.cat==='fuku'?'（cm）':''));
+  if(v.dWhen) info.push('購入時期：'+v.dWhen);
+  if(v.dAcc) info.push('付属品：'+v.dAcc);
+  if(info.length) b.push('【商品について】',...info,'');
+  b.push('【状態】',v.dCond+(v.dUse?'（'+v.dUse+'）':''));
+  if(v.dFlaw) b.push(v.dFlaw);
+  else if(['やや傷や汚れあり','傷や汚れあり','全体的に状態が悪い'].includes(v.dCond)) b.push('※気になる点は写真でご確認ください');
+  const env=ch.filter(c=>!DEAL.includes(c));
+  if(env.length) b.push(env.map(c=>'・'+c).join('\n'));
+  if(cat.note) b.push(cat.note);
+  b.push('');
+  b.push('【発送】','匿名配送・追跡ありで発送します。','梱包は簡易包装になります（水濡れ対策はしています）。','');
+  const deal=[];
+  if(ch.includes('即購入OK')) deal.push('コメントなしの即購入OKです。');
+  if(ch.includes('値下げ交渉OK')) deal.push('お値下げのご相談はコメントでお気軽にどうぞ。');
+  if(ch.includes('まとめ買い歓迎')) deal.push('ほかの出品物とのまとめ買いはお値引きします。');
+  if(deal.length) b.push(...deal,'');
+  b.push('自宅保管の中古品となりますので、ご理解のある方のご購入をお願いいたします。','気になる点はご購入前にコメントでお聞きください。');
+  const tags=[v.dBrand,v.dName].filter(Boolean).map(t=>'#'+t.replace(/\s+/g,''));
+  if(tags.length) b.push('',tags.join(' '));
+  const body=b.join('\n').replace(/\n{3,}/g,'\n\n');
+  const hasAny=DF.some(k=>k!=='dCond'&&v[k])||ch.length;
+  $('tOut').textContent=hasAny?title.trim():'（入力すると商品名ができます）';
+  $('bOut').textContent=hasAny?body:'（入力すると説明文ができます）';
+  const tl=title.trim().length, bl=body.length;
+  $('tCount').textContent=hasAny?tl+'/40文字':''; $('tCount').className='count'+(tl>40?' over':'');
+  $('bCount').textContent=hasAny?bl+'/1000文字':''; $('bCount').className='count'+(bl>1000?' over':'');
+}
+function copyOut(id){ const t=$(id).textContent; if(t.startsWith('（')) return toast('まだ空っぽです'); copyText(t); }
+function clearDesc(){ if(!confirm('入力を全部消しますか？')) return; desc={chips:[],photo:[],cat:desc.cat}; DF.forEach(k=>$(k).value=k==='dCond'?'目立った傷や汚れなし':''); renderChips(); buildDesc(); }
+function descToItem(){
+  const t=$('tOut').textContent; if(t.startsWith('（')) return toast('先に商品名を入れてください');
+  if(desc.fromId&&items.some(i=>i.id===desc.fromId)){ openItem(desc.fromId); $('mName').value=t; return; }   // 準備中の商品から来たときはその商品を更新
+  openItem(null,{name:t,status:'draft'});
+}
+function descFrom(id){
+  const it=items.find(i=>i.id===id); if(!it) return;
+  if(DF.some(k=>k!=='dCond'&&desc[k])&&desc.fromId!==id&&!confirm('説明文タブの今の入力を消して、「'+it.name+'」の説明文を作りますか？')) return;
+  if(desc.fromId!==id){ desc={chips:[],photo:[],cat:desc.cat,fromId:id}; DF.forEach(k=>$(k).value=k==='dCond'?'目立った傷や汚れなし':''); $('dName').value=it.name; }
+  renderChips(); buildDesc(); go('desc');
+}
+
+/* ---------- ⑤ 出品管理 ---------- */
+const ST={draft:'準備中',listed:'出品中',sold:'発送待ち',shipped:'評価待ち',done:'完了'};
+const NEXT={draft:['listed','📤 出品した'],listed:['sold','🎉 売れた'],sold:['shipped','📦 発送した'],shipped:['done','⭐ 取引完了']};
+let items=load(KEY_ITEMS,[]);
+let ui=load(KEY_UI,{tab:'guide',filter:'active'});
+let editing=null;
+function netOf(it){ return (+it.price||0)-feeOf(+it.price||0)-(+it.ship||0); }
+function daysBetween(a,b){ return Math.round((new Date(b)-new Date(a))/86400000); }
+function addDays(d,n){ const x=new Date(d); x.setDate(x.getDate()+n); return x; }
+function md(d){ const x=new Date(d); return (x.getMonth()+1)+'/'+x.getDate(); }
+function renderItems(){
+  renderReport();
+  const t=today(), ym=t.slice(0,7);
+  const fin=items.filter(i=>['shipped','done'].includes(i.status));
+  $('stListed').textContent=items.filter(i=>i.status==='listed').length;
+  $('stMonth').textContent=yen(fin.filter(i=>(i.soldAt||'').startsWith(ym)).reduce((s,i)=>s+netOf(i),0));
+  $('stTotal').textContent=yen(fin.reduce((s,i)=>s+netOf(i),0));
+  const waiting=items.filter(i=>i.status==='sold');
+  $('navBadge').style.display=waiting.length?'':'none'; $('navBadge').textContent=waiting.length;
+  $('urgent').innerHTML=waiting.length?`<div class="warn" style="margin-top:14px">📦 発送待ちが <b>${waiting.length}件</b> あります。期限までに送りましょう！</div>`:'';
+  const F=[['active','進行中'],['listed','出品中'],['sold','発送待ち'],['shipped','評価待ち'],['done','完了'],['draft','準備中'],['all','すべて']];
+  $('filter').innerHTML=F.map(([k,l])=>`<button class="${ui.filter===k?'on':''}" onclick="setFilter('${k}')">${l}</button>`).join('');
+  const order={sold:0,shipped:1,listed:2,draft:3,done:4};
+  let list=items.filter(i=>ui.filter==='all'||(ui.filter==='active'?i.status!=='done':i.status===ui.filter));
+  list.sort((a,b)=>order[a.status]-order[b.status]||(b.updated||0)-(a.updated||0));
+  if(!list.length){ $('items').innerHTML=`<div class="empty">${items.length?'この条件の商品はありません':'まだ記録がありません<br>右下の ＋ から追加できます'}</div>`; return; }
+  $('items').innerHTML=list.map(it=>{
+    let alert='';
+    if(it.status==='sold'&&it.soldAt){
+      const dl=addDays(it.soldAt,+it.days||3); const left=daysBetween(t,dl.toISOString().slice(0,10));
+      alert=`<div class="alert">⏰ 発送期限 ${md(dl)}　${left>0?'あと'+left+'日':left===0?'今日まで！':'期限を過ぎています'}</div>`;
+    }
+    if(it.status==='listed'&&it.listedAt){
+      const d=daysBetween(it.listedAt,t);
+      if(d>=14) alert=`<div class="alert y">💡 出品から${d}日。100〜300円の値下げで売れやすくなります</div>`;
+    }
+    if(it.status==='shipped'&&it.shippedAt){
+      const d=daysBetween(it.shippedAt,t);
+      if(d>=4) alert=`<div class="alert y">発送から${d}日。評価がなくても、しばらくすると自動で完了します</div>`;
+    }
+    const nx=NEXT[it.status], td=TODO[it.status], tdv=it.todo||{};
+    return `<div class="item s-${it.status}">
+      <div class="top"><b>${esc(it.name)||'（名前なし）'}</b><span class="st">${ST[it.status]}</span></div>
+      <div class="meta">${it.price?`販売 <b>${yen(it.price)}円</b>　手取り <b>${yen(netOf(it))}円</b>`:'価格未設定'}
+        ${it.listedAt?'　出品 '+md(it.listedAt):''}${it.soldAt?'　売約 '+md(it.soldAt):''}
+        ${it.method?'<br>🚚 '+esc(it.method):''}${it.memo?'<br>📝 '+esc(it.memo):''}</div>
+      ${alert}
+      ${td?`<div class="todo">${td.map(([k,l])=>`<button class="${tdv[k]?'on':''}" onclick="toggleTodo('${it.id}','${k}')">${tdv[k]?'✓':'□'} ${l}</button>`).join('')}</div>`:''}
+      <div class="acts">${nx?`<button class="main" onclick="advance('${it.id}')">${nx[1]}</button>`:''}
+        <button onclick="openItem('${it.id}')">✏️ 編集</button>
+        ${it.status==='draft'?`<button onclick="descFrom('${it.id}')">📝 説明文を作る</button>`:''}
+        ${['sold','shipped','done'].includes(it.status)?`<button onclick="openMsg('${it.id}')">💬 メッセージ</button>`:''}
+        ${it.status==='listed'?`<button onclick="priceDown('${it.id}')">📉 100円下げる</button>`:''}</div>
+    </div>`;
+  }).join('');
+}
+function setFilter(k){ ui.filter=k; saveUI(); renderItems(); }
+function saveItems(){ store(KEY_ITEMS,items); renderItems(); cloudAutoSave(); }
+
+/* 取引中のやること */
+const TODO={
+  draft:[['photo','写真'],['price','相場・値段'],['text','説明文']],
+  sold:[['greet','あいさつ'],['pack','梱包'],['send','発送'],['notify','「発送しました」']],
+  shipped:[['review','受取評価が来た'],['rate','購入者を評価']]
+};
+function toggleTodo(id,k){ const it=items.find(i=>i.id===id); it.todo=it.todo||{}; it.todo[k]=!it.todo[k]; it.updated=Date.now(); saveItems(); }
+
+/* 取引メッセージ（期限・発送方法を入れた例文） */
+function openMsg(id){
+  const it=items.find(i=>i.id===id); if(!it) return;
+  const dl=it.soldAt?addDays(it.soldAt,+it.days||3):null;
+  const how=it.method&&!it.method.startsWith('手渡し')?it.method.replace(/[\s　]*[\d,]+円.*$/,''):'';
+  const M=[];
+  if(it.status==='sold') M.push(['🙏 購入のお礼',`ご購入ありがとうございます。\n${dl?md(dl)+'までに':'なるべく早く'}${how?how+'で':''}発送いたしますので、到着まで今しばらくお待ちください。\n最後までよろしくお願いいたします。`]);
+  if(['sold','shipped'].includes(it.status)) M.push(['📦 発送のご連絡',`本日${how?how+'にて':''}発送いたしました。\n到着まで今しばらくお待ちください。\n商品が届きましたら、受取評価をお願いいたします。`]);
+  if(it.status==='sold') M.push(['🙇 発送が少し遅れるとき',`ご購入ありがとうございます。\n申し訳ありませんが、発送が${dl?md(addDays(dl,1)):'少し'}ごろになりそうです。\n準備ができ次第すぐにお送りしますので、よろしくお願いいたします。`]);
+  if(it.status==='shipped') M.push(['📮 届いたか確認',`お世話になっております。\n商品は無事に届いておりますでしょうか。\nお手すきの際に受取評価をいただけますと幸いです。`]);
+  M.push(['⭐ 評価のコメント','スムーズなお取引ありがとうございました。\nまたご縁がありましたらよろしくお願いいたします。']);
+  $('msgFor').textContent=it.name+(dl&&it.status==='sold'?'　／　発送期限 '+md(dl):'');
+  window._msgs=M;
+  $('msgList').innerHTML=M.map((m,i)=>`<div class="tmpl"><div class="hd"><b>${m[0]}</b><button class="btn sm sub" onclick="copyText(_msgs[${i}][1])">コピー</button></div><p>${esc(m[1])}</p></div>`).join('');
+  $('msgModal').classList.add('on');
+}
+
+/* まとめて追加 */
+function openBulk(){ $('bulkText').value=''; $('bulkModal').classList.add('on'); setTimeout(()=>$('bulkText').focus(),200); }
+function saveBulk(){
+  const names=$('bulkText').value.split('\n').map(s=>s.replace(/^[\s　・\-*●]+/,'').trim()).filter(Boolean);
+  if(!names.length) return toast('1行に1つずつ書いてください');
+  const t=Date.now();
+  names.forEach((n,i)=>items.push({id:'i'+(t+i).toString(36),name:n,price:0,ship:0,status:'draft',days:3,listedAt:'',soldAt:'',memo:'',updated:t+i}));
+  saveItems(); $('bulkModal').classList.remove('on');
+  ui.filter='draft'; saveUI(); renderItems(); toast(names.length+'件を「準備中」に追加しました');
+}
+
+/* 売上レポート */
+let repMode='year';
+function renderReport(){
+  document.querySelectorAll('#repMode button').forEach(b=>b.classList.toggle('on',b.dataset.r===repMode));
+  const t=today(), y=t.slice(0,4);
+  const fin=items.filter(i=>['shipped','done'].includes(i.status)&&i.soldAt&&(repMode==='all'||i.soldAt.startsWith(y)));
+  if(!fin.length){ $('report').innerHTML=`<div class="empty">${repMode==='year'?'今年':'まだ'}売れた記録がありません<br><span style="font-size:11px">「📦 発送した」まで進むと集計されます</span></div>`; return; }
+  // 直近6ヶ月の手取り
+  const months=[]; const now=new Date(); for(let k=5;k>=0;k--){ const d=new Date(now.getFullYear(),now.getMonth()-k,1); months.push(d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')); }
+  const allFin=items.filter(i=>['shipped','done'].includes(i.status)&&i.soldAt);
+  const mv=months.map(m=>allFin.filter(i=>i.soldAt.startsWith(m)).reduce((s,i)=>s+netOf(i),0));
+  const mx=Math.max(...mv,1);
+  const sum=(f)=>fin.reduce((s,i)=>s+f(i),0);
+  const sales=sum(i=>+i.price||0), fee=sum(i=>feeOf(+i.price||0)), ship=sum(i=>+i.ship||0), net=sales-fee-ship;
+  const dd=fin.filter(i=>i.listedAt&&i.soldAt>=i.listedAt).map(i=>daysBetween(i.listedAt,i.soldAt));
+  const avgDays=dd.length?Math.round(dd.reduce((s,n)=>s+n,0)/dd.length*10)/10:null;
+  const top=[...fin].sort((a,b)=>netOf(b)-netOf(a)).slice(0,3);
+  const listedNow=items.filter(i=>i.status==='listed');
+  $('report').innerHTML=`
+    <div class="bars">${mv.map((v,k)=>`<div class="b ${k===5?'now':''}"><em>${v?yen(v):''}</em><i style="height:${Math.round(v/mx*100)}%"></i></div>`).join('')}</div>
+    <div class="bars-lb">${months.map(m=>`<span>${+m.slice(5)}月</span>`).join('')}</div>
+    <div class="note" style="margin-top:4px">↑直近6ヶ月の手取り（今月はみどり）</div>
+    <div class="kv">
+      <div><small>売れた数</small><b>${fin.length}件</b></div>
+      <div><small>手取りの合計</small><b style="color:var(--ok)">${yen(net)}円</b></div>
+      <div><small>売上（販売価格の合計）</small><b>${yen(sales)}円</b></div>
+      <div><small>1件あたりの手取り</small><b>${yen(net/fin.length)}円</b></div>
+      <div><small>手数料の合計</small><b>${yen(fee)}円</b></div>
+      <div><small>送料の合計</small><b>${yen(ship)}円</b></div>
+      <div><small>売れるまで平均</small><b>${avgDays===null?'—':avgDays+'日'}</b></div>
+      <div><small>いま出品中の見込み手取り</small><b>${yen(listedNow.reduce((s,i)=>s+netOf(i),0))}円</b></div>
+    </div>
+    <div class="note" style="margin-top:12px">🏆 手取りが多かった商品</div>
+    <table class="mini">${top.map((i,k)=>`<tr><td>${['🥇','🥈','🥉'][k]} ${esc(i.name)}</td><td>${yen(netOf(i))}円</td></tr>`).join('')}</table>
+    <div class="note">家の不用品（生活用品）を売ったお金は原則として税金はかかりません。仕入れて売る場合は別です。</div>`;
+}
+function advance(id){
+  const it=items.find(i=>i.id===id); const nx=NEXT[it.status]; if(!nx) return;
+  it.status=nx[0]; const t=today();
+  if(nx[0]==='listed'&&!it.listedAt) it.listedAt=t;
+  if(nx[0]==='sold'&&!it.soldAt) it.soldAt=t;
+  if(nx[0]==='shipped') it.shippedAt=t;
+  if(nx[0]==='done'){ it.doneAt=t; toast('🎉 おつかれさまでした！ 手取り '+yen(netOf(it))+'円'); }
+  if(nx[0]==='sold') toast('🎉 売れました！発送期限を確認しましょう');
+  it.updated=Date.now(); saveItems();
+}
+function priceDown(id){ const it=items.find(i=>i.id===id); if(+it.price-100<300) return toast('300円より下げられません');
+  it.price=+it.price-100; it.listedAt=today(); it.updated=Date.now(); saveItems(); toast(yen(it.price)+'円にしました（アプリ側も変更してね）'); }
+function openItem(id,preset){
+  editing=id||null; const it=id?items.find(i=>i.id===id):Object.assign({status:'listed',days:3,listedAt:today(),ship:curShip()||''},preset||{});
+  $('mTitle').textContent=id?'商品を編集':'商品を追加';
+  $('mName').value=it.name||''; $('mPrice').value=it.price||''; $('mShip').value=it.ship??'';
+  $('mStatus').value=it.status; $('mDays').value=String(it.days||3);
+  $('mListed').value=it.listedAt||''; $('mSold').value=it.soldAt||''; $('mMemo').value=it.memo||'';
+  const ms=$('mMethod'); if(it.method&&![...ms.options].some(o=>o.value===it.method)) ms.add(new Option(it.method,it.method)); ms.value=it.method||'';
+  $('mDel').style.display=id?'':'none';
+  mNet(); $('modal').classList.add('on');
+}
+function closeItem(){ $('modal').classList.remove('on'); }
+function fillMethodSelect(){
+  const o=[['','（まだ決めていない）','']];
+  SHIPS.forEach(s=>o.push([s.name+' '+yen(s.price+s.mat)+'円',s.name+'　'+yen(s.price+s.mat)+'円'+(s.mat?'（資材込み）':''),s.price+s.mat]));
+  TQ.forEach(t=>o.push(['宅急便 '+t[0]+'サイズ '+yen(t[2])+'円','宅急便 '+t[0]+'サイズ　'+yen(t[2])+'円',t[2]]));
+  YP.forEach(t=>o.push(['ゆうパック '+t[0]+'サイズ '+yen(t[2])+'円','ゆうパック '+t[0]+'サイズ　'+yen(t[2])+'円',t[2]]));
+  o.push(['手渡し・着払い','手渡し・着払い（送料0円）',0]);
+  $('mMethod').innerHTML=o.map(([v,l,p])=>`<option value="${esc(v)}" data-p="${p}">${l}</option>`).join('');
+  $('mMethod').addEventListener('change',e=>{ const p=e.target.selectedOptions[0].dataset.p; if(p!=='') { $('mShip').value=p; mNet(); } });
+}
+function mNet(){ const p=+$('mPrice').value||0, s=+$('mShip').value||0; $('mNet').textContent=p?`手数料 ${yen(feeOf(p))}円・送料 ${yen(s)}円を引いて、手取り ${yen(p-feeOf(p)-s)}円`:''; }
+function saveItem(){
+  const name=$('mName').value.trim(); if(!name) return toast('商品名を入れてください');
+  const st=$('mStatus').value;
+  const data={name,price:+$('mPrice').value||0,ship:+$('mShip').value||0,status:st,days:+$('mDays').value,
+    listedAt:$('mListed').value,soldAt:$('mSold').value,memo:$('mMemo').value.trim(),method:$('mMethod').value,updated:Date.now()};
+  if(['sold','shipped','done'].includes(st)&&!data.soldAt) data.soldAt=today();
+  if(editing){ const it=items.find(i=>i.id===editing); if(st==='shipped'&&it.status!=='shipped') data.shippedAt=today(); Object.assign(it,data); }
+  else items.push(Object.assign({id:'i'+Date.now().toString(36)},data,st==='shipped'?{shippedAt:today()}:{}));
+  saveItems(); closeItem(); if(ui.tab!=='list') go('list'); toast('保存しました');
+}
+function delItem(){ if(!confirm('この商品の記録を削除しますか？')) return; items=items.filter(i=>i.id!==editing); saveItems(); closeItem(); }
+function exportData(){
+  const blob=new Blob([JSON.stringify({app:'mercari-guide',v:1,at:new Date().toISOString(),items,progress:state},null,1)],{type:'application/json'});
+  const a=document.createElement('a'); a.href=URL.createObjectURL(blob); a.download='メルカリ記録_'+today()+'.json'; a.click();
+  setTimeout(()=>URL.revokeObjectURL(a.href),1000);
+}
+function importData(inp){
+  const f=inp.files[0]; if(!f) return; const r=new FileReader();
+  r.onload=()=>{ try{ const d=JSON.parse(r.result); if(!Array.isArray(d.items)) throw 0;
+      if(!confirm(d.items.length+'件の記録で置き換えますか？（いまの'+items.length+'件は上書きされます）')) return;
+      items=d.items; if(d.progress){ state=d.progress; store(KEY,state); renderGuide(); } saveItems(); toast('戻しました');
+    }catch(e){ alert('このファイルは読み込めませんでした'); } inp.value=''; };
+  r.readAsText(f);
+}
+
+/* ---------- タブ ---------- */
+const SUB={guide:'はじめてでも順番どおりに進めればOK！',calc:'売れたらいくら残る？をすぐ計算',ship:'サイズと重さから、いちばん安い送り方',desc:'埋めるだけで、商品名と説明文ができる',list:'出品中・発送待ち・売上をまとめて管理'};
+function go(t){
+  ui.tab=t; saveUI();
+  document.querySelectorAll('.page').forEach(p=>p.classList.toggle('on',p.id==='p-'+t));
+  document.querySelectorAll('nav.tabs button').forEach(b=>b.classList.toggle('on',b.dataset.t===t));
+  $('fab').classList.toggle('on',t==='list');
+  $('subtitle').textContent=SUB[t];
+  window.scrollTo({top:0});
+}
+function saveUI(){
+  ui.calc={mode:calcMode,price:$('cPrice').value,want:$('cWant').value,ship:$('cShipSel').value,free:$('cShip').value,cost:$('cCost').value};
+  ui.ship={L:$('sL').value,W:$('sW').value,H:$('sH').value,kg:$('sKg').value};
+  ui.mk={kw:$('mkKw').value,prices:$('mkPrices').value};
+  store(KEY_UI,ui);
+}
+
+/* ---------- Macとスマホの自動同期（Google） ---------- */
+// 最後にクラウドとそろえた時点の中身（base）を覚えておき、
+//   クラウドだけ変わっていた → 読み込む（ほかの端末で入れた分）
+//   手元だけ変わっていた     → 送る
+//   両方変わっていた         → どちらを残すか聞く
+// 同期するのは「管理の記録」と「ガイドのチェック」だけ（説明文の下書き・画面の状態はその端末だけ）
+const SYNC_URL='https://script.google.com/macros/s/AKfycbxwL19mAenATUMILRsQYrDL0ThjU2C583Cj729OfzNHEH3drMcZCExYULRp4VGOZ11J/exec';
+const SYNC_KEY='mercari_guide_data_musume';
+const BASE_KEY='mercari_syncbase_musume_v1';
+function storageOK(){ try{ localStorage.setItem('__synctest','1'); localStorage.removeItem('__synctest'); return true; }catch(e){ return false; } }
+function syncData(){ const p={}; STEPS.forEach((s,i)=>{ if(state['c'+i]) p['c'+i]=true; }); return {items,progress:p}; }
+function hasRealData(d){ return !!d&&((d.items||[]).length>0||Object.keys(d.progress||{}).length>0); }
+function stable(o){
+  if(Array.isArray(o)) return o.map(stable);
+  if(o&&typeof o==='object'){ const r={}; Object.keys(o).sort().forEach(k=>{ if(k!=='savedAt') r[k]=stable(o[k]); }); return r; }
+  return o;
+}
+function fpOf(d){ return JSON.stringify(stable(d)); }
+function getBase(){ try{ return localStorage.getItem(BASE_KEY); }catch(e){ return null; } }
+function setBase(d){ try{ localStorage.setItem(BASE_KEY,fpOf(d)); }catch(e){} }
+function hhmm(d){ return d.getHours()+':'+String(d.getMinutes()).padStart(2,'0'); }
+function setSyncSt(s){ $('syncSt').textContent=s; }
+let autoCloudTimer=null, syncing=false, cloudReady=false, lastSync=0, pendingPush=false;
+function cloudAutoSave(){
+  if(!cloudReady){ pendingPush=true; return; }   // 起動時の突き合わせが終わってから送る
+  clearTimeout(autoCloudTimer); autoCloudTimer=setTimeout(syncNow,2500);
+}
+async function fetchCloud(){
+  const res=await fetch(SYNC_URL+'?action=load&key='+SYNC_KEY,{cache:'no-store'});
+  const j=await res.json();
+  let d=j&&j.data; if(typeof d==='string'){ try{ d=JSON.parse(d); }catch(e){ d=null; } }
+  return (d&&Array.isArray(d.items))?{items:d.items,progress:d.progress||{}}:null;
+}
+function takeCloud(d,msg){
+  items=d.items; STEPS.forEach((s,i)=>{ state['c'+i]=!!d.progress['c'+i]; });
+  store(KEY_ITEMS,items); store(KEY,state); setBase(syncData());
+  renderGuide(); renderItems();
+  if(msg) toast(msg);
+}
+async function syncNow(manual){
+  if(syncing) return;
+  syncing=true; lastSync=Date.now();
+  clearTimeout(autoCloudTimer); autoCloudTimer=null;
+  try{
+    const cloud=await fetchCloud();
+    let hasLocal=false; try{ hasLocal=localStorage.getItem(KEY_ITEMS)!==null||localStorage.getItem(KEY)!==null; }catch(e){}
+    const mine=syncData(), local=fpOf(mine), base=getBase();
+    if(!cloud){
+      if(hasLocal&&hasRealData(mine)) await pushCloud(true);   // クラウドが空なら手元を送る
+    }else{
+      const cs=fpOf(cloud);
+      if(cs===local) setBase(mine);
+      else if(!hasLocal||(!hasRealData(mine)&&hasRealData(cloud))) takeCloud(cloud,'☁️ クラウドから読み込みました');   // この端末では初めて
+      else{
+        const cloudChanged=base===null||cs!==base, localChanged=base===null||local!==base;
+        if(cloudChanged&&!localChanged) takeCloud(cloud,'☁️ ほかの端末で入れた分を読み込みました');
+        else if(!cloudChanged&&localChanged) await pushCloud(true);
+        else if(confirm('⚠️ この画面とクラウド（ほかの端末）の両方に、違う内容があります。\n\n'
+                       +'OK＝クラウドの内容を読み込む\n'
+                       +'キャンセル＝この画面の内容でクラウドを上書きする\n\n'
+                       +'（迷ったら、先に「ファイルに書き出す」で控えを取ってからにすると安心です）')) takeCloud(cloud,'☁️ クラウドの内容を読み込みました');
+        else await pushCloud(true);
+      }
+    }
+    setSyncSt('☁️ クラウドOK '+hhmm(new Date()));
+    if(manual===true) toast('☁️ 同期しました');
+  }catch(e){ setSyncSt('💾 この端末に保存済み（クラウド未接続）'); if(manual===true) toast('クラウドにつながりませんでした'); }
+  syncing=false;
+  if(!cloudReady){ cloudReady=true; if(pendingPush){ pendingPush=false; cloudAutoSave(); } }
+}
+async function pushCloud(silent){
+  if(!storageOK()) return false;   // localStorage が使えない画面（プレビュー等）からは送らない
+  try{
+    const d=syncData(), sent=JSON.stringify(Object.assign({},d,{savedAt:Date.now()}));
+    const res=await fetch(SYNC_URL+'?action=save&key='+SYNC_KEY,{method:'POST',body:sent});
+    const j=await res.json();
+    if(j.success){ setBase(d); setSyncSt('☁️ クラウドOK '+hhmm(new Date())); if(!silent) toast('☁️ クラウドに保存しました'); return true; }
+    if(!silent) toast('エラー: '+(j.message||''));
+  }catch(e){ if(!silent) toast('通信エラー: '+e.message); }
+  setSyncSt('💾 この端末に保存済み（クラウド送信できず）');
+  return false;
+}
+async function cloudDownload(){
+  toast('☁️ 読み込み中…');
+  try{
+    const d=await fetchCloud();
+    if(!d) return toast('クラウドにデータがありません');
+    if(!confirm('クラウドの記録（'+d.items.length+'件）を読み込みますか？\nこの画面の記録（'+items.length+'件）は置き換わります。')) return;
+    takeCloud(d,'☁️ クラウドから読み込みました');
+  }catch(e){ toast('クラウドにつながりませんでした'); }
+}
+document.addEventListener('visibilitychange',()=>{
+  if(document.visibilityState==='hidden'){ if(autoCloudTimer) syncNow(); return; }   // 送る前の編集があれば送っておく
+  if(cloudReady&&!autoCloudTimer&&Date.now()-lastSync>30*1000) syncNow();
+});
+function setMode(m){
+  calcMode=m; document.querySelectorAll('#calcMode button').forEach(b=>b.classList.toggle('on',b.dataset.m===m));
+  $('fPrice').style.display=m==='fwd'?'':'none'; $('fWant').style.display=m==='rev'?'':'none'; calc();
+}
+
+/* ---------- 起動 ---------- */
+if(state.open===undefined) state.open=0;
+renderGuide(); renderExtras(); fillShipSelect(); renderChips();
+DF.forEach(k=>{ if(desc[k]!==undefined) $(k).value=desc[k]; $(k).addEventListener('input',buildDesc); $(k).addEventListener('change',buildDesc); });
+buildDesc();
+if(ui.calc){ $('cPrice').value=ui.calc.price||''; $('cWant').value=ui.calc.want||''; if(ui.calc.ship) $('cShipSel').value=ui.calc.ship; $('cShip').value=ui.calc.free||''; $('cCost').value=ui.calc.cost||''; calcMode=ui.calc.mode||'fwd'; }
+if(ui.ship){ $('sL').value=ui.ship.L||''; $('sW').value=ui.ship.W||''; $('sH').value=ui.ship.H||''; $('sKg').value=ui.ship.kg||''; }
+['cPrice','cWant','cShip','cCost'].forEach(k=>$(k).addEventListener('input',calc));
+$('cShipSel').addEventListener('change',calc);
+['sL','sW','sH','sKg'].forEach(k=>$(k).addEventListener('input',shipCalc));
+$('sPreset').addEventListener('change',e=>{ const v=e.target.value; if(!v) return; const [l,w,h,kg]=v.split(','); $('sL').value=l;$('sW').value=w;$('sH').value=h;$('sKg').value=kg; e.target.value=''; shipCalc(); });
+document.querySelectorAll('#calcMode button').forEach(b=>b.onclick=()=>setMode(b.dataset.m));
+document.querySelectorAll('nav.tabs button').forEach(b=>b.onclick=()=>go(b.dataset.t));
+['mPrice','mShip'].forEach(k=>$(k).addEventListener('input',mNet));
+fillMethodSelect();
+if(ui.mk){ $('mkKw').value=ui.mk.kw||''; $('mkPrices').value=ui.mk.prices||''; }
+$('mkKw').addEventListener('input',saveUI);
+$('mkPrices').addEventListener('input',mkCalc);
+$('cShipSel').addEventListener('change',mkCalc);
+document.querySelectorAll('#repMode button').forEach(b=>b.onclick=()=>{ repMode=b.dataset.r; renderReport(); });
+setMode(calcMode); shipCalc(); mkCalc(); renderItems(); go(ui.tab||'guide');
+if(!storageOK()) setSyncSt('⚠️ この画面では保存できません（プライベートモード等）');
+syncNow();
+</script>
+</body>
+</html>
