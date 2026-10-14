@@ -10,7 +10,22 @@
 *{box-sizing:border-box}
 body{margin:0;background:var(--bg);color:var(--ink);font-family:-apple-system,"Hiragino Sans","Hiragino Kaku Gothic ProN",sans-serif;font-size:16px;padding-bottom:160px}
 header{background:var(--main);color:#fff;padding:14px 16px 10px;padding-top:max(14px,env(safe-area-inset-top))}
-header h1{margin:0;font-size:20px}
+header h1{margin:0;font-size:20px;position:relative;z-index:1}
+header{position:relative;overflow:hidden}
+header .sub{position:relative;z-index:1}
+/* 走る軽トラ */
+#truckLane{position:absolute;top:max(6px,env(safe-area-inset-top));right:10px;left:max(185px,45%);height:40px;pointer-events:none}
+#truck{position:absolute;bottom:0;left:calc(100% - 76px);width:76px;height:38px;animation:drive 18s linear infinite}
+#truck svg{width:100%;height:100%;display:block;overflow:visible}
+#truck .wheel{transform-box:fill-box;transform-origin:center;animation:spin .5s linear infinite}
+#truck .bd{animation:bump .35s ease-in-out infinite alternate}
+#truck .puff{transform-box:fill-box;transform-origin:center;animation:puff 1.2s ease-out infinite}
+#truck .puff.p2{animation-delay:.6s}
+@keyframes drive{0%{left:calc(100% - 76px);transform:scaleX(1)}46%{left:0;transform:scaleX(1)}50%{left:0;transform:scaleX(-1)}96%{left:calc(100% - 76px);transform:scaleX(-1)}100%{left:calc(100% - 76px);transform:scaleX(1)}}
+@keyframes spin{to{transform:rotate(-360deg)}}
+@keyframes bump{to{transform:translateY(-.9px)}}
+@keyframes puff{0%{opacity:.7;transform:translate(0,0) scale(.5)}100%{opacity:0;transform:translate(10px,-4px) scale(1.6)}}
+@media (prefers-reduced-motion:reduce){#truck,#truck .wheel,#truck .bd,#truck .puff{animation:none}}
 header .sub{font-size:13px;opacity:.9;margin-top:2px}
 #weekBox{margin:12px 16px 0;padding:12px 14px;border-radius:12px;font-weight:600}
 #weekBox.ok{background:#e8f5e9;color:var(--ok)}
@@ -112,6 +127,31 @@ table.book td.l{text-align:left}
 </head>
 <body>
 <header>
+  <div id="truckLane" aria-hidden="true"><div id="truck"><svg viewBox="0 0 120 60">
+  <circle class="puff" cx="116" cy="47" r="3" fill="#fff" opacity=".6"/><circle class="puff p2" cx="116" cy="47" r="3" fill="#fff" opacity=".6"/>
+  <g class="bd">
+    <rect x="12" y="44" width="100" height="4" fill="#333"/>
+    <path d="M9 46 L9 29 Q10 16 20 14 L45 14 L47 16 L47 46 Z" fill="#f5f5f5" stroke="#8a8a8a" stroke-width="1"/>
+    <path d="M13 29 Q14 19 21 18 L37 18 L37 30 L13 30 Z" fill="#9fcbe2" stroke="#6b8fa3" stroke-width=".8"/>
+    <path d="M40 18 L44 18 L44 30 L40 30 Z" fill="#9fcbe2" stroke="#6b8fa3" stroke-width=".8"/>
+    <line x1="38.5" y1="18" x2="38.5" y2="45" stroke="#bbb" stroke-width=".8"/>
+    <rect x="33" y="33" width="4" height="1.5" rx=".7" fill="#999"/>
+    <rect x="7" y="35" width="3" height="4" rx="1" fill="#ffe082" stroke="#b0a060" stroke-width=".5"/>
+    <rect x="6" y="41" width="5" height="4" rx="1" fill="#bdbdbd"/>
+    <rect x="47" y="11" width="2.5" height="29" fill="#9e9e9e"/>
+    <line x1="47" y1="16" x2="56" y2="16" stroke="#9e9e9e" stroke-width="1"/>
+    <rect x="50" y="21" width="8" height="16" rx="1" fill="#d32f2f" stroke="#8e1b1b" stroke-width=".6"/>
+    <rect x="58" y="16" width="44" height="22" rx="6" fill="#ecdc6a" stroke="#b9a83a" stroke-width="1"/>
+    <rect x="76" y="12.5" width="9" height="4" rx="1" fill="#f3ea9c" stroke="#b9a83a" stroke-width=".7"/>
+    <rect x="61" y="20" width="14" height="5" fill="#fff" opacity=".6"/>
+    <rect x="47" y="35" width="65" height="10" fill="#eeeeee" stroke="#8a8a8a" stroke-width="1"/>
+    <line x1="69" y1="35" x2="69" y2="45" stroke="#aaa" stroke-width=".7"/><line x1="91" y1="35" x2="91" y2="45" stroke="#aaa" stroke-width=".7"/>
+    <path d="M100 30 C110 31 112 38 106 44 C102 48 98 47 99 50" fill="none" stroke="#2aa5d8" stroke-width="2.4" stroke-linecap="round"/>
+    <rect x="109.5" y="37" width="2.5" height="4" fill="#e53935"/>
+  </g>
+  <g class="wheel"><circle cx="28" cy="49" r="8" fill="#222"/><circle cx="28" cy="49" r="3.6" fill="#bbb"/><rect x="27.3" y="42" width="1.4" height="4" fill="#555"/></g>
+  <g class="wheel"><circle cx="93" cy="49" r="8" fill="#222"/><circle cx="93" cy="49" r="3.6" fill="#bbb"/><rect x="92.3" y="42" width="1.4" height="4" fill="#555"/></g>
+</svg></div></div>
   <h1>♨️ 温泉運搬記録</h1>
   <div class="sub">うちまち｜毎週木曜 温泉 → <span id="hDest">リュウオウ</span>　<span id="syncDot"></span></div>
 </header>
