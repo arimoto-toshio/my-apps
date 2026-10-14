@@ -373,7 +373,7 @@ const DEF_SET={
 const $=id=>document.getElementById(id);
 const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 function lsOK(){try{localStorage.setItem('__synctest','1');localStorage.removeItem('__synctest');return true;}catch(e){return false;}}
-function toast(m){if(/ください|ません|失敗|電波|読めない/.test(m)&&typeof falcoSay==='function')setTimeout(()=>falcoSay(/電波|読め/.test(m)?'電波の届く所でもう一度だ':FALCO_HELP[Math.floor(Math.random()*FALCO_HELP.length)]),300);const t=$('toast');t.textContent=m;t.classList.add('on');clearTimeout(t._h);t._h=setTimeout(()=>t.classList.remove('on'),2600);}
+function toast(m){if(/ください|ません|失敗|電波|読めない/.test(m)&&typeof falcoSay==='function')setTimeout(()=>falcoSay(/電波|読め/.test(m)?'電波の届く所でもう一度だ':pick(T().help)),300);const t=$('toast');t.textContent=m;t.classList.add('on');clearTimeout(t._h);t._h=setTimeout(()=>t.classList.remove('on'),2600);}
 const pad=n=>String(n).padStart(2,'0');
 const ymd=d=>d.getFullYear()+'-'+pad(d.getMonth()+1)+'-'+pad(d.getDate());
 const today=()=>ymd(new Date());
@@ -551,7 +551,7 @@ $('saveBtn').onclick=()=>{
   clearTimeout(recTimer);
   const r=commitRec(false);if(!r)return;
   editId=null;renderAll();renderForm({});
-  toast('保存しました');setTimeout(()=>mascotSay('エクセレント！'),400);
+  toast('保存しました');setTimeout(()=>mascotSay(pick(T().ok)),400);
   if(r.kind==='run'&&r.checks.length<S.set.checks.length)setTimeout(()=>falcoSay('点検もれがあるな。あとで見ておこう'),1800);
   else if(/漏れ|もれ|故障|壊|パンク|トラブル|不具合|異常/.test(r.note))setTimeout(()=>falcoSay('トラブルか？このファルコに任せろ'),1800);
   clearTimeout(pushTimer);pushCloud(true);
@@ -624,7 +624,7 @@ $('gSave').onclick=()=>{
   clearTimeout(gTimer);
   const f=commitFuel(false);if(!f)return;
   gEdit=null;renderFuelForm({});$('gMonth').value=f.date.slice(0,7);renderFuel();renderWeek();
-  toast('給油を記録しました');setTimeout(()=>mascotSay('エクセレント！'),400);
+  toast('給油を記録しました');setTimeout(()=>mascotSay(pick(T().ok)),400);
   clearTimeout(pushTimer);pushCloud(true);
 };
 // 画面を閉じる・切りかえる前に、書きかけを保存
@@ -818,17 +818,103 @@ document.querySelector('nav').onclick=e=>{const b=e.target.closest('button');if(
 function renderAll(){renderWeek();renderSet();if($('rot').classList.contains('on'))renderRot();if($('fuel').classList.contains('on'))renderFuel();if($('list').classList.contains('on'))renderList();if($('sum').classList.contains('on')){renderSumSel();renderSum();}}
 
 renderAll();renderForm({});renderFuelForm({});
+// ===== 今週のセリフ（毎週月曜に入れかわる・8週で一巡） =====
+const THEMES=[
+ {name:'いつもの週',
+  r:['エクセレント！','今週も運んだ？','記録はちゃんとつけてな','ご苦労さん！','リュウオウまで安全運転で','ホースの片付けよろしく'],
+  f:['トラブルか？このファルコに任せろ','困ったことがあれば呼べ','ホースの漏れか？すぐ行く','軽トラの調子はどうだ','給油の立替、忘れるなよ','どんな問題も元斗皇拳で解決だ'],
+  ok:['エクセレント！','エクセレント！！','ナイス記録！'],
+  help:['ファルコに任せろ。もう一度やってみるのだ','あわてるな。落ち着いて入れ直せ'],
+  hit:['あべしっ！','ひでぶっ！','たわばっ！','うわらばっ！'],
+  after:['……記録、つけます','ちゃんとやるけん…','い、今のは効いた…'],
+  talk:[[['f','記録はつけたか？'],['m','あ、あとで…'],['f','あとでではない！今だ！']],
+        [['m','ガソリン入れといたで'],['f','立替の記録はしたか？'],['m','……']],
+        [['m','今週もちゃんと運んだで！'],['f','うむ。見事だ']]]},
+ {name:'伊予弁の週',
+  r:['ほうよ、記録しとかんといけんのよ','今日もよもだ言わんと運ぼや','ほなけん安全運転でな','おつかれさんじゃったねぇ','ホース、なおしとってや','木曜日はリュウオウの日やけん'],
+  f:['困ったらワシを呼ばんかい','ほれ、点検はしたんか','軽トラ、機嫌ようしとるか','立替、ためこんだらいけんぞ','ワシが来たけん、もう大丈夫ぞ','漏れとるんか？すぐ行くけん'],
+  ok:['ええがい！','でかしたぞな！','エクセレントじゃが！'],
+  help:['あわてんでええけん、もう一回入れてみ','ゆっくりでええんよ'],
+  hit:['あいたーっ！','なんしよん！','いたいがーっ！','ひでぶっ！'],
+  after:['ほうよね…記録せないかんね…','ちゃんとするけん許してや','もう、よもだ言わんけん…'],
+  talk:[[['m','今日はえらいけん休もかな'],['f','たわけ！木曜は運ぶ日ぞ'],['m','ほうよね…']],
+        [['f','記録しとるんか？'],['m','あとでするけん'],['f','今せぇ！']],
+        [['m','リュウオウのお客さん喜んどったよ'],['f','それが一番ぞな']]]},
+ {name:'時代劇の週',
+  r:['苦しゅうない、記録をつけよ','温泉運搬、大儀であった','者ども、ホースを巻け','かたじけない','本日は木曜でござる','殿中でござる！記録でござる！'],
+  f:['拙者に任せよ','曲者はどこだ','この元斗の太刀にかけて','点検、抜かりはないな','軽トラ号、出陣じゃ','立替の儀、しかと記せ'],
+  ok:['あっぱれ！','天晴れである！','見事な記録じゃ！'],
+  help:['慌てるでない。今一度じゃ','落ち着かれよ、殿'],
+  hit:['ぐはぁっ！','む、無念…！','お、おのれ…！','あーれー！'],
+  after:['……記録いたしまする','お手討ちだけはご勘弁を','殿、ご乱心…'],
+  talk:[[['m','今日の運搬は明日にいたそう'],['f','ならぬ！木曜は木曜じゃ'],['m','ははーっ']],
+        [['f','帳面は付けたか'],['m','そ、それは…'],['f','たわけ者！']],
+        [['m','リュウオウに湯を届けてまいった'],['f','大儀であった']]]},
+ {name:'実況中継の週',
+  r:['さあ始まりました木曜運搬！','軽トラ、いま発進しました！','記録、入りましたー！','ホースさばき、見事です','リュウオウまで残りわずか！','これは好タイムが出そうです'],
+  f:['解説のファルコです','ここは落ち着いていきたい','点検、ここ大事ですよ','いい給油でしたね','記録をつけてこそ一人前','ここから巻き返せますよ'],
+  ok:['ゴーーール！！','記録達成ですっ！','見事な保存だーっ！'],
+  help:['おっと、ここは入れ直しです','あわてず、もう一度いきましょう'],
+  hit:['おーっと決まったーっ！','ダウン！ダウンです！','これは痛いーっ！','ひでぶっ！'],
+  after:['……立ち上がりました！','カウント8で立ちました','記録をつけて再起です'],
+  talk:[[['m','さあ、記録はつけたのか！？'],['f','……まだのようですね'],['m','これは痛い！']],
+        [['f','給油の立替、入っていますか'],['m','まだ入っておりません！'],['f','致命的ですね']],
+        [['m','本日の運搬、無事終了です！'],['f','いい試合でした']]]},
+ {name:'刑事ドラマの週',
+  r:['ホシは軽トラで逃げた…','木曜の現場はリュウオウだ','記録こそが証拠だ','ガソリン代、裏は取れてる','ホース係、張り込み頼む','温泉は嘘をつかない'],
+  f:['ワシは鬼のファルコ','吐け。記録はどこだ','点検もれ、見逃さんぞ','現場百回、温泉百回','立替のレシート、出してもらおうか','落としの元斗、参上'],
+  ok:['ヤマが片付いた','いい仕事だ、相棒','記録、確保ーっ！'],
+  help:['焦るな。もう一度だ','証拠が足りん。入れ直せ'],
+  hit:['ぐはっ！','な、なにを…！','任意同行ですかーっ！','ひでぶっ！'],
+  after:['……全部、記録します','カツ丼はいらんです','自白します、記録してませんでした'],
+  talk:[[['f','先週の木曜、どこにいた'],['m','り、リュウオウに…'],['f','記録を見せてもらおう']],
+        [['m','ワシはやっとらん！'],['f','記録がないのが証拠だ'],['m','うっ…']],
+        [['f','これにて一件落着だ'],['m','お疲れさまでした！']]]},
+ {name:'体育会系の週',
+  r:['押忍！今週も運びます！','ホース巻き、あと10回！','記録つけるまでが運搬っす！','水分補給、忘れんな！','軽トラ、ナイスファイト！','リュウオウまでダッシュ！'],
+  f:['声が小さい！','点検は基本中の基本だ','腹から声を出せ','記録は筋肉を裏切らない','給油もトレーニングだ','もう一本いけるだろう'],
+  ok:['ナイスファイト！','押忍！記録完了！','ナイス筋肉！'],
+  help:['気合いでもう一回だ！','フォームを整えて入れ直せ'],
+  hit:['ぐおおっ！','効くーっ！','ぐはぁ！ナイス技！','ひでぶっ！'],
+  after:['……押忍！記録します！','あと3セットいけます…','いい汗かきました…'],
+  talk:[[['m','今日は筋肉痛で…'],['f','言い訳無用！'],['m','お、押忍…']],
+        [['f','記録は何本つけた'],['m','ゼロ本です！'],['f','腕立て100回！']],
+        [['m','温泉運んで健康体！'],['f','いい心がけだ']]]},
+ {name:'温泉ソムリエの週',
+  r:['今週の湯は、まろやかですな','湯けむりの向こうにリュウオウ','いい湯だな、記録もな','ホースから香るこの泉質…','温泉は、運んでなんぼ','効能：記録をつけたくなる'],
+  f:['湯の温度、確かめたか','ワシの拳は源泉かけ流し','点検はぬるま湯ではいかん','温泉の一滴は汗の一滴','給油の記録で心もポカポカ','湯冷めする前に記録しろ'],
+  ok:['いい湯だった！','記録、とろとろ仕上がり！','極楽、極楽！'],
+  help:['湯加減を見て、もう一度だ','ゆっくり浸かって入れ直せ'],
+  hit:['あちちちーっ！','湯あたりーっ！','のぼせるーっ！','ひでぶっ！'],
+  after:['……いいお湯でした','記録して、ひとっ風呂…','湯冷めしました…'],
+  talk:[[['m','温泉、ちょっと味見しよかな'],['f','運ぶ湯だ！'],['m','ですよね…']],
+        [['f','今日の湯はどうだった'],['m','記録するの忘れて湯冷めしました'],['f','喝！']],
+        [['m','リュウオウのお客さん、ぽかぽかや'],['f','うむ、それでよい']]]},
+ {name:'ポエムの週',
+  r:['木曜の風が、ホースを揺らす','記録とは、心のタンク','軽トラは今日も、愛を運ぶ','ありがとう、リュウオウ','ガソリンの匂いと、夕焼けと','また来週、湯けむりの約束'],
+  f:['…ワシにも、詩が分かる','記録とは、明日への手紙','点検とは、優しさだ','拳で語ろう、湯で語ろう','空が青い。給油しよう','トラブルの向こうに、虹がある'],
+  ok:['美しい記録…','エクセレント、という名の詩','記録、それは愛'],
+  help:['焦らずに、心を整えて','もう一度、ゆっくりと'],
+  hit:['あぁ…星が見える…','詩的なダメージ…！','心に響いたーっ！','ひでぶっ！'],
+  after:['……記録、という名の詩を','痛みもまた、思い出','君の拳に、乾杯'],
+  talk:[[['m','記録をつけない自由も…'],['f','ない'],['m','ですよね']],
+        [['f','お前の記録に、季節はあるか'],['m','まだ白紙です'],['f','書け']],
+        [['m','今日も湯を運んだ'],['f','それが、生きるということだ']]]}
+];
+const weekNo=()=>Math.floor(((Date.now()-new Date().getTimezoneOffset()*6e4)/864e5+3)/7);   // 日本時間の月曜はじまり
+const THEME_BASE=Math.floor((Date.UTC(2026,9,14)/864e5+3)/7);   // 2026/10/12の週＝「いつもの週」
+const T=()=>THEMES[(((weekNo()-THEME_BASE)%THEMES.length)+THEMES.length)%THEMES.length];
+const pick=a=>a[Math.floor(Math.random()*a.length)];
+
 // ===== 理事長マスコット =====
-const MASCOT_LINES=['エクセレント！','今週も運んだ？','記録はちゃんとつけてな','ご苦労さん！','リュウオウまで安全運転で','ホースの片付けよろしく'];
 function mascotSay(t){const m=$('mascot'),sy=m.querySelector('.say');sy.textContent=t;sy.classList.add('on');
   m.classList.remove('jump');void m.offsetWidth;m.classList.add('jump');
   clearTimeout(sy._h);sy._h=setTimeout(()=>sy.classList.remove('on'),2400);}
-const FALCO_LINES=['トラブルか？このファルコに任せろ','困ったことがあれば呼べ','ホースの漏れか？すぐ行く','軽トラの調子はどうだ','給油の立替、忘れるなよ','どんな問題も元斗皇拳で解決だ'];
-const FALCO_HELP=['ファルコに任せろ。もう一度やってみるのだ','あわてるな。落ち着いて入れ直せ'];
 function falcoSay(t){const m=$('falco'),sy=m.querySelector('.say');sy.textContent=t;sy.classList.add('on');
   m.classList.remove('jump');void m.offsetWidth;m.classList.add('jump');
   clearTimeout(sy._h);sy._h=setTimeout(()=>sy.classList.remove('on'),3000);}
-$('falco').onclick=()=>{if(skitBusy)return;if(Math.random()<.35)runSkit();else falcoSay(FALCO_LINES[Math.floor(Math.random()*FALCO_LINES.length)]);};
+$('falco').onclick=()=>{if(skitBusy)return;if(Math.random()<.35)runSkit();else falcoSay(pick(T().f));};
+$('mascot').onclick=()=>{if(skitBusy)return;mascotSay(pick(T().r));};
 
 // ===== ファルコ様と理事長の寸劇 =====
 const wait=ms=>new Promise(r=>setTimeout(r,ms));
@@ -836,45 +922,65 @@ const noMotion=matchMedia('(prefers-reduced-motion: reduce)').matches;
 let skitBusy=false;
 function say(who,t,ms,shout){const m=$(who),sy=m.querySelector('.say');sy.textContent=t;sy.classList.toggle('shout',!!shout);sy.classList.add('on');
   clearTimeout(sy._h);sy._h=setTimeout(()=>{sy.classList.remove('on');sy.classList.remove('shout');},ms||2200);}
-function anim(el,frames,opt){if(noMotion)return Promise.resolve();return el.animate(frames,opt).finished.catch(()=>{});}
+function anim(el,frames,opt){if(noMotion)return wait(opt&&opt.duration?Math.min(opt.duration,600):0);return el.animate(frames,opt).finished.catch(()=>{});}
 const face=()=>$('mascot').querySelector('.face'), fbody=()=>$('falco').querySelector('.body');
-const SKITS=[
-  async()=>{ // 喝！
+const FAL=()=>$('falco'), MAS=()=>$('mascot');
+function geo(){const f=FAL().getBoundingClientRect(),m=MAS().getBoundingClientRect();
+  return {dx:(m.right+4)-f.left, dy:m.bottom-f.bottom, f, m};}
+const ouch=async()=>{say('mascot',pick(T().hit),1800,true);};
+const recover=async()=>{await wait(700);say('mascot',pick(T().after),2200);};
+// 技（アクション）
+const MOVES=[
+  async()=>{ // 気弾
+    say('falco','元斗皇拳！！',1800,true);
+    await anim(fbody(),[{transform:'none'},{transform:'translateY(-26px) scale(1.2)'},{transform:'translateY(-26px) scale(1.2)'},{transform:'none'}],{duration:800});
+    await beam();ouch();
+    await anim(MAS(),[{transform:'none'},{transform:'translate(30px,-140px) rotate(540deg) scale(1.3)'},{transform:'translate(10px,-40px) rotate(900deg) scale(.9)'},{transform:'none'}],{duration:1300,easing:'ease-out'});
+    await recover();},
+  async()=>{ // ドロップキック
+    const {dx,dy}=geo();say('falco','ドロップキーック！！',1800,true);await wait(400);
+    anim(FAL(),[{transform:'none'},{transform:`translate(${dx*.45}px,${dy-90}px) rotate(-50deg)`,offset:.35},{transform:`translate(${dx}px,${dy-15}px) rotate(-90deg)`,offset:.55},{transform:`translate(${dx}px,${dy}px) rotate(-90deg)`,offset:.65},{transform:`translate(${dx*.5}px,-30px) rotate(-20deg)`,offset:.85},{transform:'none'}],{duration:1800,easing:'ease-in-out'});
+    await wait(1000);ouch();
+    await anim(MAS(),[{transform:'none'},{transform:'translate(25px,-200px) rotate(-720deg) scale(.8)'},{transform:'translate(15px,-60px) rotate(-1080deg)'},{transform:'none'}],{duration:1400,easing:'ease-out'});
+    await recover();},
+  async()=>{ // ラリアット
+    const {dx,dy}=geo();say('falco','ラリアットォーッ！',1800,true);await wait(300);
+    anim(FAL(),[{transform:'none'},{transform:`translate(${dx}px,${dy}px) rotate(-12deg)`,offset:.45},{transform:`translate(${dx}px,${dy}px) rotate(-12deg)`,offset:.6},{transform:'none'}],{duration:1500,easing:'ease-in-out'});
+    await wait(680);ouch();
+    await anim(MAS(),[{transform:'none'},{transform:'translateY(-40px) rotate(1080deg)'},{transform:'translateY(0) rotate(1440deg)'}],{duration:1200,easing:'ease-out'});
+    await recover();},
+  async()=>{ // 張り手
+    const {dx,dy}=geo();say('falco','張り手、百連発ーっ！',2200,true);
+    const near=`translate(${dx}px,${dy}px)`;
+    await anim(FAL(),[{transform:'none'},{transform:near}],{duration:500,easing:'ease-in',fill:'forwards'});
+    const shake=[];for(let i=0;i<12;i++)shake.push({transform:near+` translateX(${i%2?6:-6}px)`});
+    const fa=FAL().animate(shake,{duration:900,fill:'forwards'});
+    await anim(MAS(),[{transform:'none'},{transform:'scale(.85,1.1) rotate(-12deg)'},{transform:'scale(1.1,.9) rotate(12deg)'},{transform:'scale(.85,1.1) rotate(-12deg)'},{transform:'scale(1.1,.9) rotate(12deg)'},{transform:'none'}],{duration:900});
+    ouch();fa.cancel();
+    await anim(FAL(),[{transform:near},{transform:'none'}],{duration:600,easing:'ease-out'});
+    FAL().getAnimations().forEach(a=>a.cancel());
+    await recover();},
+  async()=>{ // フライングボディプレス
+    const {dx,dy}=geo();say('falco','フライング・ボディプレス！！',1800,true);await wait(300);
+    anim(FAL(),[{transform:'none'},{transform:`translate(${dx*.5}px,${dy-220}px) rotate(-180deg)`,offset:.4},{transform:`translate(${dx}px,${dy}px) rotate(-360deg)`,offset:.7},{transform:`translate(${dx}px,${dy}px) rotate(-360deg)`,offset:.82},{transform:'none'}],{duration:2000,easing:'ease-in-out'});
+    await wait(1400);ouch();
+    await anim(MAS(),[{transform:'none'},{transform:'scale(1.5,.3) translateY(40px)'},{transform:'scale(1.5,.3) translateY(40px)'},{transform:'scale(.9,1.2)'},{transform:'none'}],{duration:1100});
+    await recover();},
+  async()=>{ // 理事長の逆襲
+    const g=geo();const dx=-(g.dx);const dy=-g.dy;
+    say('mascot','えーい、たまには反撃じゃ！',1800);await wait(1200);
+    await anim(MAS(),[{transform:'none'},{transform:`translate(${dx}px,${dy}px) rotate(720deg)`,offset:.55},{transform:`translate(${dx*.6}px,${dy-60}px) rotate(900deg)`,offset:.75},{transform:'none'}],{duration:1500,easing:'ease-in-out'});
+    say('falco','効かぬ！',1600,true);
+    await anim(fbody(),[{transform:'none'},{transform:'scale(1.15)'},{transform:'none'}],{duration:500});
+    await wait(500);say('mascot','かてぇ…',1800);},
+  async()=>{ // 喝
     say('falco','喝ーーーっ！！',1800,true);
     anim(fbody(),[{transform:'scale(1)'},{transform:'scale(1.3)'},{transform:'scale(1.3) translateX(-3px)'},{transform:'scale(1.3) translateX(3px)'},{transform:'scale(1)'}],{duration:700});
     await wait(350);
-    await anim(face(),[{transform:'translate(0,0)'},{transform:'translate(-4px,0) rotate(-10deg)'},{transform:'translate(4px,0) rotate(10deg)'},{transform:'translate(-3px,0)'},{transform:'translate(0,0)'}],{duration:500,iterations:2});
-    say('mascot','は、はいっ！',1800);
-  },
-  async()=>{ // 天将奔烈
-    say('falco','元斗皇拳・天将奔烈！！',2000,true);
-    await anim(fbody(),[{transform:'none'},{transform:'translateY(-26px) scale(1.2)'},{transform:'translateY(-26px) scale(1.2)'},{transform:'none'}],{duration:800});
-    await beam();
-    say('mascot','あべしっ！',1800,true);
-    await anim(face(),[{transform:'none'},{transform:'translate(30px,-140px) rotate(540deg) scale(1.3)'},{transform:'translate(10px,-40px) rotate(900deg) scale(.9)'},{transform:'none'}],{duration:1300,easing:'ease-out'});
-    await wait(300);say('mascot','……記録、つけます',2200);
-  },
-  async()=>{ // 記録はつけたか
-    say('falco','記録はつけたか？',1800);await wait(1600);
-    say('mascot','あ、あとで…',1600);await wait(1300);
-    say('falco','あとでではない！今だ！',2000,true);
-    await beam(true);
-    await anim(face(),[{transform:'none'},{transform:'scale(.6) rotate(-20deg)'},{transform:'scale(1.15)'},{transform:'none'}],{duration:700});
-    say('mascot','ひでぶっ！',1800,true);
-  },
-  async()=>{ // 給油
-    say('mascot','ガソリン入れといたで',1800);await wait(1600);
-    say('falco','立替の記録はしたか？',1800);await wait(1500);
-    say('mascot','……',1200);await wait(900);
-    say('falco','喝っ！',1400,true);
-    await anim(face(),[{transform:'none'},{transform:'translateY(-30px) rotate(-30deg)'},{transform:'none'}],{duration:600});
-  },
-  async()=>{ // ほめる
-    say('mascot','今週もちゃんと運んだで！',2000);await wait(1800);
-    say('falco','うむ。見事だ',2000);
-    anim(fbody(),[{transform:'none'},{transform:'scale(1.08) rotate(-4deg)'},{transform:'none'}],{duration:900});
-  }
+    await anim(face(),[{transform:'none'},{transform:'translate(-4px,0) rotate(-10deg)'},{transform:'translate(4px,0) rotate(10deg)'},{transform:'none'}],{duration:500,iterations:2});
+    say('mascot',pick(T().after),1800);}
 ];
+async function playTalk(t){for(const [who,txt] of t){say(who==='f'?'falco':'mascot',txt,2000,/[！!]$/.test(txt)&&who==='f');await wait(1700);}}
 async function beam(small){
   if(noMotion)return;
   const f=$('falco').getBoundingClientRect(),m=$('mascot').getBoundingClientRect();
@@ -885,16 +991,22 @@ async function beam(small){
   const fl=document.createElement('div');fl.className='flash';document.body.appendChild(fl);
   await fl.animate([{opacity:1},{opacity:0}],{duration:450}).finished.catch(()=>{});fl.remove();
 }
-let lastSkit=-1;
-async function runSkit(){if(skitBusy)return;skitBusy=true;
-  let i;do{i=Math.floor(Math.random()*SKITS.length);}while(i===lastSkit&&SKITS.length>1);lastSkit=i;
-  try{await SKITS[i]();}finally{await wait(1200);skitBusy=false;}}
+let lastMove=-1;
+async function runSkit(kind){if(skitBusy)return;skitBusy=true;
+  try{
+    if(kind==='talk'||(kind!=='move'&&Math.random()<.35)){
+      const t=pick(T().talk);await playTalk(t);
+      if(Math.random()<.6){await wait(200);let i;do{i=Math.floor(Math.random()*MOVES.length);}while(i===lastMove);lastMove=i;await MOVES[i]();}
+    }else{let i;do{i=Math.floor(Math.random()*MOVES.length);}while(i===lastMove);lastMove=i;await MOVES[i]();}
+  }finally{await wait(1200);skitBusy=false;}}
 function nextSkit(first){setTimeout(()=>{
   const typing=document.activeElement&&/INPUT|TEXTAREA|SELECT/.test(document.activeElement.tagName);
-  if(document.visibilityState==='visible'&&!typing&&!window.matchMedia('print').matches)runSkit();
+  if(document.visibilityState==='visible'&&!typing)runSkit();
   nextSkit();},first?20000+Math.random()*15000:50000+Math.random()*40000);}
 nextSkit(true);
-$('mascot').onclick=()=>mascotSay(MASCOT_LINES[Math.floor(Math.random()*MASCOT_LINES.length)]);
+// 週がかわって最初に開いたら、今週のテーマを発表
+try{if(lsOK()&&localStorage.getItem('onsen_theme_week')!==String(weekNo())){localStorage.setItem('onsen_theme_week',String(weekNo()));
+  setTimeout(()=>{if(!skitBusy)falcoSay('今週は「'+T().name+'」でいくぞ！');},4000);}}catch(e){}
 pullCloud(true).then(retryPhotos);
 document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='visible')pullCloud(true);});
 </script>
