@@ -168,7 +168,7 @@ table.book td.l{text-align:left}
 <!-- 記録する -->
 <section id="add" class="on">
   <div class="card">
-    <div id="editNote" class="muted" style="display:none;margin-bottom:8px">✏️ 記録を直しています <button class="btn sm gray" id="cancelEdit">やめる</button></div>
+    <div id="editNote" class="muted" style="display:none;margin-bottom:8px"><span id="editTxt">✏️ 記録を直しています</span> <button class="btn sm gray" id="cancelEdit">やめる</button></div>
     <label class="t">日付</label>
     <input type="date" id="fDate">
     <label class="t">この日は</label>
@@ -203,7 +203,8 @@ table.book td.l{text-align:left}
     <textarea id="fNote" placeholder="例：ホースの継ぎ目から少し漏れ。次回パッキン交換"></textarea>
     <label class="t">記録した人</label>
     <select id="fBy"></select>
-    <button class="btn wide" id="saveBtn">💾 記録を保存</button>
+    <div class="muted" id="recAuto" style="margin-top:12px;min-height:1.2em">入力すると自動で保存されます</div>
+    <button class="btn wide" id="saveBtn" style="margin-top:8px">💾 記録を保存</button>
   </div>
 </section>
 
@@ -224,7 +225,7 @@ table.book td.l{text-align:left}
 <!-- 給油 -->
 <section id="fuel">
   <div class="card">
-    <div id="gEditNote" class="muted" style="display:none;margin-bottom:8px">✏️ 給油記録を直しています <button class="btn sm gray" id="gCancel">やめる</button></div>
+    <div id="gEditNote" class="muted" style="display:none;margin-bottom:8px"><span id="gEditTxt">✏️ 給油記録を直しています</span> <button class="btn sm gray" id="gCancel">やめる</button></div>
     <label class="t">給油した日</label>
     <input type="date" id="gDate">
     <label class="t">給油した人</label>
@@ -251,7 +252,8 @@ table.book td.l{text-align:left}
     <div class="photoBox" id="gPrev"></div>
     <label class="t">備考</label>
     <input id="gNote">
-    <button class="btn wide" id="gSave">⛽ 給油を記録</button>
+    <div class="muted" id="gAuto" style="margin-top:12px;min-height:1.2em">入力すると自動で保存されます</div>
+    <button class="btn wide" id="gSave" style="margin-top:8px">⛽ 給油を記録</button>
   </div>
   <div class="card">
     <div style="font-weight:600;margin-bottom:6px">💴 まだ精算していない立替</div>
@@ -484,8 +486,10 @@ function renderForm(r){
   $('fReason').value=r.reason||'';$('fNote').value=r.note||'';
   $('fPhoto').value='';newPhoto=null;
   showPhoto($('photoPrev'),r.photo?r.id:null);
-  $('editNote').style.display=editId?'':'none';
-  $('saveBtn').textContent=editId?'💾 直した内容で保存':'💾 記録を保存';
+  $('editNote').style.display=editId?'':'none';$('cancelEdit').textContent=editId?'閉じる':'やめる';
+  $('editTxt').textContent='✏️ '+jdate(r.date||$('fDate').value)+' の記録（変更は自動で保存されます）';
+  $('saveBtn').textContent='💾 保存して一覧へ';
+  recDirty=false;clearTimeout(recTimer);$('recAuto').textContent=editId?'✅ 保存済み':'入力すると自動で保存されます';
 }
 function defaultDate(){const d=new Date();if(d.getDay()===4)return today();
   // 木曜以外は直近の過去の木曜（その記録がまだなら）、なければ今日
@@ -494,24 +498,30 @@ function defaultDate(){const d=new Date();if(d.getDay()===4)return today();
 $('fDate').onchange=()=>{if(editId)return;const ds=$('fDate').value;if(!ds)return;const m=rotFor(ds);
   [...$('fMembers').children].forEach(b=>b.classList.toggle('on',m.includes(b.dataset.m)));};
 $('fMembers').onclick=e=>{const b=e.target.closest('.chip');if(b)b.classList.toggle('on');};
-$('cancelEdit').onclick=()=>{editId=null;renderForm({});};
+$('cancelEdit').onclick=()=>{flushAuto();editId=null;renderForm({});};
 $('fPhoto').onchange=async e=>{const f=e.target.files[0];if(!f)return;
   try{newPhoto=await shrink(f);$('photoPrev').innerHTML='<img src="'+newPhoto+'">'+'<button class="btn sm gray" id="rmPh" style="margin-top:6px">写真を外す</button>';
-    $('rmPh').onclick=()=>{newPhoto='';$('fPhoto').value='';$('photoPrev').innerHTML='';};}
+    $('rmPh').onclick=()=>{newPhoto='';$('fPhoto').value='';$('photoPrev').innerHTML='';recSched();};recSched();}
   catch(err){toast('写真を読み込めませんでした');}};
 function shrink(file){return new Promise((ok,ng)=>{const img=new Image();const u=URL.createObjectURL(file);
   img.onload=()=>{const M=900;let w=img.width,h=img.height;const k=Math.min(1,M/Math.max(w,h));w=Math.round(w*k);h=Math.round(h*k);
     const c=document.createElement('canvas');c.width=w;c.height=h;c.getContext('2d').drawImage(img,0,0,w,h);URL.revokeObjectURL(u);ok(c.toDataURL('image/jpeg',0.7));};
   img.onerror=ng;img.src=u;});}
 
-$('saveBtn').onclick=()=>{
+// ===== 記録の保存（自動保存あり） =====
+let recDirty=false,recTimer=null,pushTimer=null;
+const hm=()=>{const d=new Date();return d.getHours()+':'+pad(d.getMinutes());};
+function pushSoon(){clearTimeout(pushTimer);pushTimer=setTimeout(()=>pushCloud(true),3000);}
+function commitRec(auto){
   const kind=segVal('fKind');const date=$('fDate').value;
-  if(!date){toast('日付を入れてください');return;}
+  const say=m=>{if(auto)$('recAuto').textContent='⏸ '+m+'（そろったら自動で保存）';else toast(m);};
+  if(!date){say('日付を入れてください');return null;}
   const members=[...$('fMembers').querySelectorAll('.chip.on')].map(b=>b.dataset.m);
-  if(kind==='run'&&!members.length){toast('担当者をえらんでください');return;}
+  if(kind==='run'&&!members.length){say('担当者をえらんでください');return null;}
   const by=$('fBy').value;if(by)try{localStorage.setItem('onsen_me',by);}catch(e){}
   const dup=live().find(r=>r.date===date&&r.id!==editId);
-  if(dup&&!confirm(jdate(date)+' はもう記録があります。もう1件追加しますか？'))return;
+  if(dup){if(auto){$('recAuto').textContent='⚠️ '+jdate(date)+' はもう記録があります。2件目にするなら「保存」を押してください';return null;}
+    if(!confirm(jdate(date)+' はもう記録があります。もう1件追加しますか？'))return null;}
   const old=editId?S.recs.find(r=>r.id===editId):null;
   const r={id:editId||uid(),date,kind,
     members:kind==='run'?members:[],start:$('fStart').value,end:$('fEnd').value,
@@ -522,17 +532,30 @@ $('saveBtn').onclick=()=>{
     photo:old?old.photo:false,
     createdAt:old?old.createdAt:Date.now(),updatedAt:Date.now()};
   if(kind==='rest'){r.start=r.end='';r.liters='';r.trips=0;r.checks=[];}
-  let phPush=null;
-  if(newPhoto){PH[r.id]=newPhoto;r.photo=true;phPush=newPhoto;savePH();}
-  else if(newPhoto===''){delete PH[r.id];r.photo=false;savePH();phPush='';}
+  if(newPhoto){PH[r.id]=newPhoto;r.photo=true;savePH();pushPhoto(r.id,newPhoto);}
+  else if(newPhoto===''){delete PH[r.id];r.photo=false;savePH();pushPhoto(r.id,'');}
+  newPhoto=null;
   if(old)Object.assign(old,r);else S.recs.push(r);
-  save();editId=null;renderAll();renderForm({});
+  save();editId=r.id;recDirty=false;clearTimeout(recTimer);
+  return r;
+}
+function recSched(){recDirty=true;$('recAuto').textContent='✏️ 入力中…';clearTimeout(recTimer);recTimer=setTimeout(autoRec,1200);}
+function autoRec(){if(!recDirty)return;const wasNew=!editId;const r=commitRec(true);if(!r)return;
+  $('recAuto').textContent='✅ 自動保存しました（'+hm()+'）';
+  if(wasNew){$('editNote').style.display='';$('cancelEdit').textContent='閉じる';$('editTxt').textContent='✏️ '+jdate(r.date)+' の記録（変更は自動で保存されます）';}
+  renderWeek();pushSoon();}
+$('add').addEventListener('input',e=>{if(e.target.id!=='fPhoto')recSched();});
+$('add').addEventListener('change',e=>{if(e.target.id!=='fPhoto')recSched();});
+$('add').addEventListener('click',e=>{if(e.target.closest('.chip,.seg button'))setTimeout(recSched,0);});
+$('saveBtn').onclick=()=>{
+  clearTimeout(recTimer);
+  const r=commitRec(false);if(!r)return;
+  editId=null;renderAll();renderForm({});
   toast('保存しました');setTimeout(()=>mascotSay('エクセレント！'),400);
-  if(kind==='run'&&r.checks.length<S.set.checks.length)setTimeout(()=>falcoSay('点検もれがあるな。あとで見ておこう'),1800);
+  if(r.kind==='run'&&r.checks.length<S.set.checks.length)setTimeout(()=>falcoSay('点検もれがあるな。あとで見ておこう'),1800);
   else if(/漏れ|もれ|故障|壊|パンク|トラブル|不具合|異常/.test(r.note))setTimeout(()=>falcoSay('トラブルか？このファルコに任せろ'),1800);
-  if(phPush!==null)pushPhoto(r.id,phPush);
-  pushCloud(true);
-  showTab('list');$('lMonth').value=date.slice(0,7);renderList();
+  clearTimeout(pushTimer);pushCloud(true);
+  showTab('list');$('lMonth').value=r.date.slice(0,7);renderList();
 };
 
 // ===== 写真 =====
@@ -559,32 +582,58 @@ function renderFuelForm(f){
   $('gDate').value=f.date||today();$('gYen').value=f.yen??'';$('gLit').value=f.lit??'';$('gKm').value=f.km??'';
   $('gCar').value=f.car??(S.set.cars[0]||'');$('gShop').value=f.shop??(liveFuel().slice(-1)[0]||{}).shop??'';$('gNote').value=f.note||'';
   setSeg('gPay',f.pay||'tatekae');$('gPhoto').value='';gPhoto=null;showPhoto($('gPrev'),f.photo?f.id:null);
-  $('gEditNote').style.display=gEdit?'':'none';$('gSave').textContent=gEdit?'⛽ 直した内容で保存':'⛽ 給油を記録';gUnit();
+  $('gEditNote').style.display=gEdit?'':'none';$('gCancel').textContent=gEdit?'閉じる':'やめる';$('gEditTxt').textContent='✏️ '+jdate(f.date||$('gDate').value)+' の給油（変更は自動で保存されます）';
+  $('gSave').textContent=gEdit?'⛽ 保存して閉じる':'⛽ 給油を記録';gUnit();
+  gDirty=false;clearTimeout(gTimer);$('gAuto').textContent=gEdit?'✅ 保存済み':'入力すると自動で保存されます';
 }
 function gUnit(){const y=Number($('gYen').value),l=Number($('gLit').value);$('gUnit').textContent=y&&l?'単価 '+(y/l).toFixed(1)+' 円/L':'';}
 $('gYen').oninput=gUnit;$('gLit').oninput=gUnit;
 $('gPay').onclick=e=>{const b=e.target.closest('button');if(b)setSeg('gPay',b.dataset.v);};
-$('gCancel').onclick=()=>{gEdit=null;renderFuelForm({});};
+$('gCancel').onclick=()=>{flushAuto();gEdit=null;renderFuelForm({});};
 $('gPhoto').onchange=async e=>{const f=e.target.files[0];if(!f)return;
   try{gPhoto=await shrink(f);$('gPrev').innerHTML='<img src="'+gPhoto+'"><button class="btn sm gray" id="gRm" style="margin-top:6px">写真を外す</button>';
-    $('gRm').onclick=()=>{gPhoto='';$('gPhoto').value='';$('gPrev').innerHTML='';};}catch(err){toast('写真を読み込めませんでした');}};
-$('gSave').onclick=()=>{
+    $('gRm').onclick=()=>{gPhoto='';$('gPhoto').value='';$('gPrev').innerHTML='';gSched();};gSched();}catch(err){toast('写真を読み込めませんでした');}};
+let gDirty=false,gTimer=null;
+function commitFuel(auto){
   const date=$('gDate').value,who=$('gWho').value,y=$('gYen').value;
-  if(!date){toast('日付を入れてください');return;}
-  if(!who){toast('給油した人をえらんでください');return;}
-  if(y===''){toast('金額を入れてください');return;}
+  const say=m=>{if(auto)$('gAuto').textContent='⏸ '+m+'（そろったら自動で保存）';else toast(m);};
+  if(!date){say('日付を入れてください');return null;}
+  if(!who){say('給油した人をえらんでください');return null;}
+  if(y===''){say('金額を入れてください');return null;}
   const old=gEdit?S.fuel.find(x=>x.id===gEdit):null;
   const pay=segVal('gPay');
   const f={id:gEdit||uid(),date,who,yen:Number(y),lit:$('gLit').value===''?'':Number($('gLit').value),km:$('gKm').value===''?'':Number($('gKm').value),
     car:$('gCar').value.trim(),shop:$('gShop').value.trim(),pay,settled:pay==='kai'?true:(old&&old.pay==='tatekae'?!!old.settled:false),
     settledAt:old?old.settledAt||'':'',note:$('gNote').value.trim(),photo:old?old.photo:false,createdAt:old?old.createdAt:Date.now(),updatedAt:Date.now()};
-  let ph=null;
-  if(gPhoto){PH[f.id]=gPhoto;f.photo=true;ph=gPhoto;savePH();}else if(gPhoto===''){delete PH[f.id];f.photo=false;savePH();ph='';}
+  if(gPhoto){PH[f.id]=gPhoto;f.photo=true;savePH();pushPhoto(f.id,gPhoto);}else if(gPhoto===''){delete PH[f.id];f.photo=false;savePH();pushPhoto(f.id,'');}
+  gPhoto=null;
   if(old)Object.assign(old,f);else S.fuel.push(f);
-  save();gEdit=null;renderFuelForm({});$('gMonth').value=date.slice(0,7);renderFuel();renderWeek();
+  save();gEdit=f.id;gDirty=false;clearTimeout(gTimer);
+  return f;
+}
+function gSched(){gDirty=true;$('gAuto').textContent='✏️ 入力中…';clearTimeout(gTimer);gTimer=setTimeout(autoFuel,1200);}
+function autoFuel(){if(!gDirty)return;const wasNew=!gEdit;const f=commitFuel(true);if(!f)return;
+  $('gAuto').textContent='✅ 自動保存しました（'+hm()+'）';
+  if(wasNew){$('gEditNote').style.display='';$('gCancel').textContent='閉じる';$('gEditTxt').textContent='✏️ '+jdate(f.date)+' の給油（変更は自動で保存されます）';$('gSave').textContent='⛽ 保存して閉じる';}
+  $('gMonth').value=f.date.slice(0,7);renderFuel();pushSoon();}
+const fuelForm=$('gSave').closest('.card');
+fuelForm.addEventListener('input',e=>{if(e.target.id!=='gPhoto')gSched();});
+fuelForm.addEventListener('change',e=>{if(e.target.id!=='gPhoto')gSched();});
+fuelForm.addEventListener('click',e=>{if(e.target.closest('.seg button'))setTimeout(gSched,0);});
+$('gSave').onclick=()=>{
+  clearTimeout(gTimer);
+  const f=commitFuel(false);if(!f)return;
+  gEdit=null;renderFuelForm({});$('gMonth').value=f.date.slice(0,7);renderFuel();renderWeek();
   toast('給油を記録しました');setTimeout(()=>mascotSay('エクセレント！'),400);
-  if(ph!==null)pushPhoto(f.id,ph);pushCloud(true);
+  clearTimeout(pushTimer);pushCloud(true);
 };
+// 画面を閉じる・切りかえる前に、書きかけを保存
+function flushAuto(){let any=false;
+  if(recDirty){clearTimeout(recTimer);if(commitRec(true))any=true;}
+  if(gDirty){clearTimeout(gTimer);if(commitFuel(true))any=true;}
+  if(any){clearTimeout(pushTimer);pushCloud(true);}}
+document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='hidden')flushAuto();});
+addEventListener('pagehide',flushAuto);
 function renderFuel(){
   const ms=new Set(liveFuel().map(f=>f.date.slice(0,7)));ms.add(today().slice(0,7));
   const cur=$('gMonth').value||today().slice(0,7);
@@ -606,7 +655,7 @@ function renderFuel(){
     :'<div class="card muted">この月の給油記録はありません</div>';
 }
 $('gMonth').onchange=renderFuel;
-function fuelClick(e){const b=e.target.closest('button');if(!b)return;
+function fuelClick(e){const b=e.target.closest('button');if(!b)return;flushAuto();
   const ph=b.closest('[data-ph]');if(ph){showPhoto(ph,ph.dataset.ph);return;}
   const now=Date.now();
   if(b.dataset.setall){const a=liveFuel().filter(f=>f.who===b.dataset.setall&&f.pay==='tatekae'&&!f.settled);
@@ -648,7 +697,7 @@ function renderList(){
 }
 const acts=r=>'<div class="acts"><button class="btn sm gray" data-ed="'+r.id+'">直す</button><button class="btn sm gray" data-del="'+r.id+'">消す</button></div>';
 $('lMonth').onchange=renderList;
-$('recList').onclick=e=>{const b=e.target.closest('button');if(!b)return;
+$('recList').onclick=e=>{const b=e.target.closest('button');if(!b)return;flushAuto();
   const ph=b.closest('[data-ph]');if(ph){showPhoto(ph,ph.dataset.ph);return;}
   if(b.dataset.new){editId=null;renderForm({date:b.dataset.new});showTab('add');scrollTo(0,0);return;}
   if(b.dataset.ed){editId=b.dataset.ed;renderForm(S.recs.find(r=>r.id===editId));showTab('add');scrollTo(0,0);return;}
@@ -744,7 +793,7 @@ async function pushCloud(silent){
   finally{pushing=false;}
 }
 async function pullCloud(silent){
-  try{dot('読込中…');const c=await fetchCloud();if(c){absorb(c);save();renderAll();if(!editId)renderForm({});}
+  try{dot('読込中…');const c=await fetchCloud();if(c){absorb(c);save();renderAll();if(!editId&&!recDirty)renderForm({});}
     dot('☁️最新');if(!silent)toast(c?'最新を読み込みました（'+live().length+'件）':'クラウドにはまだ記録がありません');
     // この端末にしかない記録があれば送る
     const behind=(mine,theirs)=>mine.some(r=>!(theirs||[]).find(x=>x.id===r.id&&(x.updatedAt||0)>=(r.updatedAt||0)));
@@ -763,7 +812,7 @@ $('fileIn').onchange=e=>{const f=e.target.files[0];if(!f)return;const rd=new Fil
   catch(err){toast('読めないファイルです');}};rd.readAsText(f);};
 
 // ===== タブ =====
-function showTab(t){document.querySelectorAll('nav button').forEach(b=>b.classList.toggle('on',b.dataset.t===t));
+function showTab(t){flushAuto();document.querySelectorAll('nav button').forEach(b=>b.classList.toggle('on',b.dataset.t===t));
   document.querySelectorAll('section').forEach(s=>s.classList.toggle('on',s.id===t));
   if(t==='list')renderList();if(t==='sum'){renderSumSel();renderSum();}if(t==='rot')renderRot();if(t==='fuel')renderFuel();}
 document.querySelector('nav').onclick=e=>{const b=e.target.closest('button');if(b)showTab(b.dataset.t);};
