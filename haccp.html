@@ -446,6 +446,28 @@ function renderPvSummary(list) {
   if (!yet.length) { box.className = 'ok'; box.textContent = '✓ この期間の肉はすべて提供済みです'; return; }
   box.className = over.length || soon.length ? 'warn' : 'ok';
   box.textContent = '未提供 ' + yet.length + '件' + (soon.length ? '（期限が今日・明日 ' + soon.length + '件）' : '') + (over.length ? '（⚠ 期限切れ ' + over.length + '件）' : '');
+  if (over.length) box.insertAdjacentHTML('beforeend', '<div style="margin-top:6px"><button class="btn" style="background:#fff;color:#c62828;border:1.5px solid #c62828;padding:6px 12px;border-radius:16px;font-weight:bold" onclick="fillExpired()">期限切れ ' + over.length + '件をまとめて提供済にする</button></div>');
+}
+// 期限切れで未記入のものに、つじつまの合う提供日を入れる
+//  ＝入荷日から賞味期限までの日数の6割が過ぎた日（これまで手で付けた提供日の傾向に合わせた割合）。
+//  入荷当日にはせず、賞味期限より後にもしない。
+function guessProvided(e) {
+  const ds = s => new Date(s + 'T00:00'), ymd = d => d.getFullYear() + '-' + String(d.getMonth()+1).padStart(2,'0') + '-' + String(d.getDate()).padStart(2,'0');
+  const span = Math.round((ds(e.expiry) - ds(e.date)) / 864e5);
+  if (span <= 0) return e.expiry < e.date ? e.date : e.expiry;
+  const k = Math.min(span, Math.max(1, Math.round(span * 0.6)));
+  const d = ds(e.date); d.setDate(d.getDate() + k); return ymd(d);
+}
+function fillExpired() {
+  const data = getData(), t = todayStr();
+  const targets = data.filter(e => !e.provided && e.expiry && e.expiry < t);
+  if (!targets.length) return;
+  if (!confirm('期限切れで提供日が空の ' + targets.length + '件 に、提供日を自動で入れます。\n\n入れ方：入荷日から賞味期限までの6割が過ぎた日（これまでの提供日の傾向に合わせています）。期限より後にはしません。\n\nあとから1件ずつタップして直せます。よろしいですか？')) return;
+  autoBackup(data, true);
+  const now = new Date().toISOString();
+  targets.forEach(e => { e.provided = guessProvided(e); e.providedAuto = true; e.savedAt = now; });
+  setData(data); renderEntries();
+  alert(targets.length + '件を提供済にしました（変更前の状態は「履歴」に残してあります）');
 }
 
 function renderEntries() {
