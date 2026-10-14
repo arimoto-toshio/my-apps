@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=Caveat+Brush&text=Ryuow&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Yuji+Boku&text=%E5%86%85%E5%AD%90&family=Cormorant+Garamond:wght@500&text=auberg%E5%86%85%E5%AD%90&display=swap" rel="stylesheet">
 <title>温泉運搬記録（うちまち）</title>
 <style>
 :root{--bg:#f4f1ea;--card:#fff;--ink:#2b2b2b;--sub:#777;--line:#e2dccf;--main:#1f7a8c;--main2:#e3f2f5;--ok:#2e7d32;--warn:#c62828;--warn2:#fdecea;--amber:#b26a00}
@@ -125,11 +125,10 @@ table.book td.l{text-align:left}
 @keyframes jump{0%{transform:translateY(0) scale(1)}40%{transform:translateY(-22px) scale(1.12) rotate(-15deg)}70%{transform:translateY(0) scale(.95)}100%{transform:translateY(0) scale(1)}}
 @media print{#mascot,#falco,#kiai,.flash{display:none!important}}
 @media (prefers-reduced-motion:reduce){#mascot .face,#falco .body{animation:none}}
-/* Ryuow ロゴ */
-.ryuow{display:inline-flex;align-items:flex-end;gap:2px;background:#eef5f3;border-radius:8px;padding:1px 6px 2px 7px;vertical-align:middle;line-height:1}
-.ryuow .w{position:relative;font-family:'Caveat Brush','Kaushan Script',cursive;color:#2f6f7e;font-size:19px;letter-spacing:.5px}
-.ryuow .w svg{position:absolute;left:30%;right:4%;bottom:-3px;width:66%;height:5px}
-.ryuow .tw{width:13px;height:19px;flex:none}
+/* auberge 内子 ロゴ */
+.auberge{display:inline-flex;align-items:center;gap:5px;background:#f7f6f2;border-radius:8px;padding:0 8px 0 7px;height:26px;vertical-align:middle;line-height:1;color:#111}
+.auberge .a{font-family:'Cormorant Garamond',Georgia,'Times New Roman',serif;font-weight:500;font-size:14px;letter-spacing:.2px;position:relative;top:1px}
+.auberge .u{font-family:'Yuji Boku','Hiragino Mincho ProN','Yu Mincho',serif;font-size:21px;letter-spacing:2px;font-weight:700}
 </style>
 </head>
 <body>
@@ -374,6 +373,7 @@ const DEF_SET={
   cars:['軽トラ（89-02）'],
   checks:['タンク・ホースの点検','汲み上げ完了','運搬先へ給水完了','ホース・バルブの片付け','車両に異常なし'],
   liters:'',
+  ryuowLoc:{lat:33.5441759,lng:132.6555356,src:'オーベルジュ内子（Googleマップ）'},
   rotOrder:['森脇','宇都宮','矢野','上田','有本','酒井'], rotPer:1, rotBase:'2026-10-08', rotFirst:'矢野'
 };
 const $=id=>document.getElementById(id);
@@ -522,7 +522,7 @@ async function exifDate(file){try{const b=new DataView(await file.slice(0,131072
     o+=2+len;}}catch(e){}return null;}
 const fmtDT=ts=>{const d=new Date(ts);return d.getFullYear()+'/'+pad(d.getMonth()+1)+'/'+pad(d.getDate())+'('+WD[d.getDay()]+') '+pad(d.getHours())+':'+pad(d.getMinutes());};
 const distTxt=m=>m<1000?Math.round(m/10)*10+'m':(m/1000).toFixed(1)+'km';
-function placeTxt(meta){if(!meta||!meta.lat)return '位置情報なし';const L=S.set.ryuowLoc;
+function placeTxt(meta){if(!meta||!meta.lat)return '位置情報なし';const L=RL();
   if(L&&L.lat)return 'リュウオウから '+distTxt(meta.dist);return meta.lat.toFixed(5)+', '+meta.lng.toFixed(5);}
 function stamp(file,meta){return new Promise((ok,ng)=>{const img=new Image();const u=URL.createObjectURL(file);
   img.onload=()=>{const M=1000;let w=img.width,h=img.height;const k=Math.min(1,M/Math.max(w,h));w=Math.round(w*k);h=Math.round(h*k);
@@ -548,7 +548,7 @@ async function takePhoto(file,src){
     const meta={src,who:[...$('fMembers').querySelectorAll('.chip.on')].map(b=>b.dataset.m).join('・')};
     if(src==='camera'){meta.at=Date.now();const p=await (posWait||getPos());if(p)Object.assign(meta,p);}
     else{meta.at=await exifDate(file)||file.lastModified||Date.now();meta.exif=!!(await exifDate(file));}
-    const L=S.set.ryuowLoc;if(meta.lat&&L&&L.lat)meta.dist=Math.round(haversine(meta,L));
+    const L=RL();if(meta.lat&&L&&L.lat)meta.dist=Math.round(haversine(meta,L));
     newPhoto=await stamp(file,meta);newPhotoMeta=meta;
     $('photoPrev').innerHTML='<img src="'+newPhoto+'">'+photoBadge(meta,$('fDate').value)+'<button class="btn sm gray" id="rmPh" style="margin-top:6px">写真を外す</button>';
     $('rmPh').onclick=()=>{newPhoto='';newPhotoMeta=null;$('fPhoto').value='';$('fAlbum').value='';$('photoPrev').innerHTML='';recSched();};recSched();
@@ -565,7 +565,7 @@ function photoBadge(meta,date){if(!meta)return '';
   else if(meta.src==='camera')t+='　📍位置情報なし';
   return '<div class="muted" style="margin-top:4px">'+t+'</div>';}
 // リュウオウの場所
-function renderLoc(){const L=S.set.ryuowLoc;$('locInfo').textContent=L&&L.lat?'登録済み（'+L.lat.toFixed(5)+', '+L.lng.toFixed(5)+'）':'まだ登録されていません。リュウオウに着いたときに下のボタンを押してください';}
+function renderLoc(){const L=RL();$('locInfo').textContent=(L.src?L.src+'で登録済み':'現地で登録済み'+(L.acc?'（誤差'+L.acc+'m）':''))+'：'+L.lat.toFixed(5)+', '+L.lng.toFixed(5)+'。ずれていたら現地で下のボタンを押してください';}
 $('locSet').onclick=async()=>{if(!confirm('いまいる場所を「リュウオウ」として登録しますか？\n（リュウオウにいるときに押してください）'))return;
   toast('位置を調べています…');const p=await getPos();if(!p){toast('位置情報が取れませんでした（位置情報の許可を確認）');return;}
   S.set.ryuowLoc={lat:p.lat,lng:p.lng,acc:p.acc};S.set.updatedAt=Date.now();save();renderLoc();pushCloud(true);toast('リュウオウの場所を登録しました（誤差'+p.acc+'m）');};
@@ -830,10 +830,11 @@ $('csvBtn').onclick=()=>{
 
 // ===== 設定 =====
 const split=s=>s.split(/[,、，\n]/).map(x=>x.trim()).filter(Boolean);
-const RYUOW_LOGO='<span class="ryuow" title="リュウオウ"><span class="w">Ryuow<svg viewBox="0 0 60 6" preserveAspectRatio="none"><path d="M1 5 Q30 -1 59 4" fill="none" stroke="#3aa04a" stroke-width="2" stroke-linecap="round"/></svg></span><svg class="tw" viewBox="0 0 26 38"><path d="M1 6 L22 4 L25 7 L4 9 Z" fill="#2f6f7e"/><path d="M4 9 L23 8 L23 13 L5 14 Z" fill="#3c7f8d"/><path d="M6 14 L22 13 L25 37 L3 37 Z" fill="#2f6f7e"/><rect x="9" y="19" width="1.6" height="4" fill="#eef5f3"/></svg></span>';
+const RL=()=>(S.set.ryuowLoc&&S.set.ryuowLoc.lat)?S.set.ryuowLoc:DEF_SET.ryuowLoc;
+const RYUOW_LOGO='<span class="auberge" title="リュウオウ（オーベルジュ内子）"><span class="a">auberge</span><span class="u">内子</span></span>';
 function renderSet(){const st=S.set;renderLoc();$('sRotOrder').value=(st.rotOrder||st.members).join('、');$('sRotPer').value=String(st.rotPer||1);$('sRotBase').value=st.rotBase||START_DATE;
   $('sRotFirst').innerHTML=(st.rotOrder||st.members).map(m=>'<option'+(m===st.rotFirst?' selected':'')+'>'+esc(m)+'</option>').join('');$('sMembers').value=st.members.join('、');$('sDest').value=st.dest;$('sFrom').value=st.from;
-  $('sCars').value=st.cars.join('、');$('sChecks').value=st.checks.join('、');$('sLiters').value=st.liters;if(/リュウオウ|ryuow/i.test(st.dest))$('hDest').innerHTML=RYUOW_LOGO;else $('hDest').textContent=st.dest;}
+  $('sCars').value=st.cars.join('、');$('sChecks').value=st.checks.join('、');$('sLiters').value=st.liters;if(/リュウオウ|ryuow|オーベルジュ|auberge/i.test(st.dest))$('hDest').innerHTML=RYUOW_LOGO;else $('hDest').textContent=st.dest;}
 $('saveSet').onclick=()=>{const m=split($('sMembers').value);if(!m.length){toast('メンバーを入れてください');return;}
   S.set={ryuowLoc:S.set.ryuowLoc||null,members:m,dest:$('sDest').value.trim()||'リュウオウ',from:$('sFrom').value.trim()||'温泉',cars:split($('sCars').value),
     checks:split($('sChecks').value),liters:$('sLiters').value===''?'':Number($('sLiters').value),
