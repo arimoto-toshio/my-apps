@@ -87,6 +87,16 @@
   .hist-item .when { font-weight: bold; color: #8b1a00; }
   .hist-item .info { color: #888; }
   .hist-item button { margin-left: auto; white-space: nowrap; }
+  /* 提供済 */
+  .pv{position:relative;display:inline-flex;align-items:center;justify-content:center;gap:3px;min-width:84px;padding:6px 8px;border-radius:16px;font-size:.82rem;font-weight:bold;cursor:pointer;border:1.5px solid #c9c9bd;background:#fff;color:#555;white-space:nowrap}
+  .pv.done{background:#e6f2dc;border-color:#7cb342;color:#33691e}
+  .pv.soon{border-color:#f0a020;color:#b26a00;background:#fff8e6}
+  .pv.over{border-color:#d32f2f;color:#c62828;background:#fdecea}
+  .pv input{position:absolute;inset:0;opacity:0;width:100%;height:100%;cursor:pointer}
+  .grp-count{font-size:.8rem;font-weight:normal;margin-left:6px;padding:1px 8px;border-radius:10px;background:rgba(255,255,255,.25)}
+  #pvSummary{margin:0 0 10px;padding:8px 12px;border-radius:10px;font-size:.9rem;font-weight:bold}
+  #pvSummary.ok{background:#e6f2dc;color:#33691e}
+  #pvSummary.warn{background:#fdecea;color:#c62828}
 </style>
 </head>
 <body>
@@ -406,7 +416,36 @@ function deleteEntry(id) {
 function updateProvided(id, val) {
   const data = getData();
   const e = data.find(x => x.id === id);
-  if (e) { e.provided = val; setData(data); }
+  if (!e) return;
+  if (val && e.expiry && val > e.expiry && !confirm('賞味期限（' + fmtDate(e.expiry) + '）を過ぎた日付です。このまま記録しますか？')) { renderEntries(); return; }
+  e.provided = val; e.savedAt = new Date().toISOString(); setData(data); renderEntries();
+}
+// 「提供した」ボタン：ワンタップで今日の日付を入れる
+function provideToday(id) {
+  const d = new Date(); const t = d.getFullYear() + '-' + String(d.getMonth()+1).padStart(2,'0') + '-' + String(d.getDate()).padStart(2,'0');
+  updateProvided(id, t);
+}
+function daysLeft(exp) { if (!exp) return null; return Math.round((new Date(exp + 'T00:00') - new Date(todayStr() + 'T00:00')) / 864e5); }
+function provCell(e) {
+  const md = s => { const d = new Date(s + 'T00:00'); return (d.getMonth()+1) + '/' + d.getDate(); };
+  const picker = `<input type="date" value="${esc(e.provided)}" min="${esc(e.date)}" onchange="updateProvided(${e.id}, this.value)" title="日付を変える・消す">`;
+  if (e.provided) return `<label class="pv done" title="タップで日付を変える／消す">✓ ${md(e.provided)}${picker}</label>`;
+  const left = daysLeft(e.expiry);
+  if (left !== null && left < 0) return `<button class="pv over" onclick="provideToday(${e.id})">⚠ 期限切れ</button>`;
+  if (left !== null && left <= 1) return `<button class="pv soon" onclick="provideToday(${e.id})">${left === 0 ? '今日まで' : '明日まで'}・提供</button>`;
+  return `<button class="pv" onclick="provideToday(${e.id})">▶ 提供した</button>`;
+}
+function renderPvSummary(list) {
+  let box = document.getElementById('pvSummary');
+  if (!box) { box = document.createElement('div'); box.id = 'pvSummary'; const el = document.getElementById('entriesList'); el.parentNode.insertBefore(box, el); }
+  const yet = list.filter(e => !e.provided);
+  const over = yet.filter(e => { const l = daysLeft(e.expiry); return l !== null && l < 0; });
+  const soon = yet.filter(e => { const l = daysLeft(e.expiry); return l !== null && l >= 0 && l <= 1; });
+  if (!list.length) { box.style.display = 'none'; return; }
+  box.style.display = '';
+  if (!yet.length) { box.className = 'ok'; box.textContent = '✓ この期間の肉はすべて提供済みです'; return; }
+  box.className = over.length || soon.length ? 'warn' : 'ok';
+  box.textContent = '未提供 ' + yet.length + '件' + (soon.length ? '（期限が今日・明日 ' + soon.length + '件）' : '') + (over.length ? '（⚠ 期限切れ ' + over.length + '件）' : '');
 }
 
 function renderEntries() {
@@ -415,6 +454,7 @@ function renderEntries() {
   const filtered = filterMonth ? all.filter(e => e.date.startsWith(filterMonth)) : all;
 
   const list = document.getElementById('entriesList');
+  renderPvSummary(filtered);
   if (filtered.length === 0) {
     list.innerHTML = '<div class="empty">まだ記録がありません。上のフォームから追加してください。</div>';
     return;
@@ -436,7 +476,7 @@ function renderEntries() {
     const supplier = entries[0].supplier || '';
     return `
       <div class="date-header">
-        <div>📅 ${fmtDate(date)}（${supplier}）</div>
+        <div>📅 ${fmtDate(date)}（${supplier}）<span class="grp-count">提供済 ${entries.filter(x => x.provided).length}/${entries.length}</span></div>
         <div class="confirm">確認者: ${checker}</div>
       </div>
       <table>
@@ -455,7 +495,7 @@ function renderEntries() {
               <td class="name">${esc(e.name)}</td>
               <td class="amt">${esc(e.amount)}</td>
               <td>${esc(e.expiry)}</td>
-              <td><input type="date" value="${esc(e.provided)}" min="${esc(e.date)}" max="${esc(e.expiry)}" onchange="updateProvided(${e.id}, this.value)" style="padding:4px;border:1px solid #ddd;border-radius:4px;text-align:center;font-size:0.82rem;"></td>
+              <td>${provCell(e)}</td>
               <td><button class="del-btn" onclick="deleteEntry(${e.id})">✕</button></td>
             </tr>
           `).join('')}
