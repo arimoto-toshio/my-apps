@@ -4,6 +4,8 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <meta name="apple-mobile-web-app-capable" content="yes">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Caveat+Brush&text=Ryuow&display=swap" rel="stylesheet">
 <title>温泉運搬記録（うちまち）</title>
 <style>
 :root{--bg:#f4f1ea;--card:#fff;--ink:#2b2b2b;--sub:#777;--line:#e2dccf;--main:#1f7a8c;--main2:#e3f2f5;--ok:#2e7d32;--warn:#c62828;--warn2:#fdecea;--amber:#b26a00}
@@ -123,6 +125,11 @@ table.book td.l{text-align:left}
 @keyframes jump{0%{transform:translateY(0) scale(1)}40%{transform:translateY(-22px) scale(1.12) rotate(-15deg)}70%{transform:translateY(0) scale(.95)}100%{transform:translateY(0) scale(1)}}
 @media print{#mascot,#falco,#kiai,.flash{display:none!important}}
 @media (prefers-reduced-motion:reduce){#mascot .face,#falco .body{animation:none}}
+/* Ryuow ロゴ */
+.ryuow{display:inline-flex;align-items:flex-end;gap:2px;background:#eef5f3;border-radius:8px;padding:1px 6px 2px 7px;vertical-align:middle;line-height:1}
+.ryuow .w{position:relative;font-family:'Caveat Brush','Kaushan Script',cursive;color:#2f6f7e;font-size:19px;letter-spacing:.5px}
+.ryuow .w svg{position:absolute;left:30%;right:4%;bottom:-3px;width:66%;height:5px}
+.ryuow .tw{width:13px;height:19px;flex:none}
 </style>
 </head>
 <body>
@@ -178,12 +185,7 @@ table.book td.l{text-align:left}
       <div class="chips" id="fMembers"></div>
       <label class="t">時間</label>
       <div class="row"><input type="time" id="fStart"><span style="flex:none">〜</span><input type="time" id="fEnd"></div>
-      <label class="t">運んだ量</label>
-      <div class="row">
-        <input type="number" id="fLiters" inputmode="numeric" placeholder="例：500">
-        <span style="flex:none">L</span>
-        <input type="hidden" id="fTrips" value="1">
-      </div>
+      <input type="hidden" id="fLiters" value=""><input type="hidden" id="fTrips" value="1">
       <label class="t">車両</label>
       <input id="fCar" list="carList">
       <datalist id="carList"></datalist>
@@ -290,7 +292,7 @@ table.book td.l{text-align:left}
   <div class="card">
     <div class="stat">
       <div><b id="stRuns">0</b><span>運搬した回数</span></div>
-      <div><b id="stLit">0</b><span>運んだ量(L)</span></div>
+      <div><b id="stLit">0</b><span>休み・中止</span></div>
       <div><b id="stMiss">0</b><span>記録なしの木曜</span></div>
     </div>
   </div>
@@ -333,8 +335,7 @@ table.book td.l{text-align:left}
     <select id="sRotPer"><option value="1">1人</option><option value="2">2人</option><option value="3">3人</option></select>
     <label class="t">基準の日（木曜）と、その日の当番の先頭の人</label>
     <div class="row"><input type="date" id="sRotBase"><select id="sRotFirst"></select></div>
-    <label class="t">いつもの量（L）</label>
-    <input type="number" id="sLiters" inputmode="numeric">
+    <input type="hidden" id="sLiters">
     <button class="btn wide" id="saveSet">設定を保存</button>
   </div>
   <div class="card">
@@ -480,7 +481,7 @@ function renderForm(r){
   $('fDate').value=r.date||defaultDate();
   setSeg('fKind',r.kind||'run');kindView();
   $('fStart').value=r.start||'';$('fEnd').value=r.end||'';
-  $('fLiters').value=r.liters??st.liters;$('fTrips').value=1;
+  $('fLiters').value=r.liters??'';$('fTrips').value=1;
   $('fCar').value=r.car??(st.cars[0]||'');
   setSeg('fWeather',r.weather||'');
   $('fReason').value=r.reason||'';$('fNote').value=r.note||'';
@@ -684,7 +685,7 @@ function renderList(){
       '<div class="acts"><button class="btn sm" data-new="'+r.date+'">この日の記録をつける</button></div></div>';
     if(r.kind==='rest')return '<div class="card rec rest"><h3>'+jdate(r.date)+'<span class="tag g">休み・中止</span></h3>'+
       '<div class="meta">'+esc(r.reason||'理由なし')+(r.note?'<br>📝 '+esc(r.note):'')+(r.by?'<br>記録：'+esc(r.by):'')+'</div>'+acts(r)+'</div>';
-    const lit=r.liters!==''&&r.liters!=null?(r.liters*(r.trips||1)).toLocaleString()+'L'+(r.trips>1?'（'+r.liters+'L×'+r.trips+'）':''):'';
+    const lit='';
     const nc=S.set.checks.length, okc=(r.checks||[]).length;
     return '<div class="card rec"><h3>'+jdate(r.date)+'<span>'+(r.weather?'<span class="tag g">'+esc(r.weather)+'</span>':'')+'</span></h3>'+
       '<div class="meta">👥 '+esc((r.members||[]).join('・'))+
@@ -717,7 +718,7 @@ function inPeriod(){const [a,b]=period();return live().filter(r=>r.date>=a&&r.da
 function renderSum(){
   const recs=inPeriod();const runs=recs.filter(r=>r.kind==='run');
   $('stRuns').textContent=runs.length;
-  $('stLit').textContent=runs.reduce((s,r)=>s+(Number(r.liters)||0)*(r.trips||1),0).toLocaleString();
+  $('stLit').textContent=recs.filter(r=>r.kind==='rest').length;
   const [a,b]=period();$('stMiss').textContent=missingThursdays(a,b).length;
   const cnt={};S.set.members.forEach(m=>cnt[m]=0);runs.forEach(r=>(r.members||[]).forEach(m=>cnt[m]=(cnt[m]||0)+1));
   const plan={};thursdays(a<firstDate()?firstDate():a,b<today()?b:today()).forEach(d=>rotFor(d).forEach(m=>plan[m]=(plan[m]||0)+1));
@@ -734,14 +735,13 @@ $('printBtn').onclick=()=>{
   const st=S.set;
   $('printArea').innerHTML='<h2>温泉運搬 作業記録簿　'+esc(label)+'</h2>'+
     '<div style="font-size:12px;margin-bottom:6px">団体：うちまち　｜　'+esc(st.from)+' → '+esc(st.dest)+'　｜　印刷日 '+today()+'</div>'+
-    '<table class="book"><tr><th>No</th><th>日付</th><th>区分</th><th>担当者</th><th>時間</th><th>運搬量(L)</th><th>車両</th><th>天気</th><th>点検</th><th>備考</th><th>記録者</th><th>確認印</th></tr>'+
-    rows.map((r,i)=>r.miss?'<tr><td>'+(i+1)+'</td><td>'+jdate(r.date)+'</td><td colspan="10" class="l" style="color:#c62828">記録なし</td></tr>':
+    '<table class="book"><tr><th>No</th><th>日付</th><th>区分</th><th>担当者</th><th>時間</th><th>車両</th><th>天気</th><th>点検</th><th>備考</th><th>記録者</th><th>確認印</th></tr>'+
+    rows.map((r,i)=>r.miss?'<tr><td>'+(i+1)+'</td><td>'+jdate(r.date)+'</td><td colspan="9" class="l" style="color:#c62828">記録なし</td></tr>':
       '<tr><td>'+(i+1)+'</td><td>'+jdate(r.date)+'</td><td>'+(r.kind==='rest'?'休み':'実施')+'</td><td class="l">'+esc((r.members||[]).join('・'))+'</td>'+
-      '<td>'+(r.start||r.end?esc(r.start)+'〜'+esc(r.end):'')+'</td><td>'+(r.kind==='run'&&r.liters!==''?(r.liters*(r.trips||1)).toLocaleString():'')+'</td>'+
+      '<td>'+(r.start||r.end?esc(r.start)+'〜'+esc(r.end):'')+'</td>'+
       '<td>'+esc(r.car||'')+'</td><td>'+esc(r.weather||'')+'</td><td>'+(r.kind==='run'?(r.checks||[]).length+'/'+st.checks.length:'')+'</td>'+
       '<td class="l">'+esc([r.reason,r.note].filter(Boolean).join(' / '))+'</td><td>'+esc(r.by||'')+'</td><td style="width:50px"></td></tr>').join('')+
-    '</table><div style="font-size:12px;margin-top:6px">実施 '+recs.filter(r=>r.kind==='run').length+'回　運搬量合計 '+
-      recs.filter(r=>r.kind==='run').reduce((s,r)=>s+(Number(r.liters)||0)*(r.trips||1),0).toLocaleString()+'L　点検項目：'+esc(st.checks.join('、'))+'</div>';
+    '</table><div style="font-size:12px;margin-top:6px">実施 '+recs.filter(r=>r.kind==='run').length+'回　休み・中止 '+recs.filter(r=>r.kind==='rest').length+'回　点検項目：'+esc(st.checks.join('、'))+'</div>';
   window.print();
 };
 $('fuelPrint').onclick=()=>{const [a,b,label]=period();const fs=liveFuel().filter(f=>f.date>=a&&f.date<=b).sort((x,y)=>x.date.localeCompare(y.date));
@@ -757,17 +757,17 @@ $('fuelCsv').onclick=()=>{const q=v=>'"'+String(v??'').replace(/"/g,'""')+'"';co
   download('給油記録_'+label+'.csv','﻿'+lines.join('\r\n'),'text/csv');};
 $('csvBtn').onclick=()=>{
   const q=v=>'"'+String(v??'').replace(/"/g,'""')+'"';
-  const lines=[['日付','区分','担当者','開始','終了','1回量L','往復','合計L','車両','天気','点検済み','理由','備考','記録者'].map(q).join(',')];
-  inPeriod().forEach(r=>lines.push([r.date,r.kind==='rest'?'休み':'実施',(r.members||[]).join('・'),r.start,r.end,r.liters,r.kind==='run'?r.trips:'',
-    r.kind==='run'&&r.liters!==''?r.liters*(r.trips||1):'',r.car,r.weather,(r.checks||[]).join('・'),r.reason,r.note,r.by].map(q).join(',')));
+  const lines=[['日付','区分','担当者','開始','終了','車両','天気','点検済み','理由','備考','記録者'].map(q).join(',')];
+  inPeriod().forEach(r=>lines.push([r.date,r.kind==='rest'?'休み':'実施',(r.members||[]).join('・'),r.start,r.end,r.car,r.weather,(r.checks||[]).join('・'),r.reason,r.note,r.by].map(q).join(',')));
   download('温泉運搬記録_'+period()[2]+'.csv','﻿'+lines.join('\r\n'),'text/csv');
 };
 
 // ===== 設定 =====
 const split=s=>s.split(/[,、，\n]/).map(x=>x.trim()).filter(Boolean);
+const RYUOW_LOGO='<span class="ryuow" title="リュウオウ"><span class="w">Ryuow<svg viewBox="0 0 60 6" preserveAspectRatio="none"><path d="M1 5 Q30 -1 59 4" fill="none" stroke="#3aa04a" stroke-width="2" stroke-linecap="round"/></svg></span><svg class="tw" viewBox="0 0 26 38"><path d="M1 6 L22 4 L25 7 L4 9 Z" fill="#2f6f7e"/><path d="M4 9 L23 8 L23 13 L5 14 Z" fill="#3c7f8d"/><path d="M6 14 L22 13 L25 37 L3 37 Z" fill="#2f6f7e"/><rect x="9" y="19" width="1.6" height="4" fill="#eef5f3"/></svg></span>';
 function renderSet(){const st=S.set;$('sRotOrder').value=(st.rotOrder||st.members).join('、');$('sRotPer').value=String(st.rotPer||1);$('sRotBase').value=st.rotBase||START_DATE;
   $('sRotFirst').innerHTML=(st.rotOrder||st.members).map(m=>'<option'+(m===st.rotFirst?' selected':'')+'>'+esc(m)+'</option>').join('');$('sMembers').value=st.members.join('、');$('sDest').value=st.dest;$('sFrom').value=st.from;
-  $('sCars').value=st.cars.join('、');$('sChecks').value=st.checks.join('、');$('sLiters').value=st.liters;$('hDest').textContent=st.dest;}
+  $('sCars').value=st.cars.join('、');$('sChecks').value=st.checks.join('、');$('sLiters').value=st.liters;if(/リュウオウ|ryuow/i.test(st.dest))$('hDest').innerHTML=RYUOW_LOGO;else $('hDest').textContent=st.dest;}
 $('saveSet').onclick=()=>{const m=split($('sMembers').value);if(!m.length){toast('メンバーを入れてください');return;}
   S.set={members:m,dest:$('sDest').value.trim()||'リュウオウ',from:$('sFrom').value.trim()||'温泉',cars:split($('sCars').value),
     checks:split($('sChecks').value),liters:$('sLiters').value===''?'':Number($('sLiters').value),
