@@ -683,7 +683,7 @@ function renderList(){
     if(r.miss)return '<div class="card rec miss"><h3>'+jdate(r.date)+'<span style="color:var(--warn);font-size:14px">記録なし</span></h3>'+
       '<div class="acts"><button class="btn sm" data-new="'+r.date+'">この日の記録をつける</button></div></div>';
     if(r.kind==='rest')return '<div class="card rec rest"><h3>'+jdate(r.date)+'<span class="tag g">休み・中止</span></h3>'+
-      '<div class="meta">'+esc(r.reason||'理由なし')+(r.note?'<br>📝 '+esc(r.note):'')++'</div>'+acts(r)+'</div>';
+      '<div class="meta">'+esc(r.reason||'理由なし')+(r.note?'<br>📝 '+esc(r.note):'')+'</div>'+acts(r)+'</div>';
     const lit='';
     const nc=S.set.checks.length, okc=(r.checks||[]).length;
     return '<div class="card rec"><h3>'+jdate(r.date)+'<span>'+(r.weather?'<span class="tag g">'+esc(r.weather)+'</span>':'')+'</span></h3>'+
@@ -691,7 +691,7 @@ function renderList(){
       (r.start||r.end?'<br>🕘 '+esc(r.start)+'〜'+esc(r.end):'')+
       (lit?'<br>♨️ '+lit:'')+(r.car?'<br>🚚 '+esc(r.car):'')+
       '<br>✅ 点検 '+okc+'/'+nc+(okc<nc?'<span class="tag" style="background:#fff3e0;color:var(--amber)">未チェックあり</span>':'')+
-      (r.note?'<br>📝 '+esc(r.note):'')++'</div>'+
+      (r.note?'<br>📝 '+esc(r.note):'')+'</div>'+
       (r.photo?'<div class="photoBox" data-ph="'+r.id+'"><button class="btn sm gray" style="margin-top:8px">📷 写真を見る</button></div>':'')+acts(r)+'</div>';
   }).join('');
 }
