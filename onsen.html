@@ -193,8 +193,11 @@ table.book td.l{text-align:left}
       <div class="seg" id="fWeather"><button data-v="晴れ">☀️晴れ</button><button data-v="くもり">☁️くもり</button><button data-v="雨">☔雨</button></div>
       <label class="t">点検・作業チェック</label>
       <div class="checks" id="fChecks"></div>
-      <label class="t">写真（1枚・任意）</label>
-      <input type="file" id="fPhoto" accept="image/*">
+      <label class="t">証拠写真（1枚）</label>
+      <div class="row"><button class="btn" id="camBtn" type="button">📷 カメラで撮る</button><button class="btn gray" id="albBtn" type="button" style="flex:.7">🖼 アルバム</button></div>
+      <div class="muted" style="margin-top:5px">カメラで撮ると、日時・場所・担当者が写真に入ります（証拠になります）</div>
+      <input type="file" id="fPhoto" accept="image/*" capture="environment" hidden>
+      <input type="file" id="fAlbum" accept="image/*" hidden>
       <div class="photoBox" id="photoPrev"></div>
     </div>
     <div id="restFields" style="display:none">
@@ -334,6 +337,9 @@ table.book td.l{text-align:left}
     <select id="sRotPer"><option value="1">1人</option><option value="2">2人</option><option value="3">3人</option></select>
     <label class="t">基準の日（木曜）と、その日の当番の先頭の人</label>
     <div class="row"><input type="date" id="sRotBase"><select id="sRotFirst"></select></div>
+    <label class="t">リュウオウの場所（証拠写真の距離に使います）</label>
+    <div class="muted" id="locInfo"></div>
+    <button class="btn gray" id="locSet" type="button" style="margin-top:6px">📍 いまいる場所をリュウオウとして登録</button>
     <input type="hidden" id="sLiters">
     <button class="btn wide" id="saveSet">設定を保存</button>
   </div>
@@ -462,7 +468,7 @@ function renderWeek(){
 }
 
 // ===== 記録フォーム =====
-let F={}; let editId=null; let newPhoto=null;
+let F={}; let editId=null; let newPhoto=null; let newPhotoMeta=null;
 function setSeg(id,v){[...$(id).children].forEach(b=>b.classList.toggle('on',b.dataset.v===v));}
 function segVal(id){const b=$(id).querySelector('.on');return b?b.dataset.v:'';}
 ['fKind','fWeather'].forEach(id=>$(id).onclick=e=>{const b=e.target.closest('button');if(!b)return;
@@ -484,8 +490,8 @@ function renderForm(r){
   $('fCar').value=r.car??(st.cars[0]||'');
   setSeg('fWeather',r.weather||'');
   $('fReason').value=r.reason||'';$('fNote').value=r.note||'';
-  $('fPhoto').value='';newPhoto=null;
-  showPhoto($('photoPrev'),r.photo?r.id:null);
+  $('fPhoto').value='';$('fAlbum').value='';newPhoto=null;newPhotoMeta=null;
+  showPhoto($('photoPrev'),r.photo?r.id:null).then(()=>{if(r.photo&&r.photoMeta)$('photoPrev').insertAdjacentHTML('beforeend',photoBadge(r.photoMeta,r.date));});
   $('editNote').style.display=editId?'':'none';$('cancelEdit').textContent=editId?'閉じる':'やめる';
   $('editTxt').textContent='✏️ '+jdate(r.date||$('fDate').value)+' の記録（変更は自動で保存されます）';
   $('saveBtn').textContent='💾 保存して一覧へ';
@@ -499,10 +505,70 @@ $('fDate').onchange=()=>{if(editId)return;const ds=$('fDate').value;if(!ds)retur
   [...$('fMembers').children].forEach(b=>b.classList.toggle('on',m.includes(b.dataset.m)));};
 $('fMembers').onclick=e=>{const b=e.target.closest('.chip');if(b)b.classList.toggle('on');};
 $('cancelEdit').onclick=()=>{flushAuto();editId=null;renderForm({});};
-$('fPhoto').onchange=async e=>{const f=e.target.files[0];if(!f)return;
-  try{newPhoto=await shrink(f);$('photoPrev').innerHTML='<img src="'+newPhoto+'">'+'<button class="btn sm gray" id="rmPh" style="margin-top:6px">写真を外す</button>';
-    $('rmPh').onclick=()=>{newPhoto='';$('fPhoto').value='';$('photoPrev').innerHTML='';recSched();};recSched();}
-  catch(err){toast('写真を読み込めませんでした');}};
+// ===== 証拠写真（日時・場所・担当者を焼き込む） =====
+function haversine(a,b){const R=6371e3,t=x=>x*Math.PI/180;const dLa=t(b.lat-a.lat),dLo=t(b.lng-a.lng);
+  const h=Math.sin(dLa/2)**2+Math.cos(t(a.lat))*Math.cos(t(b.lat))*Math.sin(dLo/2)**2;return 2*R*Math.asin(Math.sqrt(h));}
+function getPos(){return new Promise(ok=>{if(!navigator.geolocation)return ok(null);
+  navigator.geolocation.getCurrentPosition(p=>ok({lat:p.coords.latitude,lng:p.coords.longitude,acc:Math.round(p.coords.accuracy)}),()=>ok(null),{enableHighAccuracy:true,timeout:10000,maximumAge:60000});});}
+// 写真の撮影日時（EXIF）を読む
+async function exifDate(file){try{const b=new DataView(await file.slice(0,131072).arrayBuffer());if(b.getUint16(0)!==0xFFD8)return null;
+  let o=2;while(o<b.byteLength-4){const mk=b.getUint16(o),len=b.getUint16(o+2);if(mk===0xFFE1&&b.getUint32(o+4)===0x45786966){
+    const t=o+10,le=b.getUint16(t)===0x4949,g16=x=>b.getUint16(x,le),g32=x=>b.getUint32(x,le);
+    const ifd=(off,tag)=>{const n=g16(t+off);for(let k=0;k<n;k++){const e=t+off+2+k*12;if(g16(e)===tag)return g32(e+8);}return null;};
+    let dto=null;const ex=ifd(g32(t+4),0x8769);if(ex!=null){const v=ifd(ex,0x9003);if(v!=null)dto=v;}
+    if(dto==null)dto=ifd(g32(t+4),0x0132);if(dto==null)return null;
+    let str='';for(let k=0;k<19;k++)str+=String.fromCharCode(b.getUint8(t+dto+k));
+    const m=str.match(/(\d{4}):(\d\d):(\d\d) (\d\d):(\d\d)/);return m?new Date(+m[1],m[2]-1,+m[3],+m[4],+m[5]).getTime():null;}
+    o+=2+len;}}catch(e){}return null;}
+const fmtDT=ts=>{const d=new Date(ts);return d.getFullYear()+'/'+pad(d.getMonth()+1)+'/'+pad(d.getDate())+'('+WD[d.getDay()]+') '+pad(d.getHours())+':'+pad(d.getMinutes());};
+const distTxt=m=>m<1000?Math.round(m/10)*10+'m':(m/1000).toFixed(1)+'km';
+function placeTxt(meta){if(!meta||!meta.lat)return '位置情報なし';const L=S.set.ryuowLoc;
+  if(L&&L.lat)return 'リュウオウから '+distTxt(meta.dist);return meta.lat.toFixed(5)+', '+meta.lng.toFixed(5);}
+function stamp(file,meta){return new Promise((ok,ng)=>{const img=new Image();const u=URL.createObjectURL(file);
+  img.onload=()=>{const M=1000;let w=img.width,h=img.height;const k=Math.min(1,M/Math.max(w,h));w=Math.round(w*k);h=Math.round(h*k);
+    const fs=Math.max(15,Math.round(w/30)),band=Math.round(fs*4.3);
+    const c=document.createElement('canvas');c.width=w;c.height=h+band;const g=c.getContext('2d');
+    g.drawImage(img,0,0,w,h);URL.revokeObjectURL(u);
+    g.fillStyle='#1f3f47';g.fillRect(0,h,w,band);g.fillStyle='#f9c74f';g.fillRect(0,h,w,Math.max(3,fs/5));
+    g.fillStyle='#fff';g.textBaseline='top';const x=Math.round(fs*.7);
+    g.font='bold '+Math.round(fs*1.15)+'px -apple-system,"Hiragino Sans",sans-serif';
+    g.fillText('♨ 温泉運搬　'+fmtDT(meta.at)+(meta.src==='album'?'（写真の撮影日時）':''),x,h+fs*.55);
+    g.font=fs+'px -apple-system,"Hiragino Sans",sans-serif';
+    g.fillText('担当：'+(meta.who||'—')+'　📍'+placeTxt(meta)+(meta.acc?'（誤差'+meta.acc+'m）':''),x,h+fs*1.95);
+    g.fillStyle='#bcd';g.font=Math.round(fs*.8)+'px -apple-system,"Hiragino Sans",sans-serif';
+    g.fillText('うちまち 温泉運搬記録｜'+(meta.src==='camera'?'アプリのカメラで撮影':'アルバムから追加（取込 '+fmtDT(Date.now()).slice(5)+'）'),x,h+fs*3.2);
+    ok(c.toDataURL('image/jpeg',0.72));};
+  img.onerror=ng;img.src=u;});}
+let posWait=null;
+$('camBtn').onclick=()=>{posWait=getPos();$('fPhoto').click();};
+$('albBtn').onclick=()=>{posWait=null;$('fAlbum').click();};
+async function takePhoto(file,src){
+  $('photoPrev').innerHTML='<div class="muted">写真に日時・場所を入れています…</div>';
+  try{
+    const meta={src,who:[...$('fMembers').querySelectorAll('.chip.on')].map(b=>b.dataset.m).join('・')};
+    if(src==='camera'){meta.at=Date.now();const p=await (posWait||getPos());if(p)Object.assign(meta,p);}
+    else{meta.at=await exifDate(file)||file.lastModified||Date.now();meta.exif=!!(await exifDate(file));}
+    const L=S.set.ryuowLoc;if(meta.lat&&L&&L.lat)meta.dist=Math.round(haversine(meta,L));
+    newPhoto=await stamp(file,meta);newPhotoMeta=meta;
+    $('photoPrev').innerHTML='<img src="'+newPhoto+'">'+photoBadge(meta,$('fDate').value)+'<button class="btn sm gray" id="rmPh" style="margin-top:6px">写真を外す</button>';
+    $('rmPh').onclick=()=>{newPhoto='';newPhotoMeta=null;$('fPhoto').value='';$('fAlbum').value='';$('photoPrev').innerHTML='';recSched();};recSched();
+  }catch(err){$('photoPrev').innerHTML='';toast('写真を読み込めませんでした');}
+}
+$('fPhoto').onchange=e=>{const f=e.target.files[0];if(f)takePhoto(f,'camera');};
+$('fAlbum').onchange=e=>{const f=e.target.files[0];if(f)takePhoto(f,'album');};
+// 写真の証拠チェック表示
+function photoBadge(meta,date){if(!meta)return '';
+  const d=new Date(meta.at),same=ymd(d)===date;
+  let t='📷 '+(d.getMonth()+1)+'/'+d.getDate()+' '+pad(d.getHours())+':'+pad(d.getMinutes())+(meta.src==='camera'?' 撮影':' （アルバム）');
+  t+=same?' ✓':' <b style="color:var(--warn)">⚠️ 記録の日付と違います</b>';
+  if(meta.lat)t+='　📍'+esc(placeTxt(meta))+(meta.dist!=null&&meta.dist>500?' <b style="color:var(--amber)">⚠️ 遠い</b>':'');
+  else if(meta.src==='camera')t+='　📍位置情報なし';
+  return '<div class="muted" style="margin-top:4px">'+t+'</div>';}
+// リュウオウの場所
+function renderLoc(){const L=S.set.ryuowLoc;$('locInfo').textContent=L&&L.lat?'登録済み（'+L.lat.toFixed(5)+', '+L.lng.toFixed(5)+'）':'まだ登録されていません。リュウオウに着いたときに下のボタンを押してください';}
+$('locSet').onclick=async()=>{if(!confirm('いまいる場所を「リュウオウ」として登録しますか？\n（リュウオウにいるときに押してください）'))return;
+  toast('位置を調べています…');const p=await getPos();if(!p){toast('位置情報が取れませんでした（位置情報の許可を確認）');return;}
+  S.set.ryuowLoc={lat:p.lat,lng:p.lng,acc:p.acc};S.set.updatedAt=Date.now();save();renderLoc();pushCloud(true);toast('リュウオウの場所を登録しました（誤差'+p.acc+'m）');};
 function shrink(file){return new Promise((ok,ng)=>{const img=new Image();const u=URL.createObjectURL(file);
   img.onload=()=>{const M=900;let w=img.width,h=img.height;const k=Math.min(1,M/Math.max(w,h));w=Math.round(w*k);h=Math.round(h*k);
     const c=document.createElement('canvas');c.width=w;c.height=h;c.getContext('2d').drawImage(img,0,0,w,h);URL.revokeObjectURL(u);ok(c.toDataURL('image/jpeg',0.7));};
@@ -529,12 +595,12 @@ function commitRec(auto){
     car:$('fCar').value.trim(),weather:segVal('fWeather'),
     checks:[...$('fChecks').querySelectorAll('input:checked')].map(i=>i.dataset.c),
     reason:$('fReason').value.trim(),note:$('fNote').value.trim(),by,
-    photo:old?old.photo:false,
+    photo:old?old.photo:false,photoMeta:old?old.photoMeta||null:null,
     createdAt:old?old.createdAt:Date.now(),updatedAt:Date.now()};
   if(kind==='rest'){r.start=r.end='';r.liters='';r.trips=0;r.checks=[];}
-  if(newPhoto){PH[r.id]=newPhoto;r.photo=true;savePH();pushPhoto(r.id,newPhoto);}
-  else if(newPhoto===''){delete PH[r.id];r.photo=false;savePH();pushPhoto(r.id,'');}
-  newPhoto=null;
+  if(newPhoto){PH[r.id]=newPhoto;r.photo=true;r.photoMeta=newPhotoMeta;savePH();pushPhoto(r.id,newPhoto);}
+  else if(newPhoto===''){delete PH[r.id];r.photo=false;r.photoMeta=null;savePH();pushPhoto(r.id,'');}
+  newPhoto=null;newPhotoMeta=null;
   if(old)Object.assign(old,r);else S.recs.push(r);
   save();editId=r.id;recDirty=false;clearTimeout(recTimer);
   return r;
@@ -544,8 +610,8 @@ function autoRec(){if(!recDirty)return;const wasNew=!editId;const r=commitRec(tr
   $('recAuto').textContent='✅ 自動保存しました（'+hm()+'）';
   if(wasNew){$('editNote').style.display='';$('cancelEdit').textContent='閉じる';$('editTxt').textContent='✏️ '+jdate(r.date)+' の記録（変更は自動で保存されます）';}
   renderWeek();pushSoon();}
-$('add').addEventListener('input',e=>{if(e.target.id!=='fPhoto')recSched();});
-$('add').addEventListener('change',e=>{if(e.target.id!=='fPhoto')recSched();});
+$('add').addEventListener('input',e=>{if(!/fPhoto|fAlbum/.test(e.target.id))recSched();});
+$('add').addEventListener('change',e=>{if(!/fPhoto|fAlbum/.test(e.target.id))recSched();});
 $('add').addEventListener('click',e=>{if(e.target.closest('.chip,.seg button'))setTimeout(recSched,0);});
 $('saveBtn').onclick=()=>{
   clearTimeout(recTimer);
@@ -683,7 +749,7 @@ function renderList(){
     if(r.miss)return '<div class="card rec miss"><h3>'+jdate(r.date)+'<span style="color:var(--warn);font-size:14px">記録なし</span></h3>'+
       '<div class="acts"><button class="btn sm" data-new="'+r.date+'">この日の記録をつける</button></div></div>';
     if(r.kind==='rest')return '<div class="card rec rest"><h3>'+jdate(r.date)+'<span class="tag g">休み・中止</span></h3>'+
-      '<div class="meta">'+esc(r.reason||'理由なし')+(r.note?'<br>📝 '+esc(r.note):'')+'</div>'+acts(r)+'</div>';
+      '<div class="meta">'+esc(r.reason||'理由なし')+(r.note?'<br>📝 '+esc(r.note):'')+'<br>🕒 登録 '+fmtDT(r.createdAt).slice(5)+'</div>'+acts(r)+'</div>';
     const lit='';
     const nc=S.set.checks.length, okc=(r.checks||[]).length;
     return '<div class="card rec"><h3>'+jdate(r.date)+'<span>'+(r.weather?'<span class="tag g">'+esc(r.weather)+'</span>':'')+'</span></h3>'+
@@ -691,7 +757,7 @@ function renderList(){
       (r.start||r.end?'<br>🕘 '+esc(r.start)+'〜'+esc(r.end):'')+
       (lit?'<br>♨️ '+lit:'')+(r.car?'<br>🚚 '+esc(r.car):'')+
       '<br>✅ 点検 '+okc+'/'+nc+(okc<nc?'<span class="tag" style="background:#fff3e0;color:var(--amber)">未チェックあり</span>':'')+
-      (r.note?'<br>📝 '+esc(r.note):'')+'</div>'+
+      (r.note?'<br>📝 '+esc(r.note):'')+'<br>🕒 登録 '+fmtDT(r.createdAt).slice(5)+'</div>'+(r.photoMeta?photoBadge(r.photoMeta,r.date):'')+
       (r.photo?'<div class="photoBox" data-ph="'+r.id+'"><button class="btn sm gray" style="margin-top:8px">📷 写真を見る</button></div>':'')+acts(r)+'</div>';
   }).join('');
 }
@@ -734,12 +800,13 @@ $('printBtn').onclick=()=>{
   const st=S.set;
   $('printArea').innerHTML='<h2>温泉運搬 作業記録簿　'+esc(label)+'</h2>'+
     '<div style="font-size:12px;margin-bottom:6px">団体：うちまち　｜　'+esc(st.from)+' → '+esc(st.dest)+'　｜　印刷日 '+today()+'</div>'+
-    '<table class="book"><tr><th>No</th><th>日付</th><th>区分</th><th>担当者</th><th>時間</th><th>車両</th><th>天気</th><th>点検</th><th>備考</th><th>確認印</th></tr>'+
-    rows.map((r,i)=>r.miss?'<tr><td>'+(i+1)+'</td><td>'+jdate(r.date)+'</td><td colspan="8" class="l" style="color:#c62828">記録なし</td></tr>':
+    '<table class="book"><tr><th>No</th><th>日付</th><th>区分</th><th>担当者</th><th>時間</th><th>車両</th><th>天気</th><th>点検</th><th>備考</th><th>登録日時</th><th>証拠写真</th><th>確認印</th></tr>'+
+    rows.map((r,i)=>r.miss?'<tr><td>'+(i+1)+'</td><td>'+jdate(r.date)+'</td><td colspan="10" class="l" style="color:#c62828">記録なし</td></tr>':
       '<tr><td>'+(i+1)+'</td><td>'+jdate(r.date)+'</td><td>'+(r.kind==='rest'?'休み':'実施')+'</td><td class="l">'+esc((r.members||[]).join('・'))+'</td>'+
       '<td>'+(r.start||r.end?esc(r.start)+'〜'+esc(r.end):'')+'</td>'+
       '<td>'+esc(r.car||'')+'</td><td>'+esc(r.weather||'')+'</td><td>'+(r.kind==='run'?(r.checks||[]).length+'/'+st.checks.length:'')+'</td>'+
-      '<td class="l">'+esc([r.reason,r.note].filter(Boolean).join(' / '))+'</td><td style="width:50px"></td></tr>').join('')+
+      '<td class="l">'+esc([r.reason,r.note].filter(Boolean).join(' / '))+'</td><td>'+fmtDT(r.createdAt).slice(5)+'</td>'+
+      '<td>'+(r.photoMeta?(()=>{const d=new Date(r.photoMeta.at);return (d.getMonth()+1)+'/'+d.getDate()+' '+pad(d.getHours())+':'+pad(d.getMinutes())+(r.photoMeta.src==='camera'?'撮影':'(ｱﾙﾊﾞﾑ)')+(ymd(d)===r.date?'':' ⚠')+(r.photoMeta.dist!=null?'<br>'+distTxt(r.photoMeta.dist):'');})():(r.photo?'あり':''))+'</td><td style="width:50px"></td></tr>').join('')+
     '</table><div style="font-size:12px;margin-top:6px">実施 '+recs.filter(r=>r.kind==='run').length+'回　休み・中止 '+recs.filter(r=>r.kind==='rest').length+'回　点検項目：'+esc(st.checks.join('、'))+'</div>';
   window.print();
 };
@@ -764,11 +831,11 @@ $('csvBtn').onclick=()=>{
 // ===== 設定 =====
 const split=s=>s.split(/[,、，\n]/).map(x=>x.trim()).filter(Boolean);
 const RYUOW_LOGO='<span class="ryuow" title="リュウオウ"><span class="w">Ryuow<svg viewBox="0 0 60 6" preserveAspectRatio="none"><path d="M1 5 Q30 -1 59 4" fill="none" stroke="#3aa04a" stroke-width="2" stroke-linecap="round"/></svg></span><svg class="tw" viewBox="0 0 26 38"><path d="M1 6 L22 4 L25 7 L4 9 Z" fill="#2f6f7e"/><path d="M4 9 L23 8 L23 13 L5 14 Z" fill="#3c7f8d"/><path d="M6 14 L22 13 L25 37 L3 37 Z" fill="#2f6f7e"/><rect x="9" y="19" width="1.6" height="4" fill="#eef5f3"/></svg></span>';
-function renderSet(){const st=S.set;$('sRotOrder').value=(st.rotOrder||st.members).join('、');$('sRotPer').value=String(st.rotPer||1);$('sRotBase').value=st.rotBase||START_DATE;
+function renderSet(){const st=S.set;renderLoc();$('sRotOrder').value=(st.rotOrder||st.members).join('、');$('sRotPer').value=String(st.rotPer||1);$('sRotBase').value=st.rotBase||START_DATE;
   $('sRotFirst').innerHTML=(st.rotOrder||st.members).map(m=>'<option'+(m===st.rotFirst?' selected':'')+'>'+esc(m)+'</option>').join('');$('sMembers').value=st.members.join('、');$('sDest').value=st.dest;$('sFrom').value=st.from;
   $('sCars').value=st.cars.join('、');$('sChecks').value=st.checks.join('、');$('sLiters').value=st.liters;if(/リュウオウ|ryuow/i.test(st.dest))$('hDest').innerHTML=RYUOW_LOGO;else $('hDest').textContent=st.dest;}
 $('saveSet').onclick=()=>{const m=split($('sMembers').value);if(!m.length){toast('メンバーを入れてください');return;}
-  S.set={members:m,dest:$('sDest').value.trim()||'リュウオウ',from:$('sFrom').value.trim()||'温泉',cars:split($('sCars').value),
+  S.set={ryuowLoc:S.set.ryuowLoc||null,members:m,dest:$('sDest').value.trim()||'リュウオウ',from:$('sFrom').value.trim()||'温泉',cars:split($('sCars').value),
     checks:split($('sChecks').value),liters:$('sLiters').value===''?'':Number($('sLiters').value),
     rotOrder:split($('sRotOrder').value).length?split($('sRotOrder').value):m,rotPer:Number($('sRotPer').value)||1,rotBase:$('sRotBase').value||START_DATE,rotFirst:$('sRotFirst').value,updatedAt:Date.now()};
   save();renderAll();if(!editId)renderForm({});pushCloud(true);toast('設定を保存しました');};
