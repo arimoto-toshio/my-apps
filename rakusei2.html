@@ -1512,14 +1512,20 @@ function renderShare() {
     return h;
   };
   const bidRows = r.bids.slice(0, slots).filter(b => b.caller || b.opener).map((b, i) => {
-    const calls = [b.call1, b.call2].filter(x => x !== '' && x != null).join('+') || '—';
+    const hasCall = [b.call1, b.call2].some(x => x !== '' && x != null);
+    const callTotal = (+b.call1 || 0) + (+b.call2 || 0);
+    // 叫び：合計を大きく、1回目＋2回目を小さく
+    const calls = hasCall
+      ? `<div style="font-size:13px;font-weight:700;color:#bf360c;">${callTotal}</div><div style="font-size:9px;color:#888;">${+b.call1 || 0}＋${+b.call2 || 0}</div>`
+      : '<span style="color:#bbb;">—</span>';
+    const no = n => `<span style="display:inline-block;min-width:14px;font-size:9px;color:#999;">${n}</span>`;
     const resColor = b.result === '大砲' ? '#2e7d32' : b.result === 'ケツ' ? '#1565c0' : b.result === '落ち' ? '#e65100' : '#999';
     const resBadge = b.result ? `<span style="background:${resColor};color:#fff;padding:1px 5px;border-radius:3px;font-size:10px;">${b.result}</span>` : '';
     return `
       <tr style="border-bottom:1px solid #eee;">
-        <td style="padding:3px 4px;font-size:11px;text-align:center;">${b.caller || '—'}</td>
-        <td style="padding:3px 4px;font-size:11px;text-align:center;color:#555;">${calls}</td>
-        <td style="padding:3px 4px;font-size:11px;text-align:center;">${b.opener || '—'}</td>
+        <td style="padding:4px 3px;font-size:12px;text-align:left;background:#fff6ec;white-space:nowrap;">${no(i + 1)}${b.caller || '—'}</td>
+        <td style="padding:4px 3px;text-align:center;background:#fff6ec;line-height:1.25;">${calls}</td>
+        <td style="padding:4px 3px;font-size:12px;text-align:left;border-left:2px solid #0d1b3e;white-space:nowrap;">${no(i + 1)}${b.opener || '—'}</td>
         <td style="padding:3px 4px;font-size:11px;text-align:center;font-weight:600;">
           ${b.openResult !== '' && b.openResult != null ? b.openResult : '—'}
           ${openDetail(b) || (b.card2 ? `<div style="font-size:9px;font-weight:700;color:#6a1b9a;">🃏${+b.card2}円</div>` : '')}
@@ -1582,9 +1588,13 @@ function renderShare() {
         <table style="width:100%;border-collapse:collapse;background:#fafbfd;">
           <thead>
             <tr style="background:#0d1b3e;color:#fff;">
-              <th style="padding:3px;font-size:10px;">叫び順</th>
-              <th style="padding:3px;font-size:10px;">叫び経過</th>
-              <th style="padding:3px;font-size:10px;">開順</th>
+              <th colspan="2" style="padding:3px;font-size:10px;background:#bf360c;">📢 叫び</th>
+              <th colspan="3" style="padding:3px;font-size:10px;border-left:2px solid #fff;">🔓 開き</th>
+            </tr>
+            <tr style="background:#0d1b3e;color:#fff;">
+              <th style="padding:3px;font-size:10px;background:#bf360c;">叫ぶ人</th>
+              <th style="padding:3px;font-size:10px;background:#bf360c;">合計</th>
+              <th style="padding:3px;font-size:10px;border-left:2px solid #fff;">開く人</th>
               <th style="padding:3px;font-size:10px;">開き+トランプ</th>
               <th style="padding:3px;font-size:10px;width:40px;">判定</th>
             </tr>
