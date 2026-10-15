@@ -1484,6 +1484,20 @@ function renderShare() {
   const ochiCount2 = attOf(r).filter(a => a.ochi).length;
   const slots = Math.max(1, membersOf(r).length - ochiCount2);
   // 叫びも開きも入っていない行は共有画面に出さない（空行が並ぶと読みにくいため）
+  // 開結果の内訳（開く人自身の叫び＋前ケツ＋開き → トランプ）を表示用に作る
+  const _myCall = {};
+  r.bids.forEach(cb => { if (cb.caller) _myCall[cb.caller] = (+cb.call1 || 0) + (+cb.call2 || 0); });
+  const openDetail = b => {
+    if (!b.opener || b.openResult === '' || b.openResult == null) return '';
+    const cl = _myCall[b.opener] || 0, pk = +b.prevKetsu || 0, op = +b.open || 0, cd = +b.card2 || 0;
+    if (cl + pk + op + cd !== +b.openResult) return '';   // 手入力などで計算が合わない回は内訳を出さない
+    const parts = [`叫び${cl}`];
+    if (pk) parts.push(`前ケツ${pk}`);
+    parts.push(`開き${op}`);
+    let h = `<div style="font-size:9px;color:#666;font-weight:400;line-height:1.35;">${parts.join('＋')}`;
+    h += cd ? `<br>＝${cl + pk + op}<span style="color:#6a1b9a;font-weight:700;">＋🃏${cd}</span></div>` : `</div>`;
+    return h;
+  };
   const bidRows = r.bids.slice(0, slots).filter(b => b.caller || b.opener).map((b, i) => {
     const calls = [b.call1, b.call2].filter(x => x !== '' && x != null).join('+') || '—';
     const resColor = b.result === '大砲' ? '#2e7d32' : b.result === 'ケツ' ? '#1565c0' : b.result === '落ち' ? '#e65100' : '#999';
@@ -1495,7 +1509,7 @@ function renderShare() {
         <td style="padding:3px 4px;font-size:11px;text-align:center;">${b.opener || '—'}</td>
         <td style="padding:3px 4px;font-size:11px;text-align:center;font-weight:600;">
           ${b.openResult !== '' && b.openResult != null ? b.openResult : '—'}
-          ${b.card2 ? `<div style="font-size:9px;font-weight:700;color:#6a1b9a;">🃏${+b.card2}円</div>` : ''}
+          ${openDetail(b) || (b.card2 ? `<div style="font-size:9px;font-weight:700;color:#6a1b9a;">🃏${+b.card2}円</div>` : '')}
         </td>
         <td style="padding:3px 4px;font-size:11px;text-align:center;">${resBadge}</td>
       </tr>
