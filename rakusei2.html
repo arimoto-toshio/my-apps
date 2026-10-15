@@ -1507,7 +1507,7 @@ function renderShare() {
   const openDetail = b => {
     const d = openBreakdown(r, b);
     if (!d) return '';
-    let h = `<div style="font-size:9px;color:#666;font-weight:400;line-height:1.35;">${d.text}`;
+    let h = `<div style="font-size:9px;color:#666;font-weight:400;line-height:1.35;">${d.text.split('＋').map(x => `<span style="white-space:nowrap">${x}</span>`).join('＋')}`;   // 「開き800」などが途中で切れないように
     h += d.card ? `<br>＝${d.base}<span style="color:#6a1b9a;font-weight:700;">＋🃏${d.card}</span></div>` : `</div>`;
     return h;
   };
@@ -1516,11 +1516,11 @@ function renderShare() {
     const callTotal = (+b.call1 || 0) + (+b.call2 || 0);
     // 叫び：合計を大きく、1回目＋2回目を小さく
     const calls = hasCall
-      ? `<div style="font-size:13px;font-weight:700;color:#bf360c;">${callTotal}</div><div style="font-size:9px;color:#888;">${+b.call1 || 0}＋${+b.call2 || 0}</div>`
+      ? `<div style="font-size:13px;font-weight:700;color:#bf360c;">${callTotal}</div><div style="font-size:9px;color:#888;white-space:nowrap;">${+b.call1 || 0}＋${+b.call2 || 0}</div>`
       : '<span style="color:#bbb;">—</span>';
     const no = n => `<span style="font-size:9px;color:#aaa;margin-right:5px;">${n}</span>`;
     const resColor = b.result === '大砲' ? '#2e7d32' : b.result === 'ケツ' ? '#1565c0' : b.result === '落ち' ? '#e65100' : '#999';
-    const resBadge = b.result ? `<span style="background:${resColor};color:#fff;padding:1px 5px;border-radius:3px;font-size:10px;">${b.result}</span>` : '';
+    const resBadge = b.result ? `<span style="display:inline-block;background:${resColor};color:#fff;padding:3px 6px;border-radius:5px;font-size:12px;font-weight:700;white-space:nowrap;">${b.result}</span>` : '';
     return `
       <tr style="border-bottom:1px solid #eee;">
         <td style="padding:7px 6px;font-size:12px;text-align:center;background:#fff6ec;white-space:nowrap;">${no(i + 1)}${b.caller || '—'}</td>
@@ -1596,7 +1596,7 @@ function renderShare() {
               <th style="padding:3px;font-size:10px;background:#bf360c;">合計</th>
               <th style="padding:4px;font-size:10px;border-left:2px solid #fff;text-align:center;">開き</th>
               <th style="padding:3px;font-size:10px;">開き+トランプ</th>
-              <th style="padding:3px;font-size:10px;width:40px;">判定</th>
+              <th style="padding:3px;font-size:10px;width:44px;">判定</th>
             </tr>
           </thead>
           <tbody>${bidRows}</tbody>
