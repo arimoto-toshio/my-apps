@@ -1163,6 +1163,7 @@ function renderBids() {
           </select>
         </div>
       </div>
+      ${(() => { const d = openBreakdown(r, b); return d ? `<div style="margin:-2px 0 8px; padding:5px 8px; background:#f7f9fc; border-radius:6px; font-size:12px; color:#555;">🧮 ${d.text}＝<strong style="color:#0d1b3e;">${d.base.toLocaleString()}</strong>${d.card ? `<span style="color:#6a1b9a;font-weight:700;">＋🃏${d.card}</span>＝<strong style="color:#0d1b3e;">${d.total.toLocaleString()}</strong>` : ''}</div>` : ''; })()}
       <div class="result-btns">
         <button class="result-btn taihou ${b.result==='大砲'?'active':''}" onclick="setResult(${i},'大砲')">大砲${b.manualResult && b.result==='大砲'?'🔒':''}</button>
         <button class="result-btn ketsu ${b.result==='ケツ'?'active':''}" onclick="setResult(${i},'ケツ')">ケツ${b.manualResult && b.result==='ケツ'?'🔒':''}</button>
@@ -1382,6 +1383,25 @@ function renderMembers() {
      </div>`;
 }
 
+// 開結果の内訳：開く人自身の叫び＋前ケツ＋開き（＋トランプ）。合計が開結果と合わないときは null
+function openBreakdown(r, b) {
+  if (!b.opener || b.openResult === '' || b.openResult == null) return null;
+  const cb = r.bids.find(x => x.caller === b.opener);
+  const cl = cb ? (+cb.call1 || 0) + (+cb.call2 || 0) : 0;
+  const pk = +b.prevKetsu || 0, op = +b.open || 0, cd = +b.card2 || 0;
+  if (cl + pk + op + cd !== +b.openResult) return null;
+  const parts = [`叫び${cl}`];
+  if (pk) parts.push(`前ケツ${pk}`);
+  parts.push(`開き${op}`);
+  return { text: parts.join('＋'), base: cl + pk + op, card: cd, total: +b.openResult };
+}
+// 1行の文字にする（LINE用）：叫び800＋開き100＝900＋🃏100
+function openBreakdownText(r, b) {
+  const d = openBreakdown(r, b);
+  if (!d) return '';
+  return d.card ? `${d.text}＝${d.base}＋🃏${d.card}` : d.text;
+}
+
 function renderShare() {
   const el = document.getElementById('shareBody');
   if (!el) return;
@@ -1484,18 +1504,11 @@ function renderShare() {
   const ochiCount2 = attOf(r).filter(a => a.ochi).length;
   const slots = Math.max(1, membersOf(r).length - ochiCount2);
   // 叫びも開きも入っていない行は共有画面に出さない（空行が並ぶと読みにくいため）
-  // 開結果の内訳（開く人自身の叫び＋前ケツ＋開き → トランプ）を表示用に作る
-  const _myCall = {};
-  r.bids.forEach(cb => { if (cb.caller) _myCall[cb.caller] = (+cb.call1 || 0) + (+cb.call2 || 0); });
   const openDetail = b => {
-    if (!b.opener || b.openResult === '' || b.openResult == null) return '';
-    const cl = _myCall[b.opener] || 0, pk = +b.prevKetsu || 0, op = +b.open || 0, cd = +b.card2 || 0;
-    if (cl + pk + op + cd !== +b.openResult) return '';   // 手入力などで計算が合わない回は内訳を出さない
-    const parts = [`叫び${cl}`];
-    if (pk) parts.push(`前ケツ${pk}`);
-    parts.push(`開き${op}`);
-    let h = `<div style="font-size:9px;color:#666;font-weight:400;line-height:1.35;">${parts.join('＋')}`;
-    h += cd ? `<br>＝${cl + pk + op}<span style="color:#6a1b9a;font-weight:700;">＋🃏${cd}</span></div>` : `</div>`;
+    const d = openBreakdown(r, b);
+    if (!d) return '';
+    let h = `<div style="font-size:9px;color:#666;font-weight:400;line-height:1.35;">${d.text}`;
+    h += d.card ? `<br>＝${d.base}<span style="color:#6a1b9a;font-weight:700;">＋🃏${d.card}</span></div>` : `</div>`;
     return h;
   };
   const bidRows = r.bids.slice(0, slots).filter(b => b.caller || b.opener).map((b, i) => {
@@ -1523,6 +1536,15 @@ function renderShare() {
   _sl.push(`●出席(${presentList.length}): ${presentList.join('・')||'—'}`);
   _sl.push(`●欠席(${absentList.length}): ${absentList.join('・')||'—'}`);
   _sl.push('──────────');
+  const _opened = r.bids.slice(0, slots).filter(b => b.opener && b.openResult !== '' && b.openResult != null);
+  if (_opened.length) {
+    _sl.push('■ 開いた結果');
+    _opened.forEach(b => {
+      const t = openBreakdownText(r, b);
+      _sl.push(`・${b.opener} ${(+b.openResult).toLocaleString()}${t ? '（' + t + '）' : ''}${b.result ? ' ' + b.result : ''}`);
+    });
+    _sl.push('──────────');
+  }
   const _q = cardQuotaOf(r), _w = cardWinnersOf(r);
   if (_q.c100 || _q.c50) {
     _sl.push(`■ トランプ当たり（100円×${_q.c100}${_q.c50 ? '・50円×' + _q.c50 : ''}）`);
