@@ -10,7 +10,7 @@
 <style>
 :root{--bg:#f4f1ea;--card:#fff;--ink:#2b2b2b;--sub:#777;--line:#e2dccf;--main:#1f7a8c;--main2:#e3f2f5;--ok:#2e7d32;--warn:#c62828;--warn2:#fdecea;--amber:#b26a00}
 *{box-sizing:border-box}
-body{margin:0;background:var(--bg);color:var(--ink);font-family:-apple-system,"Hiragino Sans","Hiragino Kaku Gothic ProN",sans-serif;font-size:16px;padding-bottom:160px}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:-apple-system,"Hiragino Sans","Hiragino Kaku Gothic ProN",sans-serif;font-size:17px;padding-bottom:calc(230px + env(safe-area-inset-bottom))}
 header{background:var(--main);color:#fff;padding:14px 16px 10px;padding-top:max(14px,env(safe-area-inset-top))}
 header h1{margin:0;font-size:20px;position:relative;z-index:1}
 header{position:relative;overflow:hidden}
@@ -32,10 +32,44 @@ header .sub{font-size:13px;opacity:.9;margin-top:2px}
 #weekBox{margin:12px 16px 0;padding:12px 14px;border-radius:12px;font-weight:600}
 #weekBox.ok{background:#e8f5e9;color:var(--ok)}
 #weekBox.ng{background:var(--warn2);color:var(--warn)}
-nav{display:grid;grid-template-columns:repeat(6,1fr);margin:8px 16px 0;position:sticky;top:0;z-index:5;background:var(--bg);border-bottom:1px solid var(--line)}
-nav button{padding:11px 0 9px;border:none;border-bottom:3px solid transparent;background:none;font-size:14px;color:#888}
-nav button.on{color:var(--main);font-weight:700;border-bottom-color:var(--main)}
+/* 下のタブ（4つだけ・大きいアイコン） */
+nav{position:fixed;left:0;right:0;bottom:0;z-index:30;display:grid;grid-template-columns:repeat(4,1fr);background:#fff;border-top:1px solid var(--line);padding-bottom:env(safe-area-inset-bottom);box-shadow:0 -2px 10px rgba(0,0,0,.07)}
+nav button{padding:7px 0 8px;border:none;border-top:3px solid transparent;background:none;font-size:13px;color:#888;display:flex;flex-direction:column;align-items:center;gap:2px;font-family:inherit}
+nav button i{font-style:normal;font-size:25px;line-height:1.1;filter:grayscale(.6);opacity:.75}
+nav button.on{color:var(--main);font-weight:700;border-top-color:var(--main)}
+nav button.on i{filter:none;opacity:1}
+#weekBox{display:none!important}
 section{display:none;margin:12px 16px}
+/* ホーム（全体のまとめ） */
+.hm-now{border-radius:14px;padding:16px;margin-bottom:12px;color:#fff;background:linear-gradient(135deg,#1f7a8c,#2a9bb0)}
+.hm-now.ng{background:linear-gradient(135deg,#c62828,#e05a4f)}
+.hm-now .hm-big{font-size:21px;font-weight:700;line-height:1.35}
+.hm-now .hm-sm{font-size:14px;opacity:.95;margin-top:6px}
+.hm-now .go{margin-top:12px;width:100%;padding:13px;border:none;border-radius:11px;background:#fff;color:#1f7a8c;font-size:16px;font-weight:700}
+.hm-now.ng .go{color:#c62828}
+.hm-h{font-weight:700;margin-bottom:8px;display:flex;justify-content:space-between;align-items:center}
+.hm-h a{font-size:13px;font-weight:500;color:var(--main);text-decoration:none}
+.hm-tiles{display:grid;grid-template-columns:repeat(4,1fr);gap:6px}
+.hm-tile{background:#f7f5ef;border-radius:10px;padding:8px 4px;text-align:center}
+.hm-tile b{display:block;font-size:20px;color:var(--ink)}
+.hm-tile span{font-size:11px;color:var(--sub)}
+.hm-tile.warn b{color:var(--warn)}
+.hm-tl .r{display:flex;align-items:center;gap:8px;padding:9px 0;border-bottom:1px solid var(--line)}
+.hm-tl .r:last-child{border-bottom:none}
+.hm-tl .d{flex:none;width:68px;font-weight:600;font-size:14px}
+.hm-tl .ic{flex:none;width:22px;text-align:center}
+.hm-tl .t{flex:1;font-size:14px;min-width:0}
+.hm-tl .t small{display:block;color:var(--sub);font-size:12px}
+.hm-tl .r.now{background:var(--main2);border-radius:8px;padding-left:6px;padding-right:6px}
+.hm-tl .r.miss .t{color:var(--warn)}
+.hm-bar{display:flex;align-items:center;gap:8px;margin:5px 0;font-size:14px}
+.hm-bar .n{flex:none;width:52px}
+.hm-bar .g{flex:1;height:12px;background:#f1eee7;border-radius:6px;overflow:hidden}
+.hm-bar .g i{display:block;height:100%;background:var(--main);border-radius:6px}
+.hm-bar .c{flex:none;width:30px;text-align:right;color:var(--sub)}
+.hm-note{font-size:14px;padding:8px 0;border-bottom:1px solid var(--line)}
+.hm-note:last-child{border-bottom:none}
+.hm-note small{color:var(--sub)}
 section.on{display:block}
 .card{background:var(--card);border-radius:14px;padding:14px;margin-bottom:12px;box-shadow:0 1px 3px rgba(0,0,0,.06)}
 label.t{display:block;font-size:13px;color:var(--sub);margin:12px 0 5px}
@@ -116,7 +150,7 @@ table.book td.l{text-align:left}
   @page{size:A4 landscape;margin:8mm}
 }
 /* 理事長マスコット */
-#mascot{position:fixed;left:10px;bottom:calc(12px + env(safe-area-inset-bottom));z-index:40;width:46px;height:46px;cursor:pointer;-webkit-tap-highlight-color:transparent}
+#mascot{position:fixed;left:10px;bottom:calc(82px + env(safe-area-inset-bottom));z-index:40;width:46px;height:46px;cursor:pointer;-webkit-tap-highlight-color:transparent}
 #mascot .face{width:46px;height:46px;border-radius:50%;border:3px solid #fff;box-shadow:0 2px 8px rgba(0,0,0,.25);background:center/cover;animation:bob 2.6s ease-in-out infinite}
 #mascot.jump .face{animation:jump .6s ease}
 #mascot .say,#falco .say{position:absolute;left:0;bottom:calc(100% + 6px);background:#fff;color:var(--ink);font-size:14px;font-weight:600;padding:7px 11px;border-radius:14px;white-space:nowrap;box-shadow:0 2px 8px rgba(0,0,0,.18);opacity:0;transform:translateX(-6px);transition:.25s;pointer-events:none}
@@ -127,7 +161,7 @@ table.book td.l{text-align:left}
   background:radial-gradient(circle,#fffde7 0%,#ffd54f 35%,#ff8f00 65%,rgba(255,143,0,0) 72%);box-shadow:0 0 18px 8px rgba(255,193,7,.7)}
 .flash{position:fixed;inset:0;z-index:38;pointer-events:none;background:radial-gradient(circle at 15% 92%,rgba(255,235,59,.55),rgba(255,235,59,0) 45%)}
 #toast{z-index:60}
-#falco{position:fixed;right:10px;bottom:calc(8px + env(safe-area-inset-bottom));z-index:40;width:70px;height:130px;cursor:pointer;-webkit-tap-highlight-color:transparent}
+#falco{position:fixed;right:10px;bottom:calc(74px + env(safe-area-inset-bottom));z-index:40;width:70px;height:130px;cursor:pointer;-webkit-tap-highlight-color:transparent}
 #falco .body{width:70px;height:130px;background:bottom/contain no-repeat;filter:drop-shadow(0 2px 3px rgba(0,0,0,.3));transform-origin:50% 100%;animation:stance 3.2s ease-in-out infinite}
 #falco.jump .body{animation:hero .9s ease}
 @keyframes stance{0%,100%{transform:scale(1)}50%{transform:scale(1.06,1.04)}}
@@ -140,6 +174,54 @@ table.book td.l{text-align:left}
 .auberge{display:inline-flex;align-items:center;gap:5px;background:#f7f6f2;border-radius:8px;padding:0 8px 0 7px;height:26px;vertical-align:middle;line-height:1;color:#111}
 .auberge .a{font-family:'Cormorant Garamond',Georgia,'Times New Roman',serif;font-weight:500;font-size:14px;letter-spacing:.2px;position:relative;top:1px}
 .auberge .u{font-family:'Yuji Boku','Hiragino Mincho ProN','Yu Mincho',serif;font-size:21px;letter-spacing:2px;font-weight:700}
+/* ===== シンプル版の部品 ===== */
+input,select,textarea{font-size:17px;padding:12px}
+label.t{font-size:15px}
+.step{display:flex;align-items:center;gap:8px;font-weight:700;font-size:18px;margin:22px 0 10px}
+.step.first{margin-top:2px}
+.step .no{flex:none;width:28px;height:28px;border-radius:50%;background:var(--main);color:#fff;font-size:15px;display:flex;align-items:center;justify-content:center}
+.step small{font-weight:400;color:var(--sub);font-size:13px}
+.step .allOk{margin-left:auto;border:none;background:#e8f5e9;color:var(--ok);font-weight:700;font-size:15px;padding:9px 12px;border-radius:10px;font-family:inherit}
+.seg.big2{margin-top:10px;border-radius:12px}
+.seg.big2 button{padding:16px 0;font-size:18px;font-weight:700}
+.bigChips .chip{padding:12px 18px;font-size:18px}
+.bigChecks label{padding:13px 2px;font-size:17px}
+.bigChecks input{width:28px;height:28px}
+.camBig{width:100%;padding:18px;font-size:19px;border-radius:13px}
+details.more{margin-top:20px;border:1px dashed #cfc7b6;border-radius:12px;padding:2px 12px 10px}
+details.more summary{padding:12px 0 4px;color:var(--main);font-weight:600;font-size:15px}
+.bigSave{padding:18px!important;font-size:19px!important;border-radius:13px}
+.hm-now{padding:18px}
+.hm-now .hm-big{font-size:23px}
+.hm-who{font-size:21px;font-weight:700;margin-top:10px}
+.hm-btns{display:grid;grid-template-columns:2fr 1fr;gap:8px;margin-top:14px}
+.hm-btns button{padding:17px 6px;border:none;border-radius:13px;font-size:19px;font-weight:700;background:#fff;color:#1f7a8c;font-family:inherit}
+.hm-now.ng .hm-btns button{color:#c62828}
+.hm-btns button.rest{background:rgba(255,255,255,.22);color:#fff!important;font-size:15px}
+.moreGrid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.moreGrid button{background:#fff;border:none;border-radius:16px;padding:22px 8px;font-size:18px;font-weight:700;color:var(--ink);box-shadow:0 1px 3px rgba(0,0,0,.08);display:flex;flex-direction:column;align-items:center;gap:4px;font-family:inherit}
+.moreGrid i{font-style:normal;font-size:36px}
+.moreGrid small{font-weight:400;font-size:12px;color:var(--sub)}
+.back{display:block;border:none;background:none;color:var(--main);font-size:16px;padding:2px 0 12px;font-weight:600;font-family:inherit}
+@media print{nav,.back{display:none!important}}
+/* 横にはみ出さない（キャラの動きで画面が広がるのを防ぐ） */
+html,body{overflow-x:hidden;max-width:100%}
+.card,.lrow .w{min-width:0}
+/* その他の画面ではキャラを出さない（ボタンに重ならないように） */
+body.quiet #mascot,body.quiet #falco{display:none}
+/* 一覧：1件1行 */
+.lcard{padding:4px 12px}
+.lrow{display:flex;align-items:center;gap:8px;padding:13px 2px;border-bottom:1px solid var(--line);cursor:pointer;-webkit-tap-highlight-color:transparent}
+.lrow:last-child{border-bottom:none}
+.lrow:active{background:var(--main2)}
+.lrow .d{flex:none;width:76px;font-weight:700;font-size:16px}
+.lrow .w{flex:1;font-size:16px;overflow:hidden}
+.lrow .w small{display:block;color:var(--sub);font-size:12px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.lrow .ic{flex:none;font-size:15px;white-space:nowrap}
+.lrow .go{flex:none;color:#bbb;font-size:20px}
+.lrow.miss .d,.lrow.miss .w{color:var(--warn)}
+.lrow.rest .w{color:var(--sub)}
+.ftag{display:inline-block;font-size:11px;padding:1px 6px;border-radius:8px;background:#fff3e0;color:var(--amber);margin-left:4px;vertical-align:middle;font-weight:600}
 </style>
 </head>
 <body>
@@ -172,58 +254,75 @@ table.book td.l{text-align:left}
   <h1>♨️ 温泉運搬記録</h1>
   <div class="sub">うちまち｜毎週木曜 温泉 → <span id="hDest">リュウオウ</span>　<span id="syncDot"></span></div>
 </header>
-<div id="weekBox"></div>
+<div id="weekBox" style="display:none"></div>
 <nav>
-  <button data-t="add" class="on">記録</button>
-  <button data-t="rot">当番</button>
-  <button data-t="fuel">給油</button>
-  <button data-t="list">一覧</button>
-  <button data-t="sum">集計</button>
-  <button data-t="set">設定</button>
+  <button data-t="home" class="on"><i>🏠</i>ホーム</button>
+  <button data-t="add"><i>✍️</i>記録する</button>
+  <button data-t="fuel"><i>⛽</i>給油</button>
+  <button data-t="more"><i>☰</i>その他</button>
 </nav>
 
+<!-- その他（あまり使わない画面への入口） -->
+<section id="more">
+  <div class="moreGrid">
+    <button data-go="rot"><i>👤</i>当番表<small>だれの番か・交代</small></button>
+    <button data-go="list"><i>📋</i>記録の一覧<small>見る・直す・消す</small></button>
+    <button data-go="sum"><i>🖨</i>集計・印刷<small>記録簿・CSV</small></button>
+    <button data-go="set"><i>⚙️</i>設定<small>メンバー・点検の項目</small></button>
+  </div>
+</section>
+
+<!-- ホーム（全体のまとめ） -->
+<section id="home" class="on"><div id="homeBody"></div></section>
+
 <!-- 記録する -->
-<section id="add" class="on">
+<section id="add">
   <div class="card">
     <div id="editNote" class="muted" style="display:none;margin-bottom:8px"><span id="editTxt">✏️ 記録を直しています</span> <button class="btn sm gray" id="cancelEdit">やめる</button></div>
-    <label class="t">日付</label>
+    <div class="step first"><span class="no">1</span>いつ？</div>
     <input type="date" id="fDate">
-    <label class="t">この日は</label>
-    <div class="seg" id="fKind"><button data-v="run" class="on">運んだ</button><button data-v="rest">休み・中止</button></div>
+    <div class="seg big2" id="fKind"><button data-v="run" class="on">🚚 運んだ</button><button data-v="rest">💤 休み・中止</button></div>
     <div id="runFields">
-      <label class="t">担当者（タップで選ぶ・複数OK）</label>
-      <div class="chips" id="fMembers"></div>
-      <label class="t">時間</label>
-      <div class="row"><input type="time" id="fStart"><span style="flex:none">〜</span><input type="time" id="fEnd"></div>
-      <input type="hidden" id="fLiters" value=""><input type="hidden" id="fTrips" value="1">
-      <label class="t">車両</label>
-      <input id="fCar" list="carList">
-      <datalist id="carList"></datalist>
-      <label class="t">天気</label>
-      <div class="seg" id="fWeather"><button data-v="晴れ">☀️晴れ</button><button data-v="くもり">☁️くもり</button><button data-v="雨">☔雨</button></div>
-      <label class="t">点検・作業チェック</label>
-      <div class="checks" id="fChecks"></div>
-      <label class="t">証拠写真（1枚）</label>
-      <div class="row"><button class="btn" id="camBtn" type="button">📷 カメラで撮る</button><button class="btn gray" id="albBtn" type="button" style="flex:.7">🖼 アルバム</button></div>
-      <div class="muted" style="margin-top:5px">カメラで撮ると、日時・場所・担当者が写真に入ります（証拠になります）</div>
+      <div class="step"><span class="no">2</span>だれが？<small>当番が入っています</small></div>
+      <div class="chips bigChips" id="fMembers"></div>
+      <div class="step"><span class="no">3</span>点検<button type="button" class="allOk" id="allOk">✅ ぜんぶOK</button></div>
+      <div class="checks bigChecks" id="fChecks"></div>
+      <div class="step"><span class="no">4</span>写真をとる</div>
+      <button class="btn camBig" id="camBtn" type="button">📷 カメラで撮る</button>
+      <div class="muted" style="margin-top:5px">日時・場所・担当が写真に入ります（証拠になります）</div>
       <input type="file" id="fPhoto" accept="image/*" capture="environment" hidden>
       <input type="file" id="fAlbum" accept="image/*" hidden>
       <div class="photoBox" id="photoPrev"></div>
+      <details class="more"><summary>＋ くわしく（時間・車・天気・アルバム）</summary>
+        <label class="t">時間</label>
+        <div class="row"><input type="time" id="fStart"><span style="flex:none">〜</span><input type="time" id="fEnd"></div>
+        <input type="hidden" id="fLiters" value=""><input type="hidden" id="fTrips" value="1">
+        <label class="t">車両</label>
+        <input id="fCar" list="carList">
+        <datalist id="carList"></datalist>
+        <label class="t">天気</label>
+        <div class="seg" id="fWeather"><button data-v="晴れ">☀️晴れ</button><button data-v="くもり">☁️くもり</button><button data-v="雨">☔雨</button></div>
+        <label class="t">撮ってある写真を使う</label>
+        <button class="btn gray" id="albBtn" type="button" style="width:100%">🖼 アルバムから選ぶ</button>
+      </details>
     </div>
     <div id="restFields" style="display:none">
-      <label class="t">理由</label>
+      <div class="step"><span class="no">2</span>休みの理由</div>
       <input id="fReason" placeholder="例：祝日のため、雨天、機器点検中">
     </div>
-    <label class="t">気づいたこと・備考</label>
-    <textarea id="fNote" placeholder="例：ホースの継ぎ目から少し漏れ。次回パッキン交換"></textarea>
+    <div class="step"><span class="no">✎</span>気づいたこと<small>あれば</small></div>
+    <textarea id="fNote" placeholder="例：ホースの継ぎ目から少し漏れ"></textarea>
     <select id="fBy" hidden></select>
     <div class="muted" id="recAuto" style="margin-top:12px;min-height:1.2em">入力すると自動で保存されます</div>
-    <button class="btn wide" id="saveBtn" style="margin-top:8px">💾 記録を保存</button>
+    <button class="btn wide bigSave" id="saveBtn" style="margin-top:8px">💾 記録を保存</button>
+    <div id="editMeta" class="muted" style="display:none;margin-top:14px;text-align:center"></div>
+    <button class="btn wide gray" id="delBtn" type="button" style="display:none;color:var(--warn)">🗑 この記録を消す</button>
   </div>
 </section>
 
 <!-- 当番表 -->
 <section id="rot">
+  <button class="back" data-go="more">‹ その他にもどる</button>
   <div class="card">
     <div class="muted">今週の当番</div>
     <div class="big" id="rotNow"></div>
@@ -240,11 +339,10 @@ table.book td.l{text-align:left}
 <section id="fuel">
   <div class="card">
     <div id="gEditNote" class="muted" style="display:none;margin-bottom:8px"><span id="gEditTxt">✏️ 給油記録を直しています</span> <button class="btn sm gray" id="gCancel">やめる</button></div>
-    <label class="t">給油した日</label>
+    <div class="step first"><span class="no">1</span>いつ・だれが？</div>
     <input type="date" id="gDate">
-    <label class="t">給油した人</label>
-    <select id="gWho"></select>
-    <label class="t">金額と量</label>
+    <select id="gWho" style="margin-top:8px"></select>
+    <div class="step"><span class="no">2</span>金額と量</div>
     <div class="row">
       <input type="number" id="gYen" inputmode="numeric" placeholder="金額">
       <span style="flex:none">円</span>
@@ -252,22 +350,24 @@ table.book td.l{text-align:left}
       <span style="flex:none">L</span>
     </div>
     <div class="muted" id="gUnit" style="margin-top:4px"></div>
-    <label class="t">車両</label>
-    <input id="gCar" list="carList">
-    <label class="t">スタンド</label>
-    <input id="gShop" list="shopList" placeholder="例：〇〇石油 内子">
-    <datalist id="shopList"></datalist>
-    <label class="t">メーター（km・わかれば）</label>
-    <input type="number" id="gKm" inputmode="numeric">
-    <label class="t">お金の出どころ</label>
-    <div class="seg" id="gPay"><button data-v="tatekae" class="on">立替（あとで精算）</button><button data-v="kai">会のお金</button></div>
-    <label class="t">レシートの写真（任意）</label>
-    <input type="file" id="gPhoto" accept="image/*">
-    <div class="photoBox" id="gPrev"></div>
-    <label class="t">備考</label>
-    <input id="gNote">
+    <div class="step"><span class="no">3</span>だれのお金？</div>
+    <div class="seg big2" id="gPay"><button data-v="tatekae" class="on">自分で立替</button><button data-v="kai">会のお金</button></div>
+    <details class="more"><summary>＋ くわしく（車・スタンド・メーター・レシート）</summary>
+      <label class="t">車両</label>
+      <input id="gCar" list="carList">
+      <label class="t">スタンド</label>
+      <input id="gShop" list="shopList" placeholder="例：〇〇石油 内子">
+      <datalist id="shopList"></datalist>
+      <label class="t">メーター（km・わかれば）</label>
+      <input type="number" id="gKm" inputmode="numeric">
+      <label class="t">レシートの写真</label>
+      <input type="file" id="gPhoto" accept="image/*">
+      <div class="photoBox" id="gPrev"></div>
+      <label class="t">備考</label>
+      <input id="gNote">
+    </details>
     <div class="muted" id="gAuto" style="margin-top:12px;min-height:1.2em">入力すると自動で保存されます</div>
-    <button class="btn wide" id="gSave" style="margin-top:8px">⛽ 給油を記録</button>
+    <button class="btn wide bigSave" id="gSave" style="margin-top:8px">⛽ 給油を記録</button>
   </div>
   <div class="card">
     <div style="font-weight:600;margin-bottom:6px">💴 まだ精算していない立替</div>
@@ -286,17 +386,19 @@ table.book td.l{text-align:left}
 
 <!-- 一覧 -->
 <section id="list">
+  <button class="back" data-go="more">‹ その他にもどる</button>
   <div class="card">
     <div class="row">
       <select id="lMonth"></select>
     </div>
-    <div class="muted" style="margin-top:8px">赤いカードは「木曜なのに記録がない日」です。</div>
+    <div class="muted" style="margin-top:8px">行をタップすると開きます（直す・消す・写真）。⚠️＝点検に抜けがあります</div>
   </div>
   <div id="recList"></div>
 </section>
 
 <!-- 集計・印刷 -->
 <section id="sum">
+  <button class="back" data-go="more">‹ その他にもどる</button>
   <div class="card">
     <label class="t">期間</label>
     <div class="row"><select id="sYear"></select><select id="sMonth"></select></div>
@@ -330,6 +432,7 @@ table.book td.l{text-align:left}
 
 <!-- 設定 -->
 <section id="set">
+  <button class="back" data-go="more">‹ その他にもどる</button>
   <div class="card">
     <label class="t">メンバー</label>
     <input id="sMembers">
@@ -461,6 +564,62 @@ $('rotList').onclick=e=>{const b=e.target.closest('button');if(!b)return;
     toast(ms?jdate(ds)+' の当番を '+ms.join('・')+' にしました':'順番どおりに戻しました');}
 };
 
+function renderHome(){
+  const el=$('homeBody');if(!el)return;
+  const td=today(),t=thuOf(td),yr=td.slice(0,4),mo=td.slice(0,7);
+  const recOf=ds=>live().filter(r=>thuOf(r.date)===ds);
+  // 今週
+  const wr=recOf(t);let cls='',big,sm,go='';
+  if(wr.length){const r=wr[0];big=r.kind==='rest'?'今週（'+jdate(t)+'）は休み':'✅ 今週（'+jdate(t)+'）運びました';
+    sm=r.kind==='rest'?(r.reason?'理由：'+esc(r.reason):''):'担当：'+esc((r.members||[]).join('・'))+(r.liters?'　量：'+r.liters+'L'+(r.trips>1?'×'+r.trips:''):'');}
+  else if(t>td){big='🗓 次の運搬は '+jdate(t);sm='<div class="hm-who">当番：'+esc(rotFor(t).join('・'))+'</div>';go=1;}
+  else{cls=' ng';big='⚠️ '+jdate(t)+' の記録がまだです';sm='<div class="hm-who">当番：'+esc(rotFor(t).join('・'))+'</div>';go=1;}
+  const nx=new Date(t+'T00:00');nx.setDate(nx.getDate()+7);const nt=ymd(nx);
+  let h='<div class="hm-now'+cls+'"><div class="hm-big">'+big+'</div>'+(sm?(go?sm:'<div class="hm-sm">'+sm+'</div>'):'')+
+    (go?'<div class="hm-btns"><button data-hgo="'+t+'">🚚 運んだ</button><button class="rest" data-hrest="'+t+'">💤 休み</button></div>':'')+
+    '<div class="hm-sm" style="margin-top:12px">来週 '+jdate(nt)+'：'+esc(rotFor(nt).join('・'))+'</div></div>';
+  // 今年の数字
+  const ys=live().filter(r=>r.date.slice(0,4)===yr);const runs=ys.filter(r=>r.kind!=='rest');
+  const lit=runs.reduce((a,r)=>a+(Number(r.liters)||0)*(Number(r.trips)||1),0);
+  const miss=missingThursdays(firstDate(),td);
+  if(0)h+='<div class="card"><div class="hm-h">📊 '+yr+'年のようす</div><div class="hm-tiles">'+
+    '<div class="hm-tile"><b>'+runs.length+'</b><span>運んだ回</span></div>'+
+    '<div class="hm-tile"><b>'+(ys.length-runs.length)+'</b><span>休み・中止</span></div>'+
+    '<div class="hm-tile'+(miss.length?' warn':'')+'"><b>'+miss.length+'</b><span>記録なし</span></div>'+
+    '<div class="hm-tile"><b>'+(lit?lit.toLocaleString():'—')+'</b><span>運んだ量(L)</span></div></div></div>';
+  // 最近の木曜
+  const days=[];for(let i=3;i>=-1;i--){const d=new Date(t+'T00:00');d.setDate(d.getDate()-i*7);if(ymd(d)>=thuOf(firstDate())||recOf(ymd(d)).length)days.push(ymd(d));}
+  h+='<div class="card"><div class="hm-h">📅 最近の木曜 <a href="#" data-htab="list">ぜんぶ見る ›</a></div><div class="hm-tl">'+days.map(ds=>{
+    const rs=recOf(ds);let ic,tx,c='';
+    if(rs.length){const r=rs[0];if(r.kind==='rest'){ic='💤';tx='休み'+(r.reason?'<small>'+esc(r.reason)+'</small>':'');}
+      else{ic='✅';tx=esc((r.members||[]).join('・'))+'<small>'+[r.start&&r.end?r.start+'〜'+r.end:'',r.liters?r.liters+'L'+(r.trips>1?'×'+r.trips:''):'',(r.checks||[]).length?'点検'+r.checks.length+'/'+S.set.checks.length:''].filter(Boolean).join('　')+'</small>';}}
+    else if(ds<firstDate()){ic='・';tx='<span class="muted">記録開始前</span>';}
+    else if(ds<td){ic='⚠️';c=' miss';tx='記録なし<small>当番：'+esc(rotFor(ds).join('・'))+'</small>';}
+    else{ic='🗓';tx='当番：'+esc(rotFor(ds).join('・'))+'<small>'+(ds===t?'今週':'予定')+'</small>';}
+    return '<div class="r'+(ds===t?' now':'')+c+'"'+(c?' data-hgo="'+ds+'"':'')+'><span class="d">'+jdate(ds)+'</span><span class="ic">'+ic+'</span><span class="t">'+tx+'</span></div>';}).join('')+'</div></div>';
+  // メンバー別
+  const cnt={};S.set.members.forEach(m=>cnt[m]=0);runs.forEach(r=>(r.members||[]).forEach(m=>cnt[m]=(cnt[m]||0)+1));
+  const mx=Math.max(1,...Object.values(cnt));
+  if(0)h+='<div class="card"><div class="hm-h">👥 '+yr+'年 メンバー別の回数</div>'+Object.keys(cnt).map(m=>
+    '<div class="hm-bar"><span class="n">'+esc(m)+'</span><span class="g"><i style="width:'+(cnt[m]/mx*100)+'%"></i></span><span class="c">'+cnt[m]+'回</span></div>').join('')+'</div>';
+  // 給油
+  const fu=liveFuel();const fm=fu.filter(f=>f.date.slice(0,7)===mo);const owe={};
+  fu.filter(f=>f.pay==='tatekae'&&!f.settled).forEach(f=>owe[f.who]=(owe[f.who]||0)+(Number(f.yen)||0));
+  if(fm.length||Object.keys(owe).length)h+='<div class="card"><div class="hm-h">⛽ 給油 <a href="#" data-htab="fuel">給油へ ›</a></div>'+
+    '<div style="font-size:14px">今月 '+fm.length+'回・'+yen(fm.reduce((a,f)=>a+(Number(f.yen)||0),0))+'円</div>'+
+    (Object.keys(owe).length?'<div style="font-size:14px;margin-top:6px;color:var(--amber)">💴 未精算の立替：'+Object.keys(owe).map(w=>esc(w)+' '+yen(owe[w])+'円').join('、')+'</div>'
+      :'<div class="muted" style="margin-top:6px">未精算の立替はありません 👍</div>')+'</div>';
+  // 最近の気づき
+  const notes=live().filter(r=>r.note).sort((a,b)=>b.date.localeCompare(a.date)).slice(0,3);
+  if(notes.length)h+='<div class="card"><div class="hm-h">📝 最近の気づき・備考</div>'+notes.map(r=>
+    '<div class="hm-note"><small>'+jdate(r.date)+'　'+esc((r.members||[]).join('・')||r.by||'')+'</small><br>'+esc(r.note)+'</div>').join('')+'</div>';
+  el.innerHTML=h;
+}
+$('homeBody').onclick=e=>{const a=e.target.closest('[data-htab]');if(a){e.preventDefault();showTab(a.dataset.htab);return;}
+  const g=e.target.closest('[data-hgo],[data-hrest]');if(g){const ds=g.dataset.hgo||g.dataset.hrest;flushAuto();
+    const old=live().find(r=>r.date===ds);editId=old?old.id:null;
+    renderForm(old||{date:ds,kind:g.dataset.hrest?'rest':'run'});showTab('add');window.scrollTo(0,0);
+    if(g.dataset.hrest&&!old){recSched();setTimeout(()=>$('fReason').focus(),300);}}};
 function renderWeek(){
   const d=new Date();
   // 今週（月〜日）の木曜
@@ -490,6 +649,7 @@ function renderForm(r){
   const st=S.set;
   if(!editId&&!r.members)r=Object.assign({},r,{members:rotFor(r.date||defaultDate())});
   $('fMembers').innerHTML=st.members.map(m=>'<button class="chip'+((r.members||[]).includes(m)?' on':'')+'" data-m="'+esc(m)+'">'+esc(m)+'</button>').join('');
+  setTimeout(()=>{const cs=[...$('fChecks').querySelectorAll('input')];$('allOk').textContent=cs.length&&cs.every(c=>c.checked)?'↩︎ 外す':'✅ ぜんぶOK';});
   $('fChecks').innerHTML=st.checks.map(c=>'<label><input type="checkbox" data-c="'+esc(c)+'"'+((r.checks||[]).includes(c)?' checked':'')+'>'+esc(c)+'</label>').join('');
   $('carList').innerHTML=st.cars.map(c=>'<option value="'+esc(c)+'">').join('');
   const by=localStorage.getItem('onsen_me')||'';
@@ -506,6 +666,9 @@ function renderForm(r){
   $('editNote').style.display=editId?'':'none';$('cancelEdit').textContent=editId?'閉じる':'やめる';
   $('editTxt').textContent='✏️ '+jdate(r.date||$('fDate').value)+' の記録（変更は自動で保存されます）';
   $('saveBtn').textContent='💾 保存して一覧へ';
+  const ex=editId&&S.recs.find(x=>x.id===editId);
+  $('delBtn').style.display=ex?'':'none';$('editMeta').style.display=ex?'':'none';
+  if(ex)$('editMeta').textContent='🕒 登録 '+fmtDT(ex.createdAt)+(ex.by?'（'+ex.by+'）':'');
   recDirty=false;clearTimeout(recTimer);$('recAuto').textContent=editId?'✅ 保存済み':'入力すると自動で保存されます';
 }
 function defaultDate(){const d=new Date();if(d.getDay()===4)return today();
@@ -514,7 +677,13 @@ function defaultDate(){const d=new Date();if(d.getDay()===4)return today();
   return live().some(r=>r.date===t)?today():t;}
 $('fDate').onchange=()=>{if(editId)return;const ds=$('fDate').value;if(!ds)return;const m=rotFor(ds);
   [...$('fMembers').children].forEach(b=>b.classList.toggle('on',m.includes(b.dataset.m)));};
+$('allOk').onclick=()=>{const cs=[...$('fChecks').querySelectorAll('input')];const all=cs.every(c=>c.checked);cs.forEach(c=>c.checked=!all);$('allOk').textContent=all?'✅ ぜんぶOK':'↩︎ 外す';recSched();};
+$('fChecks').addEventListener('change',()=>{const cs=[...$('fChecks').querySelectorAll('input')];$('allOk').textContent=cs.length&&cs.every(c=>c.checked)?'↩︎ 外す':'✅ ぜんぶOK';});
 $('fMembers').onclick=e=>{const b=e.target.closest('.chip');if(b)b.classList.toggle('on');};
+$('delBtn').onclick=()=>{const r=editId&&S.recs.find(x=>x.id===editId);if(!r)return;
+  if(!confirm(jdate(r.date)+' の記録を消しますか？'))return;
+  clearTimeout(recTimer);recDirty=false;r.deleted=true;r.updatedAt=Date.now();save();editId=null;
+  renderAll();renderForm({});pushCloud(true);toast('消しました');showTab('list');};
 $('cancelEdit').onclick=()=>{flushAuto();editId=null;renderForm({});};
 // ===== 証拠写真（日時・場所・担当者を焼き込む） =====
 function haversine(a,b){const R=6371e3,t=x=>x*Math.PI/180;const dLa=t(b.lat-a.lat),dLo=t(b.lng-a.lng);
@@ -756,25 +925,21 @@ function renderList(){
   const miss=missingThursdays(ym+'-01',ym+'-31').map(d=>({date:d,miss:true}));
   const all=[...recs,...miss].sort((a,b)=>b.date.localeCompare(a.date));
   if(!all.length){$('recList').innerHTML='<div class="card muted">この月の記録はありません</div>';return;}
-  $('recList').innerHTML=all.map(r=>{
-    if(r.miss)return '<div class="card rec miss"><h3>'+jdate(r.date)+'<span style="color:var(--warn);font-size:14px">記録なし</span></h3>'+
-      '<div class="acts"><button class="btn sm" data-new="'+r.date+'">この日の記録をつける</button></div></div>';
-    if(r.kind==='rest')return '<div class="card rec rest"><h3>'+jdate(r.date)+'<span class="tag g">休み・中止</span></h3>'+
-      '<div class="meta">'+esc(r.reason||'理由なし')+(r.note?'<br>📝 '+esc(r.note):'')+'<br>🕒 登録 '+fmtDT(r.createdAt).slice(5)+'</div>'+acts(r)+'</div>';
-    const lit='';
-    const nc=S.set.checks.length, okc=(r.checks||[]).length;
-    return '<div class="card rec"><h3>'+jdate(r.date)+'<span>'+(r.weather?'<span class="tag g">'+esc(r.weather)+'</span>':'')+'</span></h3>'+
-      '<div class="meta">👥 '+esc((r.members||[]).join('・'))+
-      (r.start||r.end?'<br>🕘 '+esc(r.start)+'〜'+esc(r.end):'')+
-      (lit?'<br>♨️ '+lit:'')+(r.car?'<br>🚚 '+esc(r.car):'')+
-      '<br>✅ 点検 '+okc+'/'+nc+(okc<nc?'<span class="tag" style="background:#fff3e0;color:var(--amber)">未チェックあり</span>':'')+
-      (r.note?'<br>📝 '+esc(r.note):'')+'<br>🕒 登録 '+fmtDT(r.createdAt).slice(5)+'</div>'+(r.photoMeta?photoBadge(r.photoMeta,r.date):'')+
-      (r.photo?'<div class="photoBox" data-ph="'+r.id+'"><button class="btn sm gray" style="margin-top:8px">📷 写真を見る</button></div>':'')+acts(r)+'</div>';
-  }).join('');
+  const td=today(),car0=S.set.cars[0]||'',nc=S.set.checks.length;
+  $('recList').innerHTML='<div class="card lcard">'+all.map(r=>{
+    if(r.miss)return '<div class="lrow miss" data-new="'+r.date+'"><span class="d">'+jdate(r.date)+'</span><span class="w">記録なし<small>タップして記録する</small></span><span class="go">＋</span></div>';
+    const fut=r.date>td?'<span class="ftag">🗓 先の日付</span>':'';
+    if(r.kind==='rest')return '<div class="lrow rest" data-ed="'+r.id+'"><span class="d">'+jdate(r.date)+'</span><span class="w">💤 休み'+fut+(r.reason||r.note?'<small>'+esc([r.reason,r.note].filter(Boolean).join('　'))+'</small>':'')+'</span><span class="go">›</span></div>';
+    const okc=(r.checks||[]).length;
+    const pm=r.photoMeta,phWarn=pm&&(ymd(new Date(pm.at))!==r.date||(pm.dist!=null&&pm.dist>500));
+    const sub=[r.car&&r.car!==car0?'🚚'+esc(r.car):'',r.start&&r.end?esc(r.start)+'〜'+esc(r.end):'',r.note?'📝'+esc(r.note):''].filter(Boolean).join('　');
+    return '<div class="lrow" data-ed="'+r.id+'"><span class="d">'+jdate(r.date)+'</span><span class="w">'+esc((r.members||[]).join('・'))+fut+(sub?'<small>'+sub+'</small>':'')+'</span>'+
+      '<span class="ic">'+(r.photo?'📷':'')+(okc>=nc&&!phWarn?'✅':'<span title="点検の抜け・写真の注意">⚠️</span>')+'</span><span class="go">›</span></div>';
+  }).join('')+'</div>';
 }
 const acts=r=>'<div class="acts"><button class="btn sm gray" data-ed="'+r.id+'">直す</button><button class="btn sm gray" data-del="'+r.id+'">消す</button></div>';
 $('lMonth').onchange=renderList;
-$('recList').onclick=e=>{const b=e.target.closest('button');if(!b)return;flushAuto();
+$('recList').onclick=e=>{const b=e.target.closest('button,.lrow');if(!b)return;flushAuto();
   const ph=b.closest('[data-ph]');if(ph){showPhoto(ph,ph.dataset.ph);return;}
   if(b.dataset.new){editId=null;renderForm({date:b.dataset.new});showTab('add');scrollTo(0,0);return;}
   if(b.dataset.ed){editId=b.dataset.ed;renderForm(S.recs.find(r=>r.id===editId));showTab('add');scrollTo(0,0);return;}
@@ -907,11 +1072,13 @@ $('fileIn').onchange=e=>{const f=e.target.files[0];if(!f)return;const rd=new Fil
   catch(err){toast('読めないファイルです');}};rd.readAsText(f);};
 
 // ===== タブ =====
-function showTab(t){flushAuto();document.querySelectorAll('nav button').forEach(b=>b.classList.toggle('on',b.dataset.t===t));
+const SUBS=['more','rot','list','sum','set'];
+function showTab(t){flushAuto();document.body.classList.toggle('quiet',SUBS.includes(t));if(t==='home')renderHome();document.querySelectorAll('nav button').forEach(b=>b.classList.toggle('on',b.dataset.t===t||(b.dataset.t==='more'&&SUBS.includes(t))));window.scrollTo(0,0);
   document.querySelectorAll('section').forEach(s=>s.classList.toggle('on',s.id===t));
   if(t==='list')renderList();if(t==='sum'){renderSumSel();renderSum();}if(t==='rot')renderRot();if(t==='fuel')renderFuel();}
 document.querySelector('nav').onclick=e=>{const b=e.target.closest('button');if(b)showTab(b.dataset.t);};
-function renderAll(){renderWeek();renderSet();if($('rot').classList.contains('on'))renderRot();if($('fuel').classList.contains('on'))renderFuel();if($('list').classList.contains('on'))renderList();if($('sum').classList.contains('on')){renderSumSel();renderSum();}}
+document.addEventListener('click',e=>{const b=e.target.closest('[data-go]');if(b)showTab(b.dataset.go);});
+function renderAll(){renderWeek();if($('home').classList.contains('on'))renderHome();renderSet();if($('rot').classList.contains('on'))renderRot();if($('fuel').classList.contains('on'))renderFuel();if($('list').classList.contains('on'))renderList();if($('sum').classList.contains('on')){renderSumSel();renderSum();}}
 
 renderAll();renderForm({});renderFuelForm({});
 // ===== 今週のセリフ（毎週月曜に入れかわる・8週で一巡） =====
@@ -1097,7 +1264,7 @@ async function runSkit(kind){if(skitBusy)return;skitBusy=true;
   }finally{await wait(1200);skitBusy=false;}}
 function nextSkit(first){setTimeout(()=>{
   const typing=document.activeElement&&/INPUT|TEXTAREA|SELECT/.test(document.activeElement.tagName);
-  if(document.visibilityState==='visible'&&!typing)runSkit();
+  if(document.visibilityState==='visible'&&!typing&&!document.body.classList.contains('quiet'))runSkit();
   nextSkit();},first?20000+Math.random()*15000:50000+Math.random()*40000);}
 nextSkit(true);
 // 週がかわって最初に開いたら、今週のテーマを発表
