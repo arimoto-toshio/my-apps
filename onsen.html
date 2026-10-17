@@ -222,6 +222,23 @@ body.quiet #mascot,body.quiet #falco{display:none}
 .lrow.miss .d,.lrow.miss .w{color:var(--warn)}
 .lrow.rest .w{color:var(--sub)}
 .ftag{display:inline-block;font-size:11px;padding:1px 6px;border-radius:8px;background:#fff3e0;color:var(--amber);margin-left:4px;vertical-align:middle;font-weight:600}
+.hm-lab{font-size:15px;font-weight:600;opacity:.92}
+.hm-day{font-size:20px;font-weight:700;margin-top:2px}
+.hm-name{font-size:34px;font-weight:800;line-height:1.25;margin-top:2px}
+.hm-done{font-size:13px;font-weight:600;background:rgba(255,255,255,.25);padding:2px 8px;border-radius:10px;vertical-align:middle}
+.hm-next{margin-top:12px;border-top:1px solid rgba(255,255,255,.35);padding-top:8px;font-size:15px}
+.hm-next div{display:flex;justify-content:space-between;gap:8px;padding:3px 0}
+.hm-next b{font-weight:600}
+.hm-left{display:inline-block;font-size:15px;background:#fff;color:#1f7a8c;border-radius:10px;padding:1px 9px;vertical-align:middle}
+.hm-name{font-size:38px}
+.hm-ban{font-size:20px;font-weight:700;margin-left:4px}
+.hm-late{display:block;background:var(--warn2);border:2px solid var(--warn);color:var(--warn);border-radius:14px;padding:12px 14px;margin-bottom:12px;cursor:pointer}
+.hm-late b{display:block;font-size:17px}
+.hm-late span{font-size:13px}
+.hm-next .nx1{align-items:center;background:rgba(255,255,255,.16);border-radius:10px;padding:8px 10px;margin:2px -4px 6px;font-size:21px;font-weight:700}
+.hm-next .nx1 small{display:block;font-size:13px;font-weight:600;opacity:.9}
+.hm-next .nx1 b{font-size:24px;font-weight:800}
+.hm-past{font-size:14px;color:var(--sub);margin:-4px 4px 12px}
 </style>
 </head>
 <body>
@@ -569,15 +586,27 @@ function renderHome(){
   const td=today(),t=thuOf(td),yr=td.slice(0,4),mo=td.slice(0,7);
   const recOf=ds=>live().filter(r=>thuOf(r.date)===ds);
   // 今週
-  const wr=recOf(t);let cls='',big,sm,go='';
-  if(wr.length){const r=wr[0];big=r.kind==='rest'?'今週（'+jdate(t)+'）は休み':'✅ 今週（'+jdate(t)+'）運びました';
-    sm=r.kind==='rest'?(r.reason?'理由：'+esc(r.reason):''):'担当：'+esc((r.members||[]).join('・'))+(r.liters?'　量：'+r.liters+'L'+(r.trips>1?'×'+r.trips:''):'');}
-  else if(t>td){big='🗓 次の運搬は '+jdate(t);sm='<div class="hm-who">当番：'+esc(rotFor(t).join('・'))+'</div>';go=1;}
-  else{cls=' ng';big='⚠️ '+jdate(t)+' の記録がまだです';sm='<div class="hm-who">当番：'+esc(rotFor(t).join('・'))+'</div>';go=1;}
-  const nx=new Date(t+'T00:00');nx.setDate(nx.getDate()+7);const nt=ymd(nx);
-  let h='<div class="hm-now'+cls+'"><div class="hm-big">'+big+'</div>'+(sm?(go?sm:'<div class="hm-sm">'+sm+'</div>'):'')+
-    (go?'<div class="hm-btns"><button data-hgo="'+t+'">🚚 運んだ</button><button class="rest" data-hrest="'+t+'">💤 休み</button></div>':'')+
-    '<div class="hm-sm" style="margin-top:12px">来週 '+jdate(nt)+'：'+esc(rotFor(nt).join('・'))+'</div></div>';
+  // いちばん上：次に運ぶ人（今日以降でいちばん近い木曜。今日の分が記録済みなら来週）
+  const addD=(ds,n)=>{const d=new Date(ds+'T00:00');d.setDate(d.getDate()+n);return ymd(d);};
+  const san=ds=>rotFor(ds).map(m=>esc(m)+'さん').join('・')||'（当番が未設定）';
+  let N=t<td?addD(t,7):t;if(N===td&&recOf(N).length)N=addD(N,7);
+  const left=Math.round((new Date(N+'T00:00')-new Date(td+'T00:00'))/864e5);
+  const leftTx=left===0?'今日です！':left===1?'明日です':'あと'+left+'日';
+  let h='';
+  // 木曜を過ぎて記録がない週だけ、赤で最上段に
+  const late=missingThursdays(firstDate(),addD(td,-1));
+  if(late.length){const L=late[late.length-1];
+    h+='<div class="hm-late" data-hgo="'+L+'"><b>⚠️ '+jdate(L)+' の記録がまだです（'+san(L)+'）</b><span>'+(late.length>1?'ほかにも'+(late.length-1)+'日 記録なし　':'')+'タップして記録する ›</span></div>';}
+  const isToday=N===td,early=!isToday&&recOf(N).length;
+  h+='<div class="hm-now">'+(isToday?'<div class="hm-lab">🚚 今日は運搬の日です</div>':'<div class="hm-lab">次の当番</div>')+
+    '<div class="hm-day">'+jdate(N)+'　<span class="hm-left">'+leftTx+'</span></div>'+
+    '<div class="hm-name">'+san(N)+(isToday?'<span class="hm-ban">の番です</span>':'')+'</div>'+
+    (early?'<div class="hm-sm">📝 この日の記録が先に入っています</div>':'')+
+    (isToday?'<div class="hm-btns"><button data-hgo="'+N+'">🚚 運んだ</button><button class="rest" data-hrest="'+N+'">💤 休み</button></div>':'')+
+    '<div class="hm-next">'+[1].map(k=>{const ds=addD(N,7*k);return k===1?'<div class="nx1"><span><small>その次</small>'+jdate(ds)+'</span><b>'+san(ds)+'</b></div>':'<div><span>そのまた次　'+jdate(ds)+'</span><b>'+san(ds)+'</b></div>';}).join('')+'</div></div>';
+  // 済んだ週は小さく
+  const past=live().filter(r=>r.date<=td).sort((x,y)=>y.date.localeCompare(x.date))[0];
+  if(past)h+='<div class="hm-past">'+(past.kind==='rest'?'💤 '+jdate(past.date)+' は休み'+(past.reason?'（'+esc(past.reason)+'）':''):'✅ '+jdate(past.date)+' '+esc((past.members||[]).map(m=>m+'さん').join('・'))+'が運びました')+'</div>';
   // 今年の数字
   const ys=live().filter(r=>r.date.slice(0,4)===yr);const runs=ys.filter(r=>r.kind!=='rest');
   const lit=runs.reduce((a,r)=>a+(Number(r.liters)||0)*(Number(r.trips)||1),0);
