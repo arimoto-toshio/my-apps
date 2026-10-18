@@ -278,17 +278,22 @@ function keepRows(){
       kai:wa(ey+10,9,30), kaiOut:kai<now, kaiSoon:kai>=now&&(kai-now)<1000*60*60*24*365}); }
   return rows;
 }
+// 税金の7年を見せる／隠す（この端末だけの見た目の設定。クラウドには送らない）
+const TAX_VIEW_KEY='yakiniku_kessan_showtax';
+function showTax(){ try{ return localStorage.getItem(TAX_VIEW_KEY)!=='0'; }catch(e){ return showTax._v!==false; } }
+function toggleTax(){ const v=!showTax(); try{ localStorage.setItem(TAX_VIEW_KEY, v?'1':'0'); }catch(e){ showTax._v=v; } renderKeep(); }
 function setKeep(f,v){ const s=kp(f); s.st=(s.st===v)?'':v; s.date=s.st?today():''; save(); renderKeep(); }
 function renderKeep(){
   const rows=keepRows(), cnt=(a,v)=>a.filter(r=>kp(r.f).st===v).length;
   const keepR=rows.filter(r=>r.keep), oldR=rows.filter(r=>!r.keep);
-  const lim=r=>`税金の7年：<span class="${r.taxOut?'x':(r.taxSoon?'soon':'')}">${r.tax}${r.taxOut?'で切れた':'まで'}</span>${r.taxSoon?'（もうすぐ）':''}<br>会社法の10年：<span class="${r.kaiOut?'x':(r.kaiSoon?'soon':'')}">${r.kai}${r.kaiOut?'で切れた':'まで'}</span>${r.kaiSoon&&!r.kaiOut?'（1年以内に切れる）':''}`;
+  const tx=showTax();
+  const lim=r=>(tx?`税金の7年：<span class="${r.taxOut?'x':(r.taxSoon?'soon':'')}">${r.tax}${r.taxOut?'で切れた':'まで'}</span>${r.taxSoon?'（もうすぐ）':''}<br>`:'')+`会社法の10年：<span class="${r.kaiOut?'x':(r.kaiSoon?'soon':'')}">${r.kai}${r.kaiOut?'で切れた':'まで'}</span>${r.kaiSoon&&!r.kaiOut?'（1年以内に切れる）':''}`;
   const row=(r,btns)=>{ const s=kp(r.f); return `<div class="kp-row"><div class="per"><b>${r.from}〜${r.to}</b><span class="ad">（${r.ad}）</span>${r.f===endedFy()?' <span class="when">今回の決算</span>':''}
       <div class="lim">${lim(r)}</div>
       <div class="acts">${btns.map(([v,cls,label])=>`<button class="kbtn ${cls}${s.st===v?' on':''}" onclick="setKeep(${r.f},'${v}')">${label}</button>`).join('')}
         ${s.st&&s.date?`<span class="when">✔ ${esc(s.date)}</span>`:''}
         <input class="memo" placeholder="${r.keep?'メモ（例：倉庫の箱③）':'メモ（例：決算書だけ残した）'}" value="${esc(s.memo)}" oninput="kp(${r.f}).memo=this.value;save()"></div></div></div>`; };
-  let h=`<h2>🗄 書類の保管・処分 <small><button class="kbtn" onclick="printKeep()">🖨 印刷</button></small></h2>
+  let h=`<h2>🗄 書類の保管・処分 <small><button class="kbtn${tx?' on ok':''}" onclick="toggleTax()">${tx?'👁 税金の7年：表示中':'🙈 税金の7年：隠し中'}</button> <button class="kbtn" onclick="printKeep()">🖨 印刷</button></small></h2>
     <div class="kp-sub keep">📦 保管する10期（処分しない）　保管OK ${cnt(keepR,'ok')}／10</div>`;
   keepR.forEach(r=>h+=row(r,[['ok','ok','✅ 保管OK']]));
   h+=`<div class="kp-sub old">🗑 その前の10期（期限切れ）　処分済 ${cnt(oldR,'gone')}・残している ${cnt(oldR,'left')}／10</div>`;
@@ -299,11 +304,11 @@ function renderKeep(){
   document.getElementById('keepCard').innerHTML=h;
 }
 function printKeep(){
-  const rows=keepRows(), lab={ok:'保管OK',gone:'処分済',left:'残している','':''};
+  const rows=keepRows(), lab={ok:'保管OK',gone:'処分済',left:'残している','':''}, tx=showTax();
   let h=`<h1>書類の保管・処分 一覧</h1><div class="pm"><span>有限会社 焼肉ありもと　（9月30日決算）</span><span>印刷日 ${today()}</span></div>`;
   [['保管する10期（処分しない）',rows.filter(r=>r.keep)],['その前の10期（期限切れ）',rows.filter(r=>!r.keep)]].forEach(([t,list])=>{
-    h+=`<h3>${t}</h3><table><tr><th>期間</th><th>税金の7年</th><th>会社法の10年</th><th style="width:60px">状態</th><th style="width:22%">メモ</th></tr>`;
-    list.forEach(r=>{ const s=kp(r.f); h+=`<tr><td>${r.from}〜${r.to}</td><td>${r.tax}${r.taxOut?'（切れた）':''}</td><td>${r.kai}${r.kaiOut?'（切れた）':''}</td><td class="c" style="width:60px">${lab[s.st]}</td><td>${esc(s.memo)}</td></tr>`; });
+    h+=`<h3>${t}</h3><table><tr><th>期間</th>${tx?'<th>税金の7年</th>':''}<th>会社法の10年</th><th style="width:60px">状態</th><th style="width:22%">メモ</th></tr>`;
+    list.forEach(r=>{ const s=kp(r.f); h+=`<tr><td>${r.from}〜${r.to}</td>${tx?`<td>${r.tax}${r.taxOut?'（切れた）':''}</td>`:''}<td>${r.kai}${r.kaiOut?'（切れた）':''}</td><td class="c" style="width:60px">${lab[s.st]}</td><td>${esc(s.memo)}</td></tr>`; });
     h+='</table>'; });
   document.getElementById('printArea').innerHTML=h;
   setTimeout(()=>window.print(),50);
