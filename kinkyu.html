@@ -1,0 +1,528 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<title>緊急ポスレジ</title>
+<style>
+:root{
+  --bg:#f6f3ee; --card:#fff; --ink:#2b2420; --sub:#7a6e66; --line:#e3dcd3;
+  --main:#b3261e; --main2:#8c1d17; --ok:#2e7d32; --warn:#e8a200; --blue:#1d5fa8;
+}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:-apple-system,"Hiragino Sans","Hiragino Kaku Gothic ProN",sans-serif;font-size:16px}
+button{font:inherit;cursor:pointer;border:none;border-radius:10px}
+input,select{font:inherit}
+header{position:sticky;top:0;z-index:20;background:var(--main);color:#fff;padding:10px 14px calc(8px) ;display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+header h1{font-size:18px;margin:0;flex:1;white-space:nowrap}
+header .badge{background:#fff3;border-radius:999px;padding:3px 10px;font-size:13px}
+nav{display:flex;background:var(--main2)}
+nav button{flex:1;background:none;color:#fde;padding:11px 4px;border-radius:0;font-size:15px;font-weight:600;white-space:nowrap}
+nav button.on{background:var(--bg);color:var(--main)}
+main{padding:12px;max-width:1100px;margin:0 auto}
+.hide{display:none!important}
+.card{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:12px;margin-bottom:12px}
+h2{font-size:16px;margin:4px 0 10px}
+.muted{color:var(--sub);font-size:13px}
+.row{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+.btn{background:#ece6de;color:var(--ink);padding:10px 14px;font-weight:600}
+.btn.main{background:var(--main);color:#fff}
+.btn.ok{background:var(--ok);color:#fff}
+.btn.blue{background:var(--blue);color:#fff}
+.btn.ghost{background:none;border:1px solid var(--line)}
+.btn:disabled{opacity:.4}
+/* 卓 */
+.tables{display:grid;grid-template-columns:repeat(auto-fill,minmax(92px,1fr));gap:8px}
+.tbl{background:#fff;border:2px solid var(--line);padding:12px 6px;text-align:center;font-size:18px;font-weight:700;border-radius:12px;min-height:72px}
+.tbl small{display:block;font-size:12px;font-weight:500;color:var(--sub);margin-top:4px}
+.tbl.busy{border-color:var(--main);background:#fff1ef}
+.tbl.busy small{color:var(--main)}
+/* 注文画面 */
+.order{display:grid;grid-template-columns:1fr 340px;gap:12px}
+@media (max-width:760px){.order{grid-template-columns:1fr}}
+.order>div{min-width:0}
+.cats{display:flex;gap:6px;overflow-x:auto;margin-bottom:8px}
+.cats button{background:#ece6de;padding:8px 14px;white-space:nowrap;font-weight:600}
+.cats button.on{background:var(--ink);color:#fff}
+.menu{display:grid;grid-template-columns:repeat(auto-fill,minmax(112px,1fr));gap:8px}
+.mi{background:#fff;border:1px solid var(--line);padding:10px 6px;min-height:68px;text-align:center;font-weight:700;font-size:15px;line-height:1.25;position:relative}
+.mi:active{background:#ffe3df}
+.mi span{display:block;font-weight:500;font-size:13px;color:var(--sub);margin-top:3px}
+.mi b{position:absolute;top:-6px;right:-6px;background:var(--main);color:#fff;border-radius:999px;min-width:24px;height:24px;font-size:13px;line-height:24px}
+.slip{position:sticky;top:110px}
+.slip .lines{max-height:46vh;overflow:auto}
+.line{display:flex;align-items:center;gap:6px;padding:7px 0;border-bottom:1px dashed var(--line)}
+.line .nm{flex:1;font-weight:600}
+.line .sm{width:72px;text-align:right}
+.qb{width:34px;height:34px;background:#ece6de;font-size:18px;font-weight:700;padding:0}
+.total{display:flex;justify-content:space-between;align-items:baseline;font-size:15px;margin-top:10px}
+.total b{font-size:28px}
+/* 会計 */
+.modal{position:fixed;inset:0;background:#0007;z-index:50;display:flex;align-items:flex-end;justify-content:center}
+.sheet{background:var(--bg);width:100%;max-width:560px;max-height:94vh;overflow:auto;border-radius:18px 18px 0 0;padding:16px}
+@media (min-width:700px){.modal{align-items:center}.sheet{border-radius:18px}}
+.big{font-size:34px;font-weight:800;text-align:right}
+.pays{display:grid;grid-template-columns:repeat(4,1fr);gap:6px}
+.pays button{background:#fff;border:2px solid var(--line);padding:12px 2px;font-weight:700}
+.pays button.on{border-color:var(--main);background:#fff1ef;color:var(--main)}
+.keys{display:grid;grid-template-columns:repeat(4,1fr);gap:6px;margin-top:8px}
+.keys button{background:#fff;border:1px solid var(--line);padding:14px 0;font-size:20px;font-weight:700}
+.field{display:flex;justify-content:space-between;align-items:center;background:#fff;border:1px solid var(--line);border-radius:10px;padding:8px 12px;margin-top:8px}
+.field input{border:none;text-align:right;font-size:22px;font-weight:700;width:60%;outline:none;background:none}
+/* 本家入力 */
+.bill{background:#fff;border:1px solid var(--line);border-left:6px solid var(--warn);border-radius:12px;padding:10px 12px;margin-bottom:8px}
+.bill.done{border-left-color:var(--ok);opacity:.6}
+.bill.void{border-left-color:#999;opacity:.5}
+.bill.void .its{text-decoration:line-through}
+.bill .hd{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+.bill .no{font-size:20px;font-weight:800}
+.bill .its{margin:6px 0;font-size:15px;line-height:1.6}
+.chk{display:flex;align-items:center;gap:6px;font-weight:700;background:#fff7e0;padding:8px 12px;border-radius:10px;margin-left:auto}
+.bill.done .chk{background:#e6f4e7;color:var(--ok)}
+.chk input{width:22px;height:22px}
+table{border-collapse:collapse;width:100%}
+th,td{padding:7px 6px;border-bottom:1px solid var(--line);text-align:left}
+td.r,th.r{text-align:right}
+.toast{position:fixed;left:50%;bottom:24px;transform:translateX(-50%);background:#222d;color:#fff;padding:10px 18px;border-radius:999px;z-index:99;font-size:14px;pointer-events:none}
+.pill{display:inline-block;padding:2px 9px;border-radius:999px;font-size:12px;font-weight:700;background:#ece6de}
+.pill.cash{background:#e6f4e7;color:var(--ok)}
+.pill.card{background:#e3eefb;color:var(--blue)}
+.pill.qr{background:#f3e8fb;color:#7b3fa8}
+.progress{height:10px;background:#ece6de;border-radius:999px;overflow:hidden}
+.progress div{height:100%;background:var(--ok)}
+.set-item{display:grid;grid-template-columns:1fr 90px 92px 34px;gap:6px;margin-bottom:6px}
+.set-item input,.set-item select{padding:7px;border:1px solid var(--line);border-radius:8px;width:100%}
+@media print{
+  header,nav,.noprint{display:none!important}
+  body{background:#fff}
+  .card{border:none}
+}
+#receipt{display:none}
+@media print{ body.receipt main{display:none} body.receipt #receipt{display:block} }
+</style>
+</head>
+<body>
+<header>
+  <h1>🔥 焼肉ありもと 緊急ポスレジ</h1>
+  <span class="badge" id="hdDate"></span>
+  <span class="badge" id="hdTodo"></span>
+</header>
+<nav>
+  <button data-tab="tables" class="on">🍖 注文</button>
+  <button data-tab="hon">📝 本家へ</button>
+  <button data-tab="sum">📊 集計</button>
+  <button data-tab="set">⚙️ 設定</button>
+</nav>
+<main>
+  <!-- 卓一覧 -->
+  <section id="tab-tables">
+    <div class="card">
+      <h2>卓をえらぶ</h2>
+      <div class="tables" id="tables"></div>
+      <p class="muted">赤い卓は注文中。タップで追加注文・会計へ。</p>
+    </div>
+  </section>
+
+  <!-- 注文画面 -->
+  <section id="tab-order" class="hide">
+    <div class="row noprint" style="margin-bottom:8px">
+      <button class="btn" id="backTables">← 卓一覧</button>
+      <h2 style="margin:0" id="orderTitle"></h2>
+      <label class="muted" style="margin-left:auto">人数 <input type="number" id="people" min="0" style="width:56px;padding:6px;border:1px solid var(--line);border-radius:8px"></label>
+    </div>
+    <div class="order">
+      <div>
+        <div class="cats" id="cats"></div>
+        <div class="menu" id="menu"></div>
+        <div class="row" style="margin-top:10px">
+          <button class="btn ghost" id="freeItem">＋ 金額を入れて追加</button>
+        </div>
+      </div>
+      <div class="card slip">
+        <h2>伝票</h2>
+        <div class="lines" id="lines"></div>
+        <div class="total"><span>合計（税込）</span><b id="sum">0円</b></div>
+        <div class="row" style="margin-top:10px">
+          <button class="btn ghost" id="clearSlip">🗑 伝票取消</button>
+          <button class="btn main" id="goPay" style="flex:1;padding:14px;font-size:18px">会計する</button>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 本家入力 -->
+  <section id="tab-hon" class="hide">
+    <div class="card">
+      <h2>本家ポスレジへの打ち込みリスト</h2>
+      <p class="muted" style="margin-top:-4px">本家のレジがなおったら、上から順に打ち込んで「入力済み」にチェック。全部緑になれば完了です。</p>
+      <div class="row">
+        <select id="honDate" class="btn ghost"></select>
+        <label class="row" style="gap:4px"><input type="checkbox" id="honOnlyTodo" checked> 未入力だけ表示</label>
+      </div>
+      <div style="margin-top:10px" id="honProg"></div>
+    </div>
+    <div id="honList"></div>
+  </section>
+
+  <!-- 集計 -->
+  <section id="tab-sum" class="hide">
+    <div class="card">
+      <div class="row"><h2 style="margin:0">日別の集計</h2><select id="sumDate" class="btn ghost"></select>
+        <button class="btn ghost noprint" onclick="window.print()" style="margin-left:auto">🖨 印刷</button></div>
+      <div id="sumBox" style="margin-top:10px"></div>
+    </div>
+  </section>
+
+  <!-- 設定 -->
+  <section id="tab-set" class="hide">
+    <div class="card">
+      <h2>データの保存</h2>
+      <p class="muted" style="margin-top:-4px">会計のたびにこの端末へ自動保存。電波があればクラウドにもバックアップします（複数台で使っても伝票は合体します）。</p>
+      <div class="row">
+        <button class="btn blue" id="cloudUp">☁️↑ クラウドへ保存</button>
+        <button class="btn blue" id="cloudDown">☁️↓ クラウドから読込（合体）</button>
+      </div>
+      <div class="row" style="margin-top:8px">
+        <button class="btn" id="fileSave">💾 ファイルに保存</button>
+        <button class="btn" id="fileLoad">📁 ファイルから読込</button>
+        <button class="btn" id="csvOut">📄 CSV書き出し</button>
+        <input type="file" id="fileIn" accept=".json" class="hide">
+      </div>
+      <p class="muted" id="cloudStat"></p>
+    </div>
+    <div class="card">
+      <h2>卓の名前</h2>
+      <p class="muted" style="margin-top:-4px">カンマ区切り（例: 1,2,3,座敷1,座敷2,持帰り）</p>
+      <input id="tableNames" style="width:100%;padding:10px;border:1px solid var(--line);border-radius:10px">
+      <button class="btn ok" id="saveTables" style="margin-top:8px">卓を保存</button>
+    </div>
+    <div class="card">
+      <h2>メニューと値段（税込）</h2>
+      <p class="muted" style="margin-top:-4px">本家と同じ値段にしておくと打ち込み時に合計が合います。飲み物・ごはんは店のメニュー表、肉は月次集計の単価（税抜×1.1を10円単位）。</p>
+      <div id="menuEdit"></div>
+      <div class="row" style="margin-top:8px">
+        <button class="btn" id="addMenu">＋ 品目を追加</button>
+        <button class="btn ok" id="saveMenu">メニューを保存</button>
+        <button class="btn ghost" id="resetMenu" style="margin-left:auto">初期メニューに戻す</button>
+      </div>
+    </div>
+  </section>
+</main>
+
+<div id="receipt"></div>
+<div class="modal hide" id="payModal"><div class="sheet" id="paySheet"></div></div>
+
+<script>
+// ===== 設定 =====
+const LS_KEY='kinkyu_pos_v1';
+const SYNC_URL='https://script.google.com/macros/s/AKfycbxwL19mAenATUMILRsQYrDL0ThjU2C583Cj729OfzNHEH3drMcZCExYULRp4VGOZ11J/exec';
+const SYNC_KEY='kinkyu_pos_data';
+const CATS=['肉','ドリンク','ごはん・汁','一品'];
+// メニュー（税込）。肉は月次集計（2026年9月）の税抜単価×1.1、飲み物・ごはん等は店のメニュー表（2026-10-08）
+const MENU_VER=3;
+const DEFAULT_MENU=[
+ ['牛ロース',1300,'肉'],['厚切りロース',1400,'肉'],['バラ',1200,'肉'],['骨付カルビ',1200,'肉'],['ハラミ',1080,'肉'],
+ ['ミノ上',750,'肉'],['塩タン',1300,'肉'],['タンサキ',750,'肉'],['レバー',720,'肉'],['センマイ',680,'肉'],['センマイ生',880,'肉'],
+ ['ホルモン',750,'肉'],['ブタ',750,'肉'],['かしわ',600,'肉'],['地鶏',700,'肉'],['ウインナー',500,'肉'],
+ ['ビール生中',700,'ドリンク'],['ビール生大',1250,'ドリンク'],['ビール瓶',780,'ドリンク'],
+ ['酎ハイ（レモン）',620,'ドリンク'],['ハイボール',620,'ドリンク'],['コークハイ',620,'ドリンク'],['ジンジャーハイ',620,'ドリンク'],
+ ['焼酎（麦・芋）',600,'ドリンク'],['梅酒',600,'ドリンク'],['酒（京ひな）',580,'ドリンク'],['冷酒（京ひな）',1200,'ドリンク'],
+ ['スパークリング アマービレ',3200,'ドリンク'],['スパークリング ドルチェ',2800,'ドリンク'],
+ ['ドライゼロ',500,'ドリンク'],['カシスオレンジ（ノンアル）',500,'ドリンク'],['シャルドネ（ノンアル）',500,'ドリンク'],
+ ['ジュース（コーラ・ジンジャー・オレンジ・カルピス）',350,'ドリンク'],['ウーロン茶',350,'ドリンク'],
+ ['めし大',330,'ごはん・汁'],['めし中',280,'ごはん・汁'],['めし小',250,'ごはん・汁'],['赤だし',350,'ごはん・汁'],['みそ汁',350,'ごはん・汁'],['ワカメスープ',350,'ごはん・汁'],
+ ['キムチ（追加）',150,'ごはん・汁'],['キャベツ（追加）',150,'ごはん・汁'],
+ ['キムチ大（持帰り）',530,'一品'],['野菜',530,'一品'],['冷やしトマト',430,'一品'],['サラダ',430,'一品'],['バニラアイス',380,'一品'],['りんごアイス',380,'一品']
+].map(([name,price,cat],i)=>({id:'m'+i,name,price,cat}));
+const DEFAULT_TABLES=['1','2','3','4','5','6','7','8','9','10','座敷1','座敷2','持帰り'];
+const PAYS=[['cash','現金'],['card','カード'],['qr','QR・電子'],['other','その他']];
+
+// ===== 状態 =====
+let S={menu:DEFAULT_MENU,tables:DEFAULT_TABLES,open:{},bills:[]};
+let curTable=null, curCat=CATS[0];
+const $=id=>document.getElementById(id);
+const yen=n=>(n<0?'-':'')+Math.abs(Math.round(n)).toLocaleString()+'円';
+const pad=n=>String(n).padStart(2,'0');
+const today=()=>{const d=new Date();return d.getFullYear()+'-'+pad(d.getMonth()+1)+'-'+pad(d.getDate());};
+const nowTime=()=>{const d=new Date();return pad(d.getHours())+':'+pad(d.getMinutes());};
+const esc=s=>String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+function lsOK(){try{localStorage.setItem('__synctest','1');localStorage.removeItem('__synctest');return true;}catch(e){return false;}}
+function load(){try{const s=JSON.parse(localStorage.getItem(LS_KEY)||'null');if(s)S=Object.assign(S,s);}catch(e){}
+  if(S.menuVer!==MENU_VER){S.menu=JSON.parse(JSON.stringify(DEFAULT_MENU));S.menuVer=MENU_VER;}}   // メニュー表を更新したら入れ替え
+function save(){try{localStorage.setItem(LS_KEY,JSON.stringify(S));}catch(e){} renderHeader();}
+function toast(t){const d=document.createElement('div');d.className='toast';d.textContent=t;document.body.appendChild(d);setTimeout(()=>d.remove(),2200);}
+const slipTotal=items=>items.reduce((a,x)=>a+x.price*x.qty,0);
+
+// ===== ヘッダー・タブ =====
+function renderHeader(){
+  const t=today();
+  $('hdDate').textContent=t.slice(5).replace('-','/')+' 会計 '+S.bills.filter(b=>b.date===t&&!b.voided).length+'件';
+  const todo=S.bills.filter(b=>!b.entered&&!b.voided).length;
+  $('hdTodo').textContent=todo?('📝 本家未入力 '+todo+'件'):'✅ 本家入力 済';
+}
+document.querySelectorAll('nav button').forEach(b=>b.onclick=()=>showTab(b.dataset.tab));
+function showTab(t){
+  document.querySelectorAll('nav button').forEach(b=>b.classList.toggle('on',b.dataset.tab===t||(t==='order'&&b.dataset.tab==='tables')));
+  ['tables','order','hon','sum','set'].forEach(x=>$('tab-'+x).classList.toggle('hide',x!==t));
+  if(t==='tables')renderTables();
+  if(t==='hon')renderHon();
+  if(t==='sum')renderSum();
+  if(t==='set')renderSet();
+  window.scrollTo(0,0);
+}
+
+// ===== 卓一覧 =====
+function renderTables(){
+  $('tables').innerHTML=S.tables.map(t=>{
+    const o=S.open[t]; const busy=o&&o.items.length;
+    return `<button class="tbl ${busy?'busy':''}" data-t="${esc(t)}">${esc(t)}<small>${busy?yen(slipTotal(o.items))+' ・'+o.openedAt:'空き'}</small></button>`;
+  }).join('');
+  $('tables').querySelectorAll('.tbl').forEach(b=>b.onclick=()=>openTable(b.dataset.t));
+}
+function openTable(t){
+  curTable=t;
+  if(!S.open[t])S.open[t]={items:[],openedAt:nowTime(),people:''};
+  $('orderTitle').textContent='卓 '+t;
+  $('people').value=S.open[t].people||'';
+  showTab('order'); renderMenu(); renderSlip();
+}
+$('backTables').onclick=()=>{ if(S.open[curTable]&&!S.open[curTable].items.length)delete S.open[curTable]; save(); showTab('tables'); };
+$('people').oninput=e=>{S.open[curTable].people=e.target.value;save();};
+
+// ===== メニュー =====
+function renderMenu(){
+  $('cats').innerHTML=CATS.map(c=>`<button class="${c===curCat?'on':''}" data-c="${c}">${c}</button>`).join('');
+  $('cats').querySelectorAll('button').forEach(b=>b.onclick=()=>{curCat=b.dataset.c;renderMenu();});
+  const items=S.open[curTable].items;
+  $('menu').innerHTML=S.menu.filter(m=>m.cat===curCat).map(m=>{
+    const q=items.filter(x=>x.mid===m.id).reduce((a,x)=>a+x.qty,0);
+    return `<button class="mi" data-id="${m.id}">${esc(m.name)}<span>${yen(m.price)}</span>${q?`<b>${q}</b>`:''}</button>`;
+  }).join('');
+  $('menu').querySelectorAll('.mi').forEach(b=>b.onclick=()=>addItem(S.menu.find(m=>m.id===b.dataset.id)));
+}
+function addItem(m){
+  const items=S.open[curTable].items;
+  const ex=items.find(x=>x.mid===m.id&&x.price===m.price);
+  if(ex)ex.qty++; else items.push({mid:m.id,name:m.name,price:m.price,qty:1});
+  save(); renderMenu(); renderSlip();
+}
+$('freeItem').onclick=()=>{
+  const name=prompt('品名（例: 特上ロース、コース、値引きはマイナス）','その他'); if(name===null)return;
+  const p=parseInt(prompt('金額（税込）','')||'',10); if(isNaN(p))return;
+  S.open[curTable].items.push({mid:'free'+Date.now(),name:name||'その他',price:p,qty:1});
+  save(); renderSlip();
+};
+function renderSlip(){
+  const items=S.open[curTable].items;
+  $('lines').innerHTML=items.length?items.map((x,i)=>`<div class="line">
+    <span class="nm">${esc(x.name)}<br><span class="muted">${yen(x.price)}</span></span>
+    <button class="qb" data-i="${i}" data-d="-1">−</button><b style="width:24px;text-align:center">${x.qty}</b>
+    <button class="qb" data-i="${i}" data-d="1">＋</button><span class="sm">${yen(x.price*x.qty)}</span></div>`).join('')
+    :'<p class="muted">左のメニューをタップして追加</p>';
+  $('lines').querySelectorAll('.qb').forEach(b=>b.onclick=()=>{
+    const x=items[b.dataset.i]; x.qty+=+b.dataset.d; if(x.qty<=0)items.splice(b.dataset.i,1);
+    save(); renderSlip(); renderMenu();
+  });
+  $('sum').textContent=yen(slipTotal(items));
+  $('goPay').disabled=!items.length;
+}
+$('clearSlip').onclick=()=>{ if(!confirm('この卓の伝票を全部消しますか？'))return; delete S.open[curTable]; save(); showTab('tables'); };
+
+// ===== 会計 =====
+let pay={method:'cash',received:'',discount:0};
+$('goPay').onclick=()=>{pay={method:'cash',received:'',discount:0};renderPay();$('payModal').classList.remove('hide');};
+function renderPay(){
+  const o=S.open[curTable]; const sub=slipTotal(o.items); const total=sub-pay.discount;
+  const rec=parseInt(pay.received||'0',10); const change=rec-total;
+  $('paySheet').innerHTML=`
+    <div class="row"><h2 style="margin:0">会計 ・ 卓 ${esc(curTable)}</h2><button class="btn ghost" id="pClose" style="margin-left:auto">閉じる</button></div>
+    <div class="muted" style="margin-top:8px">${o.items.map(x=>esc(x.name)+'×'+x.qty).join('、')}</div>
+    <div class="field"><span>小計</span><b>${yen(sub)}</b></div>
+    <div class="field"><span>値引き</span><input type="number" id="pDisc" value="${pay.discount||''}" placeholder="0"></div>
+    <div class="row" style="justify-content:space-between;margin-top:10px"><span>お会計</span><span class="big">${yen(total)}</span></div>
+    <div class="pays" style="margin-top:8px">${PAYS.map(([k,l])=>`<button data-k="${k}" class="${pay.method===k?'on':''}">${l}</button>`).join('')}</div>
+    ${pay.method==='cash'?`
+      <div class="field"><span>お預かり</span><input id="pRec" inputmode="numeric" value="${pay.received}" placeholder="${total}"></div>
+      <div class="keys">${[1000,5000,10000].map(v=>`<button data-add="${v}">+${v>=10000?'1万':v/1000+'千'}</button>`).join('')}<button data-just="1">ちょうど</button>
+        ${['7','8','9','C','4','5','6','⌫','1','2','3','00','0'].map(k=>`<button data-k2="${k}">${k}</button>`).join('')}</div>
+      <div class="row" style="justify-content:space-between;margin-top:10px"><span>おつり</span><span class="big" style="color:${change<0?'var(--main)':'var(--ok)'}">${pay.received===''?'—':(change<0?'不足 '+yen(-change):yen(change))}</span></div>`:''}
+    <button class="btn ok" id="pDone" style="width:100%;margin-top:14px;padding:16px;font-size:20px" ${pay.method==='cash'&&pay.received!==''&&change<0?'disabled':''}>✔ 会計完了</button>`;
+  $('pClose').onclick=()=>$('payModal').classList.add('hide');
+  $('pDisc').onchange=e=>{pay.discount=Math.max(0,parseInt(e.target.value||'0',10)||0);renderPay();};
+  $('paySheet').querySelectorAll('.pays button').forEach(b=>b.onclick=()=>{pay.method=b.dataset.k;renderPay();});
+  if(pay.method==='cash'){
+    $('pRec').oninput=e=>{pay.received=e.target.value.replace(/\D/g,'');renderPay();const i=$('pRec');i.focus();i.setSelectionRange(i.value.length,i.value.length);};
+    $('paySheet').querySelectorAll('[data-add]').forEach(b=>b.onclick=()=>{pay.received=String((parseInt(pay.received||'0',10))+ +b.dataset.add);renderPay();});
+    $('paySheet').querySelector('[data-just]').onclick=()=>{pay.received=String(total);renderPay();};
+    $('paySheet').querySelectorAll('[data-k2]').forEach(b=>b.onclick=()=>{
+      const k=b.dataset.k2;
+      if(k==='C')pay.received=''; else if(k==='⌫')pay.received=pay.received.slice(0,-1); else pay.received=(pay.received+k).replace(/^0+(?=\d)/,'');
+      renderPay();
+    });
+  }
+  $('pDone').onclick=()=>finishPay(sub,total,rec);
+}
+function finishPay(sub,total,rec){
+  const o=S.open[curTable]; const d=today();
+  const no=S.bills.filter(b=>b.date===d).reduce((a,b)=>Math.max(a,b.no),0)+1;
+  const cash=pay.method==='cash';
+  const received=cash?(pay.received===''?total:rec):total;
+  const bill={id:Date.now().toString(36)+Math.random().toString(36).slice(2,6),date:d,no,time:nowTime(),
+    table:curTable,people:o.people||'',items:o.items.map(x=>({name:x.name,price:x.price,qty:x.qty})),
+    subtotal:sub,discount:pay.discount,total,method:pay.method,received,change:received-total,
+    entered:false,voided:false,updatedAt:Date.now()};
+  S.bills.push(bill); delete S.open[curTable]; save();
+  $('payModal').classList.add('hide');
+  showTab('tables');
+  toast(`No.${no} 会計完了 ${cash?'おつり '+yen(bill.change):''}`);
+  if(confirm(`No.${no} 会計完了！${cash?'\nおつり '+yen(bill.change):''}\n\n領収書を印刷しますか？`))printReceipt(bill);
+  pushCloud(true);
+}
+
+// ===== 領収書 =====
+function printReceipt(b){
+  const name=prompt('宛名（空欄なら「上様」）','')||'上様';
+  $('receipt').innerHTML=`<div style="max-width:420px;margin:20px auto;font-size:15px;border:2px solid #000;padding:24px">
+    <h1 style="text-align:center;letter-spacing:.5em;margin:0 0 16px">領収書</h1>
+    <p style="font-size:18px;border-bottom:1px solid #000">${esc(name)} 様</p>
+    <p style="font-size:28px;font-weight:800;text-align:center;border-bottom:3px double #000;padding:8px">${yen(b.total)}<small style="font-size:13px">（税込）</small></p>
+    <p>但し お食事代として<br>（内消費税等 ${yen(Math.floor(b.total*10/110))}）</p>
+    <p>${b.date.replace(/-/g,'/')} ${b.time}　No.${b.no}</p>
+    <p style="text-align:right;margin-top:24px">焼肉ありもと</p></div>`;
+  document.body.classList.add('receipt'); window.print();
+  setTimeout(()=>document.body.classList.remove('receipt'),500);
+}
+
+// ===== 本家入力リスト =====
+function dateOptions(sel,withAll){
+  const ds=[...new Set(S.bills.map(b=>b.date))].sort().reverse();
+  if(!ds.includes(today()))ds.unshift(today());
+  const cur=sel.value;
+  sel.innerHTML=(withAll?'<option value="all">全日</option>':'')+ds.map(d=>{
+    const n=S.bills.filter(b=>b.date===d&&!b.voided&&!b.entered).length;
+    return `<option value="${d}">${d.replace(/-/g,'/')}${withAll&&n?'（未'+n+'）':''}</option>`;}).join('');
+  if(cur&&[...sel.options].some(o=>o.value===cur))sel.value=cur;
+  else if(withAll&&S.bills.some(b=>!b.entered&&!b.voided))sel.value='all';
+}
+$('honDate').onchange=renderHon; $('honOnlyTodo').onchange=renderHon;
+function renderHon(){
+  dateOptions($('honDate'),true);
+  const d=$('honDate').value, only=$('honOnlyTodo').checked;
+  const all=S.bills.filter(b=>d==='all'||b.date===d).sort((a,b)=>a.date.localeCompare(b.date)||a.no-b.no);
+  const live=all.filter(b=>!b.voided); const done=live.filter(b=>b.entered).length;
+  $('honProg').innerHTML=live.length?`<div class="row" style="justify-content:space-between"><b>${done} / ${live.length} 件 入力済み</b><span class="muted">未入力の合計 ${yen(live.filter(b=>!b.entered).reduce((a,b)=>a+b.total,0))}</span></div>
+    <div class="progress" style="margin-top:6px"><div style="width:${done/live.length*100}%"></div></div>`:'<p class="muted">まだ会計がありません</p>';
+  const list=all.filter(b=>!only||(!b.entered&&!b.voided));
+  $('honList').innerHTML=list.map(b=>`<div class="bill ${b.voided?'void':b.entered?'done':''}">
+    <div class="hd"><span class="no">No.${b.no}</span><span class="muted">${b.date.slice(5).replace('-','/')} ${b.time} ・ 卓${esc(b.table)}${b.people?' ・ '+b.people+'名':''}</span>
+      <span class="pill ${b.method}">${PAYS.find(p=>p[0]===b.method)[1]}</span>
+      ${b.voided?'<span class="pill">取消</span>':`<label class="chk"><input type="checkbox" data-id="${b.id}" ${b.entered?'checked':''}> 入力済み</label>`}</div>
+    <div class="its">${b.items.map(x=>`${esc(x.name)} <b>×${x.qty}</b>`).join('　')}</div>
+    <div class="row"><b style="font-size:18px">${yen(b.total)}</b>${b.discount?`<span class="muted">（値引き ${yen(b.discount)}）</span>`:''}
+      ${b.method==='cash'?`<span class="muted">預 ${yen(b.received)} / 釣 ${yen(b.change)}</span>`:''}
+      <span style="margin-left:auto" class="row noprint">
+        <button class="btn ghost" data-rc="${b.id}" style="padding:6px 10px">🧾</button>
+        <button class="btn ghost" data-void="${b.id}" style="padding:6px 10px">${b.voided?'取消を戻す':'取消'}</button></span></div>
+  </div>`).join('')||(live.length?'<div class="card" style="text-align:center;font-size:18px">✅ 全部入力済みです！おつかれさまでした</div>':'');
+  $('honList').querySelectorAll('input[data-id]').forEach(c=>c.onchange=()=>{
+    const b=S.bills.find(x=>x.id===c.dataset.id); b.entered=c.checked; b.updatedAt=Date.now(); save();
+    setTimeout(renderHon,c.checked&&only?350:0); pushCloud(true);
+  });
+  $('honList').querySelectorAll('[data-void]').forEach(btn=>btn.onclick=()=>{
+    const b=S.bills.find(x=>x.id===btn.dataset.void);
+    if(!b.voided&&!confirm(`No.${b.no}（${yen(b.total)}）を取消にしますか？`))return;
+    b.voided=!b.voided; b.updatedAt=Date.now(); save(); renderHon(); pushCloud(true);
+  });
+  $('honList').querySelectorAll('[data-rc]').forEach(btn=>btn.onclick=()=>printReceipt(S.bills.find(x=>x.id===btn.dataset.rc)));
+}
+
+// ===== 集計 =====
+$('sumDate').onchange=renderSum;
+function renderSum(){
+  dateOptions($('sumDate'),false);
+  const d=$('sumDate').value;
+  const bs=S.bills.filter(b=>b.date===d&&!b.voided);
+  const by={}; bs.forEach(b=>b.items.forEach(x=>{const k=x.name+'|'+x.price;(by[k]=by[k]||{name:x.name,price:x.price,qty:0}).qty+=x.qty;}));
+  const order=S.menu.map(m=>m.name);
+  const rows=Object.values(by).sort((a,b)=>{const ia=order.indexOf(a.name),ib=order.indexOf(b.name);return (ia<0?999:ia)-(ib<0?999:ib);});
+  const pm={}; bs.forEach(b=>pm[b.method]=(pm[b.method]||0)+b.total);
+  const total=bs.reduce((a,b)=>a+b.total,0), disc=bs.reduce((a,b)=>a+b.discount,0);
+  const people=bs.reduce((a,b)=>a+(parseInt(b.people)||0),0);
+  $('sumBox').innerHTML=bs.length?`
+    <table><tr><th>売上合計</th><td class="r"><b style="font-size:22px">${yen(total)}</b></td></tr>
+      <tr><th>会計件数</th><td class="r">${bs.length}件${people?' ・ '+people+'名':''}</td></tr>
+      ${PAYS.filter(p=>pm[p[0]]).map(p=>`<tr><th>　${p[1]}</th><td class="r">${yen(pm[p[0]])}</td></tr>`).join('')}
+      ${disc?`<tr><th>　値引き</th><td class="r">-${yen(disc)}</td></tr>`:''}</table>
+    <h2 style="margin-top:16px">品目別（本家へまとめて打つとき・月次集計用）</h2>
+    <table><tr><th>品目</th><th class="r">単価</th><th class="r">数</th><th class="r">金額</th></tr>
+      ${rows.map(r=>`<tr><td>${esc(r.name)}</td><td class="r">${yen(r.price)}</td><td class="r"><b>${r.qty}</b></td><td class="r">${yen(r.price*r.qty)}</td></tr>`).join('')}</table>`
+    :'<p class="muted">この日の会計はありません</p>';
+}
+
+// ===== 設定 =====
+function renderSet(){
+  $('tableNames').value=S.tables.join(',');
+  $('menuEdit').innerHTML=S.menu.map((m,i)=>`<div class="set-item">
+    <input data-f="name" data-i="${i}" value="${esc(m.name)}">
+    <input data-f="price" data-i="${i}" type="number" step="10" value="${m.price}">
+    <select data-f="cat" data-i="${i}">${CATS.map(c=>`<option ${c===m.cat?'selected':''}>${c}</option>`).join('')}</select>
+    <button class="qb" data-del="${i}">×</button></div>`).join('');
+  $('menuEdit').querySelectorAll('[data-del]').forEach(b=>b.onclick=()=>{readMenuEdit();S.menu.splice(b.dataset.del,1);renderSet();});
+  $('cloudStat').textContent='この端末の伝票: '+S.bills.length+'件';
+}
+function readMenuEdit(){
+  $('menuEdit').querySelectorAll('[data-f]').forEach(el=>{const m=S.menu[el.dataset.i];m[el.dataset.f]=el.dataset.f==='price'?(parseInt(el.value,10)||0):el.value;});
+}
+$('addMenu').onclick=()=>{readMenuEdit();S.menu.push({id:'u'+Date.now(),name:'新しい品目',price:0,cat:curCat});renderSet();};
+$('saveMenu').onclick=()=>{readMenuEdit();save();toast('メニューを保存しました');};
+$('resetMenu').onclick=()=>{if(confirm('メニューを初期の値段に戻しますか？')){S.menu=JSON.parse(JSON.stringify(DEFAULT_MENU));save();renderSet();}};
+$('saveTables').onclick=()=>{const t=$('tableNames').value.split(/[,、，]/).map(s=>s.trim()).filter(Boolean);if(t.length){S.tables=t;save();toast('卓を保存しました');}};
+
+// ===== 保存・読込 =====
+function mergeBills(a,b){
+  const m={}; [...a,...b].forEach(x=>{if(!m[x.id]||(x.updatedAt||0)>(m[x.id].updatedAt||0))m[x.id]=x;});
+  return Object.values(m).sort((x,y)=>x.date.localeCompare(y.date)||x.no-y.no);
+}
+async function fetchCloud(){
+  const r=await fetch(SYNC_URL+'?action=load&key='+SYNC_KEY,{cache:'no-store'}); const j=await r.json();
+  return (j&&j.success&&j.data&&Array.isArray(j.data.bills))?j.data:null;
+}
+let pushing=false;
+async function pushCloud(silent){
+  if(!lsOK())return;                      // プレビュー等 localStorage の無い環境からは送らない
+  if(silent&&!S.bills.length)return;
+  if(pushing)return; pushing=true;
+  try{
+    const c=await fetchCloud().catch(()=>null);
+    if(c){S.bills=mergeBills(c.bills,S.bills);save();}
+    const r=await fetch(SYNC_URL+'?action=save&key='+SYNC_KEY,{method:'POST',body:JSON.stringify({bills:S.bills,menu:S.menu,tables:S.tables,savedAt:Date.now()})});
+    const j=await r.json(); if(!silent)toast(j.success?'☁️ クラウドに保存しました':'☁️ 保存に失敗しました');
+  }catch(e){ if(!silent)toast('☁️ 電波がないため端末だけに保存しています'); }
+  finally{pushing=false;}
+}
+$('cloudUp').onclick=()=>pushCloud(false);
+$('cloudDown').onclick=async()=>{
+  try{const c=await fetchCloud(); if(!c){toast('クラウドにデータがありません');return;}
+    const before=S.bills.length; S.bills=mergeBills(S.bills,c.bills);
+    if(c.menu&&confirm('クラウドのメニュー・卓設定もこの端末に入れますか？')){S.menu=c.menu;if(c.tables)S.tables=c.tables;}
+    save(); renderSet(); toast('合体しました（伝票 '+before+'→'+S.bills.length+'件）');
+  }catch(e){toast('読み込めませんでした（電波を確認）');}
+};
+function download(name,text,type){const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([text],{type}));a.download=name;a.click();}
+$('fileSave').onclick=()=>download('緊急ポスレジ_'+today()+'.json',JSON.stringify(S,null,1),'application/json');
+$('fileLoad').onclick=()=>$('fileIn').click();
+$('fileIn').onchange=e=>{const f=e.target.files[0];if(!f)return;f.text().then(t=>{try{const d=JSON.parse(t);
+  S.bills=mergeBills(S.bills,d.bills||[]); if(d.menu)S.menu=d.menu; if(d.tables)S.tables=d.tables; save(); renderSet(); toast('読み込みました');}catch(err){toast('ファイルが読めません');}});};
+$('csvOut').onclick=()=>{
+  const rows=[['日付','No','時刻','卓','人数','品目','単価','数量','金額','値引き','会計合計','支払','本家入力','取消']];
+  S.bills.forEach(b=>b.items.forEach((x,i)=>rows.push([b.date,b.no,b.time,b.table,b.people,x.name,x.price,x.qty,x.price*x.qty,i?'':b.discount,i?'':b.total,PAYS.find(p=>p[0]===b.method)[1],b.entered?'済':'未',b.voided?'取消':''])));
+  download('緊急ポスレジ_'+today()+'.csv','﻿'+rows.map(r=>r.map(v=>'"'+String(v).replace(/"/g,'""')+'"').join(',')).join('\n'),'text/csv');
+};
+
+// ===== 起動 =====
+load(); renderHeader(); renderTables();
+window.addEventListener('online',()=>pushCloud(true));
+</script>
+</body>
+</html>
