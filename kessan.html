@@ -1,0 +1,340 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>決算チェックリスト｜焼肉ありもと</title>
+<style>
+  :root{ --line:#e2d8c6; --bg:#f3efe7; --card:#fff; --txt:#2b2520; --head:#7a4a2b; --ok:#1a7a3a; --warn:#c0392b; }
+  *{box-sizing:border-box;}
+  body{margin:0;font-family:"Hiragino Kaku Gothic ProN","Yu Gothic",Arial,sans-serif;background:var(--bg);color:var(--txt);-webkit-text-size-adjust:100%;}
+  header{background:linear-gradient(135deg,#8a5a36,#b07b3f);color:#fff;padding:10px 14px;display:flex;align-items:center;gap:10px;flex-wrap:wrap;box-shadow:0 2px 6px rgba(0,0,0,.15);position:sticky;top:0;z-index:10;}
+  header h1{font-size:17px;margin:0;white-space:nowrap;}
+  header h1 small{font-weight:500;font-size:12px;opacity:.85;}
+  #saveSt{font-size:12px;font-weight:700;background:rgba(255,255,255,.18);border-radius:8px;padding:4px 9px;white-space:nowrap;}
+  .tools{display:flex;gap:8px;flex-wrap:wrap;margin-left:auto;}
+  .btn{border:none;border-radius:8px;padding:7px 12px;cursor:pointer;font-size:13px;background:rgba(255,255,255,.18);color:#fff;font-weight:600;font-family:inherit;}
+  .btn:hover{background:rgba(255,255,255,.3);}
+  .wrap{max-width:860px;margin:0 auto;padding:12px;}
+  .card{background:var(--card);border-radius:12px;box-shadow:0 1px 4px rgba(0,0,0,.08);padding:12px 14px;margin-bottom:12px;}
+  .top{display:flex;gap:14px;flex-wrap:wrap;align-items:center;}
+  .top label{font-size:13px;color:var(--head);font-weight:700;display:flex;align-items:center;gap:6px;}
+  .top label{white-space:nowrap;flex-wrap:wrap;max-width:100%;}
+  #fySel{max-width:100%;}
+  select,input[type=date]{border:1px solid var(--line);border-radius:6px;padding:6px 8px;font-size:14px;font-family:inherit;background:#fff;}
+  .prog{flex:1;min-width:220px;}
+  .prog .bar{height:14px;background:#eee6d6;border-radius:8px;overflow:hidden;}
+  .prog .bar i{display:block;height:100%;background:linear-gradient(90deg,#4caf6a,#1a7a3a);transition:width .3s;}
+  .prog .txt{font-size:13px;margin-top:4px;color:#665;}
+  .prog .txt b{color:var(--ok);font-size:16px;}
+  .filters{display:flex;gap:6px;flex-wrap:wrap;margin-top:10px;}
+  .pill{border:1.5px solid #e2dccf;background:#f6f1e7;border-radius:16px;padding:5px 12px;cursor:pointer;font-size:13px;font-family:inherit;}
+  .pill.on{background:#fff;border-color:#8a5a36;font-weight:700;}
+  h2{font-size:15px;color:var(--head);margin:4px 0 8px;display:flex;justify-content:space-between;align-items:center;}
+  h2 small{font-weight:500;color:#998;font-size:12px;}
+  .item{display:flex;gap:10px;align-items:flex-start;border-top:1px solid #f0e9dc;padding:10px 2px;}
+  .item:first-of-type{border-top:none;}
+  .item .ck{width:26px;height:26px;flex:none;border:2px solid #c9b896;border-radius:7px;background:#fff;cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:17px;color:#fff;margin-top:1px;}
+  .item.done .ck{background:var(--ok);border-color:var(--ok);}
+  .item .body{flex:1;min-width:0;}
+  .item .nm{font-size:15px;font-weight:700;line-height:1.4;}
+  .item.done .nm{color:#7a8a7a;text-decoration:line-through;text-decoration-color:#9bb79f;}
+  .item .hint{font-size:12px;color:#887;margin-top:2px;line-height:1.5;}
+  .item .meta{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-top:6px;}
+  .item .memo{flex:1;min-width:160px;border:1px solid var(--line);border-radius:6px;padding:5px 8px;font-size:13px;font-family:inherit;}
+  .item .when{font-size:12px;color:var(--ok);font-weight:700;white-space:nowrap;}
+  .item .open{font-size:12px;text-decoration:none;background:#eef5ff;color:#2f6fb0;border:1px solid #c9dcf3;border-radius:6px;padding:4px 9px;white-space:nowrap;}
+  .item .na{font-size:12px;border:none;background:none;color:#998;cursor:pointer;text-decoration:underline;padding:0;font-family:inherit;}
+  .item.skip .nm{color:#aaa;} .item.skip .ck{background:#ddd;border-color:#ccc;}
+  .item .auto{font-size:12px;background:#eaf6ec;color:var(--ok);border-radius:6px;padding:3px 8px;font-weight:700;}
+  .item .del{border:none;background:none;color:var(--warn);cursor:pointer;font-size:14px;}
+  .add{display:flex;gap:8px;margin-top:8px;}
+  .add input{flex:1;border:1px dashed #c2a86a;border-radius:8px;padding:7px 10px;font-size:14px;font-family:inherit;background:#fffcf3;}
+  .add button{border:none;background:#8a5a36;color:#fff;border-radius:8px;padding:7px 14px;cursor:pointer;font-weight:700;font-family:inherit;}
+  #toast{position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);background:rgba(0,0,0,.85);color:#fff;padding:12px 20px;border-radius:10px;font-size:14px;opacity:0;pointer-events:none;transition:opacity .2s;z-index:1000;}
+  #toast.show{opacity:1;}
+  @media (max-width:700px){ input,select,.memo{font-size:16px !important;} header{position:static;} }
+  /* 書類の保管・処分 */
+  .kp-sub{font-size:13px;font-weight:700;color:var(--head);margin:12px 0 4px;padding:6px 10px;border-radius:8px;}
+  .kp-sub.keep{background:#eaf6ec;color:var(--ok);} .kp-sub.old{background:#f4efe6;color:#7a6a55;}
+  .kp-row{display:flex;gap:10px;align-items:flex-start;border-top:1px solid #f0e9dc;padding:9px 2px;}
+  .kp-row .per{flex:1;min-width:0;}
+  .kp-row .per b{font-size:14px;} .kp-row .per .ad{font-size:11px;color:#998;margin-left:4px;}
+  .kp-row .lim{font-size:12px;color:#776;margin-top:3px;line-height:1.6;}
+  .kp-row .lim .x{color:#aaa;text-decoration:line-through;} .kp-row .lim .soon{color:var(--warn);font-weight:700;}
+  .kp-row .acts{display:flex;gap:6px;flex-wrap:wrap;align-items:center;margin-top:6px;}
+  .kbtn{border:1.5px solid #d8cdb8;background:#fff;border-radius:8px;padding:5px 10px;font-size:13px;cursor:pointer;font-family:inherit;font-weight:700;color:#776;}
+  .kbtn.on.ok{background:var(--ok);border-color:var(--ok);color:#fff;}
+  .kbtn.on.gone{background:#7a6a55;border-color:#7a6a55;color:#fff;}
+  .kbtn.on.left{background:#2f6fb0;border-color:#2f6fb0;color:#fff;}
+  .kp-row .when{font-size:12px;color:var(--ok);font-weight:700;white-space:nowrap;}
+  .kp-row .memo{flex:1;min-width:140px;border:1px solid var(--line);border-radius:6px;padding:5px 8px;font-size:13px;font-family:inherit;}
+  .kp-note{font-size:12px;color:#887;line-height:1.6;margin-top:8px;}
+  #printArea{display:none;}
+  @media print{
+    body > *:not(#printArea){display:none !important;}
+    #printArea{display:block;font-size:11px;color:#000;}
+    @page{size:A4 portrait;margin:12mm 12mm;}
+    #printArea h1{font-size:17px;text-align:center;letter-spacing:.2em;margin:0 0 4px;}
+    #printArea .pm{display:flex;justify-content:space-between;margin:4px 0 8px;font-size:11px;}
+    #printArea h3{font-size:12.5px;border-left:4px solid #000;padding-left:6px;margin:10px 0 3px;}
+    #printArea table{width:100%;border-collapse:collapse;}
+    #printArea td,#printArea th{border:1px solid #999;padding:3px 5px;vertical-align:top;}
+    #printArea th{background:#eee;font-size:10px;}
+    #printArea td.c{text-align:center;width:22px;font-size:13px;}
+    #printArea tr{page-break-inside:avoid;}
+  }
+</style>
+</head>
+<body>
+<div id="toast"></div>
+<div id="printArea"></div>
+<header>
+  <h1>📋 焼肉ありもと <small>決算チェックリスト</small></h1>
+  <span id="saveSt"></span>
+  <div class="tools">
+    <button class="btn" onclick="printList()">🖨 印刷</button>
+    <button class="btn" onclick="cloudPull(true)">☁️↓ クラウド読込</button>
+  </div>
+</header>
+<div class="wrap">
+  <div class="card">
+    <div class="top">
+      <label>事業年度 <select id="fySel" onchange="setFy(+this.value)"></select></label>
+      <label>税理士さんに渡す日 <input type="date" id="handDate" onchange="yr().handDate=this.value;save()"></label>
+      <div class="prog"><div class="bar"><i id="pbar"></i></div><div class="txt" id="ptxt"></div></div>
+    </div>
+    <div class="filters" id="filters"></div>
+  </div>
+  <div id="list"></div>
+  <div class="card">
+    <h2>＋ 自分で項目を追加 <small>このリストに無いものを足せます</small></h2>
+    <div class="add"><input id="newName" placeholder="例：補助金の通知書" onkeydown="if(event.key==='Enter')addItem()"><button onclick="addItem()">追加</button></div>
+  </div>
+  <div class="card" id="keepCard"></div>
+  <div style="font-size:12px;color:#998;text-align:center;margin:6px 0 20px;">チェックすると自動で保存・クラウドに送ります。「該当なし」は今年は無いもの（グレーになり、数に入りません）。</div>
+</div>
+<script>
+const STORAGE_KEY='yakiniku_kessan_check_v1';
+const SYNC_URL='https://script.google.com/macros/s/AKfycbxwL19mAenATUMILRsQYrDL0ThjU2C583Cj729OfzNHEH3drMcZCExYULRp4VGOZ11J/exec';
+const SYNC_KEY='kessan_check_data';
+
+// 税理士さんに渡すもの（決算は9月末締め。年は令和、期は終わりの年で呼ぶ：R8＝R7年10月〜R8年9月）
+const CATS=[
+  {id:'uri', name:'💴 売上・現金'},
+  {id:'shi', name:'🥩 仕入・在庫'},
+  {id:'kei', name:'🧾 経費'},
+  {id:'gin', name:'🏦 銀行・借入・リース'},
+  {id:'jin', name:'👥 人件費'},
+  {id:'zei', name:'📑 税金・保険・その他'},
+];
+const ITEMS=[
+  {id:'regi',    cat:'uri', name:'レジの日報・月報（12ヶ月分）', hint:'本家レジの月報。故障していた日があれば緊急ポスレジの記録も'},
+  {id:'getsuji', cat:'uri', name:'月次集計（月ごとの売上・仕入）', hint:'「通期」の表を印刷', app:'月次集計.html'},
+  {id:'genkin',  cat:'uri', name:'現金出納帳（9月末の現金残高まで）', hint:'期末の現金の残りが帳簿と合っているか', app:'現金出納帳.html'},
+  {id:'cashless',cat:'uri', name:'カード・電子マネー・QR決済の入金明細', hint:'9月分の売上で10月に入金されるものは「売掛金」になる'},
+  {id:'urikake', cat:'uri', name:'売掛金の一覧', hint:'棚卸アプリの「売掛金」', app:'棚卸.html'},
+  {id:'shiire',  cat:'shi', name:'仕入帳の決算用まとめ', hint:'仕入帳の「🧾 決算用」→ 印刷 または Excelで書き出す', app:'仕入帳.html'},
+  {id:'seikyuchk',cat:'shi',name:'9月分の請求書チェック（仕入帳と一致）', hint:'仕入帳の「🧾 決算用」④で全社 ✅ → 確認済みにする', app:'仕入帳.html', auto:'seikyu'},
+  {id:'seikyusho',cat:'shi',name:'仕入の請求書・納品書（12ヶ月分）'},
+  {id:'tana',    cat:'shi', name:'棚卸表（9月末の在庫）', hint:'棚卸アプリの「🧾 決算セットを印刷」で仕入帳のまとめと一緒に出せる', app:'棚卸.html'},
+  {id:'kaikake', cat:'shi', name:'買掛金・未払金の一覧', hint:'棚卸アプリ。買掛金は「📥 仕入帳から取り込む」', app:'棚卸.html'},
+  {id:'ryoshu',  cat:'kei', name:'経費の領収書・レシート（12ヶ月分）'},
+  {id:'keihi',   cat:'kei', name:'経費記入表', app:'経費記入表.html'},
+  {id:'card',    cat:'kei', name:'クレジットカードの利用明細（12ヶ月分）'},
+  {id:'kosai',   cat:'kei', name:'交際費・会議費の内訳（相手・人数がわかるもの）'},
+  {id:'kounetsu',cat:'kei', name:'水道光熱費・電話・ネットの明細'},
+  {id:'tsucho',  cat:'gin', name:'通帳のコピー（全口座・9月末の残高まで）'},
+  {id:'kariire', cat:'gin', name:'借入金の返済予定表・9月末の残高'},
+  {id:'lease',   cat:'gin', name:'リース契約の一覧・リース料', app:'リース管理.html'},
+  {id:'kyuyo',   cat:'jin', name:'給与台帳・賃金台帳（12ヶ月分）', hint:'バイトの時間・給与', app:'バイト時間表.html'},
+  {id:'gensen',  cat:'jin', name:'源泉所得税の納付書の控え'},
+  {id:'shaho',   cat:'jin', name:'社会保険料の通知・納付の控え'},
+  {id:'yakuin',  cat:'jin', name:'役員報酬の金額（期中に変えたら議事録も）'},
+  {id:'shataku', cat:'jin', name:'社宅の家賃・使用料の記録', app:'社宅管理.html'},
+  {id:'nozei',   cat:'zei', name:'納めた税金の控え', hint:'法人税・消費税の中間納付、固定資産税、自動車税など'},
+  {id:'hoken',   cat:'zei', name:'保険の証券・1年間の保険料', hint:'生命保険・火災保険・自動車保険など'},
+  {id:'setsubi', cat:'zei', name:'10万円以上の買い物（設備・備品）の領収書'},
+  {id:'car',     cat:'zei', name:'車の購入・売却・車検の書類'},
+  {id:'memo',    cat:'zei', name:'今年あった大きな出来事のメモ', hint:'新しい契約、大きな修繕、補助金・助成金など'},
+];
+
+const z2h=s=>String(s==null?'':s).replace(/[０-９]/g,c=>String.fromCharCode(c.charCodeAt(0)-0xFEE0));
+const esc=s=>String(s==null?'':s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const today=()=>{ const d=new Date(); return d.getFullYear()+'/'+(d.getMonth()+1)+'/'+d.getDate(); };
+function toast(m){ const t=document.getElementById('toast'); t.textContent=m; t.classList.add('show'); clearTimeout(toast._t); toast._t=setTimeout(()=>t.classList.remove('show'),2000); }
+// 今いちばん新しく終わった期（10月以降なら、その年の9月で終わった期）
+function endedFy(){ const d=new Date(), y=d.getFullYear()-2018, m=d.getMonth()+1; return m>=10? y : y-1; }
+
+// data = {savedAt, cur, years:{ "8":{ handDate, items:{id:{done,date,memo,skip}}, extra:[{id,cat,name}] } }}
+let data, filter='all';
+function storageOK(){ try{ localStorage.setItem('__synctest','1'); localStorage.removeItem('__synctest'); return true; }catch(e){ return false; } }
+function load(){ try{ const s=localStorage.getItem(STORAGE_KEY); if(s) return JSON.parse(s); }catch(e){} return {savedAt:0, cur:endedFy(), years:{}}; }
+function yr(){ const k=String(data.cur); if(!data.years[k]) data.years[k]={handDate:'',items:{},extra:[]}; const y=data.years[k]; y.items=y.items||{}; y.extra=y.extra||[]; return y; }
+function allItems(){ return ITEMS.concat(yr().extra.map(e=>Object.assign({custom:true},e))); }
+function st(id){ const it=yr().items; if(!it[id]) it[id]={done:false,date:'',memo:'',skip:false}; return it[id]; }
+
+// ---- 保存・クラウド ----
+let pushTimer=null;
+function save(){
+  if(!storageOK()) return;               // localStorageが使えない場所（プレビュー等）からは保存もクラウド送信もしない
+  data.savedAt=Date.now();
+  localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
+  showSave('保存済み '+hm()+'・☁️送信待ち');
+  clearTimeout(pushTimer); pushTimer=setTimeout(pushCloud,1500);
+}
+const hm=()=>{ const d=new Date(); return String(d.getHours()).padStart(2,'0')+':'+String(d.getMinutes()).padStart(2,'0'); };
+function showSave(t){ document.getElementById('saveSt').textContent=t; }
+async function pushCloud(){
+  pushTimer=null;
+  if(!storageOK() || !data.savedAt) return;
+  try{ const res=await fetch(SYNC_URL+'?action=save&key='+SYNC_KEY,{method:'POST',body:JSON.stringify(data),keepalive:true}); const j=await res.json();
+    showSave(j.success?'保存済み '+hm()+'・☁️クラウドOK':'保存済み・☁️未送信'); if(!j.success) pushTimer=setTimeout(pushCloud,30000);
+  }catch(e){ showSave('保存済み・☁️未送信'); pushTimer=setTimeout(pushCloud,30000); }
+}
+async function fetchCloud(key){ const res=await fetch(SYNC_URL+'?action=load&key='+key,{cache:'no-store'}); const j=await res.json(); let d=j&&j.data; if(typeof d==='string'){ try{ d=JSON.parse(d); }catch(e){ d=null; } } return d; }
+// クラウドと突き合わせ：新しい方にそろえる
+async function cloudPull(manual){
+  try{
+    const c=await fetchCloud(SYNC_KEY);
+    if(c && c.years && (c.savedAt||0) > (data.savedAt||0)){
+      const cur=data.cur; data=c; if(manual===true) data.cur=cur;
+      if(storageOK()) localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
+      render(); toast('☁️ クラウドの新しい内容を読み込みました'); showSave('☁️クラウドと同じ '+hm());
+    }else if(data.savedAt && (!c || (c.savedAt||0) < data.savedAt)){
+      await pushCloud();
+    }else{ showSave(data.savedAt?'☁️クラウドと同じ':'まだ何も入れていません'); if(manual===true) toast('最新です'); }
+  }catch(e){ showSave(data.savedAt?'保存済み・☁️未接続':''); if(manual===true) toast('クラウドにつながりませんでした'); }
+  checkAuto();
+}
+document.addEventListener('visibilitychange',()=>{ if(document.visibilityState==='hidden'){ if(pushTimer){ clearTimeout(pushTimer); pushCloud(); } } else cloudPull(); });
+
+// ---- 仕入帳と連動：9月分の請求書チェックが「確認済み」なら自動でチェック ----
+let autoInfo={};
+async function checkAuto(){
+  try{
+    const d=await fetchCloud('shiire_data'); if(!d||!d.suppliers) return;
+    const M=data.cur+'-9';
+    const ok=d.suppliers.map(s=>((d.pages&&d.pages[s.id])||{}).seikyuOk||{}).map(o=>o[M]).find(Boolean);
+    autoInfo={seikyu: ok?('仕入帳で確認済み（'+ok+'）'):''};
+    const s=st('seikyuchk');
+    if(ok && !s.done && !s.skip){ s.done=true; s.date=ok; save(); }
+    render();
+  }catch(e){}
+}
+
+// ---- 関連アプリを開くボタン ----
+// Mac（file://）ではデスクトップのファイル名のまま。スマホ公開版（kessan.html）では公開済みのアプリだけ公開名で開き、ほかは出さない
+const PUBLIC_APPS={'現金出納帳.html':'suitou.html','バイト時間表.html':'baito.html'};
+function appLink(app){ if(!app) return ''; return location.protocol==='file:'? app : (PUBLIC_APPS[app]||''); }
+
+// ---- 画面 ----
+function render(){
+  const fys=new Set([endedFy(), endedFy()+1, ...Object.keys(data.years).map(Number)]);
+  document.getElementById('fySel').innerHTML=[...fys].sort((a,b)=>b-a).map(f=>`<option value="${f}"${f===data.cur?' selected':''}>令和${f}年9月期（R${f-1}/10〜R${f}/9）</option>`).join('');
+  document.getElementById('handDate').value=yr().handDate||'';
+  const items=allItems(), act=items.filter(i=>!st(i.id).skip), done=act.filter(i=>st(i.id).done);
+  const pct=act.length?Math.round(done.length/act.length*100):0;
+  document.getElementById('pbar').style.width=pct+'%';
+  document.getElementById('ptxt').innerHTML=done.length===act.length&&act.length?'🎉 <b>全部そろいました！</b>':`そろった <b>${done.length}</b> ／ ${act.length}　（あと ${act.length-done.length}）`;
+  document.getElementById('filters').innerHTML=[['all','全部'],['todo','まだのもの'],...CATS.map(c=>[c.id,c.name])].map(([k,n])=>`<button class="pill${filter===k?' on':''}" onclick="filter='${k}';render()">${n}</button>`).join('');
+  let h='';
+  CATS.forEach(c=>{
+    if(filter!=='all'&&filter!=='todo'&&filter!==c.id) return;
+    let list=items.filter(i=>i.cat===c.id); if(filter==='todo') list=list.filter(i=>!st(i.id).done&&!st(i.id).skip);
+    if(!list.length) return;
+    const a=items.filter(i=>i.cat===c.id&&!st(i.id).skip), dn=a.filter(i=>st(i.id).done).length;
+    h+=`<div class="card"><h2>${c.name}<small>${dn}／${a.length}</small></h2>`;
+    list.forEach(i=>{ const s=st(i.id);
+      h+=`<div class="item${s.done?' done':''}${s.skip?' skip':''}">
+        <div class="ck" onclick="toggle('${i.id}')">${s.done?'✓':''}</div>
+        <div class="body"><div class="nm">${esc(i.name)}</div>${i.hint?`<div class="hint">${esc(i.hint)}</div>`:''}
+          <div class="meta">${s.done&&s.date?`<span class="when">✔ ${esc(s.date)}</span>`:''}
+            ${i.auto&&autoInfo[i.auto]?`<span class="auto">${esc(autoInfo[i.auto])}</span>`:''}
+            ${appLink(i.app)?`<a class="open" href="${encodeURI(appLink(i.app))}" target="_blank">📂 ${esc(i.app.replace('.html',''))}を開く</a>`:''}
+            <input class="memo" placeholder="メモ（例：10/20に郵送）" value="${esc(s.memo)}" oninput="st('${i.id}').memo=this.value;save()">
+            <button class="na" onclick="toggleSkip('${i.id}')">${s.skip?'該当なしを戻す':'該当なし'}</button>
+            ${i.custom?`<button class="del" title="この項目を消す" onclick="delItem('${i.id}')">✕</button>`:''}
+          </div></div></div>`; });
+    h+='</div>';
+  });
+  if(!h) h='<div class="card" style="text-align:center;color:#887;">🎉 まだのものはありません</div>';
+  document.getElementById('list').innerHTML=h;
+  renderKeep();
+}
+
+// ---- 書類の保管・処分（期ごとの保存期限） ----
+// 期は終わりの年で呼ぶ（f = 西暦-2018：R8=8, R1=1, H30=0, H29=-1）。期間は (f-1+2018)/10/1 〜 (f+2018)/9/30
+// 税金（法人税法）：申告期限(11/30)の翌日から7年 → 11/30まで。会社法：帳簿を締めた日(9/30)から10年
+// data.keep = { "8": {st:'ok'|'gone'|'left'|'', date, memo} }
+function wa(y,m,d){ const g=(y>2019||(y===2019&&m>=5))?['令和',y-2018]:['平成',y-1988]; return g[0]+(g[1]===1?'元':g[1])+'年'+m+'月'+d+'日'; }
+function kp(f){ data.keep=data.keep||{}; const k=String(f); if(!data.keep[k]) data.keep[k]={st:'',date:'',memo:''}; return data.keep[k]; }
+function keepRows(){
+  const now=new Date(), ymd=(y,m,d)=>new Date(y,m-1,d,23,59,59), top=endedFy(), rows=[];
+  for(let i=0;i<20;i++){ const f=top-i, ey=f+2018;
+    const tax=ymd(ey+7,11,30), kai=ymd(ey+10,9,30);
+    rows.push({f, keep:i<10, from:wa(ey-1,10,1), to:wa(ey,9,30), ad:(ey-1)+'〜'+ey,
+      tax:wa(ey+7,11,30), taxOut:tax<now, taxSoon:tax>=now&&(tax-now)<1000*60*60*24*90,
+      kai:wa(ey+10,9,30), kaiOut:kai<now, kaiSoon:kai>=now&&(kai-now)<1000*60*60*24*365}); }
+  return rows;
+}
+function setKeep(f,v){ const s=kp(f); s.st=(s.st===v)?'':v; s.date=s.st?today():''; save(); renderKeep(); }
+function renderKeep(){
+  const rows=keepRows(), cnt=(a,v)=>a.filter(r=>kp(r.f).st===v).length;
+  const keepR=rows.filter(r=>r.keep), oldR=rows.filter(r=>!r.keep);
+  const lim=r=>`税金の7年：<span class="${r.taxOut?'x':(r.taxSoon?'soon':'')}">${r.tax}${r.taxOut?'で切れた':'まで'}</span>${r.taxSoon?'（もうすぐ）':''}<br>会社法の10年：<span class="${r.kaiOut?'x':(r.kaiSoon?'soon':'')}">${r.kai}${r.kaiOut?'で切れた':'まで'}</span>${r.kaiSoon&&!r.kaiOut?'（1年以内に切れる）':''}`;
+  const row=(r,btns)=>{ const s=kp(r.f); return `<div class="kp-row"><div class="per"><b>${r.from}〜${r.to}</b><span class="ad">（${r.ad}）</span>${r.f===endedFy()?' <span class="when">今回の決算</span>':''}
+      <div class="lim">${lim(r)}</div>
+      <div class="acts">${btns.map(([v,cls,label])=>`<button class="kbtn ${cls}${s.st===v?' on':''}" onclick="setKeep(${r.f},'${v}')">${label}</button>`).join('')}
+        ${s.st&&s.date?`<span class="when">✔ ${esc(s.date)}</span>`:''}
+        <input class="memo" placeholder="${r.keep?'メモ（例：倉庫の箱③）':'メモ（例：決算書だけ残した）'}" value="${esc(s.memo)}" oninput="kp(${r.f}).memo=this.value;save()"></div></div></div>`; };
+  let h=`<h2>🗄 書類の保管・処分 <small><button class="kbtn" onclick="printKeep()">🖨 印刷</button></small></h2>
+    <div class="kp-sub keep">📦 保管する10期（処分しない）　保管OK ${cnt(keepR,'ok')}／10</div>`;
+  keepR.forEach(r=>h+=row(r,[['ok','ok','✅ 保管OK']]));
+  h+=`<div class="kp-sub old">🗑 その前の10期（期限切れ）　処分済 ${cnt(oldR,'gone')}・残している ${cnt(oldR,'left')}／10</div>`;
+  oldR.forEach(r=>h+=row(r,[['gone','gone','🗑 処分済'],['left','left','📦 残している']]));
+  h+=`<div class="kp-note">・両方の期限のうち遅い方（会社法の10年）まで取っておけば安心です。<br>
+    ・期限が切れても、決算書・申告書の控え、登記・定款・議事録、契約書、不動産や大きな設備の書類は残しておくのがおすすめ。赤字を繰り越している期は使い切るまで必要です。<br>
+    ・申告期限は決算の2か月後（11月30日）として計算しています。延長している場合は税金の期限が1か月後ろにずれます。毎年10月になると、表が1期ずつ自動で進みます。</div>`;
+  document.getElementById('keepCard').innerHTML=h;
+}
+function printKeep(){
+  const rows=keepRows(), lab={ok:'保管OK',gone:'処分済',left:'残している','':''};
+  let h=`<h1>書類の保管・処分 一覧</h1><div class="pm"><span>有限会社 焼肉ありもと　（9月30日決算）</span><span>印刷日 ${today()}</span></div>`;
+  [['保管する10期（処分しない）',rows.filter(r=>r.keep)],['その前の10期（期限切れ）',rows.filter(r=>!r.keep)]].forEach(([t,list])=>{
+    h+=`<h3>${t}</h3><table><tr><th>期間</th><th>税金の7年</th><th>会社法の10年</th><th style="width:60px">状態</th><th style="width:22%">メモ</th></tr>`;
+    list.forEach(r=>{ const s=kp(r.f); h+=`<tr><td>${r.from}〜${r.to}</td><td>${r.tax}${r.taxOut?'（切れた）':''}</td><td>${r.kai}${r.kaiOut?'（切れた）':''}</td><td class="c" style="width:60px">${lab[s.st]}</td><td>${esc(s.memo)}</td></tr>`; });
+    h+='</table>'; });
+  document.getElementById('printArea').innerHTML=h;
+  setTimeout(()=>window.print(),50);
+}
+function toggle(id){ const s=st(id); if(s.skip) s.skip=false; s.done=!s.done; s.date=s.done?today():''; save(); render(); }
+function toggleSkip(id){ const s=st(id); s.skip=!s.skip; if(s.skip){ s.done=false; s.date=''; } save(); render(); }
+function setFy(f){ data.cur=f; if(storageOK()) localStorage.setItem(STORAGE_KEY, JSON.stringify(data)); render(); checkAuto(); }
+function addItem(){
+  const el=document.getElementById('newName'), n=el.value.trim(); if(!n) return;
+  const cat=(filter!=='all'&&filter!=='todo')?filter:'zei';
+  yr().extra.push({id:'x'+Date.now(), cat, name:n}); el.value=''; save(); render(); toast('追加しました');
+}
+function delItem(id){ const y=yr(); const e=y.extra.find(x=>x.id===id); if(!e||!confirm('「'+e.name+'」を消しますか？')) return; y.extra=y.extra.filter(x=>x.id!==id); delete y.items[id]; save(); render(); }
+
+function printList(){
+  const y=yr(), items=allItems();
+  const hd=y.handDate?y.handDate.replace(/^(\d+)-(\d+)-(\d+)$/,(_,a,b,c)=>`令和${a-2018}年${+b}月${+c}日`):'　　年　　月　　日';
+  let h=`<h1>決算資料 チェックリスト</h1><div class="pm"><span>有限会社 焼肉ありもと　令和${data.cur}年9月期（令和${data.cur-1}年10月〜令和${data.cur}年9月）</span><span>お渡し日 ${hd}</span></div>`;
+  CATS.forEach(c=>{ const list=items.filter(i=>i.cat===c.id); if(!list.length) return;
+    h+=`<h3>${esc(c.name.replace(/^\S+\s/,''))}</h3><table><tr><th style="width:24px">済</th><th>資料</th><th style="width:30%">メモ</th></tr>`;
+    list.forEach(i=>{ const s=st(i.id); h+=`<tr><td class="c">${s.skip?'－':(s.done?'☑':'☐')}</td><td>${esc(i.name)}${s.skip?'（該当なし）':''}</td><td>${esc(s.memo)}</td></tr>`; });
+    h+='</table>'; });
+  const act=items.filter(i=>!st(i.id).skip);
+  h+=`<div style="margin-top:8px;font-size:10px;">そろった ${act.filter(i=>st(i.id).done).length}／${act.length}　印刷日 ${today()}</div>`;
+  document.getElementById('printArea').innerHTML=h;
+  setTimeout(()=>window.print(),50);
+}
+
+data=load(); if(!data.years) data.years={}; if(!data.cur) data.cur=endedFy();
+render(); showSave(data.savedAt?'保存済み':'');
+cloudPull();
+</script>
+</body>
+</html>
