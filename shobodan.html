@@ -886,7 +886,9 @@ function kessanHTML(){
     if(inc>0){ incCat[e.cat]=incCat[e.cat]||{sum:0,items:[]}; incCat[e.cat].sum+=inc; if(e.memo) incCat[e.cat].items.push(e.memo); }
     if(out>0){ outCat[e.cat]=outCat[e.cat]||{sum:0,items:[]}; outCat[e.cat].sum+=out; if(e.memo) outCat[e.cat].items.push(e.memo); }
   });
-  const note = v => { let n=v.items.slice(0,4).join("、"); if(v.items.length>4) n+=" ほか"; return n; };
+  // 備考：「部長会　高田　有本」→「部長会」のように短くし、同じ摘要は1回だけ出す
+  const shortMemo = m => /^部長会/.test(m) ? "部長会" : m.trim();
+  const note = v => { const u=[...new Set(v.items.map(shortMemo))]; let n=u.slice(0,4).join("、"); if(u.length>4) n+=" ほか"; return n; };
   // 収入の部
   let incTotal = carry, incRows = `<tr><td class="c">前年度繰越金</td><td class="r">${num(carry)}円</td><td></td></tr>`;
   Object.entries(incCat).sort((a,b)=>b[1].sum-a[1].sum).forEach(([c,v])=>{
