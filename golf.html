@@ -316,6 +316,7 @@ const STORAGE_KEY = 'golf_score_app_v2';
 })();
 
 // ========== DATA ==========
+let golfMigrated = false;   // 読込時の一度きりの直しがあればクラウドへ送る
 let app = loadApp();
 
 function loadApp() {
@@ -324,6 +325,13 @@ function loadApp() {
     if (s) {
       const d = JSON.parse(s);
       if (!d.members || d.members.length === 0) d.members = defaultMembers();
+      // 平井さんは2026年11月から外す（10月までの試合には出す）。2026-10-21 一度だけ戻す
+      if (!d.hiraiBack) {
+        const h = d.members.find(m => m.name === '平井');
+        if (h) { if (!h.leaveFrom) h.leaveFrom = '2026-11'; }
+        else d.members.push({ name: '平井', handi: 49, leaveFrom: '2026-11' });
+        d.hiraiBack = true; golfMigrated = true;
+      }
       // 試合配列に移行
       if (!Array.isArray(d.games)) d.games = [];
       // 旧形式（current 単独）からの移行
@@ -424,7 +432,13 @@ function hOf(g, m) {
   const h = g && g.handis ? g.handis[m.name] : null;
   return h != null && h !== '' ? (+h || 0) : (+m.handi || 0);
 }
-function isAbsent(g, m) { return !!(g && Array.isArray(g.absent) && g.absent.includes(m.name)); }
+// 外した月（leaveFrom 'YYYY-MM'）以降の試合には、その人は出ない（それより前の試合とスコアはそのまま）
+function isLeft(g, m) {
+  if (!g || !m.leaveFrom) return false;
+  const [y, mo] = String(m.leaveFrom).split('-').map(Number);
+  return (+g.year) * 100 + (+g.month) >= y * 100 + mo;
+}
+function isAbsent(g, m) { return isLeft(g, m) || !!(g && Array.isArray(g.absent) && g.absent.includes(m.name)); }
 function hasScore(g, m) {
   const sc = g && g.scores ? g.scores[m.name] : null;
   return !!(sc && ((sc.am !== '' && sc.am != null) || (sc.pm !== '' && sc.pm != null)));
@@ -433,9 +447,10 @@ function hasScore(g, m) {
 // 👥 参加⇄お休み
 function renderAttendance() {
   const c = app.current;
-  const n = app.members.filter(m => !isAbsent(c, m)).length;
-  document.getElementById('attCount').textContent = `参加 ${n}人 ／ お休み ${app.members.length - n}人`;
-  document.getElementById('attChips').innerHTML = app.members.map((m, i) =>
+  const inG = app.members.filter(m => !isLeft(c, m));   // 外した人はチップも出さない
+  const n = inG.filter(m => !isAbsent(c, m)).length;
+  document.getElementById('attCount').textContent = `参加 ${n}人 ／ お休み ${inG.length - n}人`;
+  document.getElementById('attChips').innerHTML = app.members.map((m, i) => isLeft(c, m) ? '' :
     `<button class="att-chip ${isAbsent(c, m) ? 'off' : ''}" onclick="toggleAbsent(${i})">${esc(m.name)}</button>`).join('');
 }
 function toggleAbsent(i) {
@@ -656,6 +671,7 @@ function renderMembers() {
     <div class="mem-edit-row">
       <input class="name-input" type="text" value="${esc(m.name)}" onchange="renameMember(${i}, this)">
       <input class="handi-input2" type="number" value="${m.handi}" oninput="app.members[${i}].handi=parseFloat(this.value)||0;save();" inputmode="numeric">
+      <label style="font-size:11px;color:#888;white-space:nowrap;">外す月<br><input type="month" value="${esc(m.leaveFrom || '')}" onchange="setLeave(${i}, this.value)" style="font-size:12px;padding:4px;border:1.5px solid #ddd;border-radius:6px;width:120px;"></label>
       <button class="btn btn-del" onclick="removeMember(${i})">削除</button>
     </div>
   `).join('');
@@ -854,8 +870,12 @@ function resetMembers() {
   toast('11名を復元しました');
 }
 
+function setLeave(i, v) {
+  app.members[i].leaveFrom = v || '';
+  save(); toast(v ? `${app.members[i].name} さんは ${v.replace('-', '年')}月からの試合に出ません` : `${app.members[i].name} さんを外す月を消しました`);
+}
 function removeMember(i) {
-  if (!confirm(app.members[i].name + ' を削除しますか？')) return;
+  if (!confirm(app.members[i].name + ' を削除しますか？\n削除すると、前の試合のスコアも見えなくなります。\nある月から来なくなった人は「外す月」を入れる方がおすすめです。')) return;
   delete app.current.scores[app.members[i].name];
   app.members.splice(i, 1);
   save();
@@ -1093,7 +1113,7 @@ document.getElementById('gameNavBottom').innerHTML = gameNavHTML('2', 'margin-to
 // 初期描画 → クラウドから自動読込 → 以後は編集のたび自動保存
 render();
 booted = true;
-autoRestore().finally(() => { cloudReady = true; });
+autoRestore().finally(() => { cloudReady = true; if (golfMigrated) { golfMigrated = false; save(); } });
 window.addEventListener('beforeunload', flushCloudSave);
 window.addEventListener('pagehide', flushCloudSave);
 </script>
