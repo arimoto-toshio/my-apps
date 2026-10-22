@@ -794,9 +794,8 @@ function commitRec(auto){
   const members=[...$('fMembers').querySelectorAll('.chip.on')].map(b=>b.dataset.m);
   if(kind==='run'&&!members.length){say('担当者をえらんでください');return null;}
   const by=$('fBy').value;if(by)try{localStorage.setItem('onsen_me',by);}catch(e){}
-  const dup=live().find(r=>r.date===date&&r.id!==editId);
-  if(dup){if(auto){$('recAuto').textContent='⚠️ '+jdate(date)+' はもう記録があります。2件目にするなら「保存」を押してください';return null;}
-    if(!confirm(jdate(date)+' はもう記録があります。もう1件追加しますか？'))return null;}
+  const dup=live().find(r=>thuOf(r.date)===thuOf(date)&&r.id!==editId);
+  if(dup&&auto){$('recAuto').textContent='⚠️ この週（'+jdate(dup.date)+'）はもう記録があります。「保存」を押すと、その記録に1つにまとめます';return null;}
   const old=editId?S.recs.find(r=>r.id===editId):null;
   const r={id:editId||uid(),date,kind,
     members:kind==='run'?members:[],start:$('fStart').value,end:$('fEnd').value,
@@ -825,6 +824,7 @@ $('add').addEventListener('click',e=>{if(e.target.closest('.chip,.seg button'))s
 $('saveBtn').onclick=()=>{
   clearTimeout(recTimer);
   const r=commitRec(false);if(!r)return;
+  mergeWeeks();
   editId=null;renderAll();renderForm({});
   toast('保存しました');setTimeout(()=>mascotSay(pick(T().ok)),400);
   if(r.kind==='run'&&r.checks.length<S.set.checks.length)setTimeout(()=>falcoSay('点検もれがあるな。あとで見ておこう'),1800);
@@ -1068,7 +1068,33 @@ function mergeRecs(a,b){const m={};[...a,...b].forEach(x=>{if(!m[x.id]||(x.updat
 async function fetchCloud(){const r=await fetch(SYNC_URL+'?action=load&key='+SYNC_KEY,{cache:'no-store'});const j=await r.json();
   return (j&&j.success&&j.data&&Array.isArray(j.data.recs))?j.data:null;}
 function mergeSwaps(a,b){const o=Object.assign({},a);Object.entries(b||{}).forEach(([k,v])=>{if(!o[k]||(v.updatedAt||0)>(o[k].updatedAt||0))o[k]=v;});return o;}
-function absorb(c){S.recs=mergeRecs(S.recs,c.recs);S.fuel=mergeRecs(S.fuel,c.fuel||[]);S.swaps=mergeSwaps(S.swaps,c.swaps);if(c.set&&(c.set.updatedAt||0)>(S.set.updatedAt||0))S.set=Object.assign({},DEF_SET,c.set);}
+function absorb(c){S.recs=mergeRecs(S.recs,c.recs);S.fuel=mergeRecs(S.fuel,c.fuel||[]);S.swaps=mergeSwaps(S.swaps,c.swaps);if(c.set&&(c.set.updatedAt||0)>(S.set.updatedAt||0))S.set=Object.assign({},DEF_SET,c.set);mergeWeeks();}
+// ===== 運搬は週に1回だけ：同じ週（木曜で数える）の記録が2件以上あれば1つにまとめる（2026-10-22） =====
+// 残すのは「写真のある記録」→「先に作った記録」。ほかの記録の担当・点検・備考などは足し合わせ、残りは消した印をつける
+// （どの端末でも同じ記録が残るように、選び方は毎回同じ）
+function mergeWeeks(){
+  const by={};live().forEach(r=>{(by[thuOf(r.date)]=by[thuOf(r.date)]||[]).push(r);});
+  let n=0;const now=Date.now();
+  Object.values(by).forEach(g=>{
+    if(g.length<2)return;
+    g.sort((a,b)=>(b.photo?1:0)-(a.photo?1:0)||(a.createdAt||0)-(b.createdAt||0)||String(a.id).localeCompare(String(b.id)));
+    const k=g[0];
+    g.slice(1).forEach(o=>{
+      if(o.kind==='run'&&k.kind!=='run'){k.kind='run';k.trips=o.trips||1;}
+      k.members=[...new Set([...(k.members||[]),...(o.members||[])])];
+      k.checks=[...new Set([...(k.checks||[]),...(o.checks||[])])];
+      ['start','end','car','weather','by','liters'].concat(k.kind==='rest'?['reason']:[]).forEach(f=>{if((k[f]===''||k[f]==null)&&o[f]!==''&&o[f]!=null)k[f]=o[f];});   // 休みの理由は休みの記録のときだけ
+      if(o.note&&!(k.note||'').includes(o.note))k.note=k.note?k.note+'\n'+o.note:o.note;
+      if(o.date<k.date&&k.kind===o.kind)k.date=o.date;
+      o.deleted=true;o.updatedAt=now;n++;
+    });
+    if(k.kind==='rest'){k.members=[];k.checks=[];}
+    k.updatedAt=now;
+    if(editId&&g.slice(1).some(o=>o.id===editId))editId=k.id;
+  });
+  if(n){save();setTimeout(()=>toast('同じ週の記録を1つにまとめました（'+n+'件）'),300);if(typeof pushSoon==='function')pushSoon();}   // まとめた結果を共有へ
+  return n;
+}
 let pushing=false;
 async function pushCloud(silent){
   if(!lsOK())return;                       // プレビュー等 localStorage の無い環境からは送らない
@@ -1109,7 +1135,7 @@ document.querySelector('nav').onclick=e=>{const b=e.target.closest('button');if(
 document.addEventListener('click',e=>{const b=e.target.closest('[data-go]');if(b)showTab(b.dataset.go);});
 function renderAll(){renderWeek();if($('home').classList.contains('on'))renderHome();renderSet();if($('rot').classList.contains('on'))renderRot();if($('fuel').classList.contains('on'))renderFuel();if($('list').classList.contains('on'))renderList();if($('sum').classList.contains('on')){renderSumSel();renderSum();}}
 
-renderAll();renderForm({});renderFuelForm({});
+mergeWeeks();renderAll();renderForm({});renderFuelForm({});
 // ===== 今週のセリフ（毎週月曜に入れかわる・8週で一巡） =====
 const THEMES=[
  {name:'いつもの週',
