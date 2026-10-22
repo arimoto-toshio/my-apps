@@ -221,6 +221,11 @@ body.quiet #mascot,body.quiet #falco{display:none}
 .lrow .go{flex:none;color:#bbb;font-size:20px}
 .lrow.miss .d,.lrow.miss .w{color:var(--warn)}
 .lrow.rest .w{color:var(--sub)}
+.lrow.lack{background:#fff8e6}
+.lrow .w small.lackline{color:#b45309;font-weight:700;white-space:normal;display:flex;align-items:center;gap:5px;margin-top:3px}
+.lrow .w small.lackline.riji{color:#2e7d6b}
+.fface.rface{background:#e6f4ef var(--riji) no-repeat center/cover;border-color:#7cc4ad}
+.fface{flex:none;width:24px;height:24px;border-radius:50%;background:#fde7c7 var(--falco) no-repeat center 12%/170% auto;border:1.5px solid #e0a95c}
 .ftag{display:inline-block;font-size:11px;padding:1px 6px;border-radius:8px;background:#fff3e0;color:var(--amber);margin-left:4px;vertical-align:middle;font-weight:600}
 .hm-lab{font-size:15px;font-weight:600;opacity:.92}
 .hm-day{font-size:20px;font-weight:700;margin-top:2px}
@@ -618,7 +623,12 @@ function renderHome(){
     '<div class="hm-tile"><b>'+(lit?lit.toLocaleString():'—')+'</b><span>運んだ量(L)</span></div></div></div>';
   // 最近の木曜
   const days=[];for(let i=3;i>=-1;i--){const d=new Date(t+'T00:00');d.setDate(d.getDate()-i*7);if(ymd(d)>=thuOf(firstDate())||recOf(ymd(d)).length)days.push(ymd(d));}
-  h+='<div class="card"><div class="hm-h">📅 最近の木曜 <a href="#" data-htab="list">ぜんぶ見る ›</a></div><div class="hm-tl">'+days.map(ds=>{
+  const rows=days.slice().reverse().map(ds=>{const rs=recOf(ds);
+    if(rs.length)return lrowHTML(rs[0]);
+    if(ds<td&&ds>=firstDate())return lrowHTML({date:ds,miss:true});
+    return '';}).join('');
+  if(rows)h+='<div class="card lcard"><div class="hm-h">📅 最近の木曜 <a href="#" data-htab="list">ぜんぶ見る ›</a></div>'+rows+'</div>';
+  if(0)h+='<div class="card"><div class="hm-h">📅 最近の木曜 <a href="#" data-htab="list">ぜんぶ見る ›</a></div><div class="hm-tl">'+days.map(ds=>{
     const rs=recOf(ds);let ic,tx,c='';
     if(rs.length){const r=rs[0];if(r.kind==='rest'){ic='💤';tx='休み'+(r.reason?'<small>'+esc(r.reason)+'</small>':'');}
       else{ic='✅';tx=esc((r.members||[]).join('・'))+'<small>'+[r.start&&r.end?r.start+'〜'+r.end:'',r.liters?r.liters+'L'+(r.trips>1?'×'+r.trips:''):'',(r.checks||[]).length?'点検'+r.checks.length+'/'+S.set.checks.length:''].filter(Boolean).join('　')+'</small>';}}
@@ -640,11 +650,16 @@ function renderHome(){
       :'<div class="muted" style="margin-top:6px">未精算の立替はありません 👍</div>')+'</div>';
   // 最近の気づき
   const notes=live().filter(r=>r.note).sort((a,b)=>b.date.localeCompare(a.date)).slice(0,3);
-  if(notes.length)h+='<div class="card"><div class="hm-h">📝 最近の気づき・備考</div>'+notes.map(r=>
+  // 「最近の気づき・備考」は最近の木曜の行に備考が出るので外した（2026-10-22）
+  if(0&&notes.length)h+='<div class="card"><div class="hm-h">📝 最近の気づき・備考</div>'+notes.map(r=>
     '<div class="hm-note"><small>'+jdate(r.date)+'　'+esc((r.members||[]).join('・')||r.by||'')+'</small><br>'+esc(r.note)+'</div>').join('')+'</div>';
   el.innerHTML=h;
 }
 $('homeBody').onclick=e=>{const a=e.target.closest('[data-htab]');if(a){e.preventDefault();showTab(a.dataset.htab);return;}
+  const lr=e.target.closest('.lrow');if(lr){flushAuto();
+    if(lr.dataset.new){editId=null;renderForm({date:lr.dataset.new});}
+    else{editId=lr.dataset.ed;renderForm(S.recs.find(r=>r.id===editId));}
+    showTab('add');window.scrollTo(0,0);return;}
   const g=e.target.closest('[data-hgo],[data-hrest]');if(g){const ds=g.dataset.hgo||g.dataset.hrest;flushAuto();
     const old=live().find(r=>r.date===ds);editId=old?old.id:null;
     renderForm(old||{date:ds,kind:g.dataset.hrest?'rest':'run'});showTab('add');window.scrollTo(0,0);
@@ -954,17 +969,37 @@ function renderList(){
   const miss=missingThursdays(ym+'-01',ym+'-31').map(d=>({date:d,miss:true}));
   const all=[...recs,...miss].sort((a,b)=>b.date.localeCompare(a.date));
   if(!all.length){$('recList').innerHTML='<div class="card muted">この月の記録はありません</div>';return;}
+  $('recList').innerHTML='<div class="card lcard">'+all.map(lrowHTML).join('')+'</div>';
+}
+// 一覧の1行（ホームの「最近の木曜」でも同じ形を使う・2026-10-22）
+function setFalcoVar(){try{const R=document.documentElement.style;
+  const b=document.querySelector('#falco .body');if(b&&!R.getPropertyValue('--falco'))R.setProperty('--falco',b.style.backgroundImage);
+  const m=document.querySelector('#mascot .face');if(m&&!R.getPropertyValue('--riji'))R.setProperty('--riji',m.style.backgroundImage);}catch(e){}}
+function lrowHTML(r){setFalcoVar();
   const td=today(),car0=S.set.cars[0]||'',nc=S.set.checks.length;
-  $('recList').innerHTML='<div class="card lcard">'+all.map(r=>{
+  {
     if(r.miss)return '<div class="lrow miss" data-new="'+r.date+'"><span class="d">'+jdate(r.date)+'</span><span class="w">記録なし<small>タップして記録する</small></span><span class="go">＋</span></div>';
     const fut=r.date>td?'<span class="ftag">🗓 先の日付</span>':'';
     if(r.kind==='rest')return '<div class="lrow rest" data-ed="'+r.id+'"><span class="d">'+jdate(r.date)+'</span><span class="w">💤 休み'+fut+(r.reason||r.note?'<small>'+esc([r.reason,r.note].filter(Boolean).join('　'))+'</small>':'')+'</span><span class="go">›</span></div>';
     const okc=(r.checks||[]).length;
     const pm=r.photoMeta,phWarn=pm&&(ymd(new Date(pm.at))!==r.date||(pm.dist!=null&&pm.dist>500));
     const sub=[r.car&&r.car!==car0?'🚚'+esc(r.car):'',r.start&&r.end?esc(r.start)+'〜'+esc(r.end):'',r.note?'📝'+esc(r.note):''].filter(Boolean).join('　');
-    return '<div class="lrow" data-ed="'+r.id+'"><span class="d">'+jdate(r.date)+'</span><span class="w">'+esc((r.members||[]).join('・'))+fut+(sub?'<small>'+sub+'</small>':'')+'</span>'+
-      '<span class="ic">'+(r.photo?'📷':'')+(okc>=nc&&!phWarn?'✅':'<span title="点検の抜け・写真の注意">⚠️</span>')+'</span><span class="go">›</span></div>';
-  }).join('')+'</div>';
+    // 足りないものを言葉で出す（2026-10-22「ちゃんと記録されていないことをもっとわかりやすく」）
+    const lack=[];
+    const soft=[];   // 理事長のやさしい言い方
+    // 点検・写真は「やっていない」ではなく「記録に入っていない」と言う（2026-10-22 本人「点検は終わってるけど記録がないだけ」）
+    if(okc<nc){lack.push(okc?'点検のチェックが'+okc+'/'+nc+'しか入ってない':'点検のチェックが入ってない');soft.push(okc?'点検のチェックをあと'+(nc-okc)+'つ入れといてね':'点検のチェックを入れといてね');}
+    if(!r.photo){lack.push('写真が入ってない');soft.push('写真も入れといてね');}
+    else if(pm&&ymd(new Date(pm.at))!==r.date){lack.push('写真の日付が違う');soft.push('写真の日付がちがうみたいよ');}
+    else if(pm&&pm.dist!=null&&pm.dist>500){lack.push('写真がリュウオウから遠い');soft.push('写真の場所がちょっと遠いみたいよ');}
+    // 森脇さんはファルコ様ご本人なので、森脇さんの記録だけは理事長がやさしく言う（2026-10-22）
+    const isFalco=(r.members||[]).includes('森脇');
+    const bad=lack.length&&r.date<=td;
+    return '<div class="lrow'+(bad?' lack':'')+'" data-ed="'+r.id+'"><span class="d">'+jdate(r.date)+'</span><span class="w">'+esc((r.members||[]).join('・'))+fut+(sub?'<small>'+sub+'</small>':'')+
+      (bad?(isFalco?'<small class="lackline riji"><i class="fface rface"></i>理事長「森脇さん、'+soft.join('。')+'。押して直してくれたら助かるよ😊」</small>'
+                   :'<small class="lackline"><i class="fface"></i>ファルコ様「'+lack.map(x=>x+'ぞ！').join('')+'押して直せ」</small>'):'')+'</span>'+
+      '<span class="ic">'+(r.photo?'📷':'')+(bad?'<span title="'+lack.join('・')+'">⚠️</span>':'✅')+'</span><span class="go">›</span></div>';
+  }
 }
 const acts=r=>'<div class="acts"><button class="btn sm gray" data-ed="'+r.id+'">直す</button><button class="btn sm gray" data-del="'+r.id+'">消す</button></div>';
 $('lMonth').onchange=renderList;
