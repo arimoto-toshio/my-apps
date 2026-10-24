@@ -100,6 +100,37 @@ td.r,th.r{text-align:right}
 }
 #receipt{display:none}
 @media print{ body.receipt main{display:none} body.receipt #receipt{display:block} }
+/* レシート画面（タブレット1画面に収める） */
+.rcModal{position:fixed;inset:0;background:#3a302acc;z-index:60;display:flex;align-items:center;justify-content:center;padding:10px}
+.rcBox{display:flex;flex-direction:column;align-items:center;width:min(400px,94vw);max-height:100%}
+.zig{width:100%;height:9px;flex:none;background-repeat:repeat-x;background-size:16px 9px}
+.zig.top{background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='9'%3E%3Cpath d='M0 9L8 0L16 9Z' fill='%23fffdf8'/%3E%3C/svg%3E")}
+.zig.bot{background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='9'%3E%3Cpath d='M0 0H16L8 9Z' fill='%23fffdf8'/%3E%3C/svg%3E")}
+.rcPaper{width:100%;background:#fffdf8;color:#222;padding:10px 20px 14px;overflow:hidden;font-family:"Osaka-Mono","Hiragino Sans",monospace;font-size:15px;line-height:1.35;flex:0 1 auto;min-height:0}
+.rcPaper.scroll{overflow:auto}
+.rcPaper .shop{text-align:center;font-size:1.55em;font-weight:800;letter-spacing:.12em;margin:4px 0 0}
+.rcPaper .ttl{text-align:center;font-size:.85em;letter-spacing:.3em;margin:2px 0 6px;color:#555}
+.rcPaper .cap{text-align:center;font-weight:800;border:2px solid #222;padding:2px;margin:4px 0;letter-spacing:.2em}
+.rcPaper .meta{display:flex;justify-content:space-between;font-size:.88em}
+.rcPaper hr{border:none;border-top:1.5px dashed #999;margin:6px 0}
+.rcPaper .its{display:grid;grid-template-columns:1fr;column-gap:16px}
+.rcPaper.two .its{grid-template-columns:1fr 1fr}
+.rcPaper .it{display:flex;justify-content:space-between;gap:8px;padding:1px 0}
+.rcPaper .it .n{flex:1;min-width:0;overflow-wrap:anywhere}
+.rcPaper .it .u{display:block;font-size:.8em;color:#666;padding-left:1em}
+.rcPaper .kv{display:flex;justify-content:space-between}
+.rcPaper .kv.tot{font-size:1.6em;font-weight:800;margin:3px 0}
+.rcPaper .kv.sm{font-size:.85em;color:#555}
+.rcPaper .thx{text-align:center;font-size:.85em;margin-top:6px;color:#555}
+.rcPaper .stamp{text-align:center;color:#c00;border:3px solid #c00;font-weight:800;font-size:1.3em;margin:6px 20%;transform:rotate(-6deg)}
+.rcBtns{display:flex;gap:8px;margin-top:10px;flex:none;width:100%}
+.rcBtns .btn{flex:1;padding:12px 6px}
+@media print{
+  body.printRc header,body.printRc nav,body.printRc main,body.printRc .modal{display:none!important}
+  body.printRc .rcModal{position:static;background:none;padding:0}
+  body.printRc .rcBtns,body.printRc .zig{display:none}
+  body.printRc .rcPaper{overflow:visible;max-height:none}
+}
 </style>
 </head>
 <body>
@@ -144,8 +175,9 @@ td.r,th.r{text-align:right}
         <div class="lines" id="lines"></div>
         <div class="total"><span>合計（税込）</span><b id="sum">0円</b></div>
         <div class="row" style="margin-top:10px">
-          <button class="btn ghost" id="clearSlip">🗑 伝票取消</button>
-          <button class="btn main" id="goPay" style="flex:1;padding:14px;font-size:18px">会計する</button>
+          <button class="btn ghost" id="clearSlip" style="padding:10px 8px">🗑 取消</button>
+          <button class="btn ghost" id="preBill" style="padding:10px 8px">🧾 お勘定</button>
+          <button class="btn main" id="goPay" style="flex:1;padding:14px;font-size:18px;white-space:nowrap">会計する</button>
         </div>
       </div>
     </div>
@@ -211,6 +243,10 @@ td.r,th.r{text-align:right}
 </main>
 
 <div id="receipt"></div>
+<div class="rcModal hide" id="rcModal"><div class="rcBox">
+  <div class="zig top"></div><div class="rcPaper" id="rcPaper"></div><div class="zig bot"></div>
+  <div class="rcBtns" id="rcBtns"></div>
+</div></div>
 <div class="modal hide" id="payModal"><div class="sheet" id="paySheet"></div></div>
 
 <script>
@@ -376,9 +412,58 @@ function finishPay(sub,total,rec){
   $('payModal').classList.add('hide');
   showTab('tables');
   toast(`No.${no} 会計完了 ${cash?'おつり '+yen(bill.change):''}`);
-  if(confirm(`No.${no} 会計完了！${cash?'\nおつり '+yen(bill.change):''}\n\n領収書を印刷しますか？`))printReceipt(bill);
+  showReceipt(bill);
   pushCloud(true);
 }
+
+// ===== レシート画面 =====
+const WD='日月火水木金土';
+function showReceipt(b,pre){
+  const dt=new Date(b.date+'T00:00');
+  const its=b.items.map(x=>`<div class="it"><span class="n">${esc(x.name)}${x.qty>1?`<span class="u">@${yen(x.price)} × ${x.qty}</span>`:''}</span><span>${yen(x.price*x.qty)}</span></div>`).join('');
+  const pm=PAYS.find(p=>p[0]===b.method);
+  $('rcPaper').innerHTML=`
+    <div class="shop">焼肉ありもと</div>
+    <div class="ttl">${pre?'お 勘 定 書':'レ シ ー ト'}</div>
+    ${pre?'<div class="cap">まだお会計前です</div>':''}
+    <div class="meta"><span>${b.date.replace(/-/g,'/')}(${WD[dt.getDay()]}) ${b.time}</span><span>${pre?'':'No.'+b.no}</span></div>
+    <div class="meta"><span>卓 ${esc(b.table)}${b.people?' ・ '+esc(b.people)+'名':''}</span><span>${b.items.reduce((a,x)=>a+x.qty,0)}点</span></div>
+    <hr><div class="its">${its}</div><hr>
+    <div class="kv"><span>小計</span><span>${yen(b.subtotal)}</span></div>
+    ${b.discount?`<div class="kv"><span>値引き</span><span>-${yen(b.discount)}</span></div>`:''}
+    <div class="kv tot"><span>合計</span><span>${yen(b.total)}</span></div>
+    <div class="kv sm"><span>（10%対象 ${yen(b.total)}　内消費税等</span><span>${yen(Math.floor(b.total*10/110))}）</span></div>
+    ${pre?'':`<hr>${b.method==='cash'
+      ?`<div class="kv"><span>お預かり（現金）</span><span>${yen(b.received)}</span></div><div class="kv" style="font-weight:800;font-size:1.2em"><span>おつり</span><span>${yen(b.change)}</span></div>`
+      :`<div class="kv"><span>${pm?pm[1]:''}</span><span>${yen(b.total)}</span></div>`}`}
+    ${b.voided?'<div class="stamp">取 消</div>':''}
+    <div class="thx">${pre?'お会計はレジでお願いします':'ご来店ありがとうございました'}</div>`;
+  $('rcBtns').innerHTML=`<button class="btn ghost" id="rcPrint" style="background:#fff">🖨 印刷</button>
+    ${pre?'':'<button class="btn" id="rcRyo" style="background:#fff">📄 領収書</button>'}
+    <button class="btn main" id="rcClose">閉じる</button>`;
+  $('rcModal').classList.remove('hide');
+  fitReceipt();
+  $('rcClose').onclick=()=>$('rcModal').classList.add('hide');
+  $('rcPrint').onclick=()=>{document.body.classList.add('printRc');window.print();setTimeout(()=>document.body.classList.remove('printRc'),500);};
+  if(!pre)$('rcRyo').onclick=()=>{$('rcModal').classList.add('hide');printReceipt(b);};
+}
+// 品目が多い時は字を小さく→2列にして、スクロールなしで1画面に収める
+function fitReceipt(){
+  const p=$('rcPaper'); p.classList.remove('two','scroll');
+  const room=()=>window.innerHeight-20-18-62;   // 余白・ギザギザ・ボタン分
+  p.style.maxHeight=room()+'px';
+  const over=()=>p.scrollHeight>p.clientHeight+1;
+  let fs=15; p.style.fontSize=fs+'px';
+  while(over()&&fs>12){fs-=.5;p.style.fontSize=fs+'px';}
+  if(over()){p.classList.add('two');fs=15;p.style.fontSize=fs+'px';while(over()&&fs>10){fs-=.5;p.style.fontSize=fs+'px';}}
+  if(over())p.classList.add('scroll');
+}
+window.addEventListener('resize',()=>{if(!$('rcModal').classList.contains('hide'))fitReceipt();});
+$('preBill').onclick=()=>{
+  const o=S.open[curTable]; if(!o||!o.items.length){toast('伝票が空です');return;}
+  const sub=slipTotal(o.items);
+  showReceipt({date:today(),time:nowTime(),table:curTable,people:o.people||'',items:o.items,subtotal:sub,discount:0,total:sub},true);
+};
 
 // ===== 領収書 =====
 function printReceipt(b){
@@ -434,7 +519,7 @@ function renderHon(){
     if(!b.voided&&!confirm(`No.${b.no}（${yen(b.total)}）を取消にしますか？`))return;
     b.voided=!b.voided; b.updatedAt=Date.now(); save(); renderHon(); pushCloud(true);
   });
-  $('honList').querySelectorAll('[data-rc]').forEach(btn=>btn.onclick=()=>printReceipt(S.bills.find(x=>x.id===btn.dataset.rc)));
+  $('honList').querySelectorAll('[data-rc]').forEach(btn=>btn.onclick=()=>showReceipt(S.bills.find(x=>x.id===btn.dataset.rc)));
 }
 
 // ===== 集計 =====
