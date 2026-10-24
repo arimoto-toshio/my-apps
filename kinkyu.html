@@ -112,7 +112,7 @@ td.r,th.r{text-align:right}
 .pill.qr{background:#f3e8fb;color:#7b3fa8}
 .progress{height:10px;background:#ece6de;border-radius:999px;overflow:hidden}
 .progress div{height:100%;background:var(--ok)}
-.set-item{display:grid;grid-template-columns:1fr 90px 92px 34px;gap:6px;margin-bottom:6px}
+.set-item{display:grid;grid-template-columns:1fr 80px 80px 92px 34px;gap:6px;margin-bottom:6px}
 .set-item input,.set-item select{padding:7px;border:1px solid var(--line);border-radius:8px;width:100%}
 @media print{
   header,nav,.noprint{display:none!important}
@@ -250,7 +250,7 @@ td.r,th.r{text-align:right}
     </div>
     <div class="card">
       <h2>メニューと値段（税込）</h2>
-      <p class="muted" style="margin-top:-4px">本家と同じ値段にしておくと打ち込み時に合計が合います。飲み物・ごはんは店のメニュー表、肉は月次集計の単価（税抜×1.1を10円単位）。</p>
+      <p class="muted" style="margin-top:-4px">本家と同じ値段にしておくと打ち込み時に合計が合います。飲み物・ごはんは店のメニュー表、肉は月次集計の単価（税抜×1.1を10円単位）。「持帰り」は店の持帰りメニュー表の値段（空欄なら店内と同じ値段）。</p>
       <div id="menuEdit"></div>
       <div class="row" style="margin-top:8px">
         <button class="btn" id="addMenu">＋ 品目を追加</button>
@@ -275,7 +275,11 @@ const SYNC_URL='https://script.google.com/macros/s/AKfycbxwL19mAenATUMILRsQYrDL0
 const SYNC_KEY='kinkyu_pos_data';
 const CATS=['肉','ドリンク','ごはん・汁','一品'];
 // メニュー（税込）。肉は月次集計（2026年9月）の税抜単価×1.1、飲み物・ごはん等は店のメニュー表（2026-10-08）
-const MENU_VER=3;
+const MENU_VER=4;
+// 持ち帰り価格（税込8%）。店の「持帰りメニュー（軽減税率対象商品）」表（2026-10-24写真）
+const TK_PRICE={'厚切りロース':1375,'牛ロース':1277,'骨付カルビ':1178,'バラ':1178,'ハラミ':1061,'ホルモン':737,'ミノ上':737,
+ '塩タン':1277,'タンサキ':737,'ブタ':737,'レバー':707,'センマイ':667,'センマイ生':864,'地鶏':687,'かしわ':589,'ウインナー':491,
+ 'めし大':324,'めし中':275,'めし小':246,'キムチ大（持帰り）':520};
 const DEFAULT_MENU=[
  ['牛ロース',1300,'肉'],['厚切りロース',1400,'肉'],['バラ',1200,'肉'],['骨付カルビ',1200,'肉'],['ハラミ',1080,'肉'],
  ['ミノ上',750,'肉'],['塩タン',1300,'肉'],['タンサキ',750,'肉'],['レバー',720,'肉'],['センマイ',680,'肉'],['センマイ生',880,'肉'],
@@ -289,7 +293,7 @@ const DEFAULT_MENU=[
  ['めし大',330,'ごはん・汁'],['めし中',280,'ごはん・汁'],['めし小',250,'ごはん・汁'],['赤だし',350,'ごはん・汁'],['みそ汁',350,'ごはん・汁'],['ワカメスープ',350,'ごはん・汁'],
  ['キムチ（追加）',150,'ごはん・汁'],['キャベツ（追加）',150,'ごはん・汁'],
  ['キムチ大（持帰り）',530,'一品'],['野菜',530,'一品'],['冷やしトマト',430,'一品'],['サラダ',430,'一品'],['バニラアイス',380,'一品'],['りんごアイス',380,'一品']
-].map(([name,price,cat],i)=>({id:'m'+i,name,price,cat}));
+].map(([name,price,cat],i)=>({id:'m'+i,name,price,cat,tkPrice:TK_PRICE[name]||0}));
 const DEFAULT_TABLES=['1','2','3','4','5','6','7','8','9','10','座敷1','座敷2','持帰り'];
 // 店の情報（請求書アプリと同じ）。電話番号はわかったら入れる
 const SHOP={name:'有限会社 焼肉ありもと',addr:'愛媛県喜多郡内子町内子2065番地',tel:'',reg:'T9500002011952'};
@@ -383,15 +387,17 @@ function renderMenu(){
   const items=S.open[curTable].items;
   $('menu').innerHTML=S.menu.filter(m=>m.cat===curCat).map(m=>{
     const q=items.filter(x=>x.mid===m.id).reduce((a,x)=>a+x.qty,0);
-    return `<button class="mi" data-id="${m.id}">${esc(m.name)}<span>${yen(m.price)}</span>${q?`<b>${q}</b>`:''}</button>`;
+    return `<button class="mi" data-id="${m.id}">${esc(m.name)}<span>${yen(priceOf(m,isTakeoutTable(curTable)||/持帰/.test(m.name)))}</span>${q?`<b>${q}</b>`:''}</button>`;
   }).join('');
   $('menu').querySelectorAll('.mi').forEach(b=>b.onclick=()=>addItem(S.menu.find(m=>m.id===b.dataset.id)));
 }
+const priceOf=(m,tk)=>tk&&m.tkPrice?m.tkPrice:m.price;
 function addItem(m){
   const items=S.open[curTable].items;
   const tk=isTakeoutTable(curTable)||/持帰|持ち帰/.test(m.name);
-  const ex=items.find(x=>x.mid===m.id&&x.price===m.price&&itemTk(x,curTable)===tk);
-  if(ex)ex.qty++; else items.push({mid:m.id,name:m.name,price:m.price,qty:1,tk});
+  const price=priceOf(m,tk);
+  const ex=items.find(x=>x.mid===m.id&&x.price===price&&itemTk(x,curTable)===tk);
+  if(ex)ex.qty++; else items.push({mid:m.id,name:m.name,price,qty:1,tk});
   save(); renderMenu(); renderSlip();
 }
 $('freeItem').onclick=()=>{
@@ -409,7 +415,9 @@ function renderSlip(){
     <button class="qb" data-i="${i}" data-d="1">＋</button><span class="sm">${yen(x.price*x.qty)}</span></div>`;}).join('')
     :'<p class="muted">左のメニューをタップして追加</p>';
   $('lines').querySelectorAll('[data-tk]').forEach(b=>b.onclick=()=>{
-    const x=items[b.dataset.tk]; x.tk=!itemTk(x,curTable); save(); renderSlip();
+    const x=items[b.dataset.tk]; x.tk=!itemTk(x,curTable);
+    const m=S.menu.find(mm=>mm.id===x.mid); if(m)x.price=priceOf(m,x.tk);   // 持帰りにすると持ち帰り価格へ
+    save(); renderSlip();
   });
   $('lines').querySelectorAll('.qb').forEach(b=>b.onclick=()=>{
     const x=items[b.dataset.i]; x.qty+=+b.dataset.d; if(x.qty<=0)items.splice(b.dataset.i,1);
@@ -627,16 +635,17 @@ function renderSum(){
 
 // ===== 設定 =====
 function renderSet(){
-  $('menuEdit').innerHTML=S.menu.map((m,i)=>`<div class="set-item">
+  $('menuEdit').innerHTML='<div class="set-item muted"><span>品名</span><span>店内</span><span>持帰り</span><span>分類</span><span></span></div>'+S.menu.map((m,i)=>`<div class="set-item">
     <input data-f="name" data-i="${i}" value="${esc(m.name)}">
     <input data-f="price" data-i="${i}" type="number" step="10" value="${m.price}">
+    <input data-f="tkPrice" data-i="${i}" type="number" value="${m.tkPrice||''}" placeholder="―">
     <select data-f="cat" data-i="${i}">${CATS.map(c=>`<option ${c===m.cat?'selected':''}>${c}</option>`).join('')}</select>
     <button class="qb" data-del="${i}">×</button></div>`).join('');
   $('menuEdit').querySelectorAll('[data-del]').forEach(b=>b.onclick=()=>{readMenuEdit();S.menu.splice(b.dataset.del,1);renderSet();});
   $('cloudStat').textContent='この端末の伝票: '+S.bills.length+'件';
 }
 function readMenuEdit(){
-  $('menuEdit').querySelectorAll('[data-f]').forEach(el=>{const m=S.menu[el.dataset.i];m[el.dataset.f]=el.dataset.f==='price'?(parseInt(el.value,10)||0):el.value;});
+  $('menuEdit').querySelectorAll('[data-f]').forEach(el=>{const m=S.menu[el.dataset.i];m[el.dataset.f]=/price|tkPrice/.test(el.dataset.f)?(parseInt(el.value,10)||0):el.value;});
 }
 $('addMenu').onclick=()=>{readMenuEdit();S.menu.push({id:'u'+Date.now(),name:'新しい品目',price:0,cat:curCat});renderSet();};
 $('saveMenu').onclick=()=>{readMenuEdit();save();toast('メニューを保存しました');};
