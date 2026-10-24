@@ -102,6 +102,152 @@
     body.print-sum #sumModal .close-x{display:none !important;}
   }
 </style>
+<!--cloudlock:start-->
+<script>window.CLOUDLOCK_KEYS=["shiire_data"];</script>
+<script>
+/* ==== 合言葉カギ（cloudlock v1）==== 焼肉ありもと等の全アプリ共通。
+   クラウド(GAS)へ送る時に合言葉で暗号化し、読む時に戻す。アプリ側の fetch はそのまま。
+   使い方: アプリの最初の<script>より前に置き、 window.CLOUDLOCK_KEYS=['自分のkey',...] を書く。
+   合言葉は全アプリ共通（localStorage 'arimoto_cloud_pass'）。クラウドの 'arimoto_cloud_check' で同じ合言葉か確かめる。 */
+(function(){
+  const GAS_ID='AKfycbxwL19mAenATUMILRsQYrDL0ThjU2C583Cj729OfzNHEH3drMcZCExYULRp4VGOZ11J';
+  const PASS_KEY='arimoto_cloud_pass', CHECK_KEY='arimoto_cloud_check', CHECK_TEXT='arimoto-ok';
+  const MY=()=>window.CLOUDLOCK_KEYS||[];
+  const rawFetch=window.fetch.bind(window);
+  const te=new TextEncoder(), td=new TextDecoder();
+  let PASS=null; try{ PASS=localStorage.getItem(PASS_KEY); }catch(e){}
+  const b64=u=>{ let s=''; for(let i=0;i<u.length;i+=8192) s+=String.fromCharCode.apply(null,u.subarray(i,i+8192)); return btoa(s); };
+  const unb64=t=>Uint8Array.from(atob(t),c=>c.charCodeAt(0));
+  const keyCache={};
+  async function deriveKey(pass,saltB64){
+    const ck=pass+'|'+saltB64; if(keyCache[ck]) return keyCache[ck];
+    const base=await crypto.subtle.importKey('raw',te.encode(pass),'PBKDF2',false,['deriveKey']);
+    return keyCache[ck]=crypto.subtle.deriveKey({name:'PBKDF2',salt:unb64(saltB64),iterations:200000,hash:'SHA-256'},base,{name:'AES-GCM',length:256},false,['encrypt','decrypt']);
+  }
+  let sessSalt=null;
+  async function enc(text,pass){
+    sessSalt=sessSalt||b64(crypto.getRandomValues(new Uint8Array(16)));
+    const iv=crypto.getRandomValues(new Uint8Array(12));
+    const ct=new Uint8Array(await crypto.subtle.encrypt({name:'AES-GCM',iv},await deriveKey(pass,sessSalt),te.encode(text)));
+    return {enc:1,v:1,salt:sessSalt,iv:b64(iv),ct:b64(ct),savedAt:Date.now()};
+  }
+  async function dec(e,pass){
+    const pt=await crypto.subtle.decrypt({name:'AES-GCM',iv:unb64(e.iv)},await deriveKey(pass,e.salt),unb64(e.ct));
+    return td.decode(pt);
+  }
+  const isEnc=d=>d&&typeof d==='object'&&d.enc===1&&d.ct;
+  const parse=d=>{ if(typeof d==='string'){ try{ return JSON.parse(d); }catch(e){} } return d; };
+  const jres=o=>new Response(JSON.stringify(o),{status:200,headers:{'Content-Type':'application/json'}});
+  function info(url){ try{ const u=new URL(url,location.href); if(!u.href.includes(GAS_ID)) return null; return {action:u.searchParams.get('action'),key:u.searchParams.get('key')}; }catch(e){ return null; } }
+  async function rawLoad(key){ const r=await rawFetch('https://script.google.com/macros/s/'+GAS_ID+'/exec?action=load&key='+encodeURIComponent(key),{cache:'no-store'}); const j=await r.json(); return parse(j&&j.data); }
+  async function rawSave(key,obj){ const r=await rawFetch('https://script.google.com/macros/s/'+GAS_ID+'/exec?action=save&key='+encodeURIComponent(key),{method:'POST',body:JSON.stringify(obj)}); return r.json(); }
+  let locked=false;   // カギのかかったデータがあるのに合言葉が無い
+  window.fetch=async function(input,init){
+    const url=typeof input==='string'?input:(input&&input.url)||''; const inf=info(url);
+    if(!inf||!window.crypto||!crypto.subtle) return rawFetch(input,init);
+    if(inf.action==='save'){
+      const mine=MY().includes(inf.key);
+      if(!mine) return rawFetch(input,init);
+      if(!PASS){
+        // まだカギをかけていない（クラウドが平文）なら今まで通り。かかっていたら上書きしない
+        let cur=null; try{ cur=await rawLoad(inf.key); }catch(e){ return jres({success:false,message:'通信エラー'}); }
+        cloudEnc[inf.key]=isEnc(cur);
+        if(isEnc(cur)){ showLock(); return jres({success:false,message:'合言葉が入っていないので保存しません'}); }
+        return rawFetch(input,init);
+      }
+      const body=init&&init.body; const text=typeof body==='string'?body:(body==null?'':String(body));
+      const e=await enc(text,PASS);
+      return rawFetch(input,Object.assign({},init,{body:JSON.stringify(e)}));
+    }
+    if(inf.action==='load'){
+      const r=await rawFetch(input,init); let j; try{ j=await r.clone().json(); }catch(e){ return r; }
+      const d=parse(j&&j.data); cloudEnc[inf.key]=isEnc(d);
+      if(!isEnc(d)) return r;
+      if(!PASS){ locked=true; showLock(); return jres({success:true,data:null}); }
+      try{ const t=await dec(d,PASS); let v; try{ v=JSON.parse(t); }catch(e){ v=t; } return jres(Object.assign({},j,{data:v})); }
+      catch(e){ forget(); showLock('bad'); return jres({success:true,data:null}); }
+    }
+    return rawFetch(input,init);
+  };
+  // 閉じる瞬間のビーコン送信（家族資産・ハワイ）も暗号化。合言葉が無くカギつきかもしれない時は送らない
+  const cloudEnc={};
+  if(navigator.sendBeacon){
+    const rawBeacon=navigator.sendBeacon.bind(navigator);
+    navigator.sendBeacon=function(url,body){
+      const inf=info(String(url));
+      if(!inf||inf.action!=='save'||!MY().includes(inf.key)||!window.crypto||!crypto.subtle) return rawBeacon(url,body);
+      if(!PASS){ return cloudEnc[inf.key]===false ? rawBeacon(url,body) : true; }
+      (async()=>{ const text=typeof body==='string'?body:await new Response(body).text();
+        rawFetch(url,{method:'POST',body:JSON.stringify(await enc(text,PASS)),keepalive:true}).catch(()=>{}); })();
+      return true;
+    };
+  }
+  function forget(){ PASS=null; try{ localStorage.removeItem(PASS_KEY); }catch(e){} }
+  // ---- 画面 ----
+  const css='.clk-ov{position:fixed;inset:0;background:rgba(40,30,25,.55);z-index:2147483000;display:flex;align-items:center;justify-content:center;padding:16px;font-family:-apple-system,"Hiragino Sans",sans-serif}'
+   +'.clk-b{background:#fff;color:#2b2420;border-radius:16px;padding:22px 20px;width:100%;max-width:420px;box-shadow:0 10px 30px rgba(0,0,0,.25)}'
+   +'.clk-b h2{margin:0 0 6px;font-size:20px}.clk-b p{font-size:14px;color:#6b5f57;line-height:1.6;margin:6px 0 12px}'
+   +'.clk-b input{width:100%;box-sizing:border-box;font-size:19px;padding:11px;border:1px solid #ddd2c6;border-radius:10px;margin-bottom:9px}'
+   +'.clk-e{color:#c62828;font-weight:bold;font-size:14px;min-height:1.2em;margin-bottom:6px}.clk-r{display:flex;gap:8px}'
+   +'.clk-r button{flex:1;font-size:15px;padding:12px;border-radius:10px;border:1px solid #ddd2c6;background:#fff;cursor:pointer}.clk-r button.p{background:#b5452f;color:#fff;border-color:#b5452f;font-weight:bold}'
+   +'.clk-pill{position:fixed;right:10px;bottom:10px;z-index:2147482000;background:#2f7d4f;color:#fff;font:12px -apple-system,sans-serif;padding:4px 10px;border-radius:999px;opacity:.85;cursor:pointer}';
+  let shown=false;
+  async function showLock(why){
+    if(shown) return; shown=true;
+    if(!document.body){ document.addEventListener('DOMContentLoaded',()=>{shown=false;showLock(why);}); return; }
+    if(!document.getElementById('clk-css')){ const s=document.createElement('style'); s.id='clk-css'; s.textContent=css; document.head.appendChild(s); }
+    const ov=document.createElement('div'); ov.className='clk-ov'; ov.innerHTML='<div class="clk-b"><h2>🔒 確認中...</h2></div>'; document.body.appendChild(ov);
+    const box=ov.firstChild; let mode;
+    try{ const c=await rawLoad(CHECK_KEY); mode=isEnc(c)?'enter':'set'; }catch(e){ mode='offline'; }
+    const close=()=>{ ov.remove(); shown=false; };
+    const later=locked?'':'<button data-a="later">あとで</button>';
+    if(mode==='enter') box.innerHTML='<h2>🔒 合言葉を入れてください</h2><p>'+(why==='bad'?'<b>合言葉が変わっています。</b>':'')+'このアプリのクラウドのデータにはカギがかかっています。<b>全アプリ共通の合言葉</b>を入れてください（この端末では次から入れなくてOK）。</p><input type="password" id="clk1" placeholder="合言葉" autocomplete="current-password"><div class="clk-e" id="clke"></div><div class="clk-r">'+later+'<button class="p" data-a="ok">開く</button></div>';
+    else if(mode==='set') box.innerHTML='<h2>🔑 合言葉を決めてください</h2><p>クラウドのデータにカギをかけます。<b>全アプリ共通</b>の合言葉です（4文字以上）。iPadなどでは最初に1回入れるだけ。<br><b>忘れるとほかの端末で開けなくなるので、紙に書いて保管してください。</b></p><input type="password" id="clk1" placeholder="合言葉" autocomplete="new-password"><input type="password" id="clk2" placeholder="もう一度" autocomplete="new-password"><div class="clk-e" id="clke"></div><div class="clk-r">'+later+'<button class="p" data-a="ok">決める</button></div>';
+    else box.innerHTML='<h2>📡 電波がありません</h2><p>クラウドを確認できませんでした。電波のある所でもう一度開いてください。</p><div class="clk-r"><button data-a="later">閉じる</button><button class="p" data-a="retry">もう一度</button></div>';
+    const i1=box.querySelector('#clk1'); if(i1) setTimeout(()=>i1.focus(),50);
+    box.addEventListener('keydown',ev=>{ if(ev.key==='Enter'&&!ev.isComposing) box.querySelector('[data-a=ok]')&&box.querySelector('[data-a=ok]').click(); });
+    box.addEventListener('click',async ev=>{
+      const a=ev.target.dataset&&ev.target.dataset.a; if(!a) return; const err=box.querySelector('#clke');
+      if(a==='later') return close();
+      if(a==='retry'){ close(); return showLock(why); }
+      const p1=box.querySelector('#clk1').value, p2=(box.querySelector('#clk2')||{}).value;
+      if(mode==='enter'){
+        if(!p1){ err.textContent='合言葉を入れてください'; return; }
+        err.textContent='確認中...';
+        try{ const c=await rawLoad(CHECK_KEY); if(await dec(c,p1)!==CHECK_TEXT) throw 0; }catch(e){ err.textContent='❌ 合言葉がちがいます'; return; }
+        try{ localStorage.setItem(PASS_KEY,p1); }catch(e){} PASS=p1;
+        err.textContent='🔓 開きました。読み込み直します...'; await lockMine(); setTimeout(()=>location.reload(),400); return;
+      }
+      if((p1||'').length<4){ err.textContent='4文字以上にしてください'; return; }
+      if(p1!==p2){ err.textContent='2回の入力がちがいます'; return; }
+      err.textContent='カギをかけています...';
+      try{ await rawSave(CHECK_KEY,await enc(CHECK_TEXT,p1)); }catch(e){ err.textContent='電波を確認してください'; return; }
+      try{ localStorage.setItem(PASS_KEY,p1); }catch(e){} PASS=p1;
+      await lockMine(); err.textContent='🔑 カギをかけました'; setTimeout(()=>location.reload(),500);
+    });
+  }
+  // このアプリのクラウドのデータがまだ平文なら、その場で暗号化してかけ直す
+  async function lockMine(){
+    for(const k of MY()){
+      try{ const cur=await rawLoad(k); if(cur!=null&&!isEnc(cur)){ await rawSave(k,await enc(typeof cur==='string'?cur:JSON.stringify(cur),PASS)); } }catch(e){}
+    }
+  }
+  window.cloudlock={showLock,lockMine,hasPass:()=>!!PASS,forget};
+  // 起動時: 合言葉があれば平文の残りをかけ直し（移行）。無ければ確認して画面を出す
+  function start(){
+    if(!window.crypto||!crypto.subtle) return;
+    let ok=true; try{ localStorage.setItem('__clk','1'); localStorage.removeItem('__clk'); }catch(e){ ok=false; }
+    if(!ok) return;   // プレビュー等では何もしない
+    if(PASS){ sessSalt=sessSalt||b64(crypto.getRandomValues(new Uint8Array(16))); deriveKey(PASS,sessSalt);   // 閉じる瞬間の保存に間に合うよう先に鍵を作っておく
+      lockMine(); const s=document.createElement('div'); s.className='clk-pill'; s.textContent='🔒'; s.title='クラウドは合言葉でカギつき'; if(!document.getElementById('clk-css')){ const c=document.createElement('style'); c.id='clk-css'; c.textContent=css; document.head.appendChild(c); } document.body.appendChild(s); }
+    else showLock();
+  }
+  if(document.readyState==='loading') document.addEventListener('DOMContentLoaded',start); else start();
+})();
+/* ==== 合言葉カギ ここまで ==== */
+
+</script>
+<!--cloudlock:end-->
 </head>
 <body>
 <div id="toast"></div>

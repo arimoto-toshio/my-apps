@@ -234,6 +234,7 @@
       if(!PASS){
         // まだカギをかけていない（クラウドが平文）なら今まで通り。かかっていたら上書きしない
         let cur=null; try{ cur=await rawLoad(inf.key); }catch(e){ return jres({success:false,message:'通信エラー'}); }
+        cloudEnc[inf.key]=isEnc(cur);
         if(isEnc(cur)){ showLock(); return jres({success:false,message:'合言葉が入っていないので保存しません'}); }
         return rawFetch(input,init);
       }
@@ -243,7 +244,7 @@
     }
     if(inf.action==='load'){
       const r=await rawFetch(input,init); let j; try{ j=await r.clone().json(); }catch(e){ return r; }
-      const d=parse(j&&j.data);
+      const d=parse(j&&j.data); cloudEnc[inf.key]=isEnc(d);
       if(!isEnc(d)) return r;
       if(!PASS){ locked=true; showLock(); return jres({success:true,data:null}); }
       try{ const t=await dec(d,PASS); let v; try{ v=JSON.parse(t); }catch(e){ v=t; } return jres(Object.assign({},j,{data:v})); }
@@ -251,6 +252,19 @@
     }
     return rawFetch(input,init);
   };
+  // 閉じる瞬間のビーコン送信（家族資産・ハワイ）も暗号化。合言葉が無くカギつきかもしれない時は送らない
+  const cloudEnc={};
+  if(navigator.sendBeacon){
+    const rawBeacon=navigator.sendBeacon.bind(navigator);
+    navigator.sendBeacon=function(url,body){
+      const inf=info(String(url));
+      if(!inf||inf.action!=='save'||!MY().includes(inf.key)||!window.crypto||!crypto.subtle) return rawBeacon(url,body);
+      if(!PASS){ return cloudEnc[inf.key]===false ? rawBeacon(url,body) : true; }
+      (async()=>{ const text=typeof body==='string'?body:await new Response(body).text();
+        rawFetch(url,{method:'POST',body:JSON.stringify(await enc(text,PASS)),keepalive:true}).catch(()=>{}); })();
+      return true;
+    };
+  }
   function forget(){ PASS=null; try{ localStorage.removeItem(PASS_KEY); }catch(e){} }
   // ---- 画面 ----
   const css='.clk-ov{position:fixed;inset:0;background:rgba(40,30,25,.55);z-index:2147483000;display:flex;align-items:center;justify-content:center;padding:16px;font-family:-apple-system,"Hiragino Sans",sans-serif}'
@@ -307,7 +321,8 @@
     if(!window.crypto||!crypto.subtle) return;
     let ok=true; try{ localStorage.setItem('__clk','1'); localStorage.removeItem('__clk'); }catch(e){ ok=false; }
     if(!ok) return;   // プレビュー等では何もしない
-    if(PASS){ lockMine(); const s=document.createElement('div'); s.className='clk-pill'; s.textContent='🔒'; s.title='クラウドは合言葉でカギつき'; if(!document.getElementById('clk-css')){ const c=document.createElement('style'); c.id='clk-css'; c.textContent=css; document.head.appendChild(c); } document.body.appendChild(s); }
+    if(PASS){ sessSalt=sessSalt||b64(crypto.getRandomValues(new Uint8Array(16))); deriveKey(PASS,sessSalt);   // 閉じる瞬間の保存に間に合うよう先に鍵を作っておく
+      lockMine(); const s=document.createElement('div'); s.className='clk-pill'; s.textContent='🔒'; s.title='クラウドは合言葉でカギつき'; if(!document.getElementById('clk-css')){ const c=document.createElement('style'); c.id='clk-css'; c.textContent=css; document.head.appendChild(c); } document.body.appendChild(s); }
     else showLock();
   }
   if(document.readyState==='loading') document.addEventListener('DOMContentLoaded',start); else start();
