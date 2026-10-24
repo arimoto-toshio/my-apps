@@ -314,6 +314,7 @@ function load(){try{const s=JSON.parse(localStorage.getItem(LS_KEY)||'null');if(
 function save(){try{localStorage.setItem(LS_KEY,JSON.stringify(S));}catch(e){} renderHeader();}
 function toast(t){const d=document.createElement('div');d.className='toast';d.textContent=t;document.body.appendChild(d);setTimeout(()=>d.remove(),2200);}
 const slipTotal=items=>items.reduce((a,x)=>a+x.price*x.qty,0);
+const floor10=n=>n>0?Math.floor(n/10)*10:n;   // お会計は1の位を切り捨てて0にする
 // ===== 消費税（持ち帰りは8%。ただしお酒は持ち帰りでも10%） =====
 const isTakeoutTable=t=>/持帰|持ち帰|テイクアウト/.test(String(t||''));
 const NON_ALC=/ノンアル|ジュース|ウーロン|ドライゼロ|茶/;
@@ -323,7 +324,7 @@ const itemRate=(x,table)=>itemTk(x,table)&&!isAlcohol(x.name)?8:10;
 // 税率ごとの合計（値引きは金額の比率で8%/10%に分ける）と内消費税
 function taxBreak(b){
   let t8=0,t10=0; b.items.forEach(x=>{const v=x.price*x.qty; if(itemRate(x,b.table)===8)t8+=v; else t10+=v;});
-  const sub=t8+t10, d=b.discount||0;
+  const sub=t8+t10, d=(b.discount||0)+(b.cut||0);   // 値引きと端数切り捨て
   if(d&&sub){const d8=Math.round(d*t8/sub); t8-=d8; t10-=d-d8;}
   return {t8,t10,tax8:Math.floor(t8*8/108),tax10:Math.floor(t10*10/110)};
 }
@@ -356,7 +357,7 @@ function renderTables(){
     const o=busyOf(t);
     return `<button class="seat ${o?'busy':''}" data-t="${t}" style="grid-column:${c};grid-row:${r}">
       <span class="ch"><i></i><i></i><i></i><i></i></span>
-      <span class="tb">${o?`<b>${yen(slipTotal(o.items))}</b><small>${o.people?o.people+'名 ・ ':''}${o.openedAt}〜</small>`:'1〜7名<small>空き</small>'}</span>
+      <span class="tb">${o?`<b>${yen(floor10(slipTotal(o.items)))}</b><small>${o.people?o.people+'名 ・ ':''}${o.openedAt}〜</small>`:'1〜7名<small>空き</small>'}</span>
       <span class="ch b"><i></i><i></i><i></i></span>
       <span class="lb">${t}番</span></button>`;
   }).join('');
@@ -364,7 +365,7 @@ function renderTables(){
   const onMap=FLOOR.map(f=>f[0]);
   const extras=Object.keys(S.open).filter(t=>!onMap.includes(t)&&busyOf(t));
   $('tables').innerHTML=seats+`<div class="extra">
-    <div class="row">${extras.map(t=>`<button class="xbtn busy" data-t="${esc(t)}">${esc(t)}<small>${yen(slipTotal(S.open[t].items))}</small></button>`).join('')}</div>
+    <div class="row">${extras.map(t=>`<button class="xbtn busy" data-t="${esc(t)}">${esc(t)}<small>${yen(floor10(slipTotal(S.open[t].items)))}</small></button>`).join('')}</div>
     <div class="row"><button class="xbtn" id="newTk">🥡 持帰り</button><button class="xbtn" id="newRinji">臨時</button></div></div>`;
   $('tables').querySelectorAll('[data-t]').forEach(b=>b.onclick=()=>openTable(b.dataset.t));
   $('newTk').onclick=()=>openTable(nextName('持帰り'));
@@ -423,7 +424,7 @@ function renderSlip(){
     const x=items[b.dataset.i]; x.qty+=+b.dataset.d; if(x.qty<=0)items.splice(b.dataset.i,1);
     save(); renderSlip(); renderMenu();
   });
-  $('sum').textContent=yen(slipTotal(items));
+  const st=slipTotal(items); $('sum').innerHTML=yen(floor10(st))+(st!==floor10(st)?`<small class="muted" style="font-size:12px;font-weight:500">（端数${st-floor10(st)}円切捨）</small>`:'');
   $('goPay').disabled=!items.length;
 }
 $('clearSlip').onclick=()=>{ if(!confirm('この卓の伝票を全部消しますか？'))return; delete S.open[curTable]; save(); showTab('tables'); };
@@ -432,13 +433,14 @@ $('clearSlip').onclick=()=>{ if(!confirm('この卓の伝票を全部消しま�
 let pay={method:'cash',received:'',discount:0};
 $('goPay').onclick=()=>{pay={method:'cash',received:'',discount:0};renderPay();$('payModal').classList.remove('hide');};
 function renderPay(){
-  const o=S.open[curTable]; const sub=slipTotal(o.items); const total=sub-pay.discount;
+  const o=S.open[curTable]; const sub=slipTotal(o.items); const total=floor10(sub-pay.discount), cut=sub-pay.discount-total;
   const rec=parseInt(pay.received||'0',10); const change=rec-total;
   $('paySheet').innerHTML=`
     <div class="row"><h2 style="margin:0">会計 ・ 卓 ${esc(curTable)}</h2><button class="btn ghost" id="pClose" style="margin-left:auto">閉じる</button></div>
     <div class="muted" style="margin-top:8px">${o.items.map(x=>esc(x.name)+'×'+x.qty).join('、')}</div>
     <div class="field"><span>小計</span><b>${yen(sub)}</b></div>
     <div class="field"><span>値引き</span><input type="number" id="pDisc" value="${pay.discount||''}" placeholder="0"></div>
+    ${cut?`<div class="field"><span>端数切り捨て</span><b>-${yen(cut)}</b></div>`:''}
     <div class="row" style="justify-content:space-between;margin-top:10px"><span>お会計</span><span class="big">${yen(total)}</span></div>
     <div class="pays" style="margin-top:8px">${PAYS.map(([k,l])=>`<button data-k="${k}" class="${pay.method===k?'on':''}">${l}</button>`).join('')}</div>
     ${pay.method==='cash'?`
@@ -469,7 +471,7 @@ function finishPay(sub,total,rec){
   const received=cash?(pay.received===''?total:rec):total;
   const bill={id:Date.now().toString(36)+Math.random().toString(36).slice(2,6),date:d,no,time:nowTime(),
     table:curTable,people:o.people||'',items:o.items.map(x=>({name:x.name,price:x.price,qty:x.qty,tk:itemTk(x,curTable)})),
-    subtotal:sub,discount:pay.discount,total,method:pay.method,received,change:received-total,
+    subtotal:sub,discount:pay.discount,cut:sub-pay.discount-total,total,method:pay.method,received,change:received-total,
     entered:false,voided:false,updatedAt:Date.now()};
   S.bills.push(bill); delete S.open[curTable]; save();
   $('payModal').classList.add('hide');
@@ -496,6 +498,7 @@ function showReceipt(b,pre){
     <hr><div class="its">${its}</div><hr>
     <div class="kv"><span>小計</span><span>${yen(b.subtotal)}</span></div>
     ${b.discount?`<div class="kv"><span>値引き</span><span>-${yen(b.discount)}</span></div>`:''}
+    ${b.cut?`<div class="kv"><span>端数切り捨て</span><span>-${yen(b.cut)}</span></div>`:''}
     <div class="kv tot"><span>合計</span><span>${yen(b.total)}</span></div>
     ${tx.t10||!tx.t8?`<div class="kv sm"><span>10%対象 ${yen(tx.t10)}</span><span>内消費税 ${yen(tx.tax10)}</span></div>`:''}
     ${tx.t8?`<div class="kv sm"><span>8%対象 ${yen(tx.t8)}</span><span>内消費税 ${yen(tx.tax8)}</span></div>
@@ -545,7 +548,7 @@ window.addEventListener('resize',()=>{if(!$('rcModal').classList.contains('hide'
 $('preBill').onclick=()=>{
   const o=S.open[curTable]; if(!o||!o.items.length){toast('伝票が空です');return;}
   const sub=slipTotal(o.items);
-  showReceipt({date:today(),time:nowTime(),table:curTable,people:o.people||'',items:o.items,subtotal:sub,discount:0,total:sub},true);
+  showReceipt({date:today(),time:nowTime(),table:curTable,people:o.people||'',items:o.items,subtotal:sub,discount:0,cut:sub-floor10(sub),total:floor10(sub)},true);
 };
 
 // ===== 領収書 =====
@@ -624,6 +627,7 @@ function renderSum(){
       <tr><th>会計件数</th><td class="r">${bs.length}件${people?' ・ '+people+'名':''}</td></tr>
       ${PAYS.filter(p=>pm[p[0]]).map(p=>`<tr><th>　${p[1]}</th><td class="r">${yen(pm[p[0]])}</td></tr>`).join('')}
       ${disc?`<tr><th>　値引き</th><td class="r">-${yen(disc)}</td></tr>`:''}
+      ${(c=>c?`<tr><th>　端数切り捨て</th><td class="r">-${yen(c)}</td></tr>`:'')(bs.reduce((a,b)=>a+(b.cut||0),0))}
       ${(()=>{const t=bs.map(taxBreak).reduce((a,x)=>({t8:a.t8+x.t8,t10:a.t10+x.t10,tax8:a.tax8+x.tax8,tax10:a.tax10+x.tax10}),{t8:0,t10:0,tax8:0,tax10:0});
         return `<tr><th>　10%対象（店内）</th><td class="r">${yen(t.t10)}<span class="muted">（内税 ${yen(t.tax10)}）</span></td></tr>`
           +(t.t8?`<tr><th>　8%対象（持ち帰り）</th><td class="r">${yen(t.t8)}<span class="muted">（内税 ${yen(t.tax8)}）</span></td></tr>`:'');})()}</table>
