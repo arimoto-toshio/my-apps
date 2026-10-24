@@ -122,13 +122,18 @@ td.r,th.r{text-align:right}
 .rcPaper .kv.tot{font-size:1.6em;font-weight:800;margin:3px 0}
 .rcPaper .kv.sm{font-size:.85em;color:#555}
 .rcPaper .thx{text-align:center;font-size:.85em;margin-top:6px;color:#555}
+.rcPaper .addr{text-align:center;font-size:.75em;color:#555;line-height:1.35;margin-top:2px}
+.rcPaper .sp{display:flex;align-items:center;gap:8px}
+.rcPaper .spb{width:34px;height:30px;padding:0;background:#ece6de;font-size:18px;font-weight:800;border-radius:8px}
+.rcPaper .kv.tot2{font-size:1.25em;font-weight:800;margin-top:3px}
+.rcPaper .kv.tot2 small{font-size:.6em;font-weight:500;color:#555}
 .rcPaper .stamp{text-align:center;color:#c00;border:3px solid #c00;font-weight:800;font-size:1.3em;margin:6px 20%;transform:rotate(-6deg)}
 .rcBtns{display:flex;gap:8px;margin-top:10px;flex:none;width:100%}
 .rcBtns .btn{flex:1;padding:12px 6px}
 @media print{
   body.printRc header,body.printRc nav,body.printRc main,body.printRc .modal{display:none!important}
   body.printRc .rcModal{position:static;background:none;padding:0}
-  body.printRc .rcBtns,body.printRc .zig{display:none}
+  body.printRc .rcBtns,body.printRc .zig,body.printRc .spb{display:none}
   body.printRc .rcPaper{overflow:visible;max-height:none}
 }
 </style>
@@ -272,6 +277,8 @@ const DEFAULT_MENU=[
  ['キムチ大（持帰り）',530,'一品'],['野菜',530,'一品'],['冷やしトマト',430,'一品'],['サラダ',430,'一品'],['バニラアイス',380,'一品'],['りんごアイス',380,'一品']
 ].map(([name,price,cat],i)=>({id:'m'+i,name,price,cat}));
 const DEFAULT_TABLES=['1','2','3','4','5','6','7','8','9','10','座敷1','座敷2','持帰り'];
+// 店の情報（請求書アプリと同じ）。電話番号はわかったら入れる
+const SHOP={name:'有限会社 焼肉ありもと',addr:'愛媛県喜多郡内子町内子2065番地',tel:'',reg:'T9500002011952'};
 const PAYS=[['cash','現金'],['card','カード'],['qr','QR・電子'],['other','その他']];
 
 // ===== 状態 =====
@@ -424,6 +431,7 @@ function showReceipt(b,pre){
   const pm=PAYS.find(p=>p[0]===b.method);
   $('rcPaper').innerHTML=`
     <div class="shop">焼肉ありもと</div>
+    <div class="addr">${esc(SHOP.addr)}${SHOP.tel?'<br>TEL '+esc(SHOP.tel):''}<br>登録番号 ${esc(SHOP.reg)}</div>
     <div class="ttl">${pre?'お 勘 定 書':'レ シ ー ト'}</div>
     ${pre?'<div class="cap">まだお会計前です</div>':''}
     <div class="meta"><span>${b.date.replace(/-/g,'/')}(${WD[dt.getDay()]}) ${b.time}</span><span>${pre?'':'No.'+b.no}</span></div>
@@ -436,12 +444,28 @@ function showReceipt(b,pre){
     ${pre?'':`<hr>${b.method==='cash'
       ?`<div class="kv"><span>お預かり（現金）</span><span>${yen(b.received)}</span></div><div class="kv" style="font-weight:800;font-size:1.2em"><span>おつり</span><span>${yen(b.change)}</span></div>`
       :`<div class="kv"><span>${pm?pm[1]:''}</span><span>${yen(b.total)}</span></div>`}`}
+    ${pre?`<hr><div class="split">
+      <div class="kv"><span>割り勘</span><span class="sp"><button class="spb" id="spM">−</button><b id="spN"></b><button class="spb" id="spP">＋</button></span></div>
+      <div id="spOut"></div></div>`:''}
     ${b.voided?'<div class="stamp">取 消</div>':''}
     <div class="thx">${pre?'お会計はレジでお願いします':'ご来店ありがとうございました'}</div>`;
   $('rcBtns').innerHTML=`<button class="btn ghost" id="rcPrint" style="background:#fff">🖨 印刷</button>
     ${pre?'':'<button class="btn" id="rcRyo" style="background:#fff">📄 領収書</button>'}
     <button class="btn main" id="rcClose">閉じる</button>`;
   $('rcModal').classList.remove('hide');
+  if(pre){
+    let n=Math.max(1,parseInt(b.people)||2);
+    const draw=()=>{
+      const per=Math.floor(b.total/n), r=b.total-per*n, up=Math.ceil(b.total/n/100)*100;
+      $('spN').textContent=n+'人';
+      $('spOut').innerHTML=n<2?'<div class="kv sm"><span>＋で人数をふやすと1人分が出ます</span></div>'
+        :`<div class="kv tot2"><span>1人</span><span>${yen(per)}${r?`<small>（あと${r}円を誰か1人）</small>`:''}</span></div>
+          <div class="kv sm"><span>100円単位なら 1人 ${yen(up)}</span><span>${up*n>b.total?'多め '+yen(up*n-b.total):''}</span></div>`;
+    };
+    draw();
+    $('spM').onclick=()=>{if(n>1){n--;draw();fitReceipt();}};
+    $('spP').onclick=()=>{if(n<30){n++;draw();fitReceipt();}};
+  }
   fitReceipt();
   $('rcClose').onclick=()=>$('rcModal').classList.add('hide');
   $('rcPrint').onclick=()=>{document.body.classList.add('printRc');window.print();setTimeout(()=>document.body.classList.remove('printRc'),500);};
@@ -474,7 +498,7 @@ function printReceipt(b){
     <p style="font-size:28px;font-weight:800;text-align:center;border-bottom:3px double #000;padding:8px">${yen(b.total)}<small style="font-size:13px">（税込）</small></p>
     <p>但し お食事代として<br>（内消費税等 ${yen(Math.floor(b.total*10/110))}）</p>
     <p>${b.date.replace(/-/g,'/')} ${b.time}　No.${b.no}</p>
-    <p style="text-align:right;margin-top:24px">焼肉ありもと</p></div>`;
+    <p style="text-align:right;margin-top:24px;line-height:1.5">${esc(SHOP.name)}<br><small>${esc(SHOP.addr)}${SHOP.tel?'<br>TEL '+esc(SHOP.tel):''}<br>登録番号 ${esc(SHOP.reg)}</small></p></div>`;
   document.body.classList.add('receipt'); window.print();
   setTimeout(()=>document.body.classList.remove('receipt'),500);
 }
