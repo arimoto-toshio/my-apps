@@ -1,0 +1,398 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>お客様管理</title>
+<style>
+:root{
+  --bg:#faf6f1; --card:#fff; --ink:#2b2420; --sub:#7a6e66; --line:#e8dfd6;
+  --main:#b5452f; --main2:#f6e3dc; --ok:#2f7d4f; --ng:#c62828; --ngbg:#fdecec; --tag:#efe7dc;
+}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:-apple-system,"Hiragino Sans","Hiragino Kaku Gothic ProN",sans-serif;font-size:16px}
+header{position:sticky;top:0;z-index:5;background:var(--main);color:#fff;padding:12px 16px 14px;box-shadow:0 2px 6px rgba(0,0,0,.15)}
+header h1{margin:0 0 10px;font-size:20px;display:flex;align-items:center;gap:8px}
+header h1 .cnt{font-size:13px;font-weight:normal;opacity:.85}
+header .tools{margin-left:auto;display:flex;gap:6px}
+header .tools button{background:rgba(255,255,255,.18);color:#fff;border:1px solid rgba(255,255,255,.35);border-radius:8px;padding:4px 9px;font-size:13px;cursor:pointer}
+.search{display:flex;gap:8px}
+.search input{flex:1;font-size:18px;padding:11px 14px;border:none;border-radius:10px;outline:none}
+.search button{font-size:15px;padding:0 14px;border:none;border-radius:10px;background:#fff;color:var(--main);font-weight:bold;cursor:pointer;white-space:nowrap}
+main{max-width:860px;margin:0 auto;padding:12px 16px 80px}
+.bar{display:flex;flex-wrap:wrap;gap:6px;align-items:center;margin-bottom:10px}
+.chip{background:var(--tag);border:1px solid transparent;border-radius:999px;padding:4px 11px;font-size:13px;cursor:pointer;user-select:none}
+.chip.on{background:var(--main);color:#fff}
+.bar select{margin-left:auto;font-size:14px;padding:5px;border-radius:8px;border:1px solid var(--line);background:#fff}
+.card{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:12px 14px;margin-bottom:10px;cursor:pointer;transition:box-shadow .15s}
+.card:hover{box-shadow:0 3px 10px rgba(0,0,0,.08)}
+.card .top{display:flex;align-items:baseline;gap:8px;flex-wrap:wrap}
+.card .nm{font-size:19px;font-weight:bold}
+.card .kn{font-size:13px;color:var(--sub)}
+.card .vis{margin-left:auto;font-size:13px;color:var(--sub)}
+.card .ngline{margin-top:6px;background:var(--ngbg);color:var(--ng);font-size:14px;border-radius:6px;padding:4px 8px;font-weight:bold}
+.card .feat{margin-top:6px;font-size:14px;color:#4a403a;line-height:1.5}
+.tags{display:flex;flex-wrap:wrap;gap:4px;margin-top:6px}
+.tags span{background:var(--tag);border-radius:999px;padding:2px 9px;font-size:12px}
+mark{background:#ffe58a;color:inherit;padding:0 1px;border-radius:2px}
+.empty{text-align:center;color:var(--sub);padding:40px 10px;line-height:1.8}
+.empty button{margin-top:10px}
+.btn{font-size:15px;padding:9px 16px;border-radius:10px;border:1px solid var(--line);background:#fff;cursor:pointer}
+.btn.pri{background:var(--main);color:#fff;border-color:var(--main);font-weight:bold}
+.btn.ok{background:var(--ok);color:#fff;border-color:var(--ok);font-weight:bold}
+.btn.del{color:var(--ng);border-color:#f0c4c4}
+.btn.sm{font-size:13px;padding:5px 10px}
+/* 詳細 */
+.ov{position:fixed;inset:0;background:rgba(30,20,15,.45);z-index:20;display:none;align-items:flex-start;justify-content:center;overflow-y:auto;padding:20px 12px}
+.ov.show{display:flex}
+.panel{background:#fff;border-radius:14px;width:100%;max-width:640px;padding:18px 18px 22px;box-shadow:0 10px 30px rgba(0,0,0,.25)}
+.panel h2{margin:0 0 4px;font-size:22px;display:flex;align-items:center;gap:8px}
+.panel h2 .x{margin-left:auto;border:none;background:none;font-size:26px;cursor:pointer;color:var(--sub)}
+.sec{margin-top:16px}
+.sec h3{font-size:14px;color:var(--main);margin:0 0 6px;border-bottom:2px solid var(--main2);padding-bottom:3px}
+label.f{display:block;font-size:13px;color:var(--sub);margin:8px 0 3px}
+input.t,textarea.t{width:100%;font-size:16px;padding:9px 10px;border:1px solid var(--line);border-radius:8px;font-family:inherit}
+textarea.t{min-height:60px;resize:vertical}
+.ngbox textarea{border-color:#f0b4b4;background:#fffafa}
+.row2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+@media(max-width:520px){.row2{grid-template-columns:1fr}}
+.tagpick{display:flex;flex-wrap:wrap;gap:5px}
+.tagpick .chip{font-size:13px}
+.addrow{display:flex;gap:6px;margin-top:6px}
+.addrow input{flex:1}
+.flist{list-style:none;margin:0;padding:0}
+.flist li{display:flex;gap:8px;align-items:flex-start;padding:7px 0;border-bottom:1px dashed var(--line);font-size:15px;line-height:1.5}
+.flist li .d{color:var(--sub);font-size:12px;white-space:nowrap;padding-top:3px}
+.flist li .tx{flex:1}
+.flist li .rm{border:none;background:none;color:#bbb;cursor:pointer;font-size:16px}
+.flist li .rm:hover{color:var(--ng)}
+.visitbox{display:flex;gap:6px;flex-wrap:wrap;align-items:center}
+.visitbox input{width:auto}
+.foot{display:flex;gap:8px;margin-top:20px;flex-wrap:wrap}
+.foot .sp{flex:1}
+.toast{position:fixed;left:50%;bottom:24px;transform:translateX(-50%);background:#333;color:#fff;padding:10px 18px;border-radius:999px;font-size:14px;opacity:0;transition:opacity .25s;z-index:50;pointer-events:none}
+.toast.show{opacity:.92}
+.stat{font-size:13px;color:var(--sub);margin-top:2px}
+/* 合言葉の画面 */
+.lock{position:fixed;inset:0;background:var(--bg);z-index:40;display:none;align-items:center;justify-content:center;padding:20px}
+.lock.show{display:flex}
+.lock .box{background:#fff;border:1px solid var(--line);border-radius:16px;padding:24px 22px;width:100%;max-width:420px;box-shadow:0 6px 20px rgba(0,0,0,.08)}
+.lock h2{margin:0 0 6px;font-size:21px}
+.lock p{font-size:14px;color:var(--sub);line-height:1.6;margin:6px 0 12px}
+.lock input{width:100%;font-size:20px;padding:12px;border:1px solid var(--line);border-radius:10px;margin-bottom:10px}
+.lock .err{color:var(--ng);font-weight:bold;font-size:14px;min-height:1.2em}
+.lock .btns{display:flex;gap:8px;flex-wrap:wrap}
+.lock .btns .btn{flex:1;padding:12px}
+</style>
+</head>
+<body>
+<header>
+  <h1>👤 お客様管理 <span class="cnt" id="cnt"></span>
+    <span class="tools">
+      <button onclick="cloudUpload()" title="クラウドに保存">☁️↑</button>
+      <button onclick="cloudDownload()" title="クラウドから読込">☁️↓</button>
+      <button onclick="exportJson()" title="バックアップを書き出し">💾</button>
+      <button onclick="showLock('change')" title="合言葉を変える">🔑</button>
+    </span>
+  </h1>
+  <div class="search">
+    <input id="q" type="search" placeholder="名前・ふりがな・特徴で検索（例：たなか、タン塩、メガネ）" autocomplete="off">
+    <button onclick="openNew()">＋新規</button>
+  </div>
+</header>
+
+<main>
+  <div class="bar" id="tagbar"></div>
+  <div id="list"></div>
+</main>
+
+<div class="ov" id="ov" onclick="if(event.target===this)closeDetail()">
+  <div class="panel" id="panel"></div>
+</div>
+<div class="toast" id="toast"></div>
+<div class="lock" id="lock"><div class="box" id="lockBox"></div></div>
+
+<script>
+const SYNC_URL='https://script.google.com/macros/s/AKfycbxwL19mAenATUMILRsQYrDL0ThjU2C583Cj729OfzNHEH3drMcZCExYULRp4VGOZ11J/exec';
+const SYNC_KEY='okyakusama_data';
+const STORAGE_KEY='okyakusama_data';
+const BASE_TAGS=['常連','初来店','家族連れ','子ども連れ','団体・宴会','観光客','地元','お酒好き','車で来店','予約の人','アレルギー注意','VIP'];
+
+let data=load();
+let curTag='';
+let curId=null;
+
+/* ---------- 保存 ---------- */
+function defData(){ return {customers:[],tags:BASE_TAGS.slice(),deleted:[],savedAt:0}; }
+function load(){ try{ const s=localStorage.getItem(STORAGE_KEY); if(s){ const d=JSON.parse(s); if(d&&d.customers){ if(!d.tags) d.tags=BASE_TAGS.slice(); return d; } } }catch(e){} return defData(); }
+function storageOK(){ try{ localStorage.setItem('__synctest','1'); localStorage.removeItem('__synctest'); return true; }catch(e){ return false; } }
+function save(){ data.savedAt=Date.now(); try{ localStorage.setItem(STORAGE_KEY,JSON.stringify(data)); }catch(e){} cloudAutoSave(); renderList(); }
+let autoCloudTimer=null;
+function cloudAutoSave(){ clearTimeout(autoCloudTimer); autoCloudTimer=setTimeout(()=>pushCloud(true),2500); }
+
+/* ---------- 合言葉（クラウドのデータは合言葉で暗号化して保存。合言葉が無いと読めない） ---------- */
+const PASS_KEY='okyakusama_pass';
+let PASS=null; try{ PASS=localStorage.getItem(PASS_KEY); }catch(e){}
+const te=new TextEncoder(), td=new TextDecoder();
+function b64(u){ let s=''; for(let i=0;i<u.length;i+=8192) s+=String.fromCharCode.apply(null,u.subarray(i,i+8192)); return btoa(s); }
+function unb64(t){ return Uint8Array.from(atob(t),c=>c.charCodeAt(0)); }
+async function deriveKey(pass,salt){
+  const base=await crypto.subtle.importKey('raw',te.encode(pass),'PBKDF2',false,['deriveKey']);
+  return crypto.subtle.deriveKey({name:'PBKDF2',salt,iterations:200000,hash:'SHA-256'},base,{name:'AES-GCM',length:256},false,['encrypt','decrypt']);
+}
+async function encryptData(obj,pass){
+  const salt=crypto.getRandomValues(new Uint8Array(16)), iv=crypto.getRandomValues(new Uint8Array(12));
+  const ct=new Uint8Array(await crypto.subtle.encrypt({name:'AES-GCM',iv},await deriveKey(pass,salt),te.encode(JSON.stringify(obj))));
+  return {enc:1,salt:b64(salt),iv:b64(iv),ct:b64(ct),savedAt:obj.savedAt};
+}
+async function decryptData(e,pass){
+  let pt; try{ pt=await crypto.subtle.decrypt({name:'AES-GCM',iv:unb64(e.iv)},await deriveKey(pass,unb64(e.salt)),unb64(e.ct)); }
+  catch(err){ const x=new Error('合言葉がちがいます'); x.code='badpass'; throw x; }
+  return JSON.parse(td.decode(pt));
+}
+async function fetchCloudRaw(){ const res=await fetch(SYNC_URL+'?action=load&key='+SYNC_KEY,{cache:'no-store'}); const j=await res.json(); let d=j&&j.data; if(typeof d==='string'){ try{ d=JSON.parse(d); }catch(e){} } return d||null; }
+// 暗号化済みなら合言葉で開く。昔の暗号化していないデータ（最初の1回だけ）もそのまま読む
+async function fetchCloud(pass){
+  const raw=await fetchCloudRaw(); if(!raw) return null;
+  if(raw.enc){ if(!(pass||PASS)){ const x=new Error('合言葉が必要です'); x.code='needpass'; throw x; } const d=await decryptData(raw,pass||PASS); return d&&d.customers?d:null; }
+  return raw.customers?raw:null;
+}
+// 2台で書いても消えないように、お客様ごとに新しい方を残して合体（削除したお客様は deleted で覚えておく）
+function mergeData(a,b){
+  const ts=c=>c.updatedAt||c.createdAt||0;
+  const del={}; [...(a.deleted||[]),...(b.deleted||[])].forEach(d=>{ if(!del[d.id]||d.at>del[d.id]) del[d.id]=d.at; });
+  const m={}; (b.customers||[]).forEach(c=>m[c.id]=c); (a.customers||[]).forEach(c=>{ if(!m[c.id]||ts(c)>=ts(m[c.id])) m[c.id]=c; });
+  const customers=Object.values(m).filter(c=>!(del[c.id]&&del[c.id]>=ts(c)));
+  const tags=(a.tags||BASE_TAGS).slice(); (b.tags||[]).forEach(t=>{ if(!tags.includes(t)) tags.push(t); });
+  return {customers,tags,deleted:Object.entries(del).map(([id,at])=>({id,at})),savedAt:Date.now()};
+}
+let pushing=false;
+async function pushCloud(silent,skipFetch){
+  // プレビュー等（localStorageが使えない所）や合言葉の無い端末からはクラウドへ書かない
+  if(!storageOK()){ if(!silent) toast('この画面からはクラウド保存できません'); return false; }
+  if(!PASS){ if(!silent) showLock(); return false; }
+  if(pushing){ cloudAutoSave(); return false; } pushing=true;
+  try{
+    if(!silent) toast('☁️ クラウドと合わせています...');
+    if(!skipFetch){
+      const c=await fetchCloud();   // 先にクラウドの分を合体（合言葉ちがい・電波なしならここで止めて上書きしない）
+      if(c){ data=mergeData(data,c); try{ localStorage.setItem(STORAGE_KEY,JSON.stringify(data)); }catch(e){} if(!curId) renderAll(); }
+    }
+    if(!data.customers.length){ if(!silent) toast('お客様が0人なので保存しません'); return false; }
+    const res=await fetch(SYNC_URL+'?action=save&key='+SYNC_KEY,{method:'POST',body:JSON.stringify(await encryptData(data,PASS))}); const j=await res.json();
+    if(j.success){ if(!silent) toast('☁️ クラウドに保存しました（合言葉つき）'); return true; }
+    if(!silent) toast('エラー: '+(j.message||''));
+  }catch(e){
+    if(e.code==='badpass'){ forgetPass(); showLock(); toast('合言葉が変わっています。入れ直してください'); }
+    else if(!silent) toast('通信エラー: '+e.message);
+  }finally{ pushing=false; }
+  return false;
+}
+async function cloudUpload(){ await pushCloud(false); }
+async function cloudDownload(){ await pushCloud(false); }   // 読込も「合体」して保存
+function forgetPass(){ PASS=null; try{ localStorage.removeItem(PASS_KEY); }catch(e){} }
+function setPass(p){ PASS=p; try{ localStorage.setItem(PASS_KEY,p); }catch(e){} }
+
+/* ---------- 合言葉の画面 ---------- */
+let lockMode='';
+async function showLock(mode){
+  const box=document.getElementById('lockBox'); document.getElementById('lock').classList.add('show');
+  if(!window.crypto||!crypto.subtle){ box.innerHTML='<h2>🔒 開けません</h2><p>このブラウザでは合言葉の暗号が使えません。SafariかChromeで開いてください。</p>'; return; }
+  if(mode==='change'){ if(!PASS){ mode=''; } else { lockMode='change'; drawLock('change'); return; } }
+  box.innerHTML='<h2>🔒 お客様管理</h2><p>クラウドを確認しています...</p>';
+  try{ const raw=await fetchCloudRaw(); lockMode=raw&&raw.enc?'enter':'set'; }
+  catch(e){ lockMode='offline'; }
+  drawLock(lockMode);
+}
+function drawLock(mode){
+  const box=document.getElementById('lockBox'); const hasLocal=data.customers.length>0;
+  const later=hasLocal?'<button class="btn" onclick="hideLock()">あとで（この端末の分だけ見る）</button>':'';
+  if(mode==='enter') box.innerHTML='<h2>🔒 合言葉を入れてください</h2><p>お客様のデータは合言葉でカギがかかっています。Macで決めた合言葉を入れてください（この端末では次から入れなくてOK）。</p>'
+    +'<input type="password" id="lp1" autocomplete="current-password" placeholder="合言葉" onkeydown="if(event.key===\'Enter\')lockOK()"><div class="err" id="lerr"></div><div class="btns">'+later+'<button class="btn pri" onclick="lockOK()">開く</button></div>';
+  else if(mode==='set'||mode==='change') box.innerHTML='<h2>🔑 '+(mode==='change'?'合言葉を変える':'合言葉を決めてください')+'</h2><p>クラウドのお客様データにカギをかけます。iPadなど他の端末では、この合言葉を1回入れると使えます。<br><b>忘れるとほかの端末で開けなくなるので、紙に書いて保管してください。</b>（4文字以上）</p>'
+    +'<input type="password" id="lp1" autocomplete="new-password" placeholder="合言葉"><input type="password" id="lp2" autocomplete="new-password" placeholder="もう一度" onkeydown="if(event.key===\'Enter\')lockOK()"><div class="err" id="lerr"></div><div class="btns">'+(mode==='change'?'<button class="btn" onclick="hideLock()">やめる</button>':later)+'<button class="btn pri" onclick="lockOK()">決める</button></div>';
+  else box.innerHTML='<h2>📡 電波がありません</h2><p>クラウドを確認できませんでした。電波のある所でもう一度ためしてください。</p><div class="btns">'+later+'<button class="btn pri" onclick="showLock()">もう一度</button></div>';
+  const i=document.getElementById('lp1'); if(i) setTimeout(()=>i.focus(),50);
+}
+function hideLock(){ document.getElementById('lock').classList.remove('show'); }
+async function lockOK(){
+  const p1=document.getElementById('lp1').value, p2=(document.getElementById('lp2')||{}).value, err=document.getElementById('lerr');
+  if(lockMode==='enter'){
+    if(!p1){ err.textContent='合言葉を入れてください'; return; }
+    err.textContent='確認中...';
+    try{ const c=await fetchCloud(p1); setPass(p1); if(c){ data=mergeData(data,c); try{ localStorage.setItem(STORAGE_KEY,JSON.stringify(data)); }catch(e){} }
+      renderAll(); hideLock(); toast('🔓 開きました（'+data.customers.length+'人）');
+    }catch(e){ err.textContent=e.code==='badpass'?'❌ 合言葉がちがいます':'電波を確認してください'; }
+    return;
+  }
+  if((p1||'').length<4){ err.textContent='4文字以上にしてください'; return; }
+  if(p1!==p2){ err.textContent='2回の入力がちがいます'; return; }
+  err.textContent='カギをかけています...';
+  try{
+    // 今のクラウドの分を（今の合言葉で）合体してから、新しい合言葉でかけ直す
+    const c=await fetchCloud(); if(c) data=mergeData(data,c);
+    try{ localStorage.setItem(STORAGE_KEY,JSON.stringify(data)); }catch(e){}
+    setPass(p1); renderAll(); hideLock();
+    if(await pushCloud(false,true)) toast('🔑 合言葉でカギをかけて保存しました');
+  }catch(e){ err.textContent=e.code==='badpass'?'❌ 今のクラウドの合言葉とちがいます':'電波を確認してください'; }
+}
+function exportJson(){
+  const b=new Blob([JSON.stringify(data,null,1)],{type:'application/json'});
+  const a=document.createElement('a'); a.href=URL.createObjectURL(b); a.download='お客様管理_'+today()+'.json'; a.click();
+  toast('💾 バックアップを書き出しました');
+}
+
+/* ---------- 便利関数 ---------- */
+function today(){ const d=new Date(); return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0'); }
+function uid(){ return Date.now().toString(36)+Math.random().toString(36).slice(2,6); }
+function esc(s){ return String(s==null?'':s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
+// ひらがな・カタカナ・全角半角・大小文字・空白を同じ扱いに
+function norm(s){ return String(s||'').normalize('NFKC').toLowerCase().replace(/[ァ-ヶ]/g,c=>String.fromCharCode(c.charCodeAt(0)-0x60)).replace(/[\s　]/g,''); }
+function fmtDate(s){ if(!s) return ''; const p=s.split('-'); return Number(p[1])+'/'+Number(p[2]); }
+function fmtDateY(s){ if(!s) return ''; const p=s.split('-'); return p[0]+'/'+Number(p[1])+'/'+Number(p[2]); }
+function lastVisit(c){ return c.visits.length? c.visits.map(v=>v.date).sort().slice(-1)[0] : ''; }
+function daysAgo(s){ if(!s) return ''; const n=Math.round((new Date(today())-new Date(s))/86400000); return n===0?'今日':n===1?'昨日':n<60?n+'日前':Math.round(n/30)+'ヶ月前'; }
+function toast(m){ const t=document.getElementById('toast'); t.textContent=m; t.classList.add('show'); clearTimeout(t._t); t._t=setTimeout(()=>t.classList.remove('show'),2200); }
+function find(id){ return data.customers.find(c=>c.id===id); }
+function hay(c){ return norm([c.name,c.kana,c.phone,c.likes,c.ng,c.memo,(c.tags||[]).join(' '),c.features.map(f=>f.text).join(' '),c.visits.map(v=>v.memo).join(' ')].join(' ')); }
+function hl(text,q){
+  const t=esc(text); if(!q) return t;
+  // 見た目の文字のまま、正規化した文字列で一致した場所に印をつける
+  const raw=String(text||''); let out='',i=0; const nq=norm(q);
+  if(!nq) return t;
+  const nr=[...raw].map(ch=>norm(ch));
+  while(i<nr.length){
+    let acc='',j=i;
+    while(j<nr.length && acc.length<nq.length){ acc+=nr[j]; j++; }
+    if(acc===nq && nr[i]!==''){ out+='<mark>'+esc([...raw].slice(i,j).join(''))+'</mark>'; i=j; }
+    else { out+=esc([...raw][i]); i++; }
+  }
+  return out;
+}
+
+/* ---------- 一覧 ---------- */
+function renderAll(){ renderTags(); renderList(); }
+function renderTags(){
+  const used={}; data.customers.forEach(c=>(c.tags||[]).forEach(t=>used[t]=(used[t]||0)+1));
+  const tags=data.tags.filter(t=>used[t]);
+  let h='<span class="chip'+(curTag===''?' on':'')+'" onclick="setTag(\'\')">すべて</span>';
+  h+='<span class="chip'+(curTag==='__ng'?' on':'')+'" onclick="setTag(\'__ng\')">⚠️ 苦手・アレルギーあり</span>';
+  tags.forEach(t=>{ h+='<span class="chip'+(curTag===t?' on':'')+'" onclick="setTag(\''+esc(t)+'\')">'+esc(t)+' '+used[t]+'</span>'; });
+  h+='<select id="sort" onchange="renderList()"><option value="recent">最近来た順</option><option value="count">来店回数順</option><option value="kana">名前順</option><option value="new">登録が新しい順</option></select>';
+  const prev=document.getElementById('sort'); const pv=prev?prev.value:'recent';
+  document.getElementById('tagbar').innerHTML=h; document.getElementById('sort').value=pv;
+}
+function setTag(t){ curTag=(curTag===t?'':t); renderTags(); renderList(); }
+function renderList(){
+  const qRaw=document.getElementById('q').value.trim(); const q=norm(qRaw);
+  let arr=data.customers.slice();
+  if(curTag==='__ng') arr=arr.filter(c=>(c.ng||'').trim());
+  else if(curTag) arr=arr.filter(c=>(c.tags||[]).includes(curTag));
+  if(q){
+    arr=arr.map(c=>{ const nm=norm(c.name+c.kana); let score=nm.startsWith(q)?3:nm.includes(q)?2:hay(c).includes(q)?1:0; return {c,score}; })
+       .filter(x=>x.score>0).sort((a,b)=>b.score-a.score).map(x=>x.c);
+  } else {
+    const s=(document.getElementById('sort')||{}).value||'recent';
+    if(s==='recent') arr.sort((a,b)=>(lastVisit(b)||'').localeCompare(lastVisit(a)||'')||(b.createdAt-a.createdAt));
+    if(s==='count') arr.sort((a,b)=>b.visits.length-a.visits.length);
+    if(s==='kana') arr.sort((a,b)=>norm(a.kana||a.name).localeCompare(norm(b.kana||b.name),'ja'));
+    if(s==='new') arr.sort((a,b)=>b.createdAt-a.createdAt);
+  }
+  document.getElementById('cnt').textContent=data.customers.length+'人';
+  const el=document.getElementById('list');
+  if(!arr.length){
+    if(qRaw) el.innerHTML='<div class="empty">「'+esc(qRaw)+'」に当てはまるお客様はいません。<br><button class="btn pri" onclick="openNew(document.getElementById(\'q\').value.trim())">＋「'+esc(qRaw)+'」さんを新しく登録</button></div>';
+    else if(!data.customers.length) el.innerHTML='<div class="empty">まだお客様が登録されていません。<br>右上の「＋新規」から登録してください。<br><span style="font-size:13px">名前・特徴・好きなもの・苦手なものを書いておくと、<br>次に来られたとき名前で検索してすぐ思い出せます。</span></div>';
+    else el.innerHTML='<div class="empty">この条件のお客様はいません。</div>';
+    return;
+  }
+  el.innerHTML=arr.map(c=>{
+    const lv=lastVisit(c);
+    const feats=c.features.slice(-3).reverse().map(f=>hl(f.text,qRaw)).join('　／　');
+    let h='<div class="card" onclick="openDetail(\''+c.id+'\')"><div class="top"><span class="nm">'+hl(c.name,qRaw)+'</span>';
+    if(c.kana) h+='<span class="kn">'+hl(c.kana,qRaw)+'</span>';
+    h+='<span class="vis">'+(c.visits.length?'来店'+c.visits.length+'回・最終 '+fmtDate(lv)+'（'+daysAgo(lv)+'）':'来店記録なし')+'</span></div>';
+    if((c.ng||'').trim()) h+='<div class="ngline">⚠️ '+hl(c.ng,qRaw)+'</div>';
+    if(c.likes) h+='<div class="feat">❤️ '+hl(c.likes,qRaw)+'</div>';
+    if(feats) h+='<div class="feat">📝 '+feats+'</div>';
+    if((c.tags||[]).length) h+='<div class="tags">'+c.tags.map(t=>'<span>'+esc(t)+'</span>').join('')+'</div>';
+    return h+'</div>';
+  }).join('');
+}
+
+/* ---------- 詳細 ---------- */
+function openNew(name){
+  const c={id:uid(),name:name||'',kana:'',phone:'',tags:[],likes:'',ng:'',memo:'',features:[],visits:[],createdAt:Date.now(),_new:true};
+  curId=null; renderDetail(c);
+}
+function openDetail(id){ curId=id; renderDetail(find(id)); }
+function closeDetail(){ document.getElementById('ov').classList.remove('show'); curId=null; }
+let draft=null;
+function renderDetail(c){
+  draft=c;
+  const isNew=!!c._new;
+  let h='<h2>'+(isNew?'新しいお客様':'👤 '+esc(c.name))+'<button class="x" onclick="closeDetail()">×</button></h2>';
+  if(!isNew){ const lv=lastVisit(c); h+='<div class="stat">来店 '+c.visits.length+'回'+(lv?'・最終 '+fmtDateY(lv)+'（'+daysAgo(lv)+'）':'')+'・登録 '+fmtDateY(new Date(c.createdAt).toISOString().slice(0,10))+'</div>'; }
+  h+='<div class="sec"><h3>基本</h3><div class="row2"><div><label class="f">お名前 *</label><input class="t" id="f_name" value="'+esc(c.name)+'" placeholder="田中 一郎"></div>'
+    +'<div><label class="f">ふりがな（検索用）</label><input class="t" id="f_kana" value="'+esc(c.kana)+'" placeholder="たなか いちろう"></div></div>'
+    +'<label class="f">電話・連絡先（任意）</label><input class="t" id="f_phone" value="'+esc(c.phone)+'" placeholder="090-…"></div>';
+  h+='<div class="sec"><h3>タグ</h3><div class="tagpick" id="tagpick">'+tagPickHtml(c)+'</div>'
+    +'<div class="addrow"><input class="t" id="newtag" placeholder="新しいタグ（例：〇〇会社）"><button class="btn sm" onclick="addTag()">追加</button></div></div>';
+  h+='<div class="sec"><h3>好み・苦手</h3><label class="f">❤️ 好きなもの・よく頼むもの</label><textarea class="t" id="f_likes" placeholder="タン塩・上ミノ。ビールは瓶。焼き加減はしっかり">'+esc(c.likes)+'</textarea>'
+    +'<div class="ngbox"><label class="f" style="color:var(--ng)">⚠️ 苦手・アレルギー・気をつけること</label><textarea class="t" id="f_ng" placeholder="ニンニク苦手。えびアレルギー">'+esc(c.ng)+'</textarea></div></div>';
+  h+='<div class="sec"><h3>📝 特徴（どんな人か）</h3><ul class="flist" id="flist">'+featHtml(c)+'</ul>'
+    +'<div class="addrow"><input class="t" id="newfeat" placeholder="例：メガネ・背が高い／奥さんと娘さん2人／役場勤め" onkeydown="if(event.key===\'Enter\'&&!event.isComposing){addFeat();}"><button class="btn pri sm" onclick="addFeat()">＋追加</button></div></div>';
+  h+='<div class="sec"><h3>🍖 来店記録</h3><div class="visitbox"><input class="t" type="date" id="v_date" value="'+today()+'"><input class="t" type="number" id="v_ppl" min="1" placeholder="人数" style="width:80px"><input class="t" id="v_memo" placeholder="メモ（誕生日・座敷など）" style="flex:1;min-width:140px"><button class="btn ok sm" onclick="addVisit()">来店を記録</button></div>'
+    +'<ul class="flist" id="vlist">'+visitHtml(c)+'</ul></div>';
+  h+='<div class="sec"><h3>その他メモ</h3><textarea class="t" id="f_memo" placeholder="自由に">'+esc(c.memo)+'</textarea></div>';
+  h+='<div class="foot">'+(isNew?'':'<button class="btn del" onclick="delCustomer()">削除</button>')+'<span class="sp"></span><button class="btn" onclick="closeDetail()">閉じる</button><button class="btn pri" onclick="saveDetail()">'+(isNew?'登録する':'保存')+'</button></div>';
+  document.getElementById('panel').innerHTML=h;
+  document.getElementById('ov').classList.add('show');
+  document.getElementById('ov').scrollTop=0;
+  if(isNew) setTimeout(()=>document.getElementById(c.name?'f_kana':'f_name').focus(),50);
+}
+function tagPickHtml(c){ return data.tags.map(t=>'<span class="chip'+((c.tags||[]).includes(t)?' on':'')+'" onclick="toggleTag(\''+esc(t)+'\')">'+esc(t)+'</span>').join(''); }
+function featHtml(c){
+  if(!c.features.length) return '<li style="color:var(--sub);font-size:14px">まだありません。気づいたことをどんどん足していきましょう。</li>';
+  return c.features.slice().reverse().map(f=>'<li><span class="d">'+fmtDateY(f.date)+'</span><span class="tx">'+esc(f.text)+'</span><button class="rm" title="消す" onclick="rmFeat(\''+f.id+'\')">✕</button></li>').join('');
+}
+function visitHtml(c){
+  return c.visits.slice().sort((a,b)=>b.date.localeCompare(a.date)).map(v=>'<li><span class="d">'+fmtDateY(v.date)+'</span><span class="tx">'+(v.people?v.people+'名　':'')+esc(v.memo||'')+'</span><button class="rm" title="消す" onclick="rmVisit(\''+v.id+'\')">✕</button></li>').join('');
+}
+function readForm(){ ['name','kana','phone','likes','ng','memo'].forEach(k=>draft[k]=document.getElementById('f_'+k).value.trim()); }
+function toggleTag(t){ draft.tags=draft.tags||[]; const i=draft.tags.indexOf(t); if(i>=0) draft.tags.splice(i,1); else draft.tags.push(t); document.getElementById('tagpick').innerHTML=tagPickHtml(draft); autoPersist(); }
+function addTag(){ const el=document.getElementById('newtag'); const t=el.value.trim(); if(!t) return; if(!data.tags.includes(t)) data.tags.push(t); if(!draft.tags.includes(t)) draft.tags.push(t); el.value=''; document.getElementById('tagpick').innerHTML=tagPickHtml(draft); autoPersist(); }
+function addFeat(){ const el=document.getElementById('newfeat'); const t=el.value.trim(); if(!t) return; draft.features.push({id:uid(),date:today(),text:t}); el.value=''; document.getElementById('flist').innerHTML=featHtml(draft); el.focus(); autoPersist(); toast('📝 特徴を追加しました'); }
+function rmFeat(id){ if(!confirm('この特徴を消しますか？')) return; draft.features=draft.features.filter(f=>f.id!==id); document.getElementById('flist').innerHTML=featHtml(draft); autoPersist(); }
+function addVisit(){ const d=document.getElementById('v_date').value||today(); const p=parseInt(document.getElementById('v_ppl').value)||0; const m=document.getElementById('v_memo').value.trim();
+  draft.visits.push({id:uid(),date:d,people:p,memo:m}); document.getElementById('v_ppl').value=''; document.getElementById('v_memo').value='';
+  document.getElementById('vlist').innerHTML=visitHtml(draft); autoPersist(); toast('🍖 来店を記録しました（'+draft.visits.length+'回目）'); }
+function rmVisit(id){ if(!confirm('この来店記録を消しますか？')) return; draft.visits=draft.visits.filter(v=>v.id!==id); document.getElementById('vlist').innerHTML=visitHtml(draft); autoPersist(); }
+// 登録済みのお客様は、特徴・来店・タグを足した時点で即保存
+function autoPersist(){ if(draft._new) return; readForm(); if(!draft.name) return; draft.updatedAt=Date.now(); save(); }
+function saveDetail(){
+  readForm();
+  if(!draft.name){ alert('お名前を入れてください'); return; }
+  const pending=document.getElementById('newfeat').value.trim();
+  if(pending){ draft.features.push({id:uid(),date:today(),text:pending}); }
+  if(draft._new){
+    const same=data.customers.filter(c=>norm(c.name)===norm(draft.name));
+    if(same.length && !confirm('「'+draft.name+'」さんはもう'+same.length+'人登録されています。\n別の人として登録しますか？')) return;
+    delete draft._new; data.customers.push(draft); toast('✅ '+draft.name+'さんを登録しました');
+  } else toast('✅ 保存しました');
+  draft.updatedAt=Date.now(); save(); renderTags(); closeDetail();
+}
+function delCustomer(){
+  if(!confirm('「'+draft.name+'」さんを削除しますか？\n特徴・来店記録もすべて消えます。')) return;
+  data.customers=data.customers.filter(c=>c.id!==draft.id); (data.deleted=data.deleted||[]).push({id:draft.id,at:Date.now()}); save(); renderTags(); closeDetail(); toast('削除しました');
+}
+
+/* ---------- 起動 ---------- */
+document.getElementById('q').addEventListener('input',renderList);
+document.addEventListener('keydown',e=>{ if(e.key==='Escape') closeDetail(); });
+renderAll();
+// 起動時: 合言葉があればクラウドと合体、無ければ合言葉の画面
+if(storageOK()){ if(PASS) pushCloud(true); else showLock(); }
+</script>
+</body>
+</html>
