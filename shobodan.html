@@ -108,7 +108,18 @@ footer{text-align:center;color:var(--sub);font-size:12px;padding:20px 0 30px}
   body.print-kessan #printArea,body.print-kessan #printArea *{visibility:hidden}
   body.print-kessan #kessanPrintArea{display:block!important;position:absolute;left:0;top:0;width:100%;visibility:visible}
   body.print-kessan #kessanPrintArea *{visibility:visible}
-  #kessanPrintArea .ksheet{border:none;padding:10mm 6mm}
+  #kessanPrintArea .ksheet{border:none;padding:0;margin:0}
+  /* 決算書はA4縦1枚に収める（2026-10-26）。余白を詰め、それでも入らなければ printKessan() が zoom で縮める */
+  #kessanPrintArea .ksheet h1{font-size:19px;margin:0 0 2px}
+  #kessanPrintArea .ksheet .k-date{margin-bottom:8px}
+  #kessanPrintArea .ksheet h2{font-size:14px;margin:9px 0 4px}
+  #kessanPrintArea .ksheet th,#kessanPrintArea .ksheet td{padding:3px 7px;font-size:12px;line-height:1.35}
+  #kessanPrintArea .ksheet .k-summary{margin-top:8px;padding:5px 12px}
+  #kessanPrintArea .ksheet .k-summary table td{padding:2px 6px;font-size:13px}
+  #kessanPrintArea .ksheet .k-summary tr.grand td{font-size:14px;padding-top:4px}
+  #kessanPrintArea .ksheet .k-sign{margin-top:12px}
+  #kessanPrintArea .ksheet .k-sign .names{margin-top:10px}
+  #kessanPrintArea .ksheet tr{page-break-inside:avoid}
   .ksheet th{background:#f2ece2!important;color:#111!important}
 }
 /* ===== 2026-09-30 見やすさ・使いやすさ改善 ===== */
@@ -873,7 +884,7 @@ function printEntries(){
   document.body.classList.add("print-entries");
   window.print();
 }
-window.addEventListener("afterprint",()=>document.body.classList.remove("print-entries","print-kessan"));
+window.addEventListener("afterprint",()=>{ document.body.classList.remove("print-entries","print-kessan"); const k=document.getElementById("kessanPageStyle"); if(k) k.remove(); });
 
 // ===== 決算書 =====
 function kessanHTML(){
@@ -953,8 +964,24 @@ function renderKessan(){
   document.getElementById("kessanSheet").innerHTML = kessanHTML();
 }
 function printKessan(){
-  document.getElementById("kessanPrintArea").innerHTML = '<div class="ksheet">'+kessanHTML()+'</div>';
+  const area=document.getElementById("kessanPrintArea");
+  area.innerHTML = '<div class="ksheet">'+kessanHTML()+'</div>';
   document.body.classList.add("print-kessan");
+  // A4縦（余白8mm）1枚に入る高さか、画面の外で印刷と同じ幅にして測る。はみ出すなら zoom で縮める
+  let st=document.getElementById("kessanPageStyle");
+  if(!st){ st=document.createElement("style"); st.id="kessanPageStyle"; document.head.appendChild(st); }
+  st.textContent="@page{size:A4 portrait;margin:8mm}";
+  const mm=96/25.4, sheet=area.firstChild;
+  sheet.style.zoom="";
+  const keep=area.getAttribute("style");
+  area.setAttribute("style","display:block;position:fixed;left:-10000px;top:0;width:"+(194*mm)+"px;visibility:hidden");
+  // 印刷用の詰めた見た目で測るため、同じ指定を一時的に当てる
+  const tmp=document.createElement("style"); tmp.textContent=[...document.styleSheets].flatMap(ss=>{try{return [...ss.cssRules]}catch(e){return []}})
+    .filter(r=>r.media&&/print/.test(r.media.mediaText)).flatMap(r=>[...r.cssRules]).filter(r=>r.selectorText&&r.selectorText.includes("#kessanPrintArea .ksheet")).map(r=>r.cssText).join("\n");
+  document.head.appendChild(tmp);
+  const h=sheet.scrollHeight, room=(297-16)*mm-12;
+  tmp.remove(); area.setAttribute("style",keep||"display:none");
+  if(h>room) sheet.style.zoom=String(Math.max(0.55,Math.floor(room/h*100)/100));
   window.print();
 }
 
