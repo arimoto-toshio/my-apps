@@ -1455,7 +1455,7 @@
 
 <script>
 // ===== 最新版チェック（公開版を開いた人も自動で最新に）=====
-const APP_VERSION = '2026-10-29f';
+const APP_VERSION = '2026-10-30a';
 (function checkLatest() {
   if (location.protocol !== 'https:') return;
   fetch(location.pathname + '?v=' + Date.now(), { cache: 'no-store' })
@@ -1969,12 +1969,28 @@ function seedRiji20261026Tasks2() {
   localStorage.setItem(FLAG, '1');
 }
 
+// ===== 2026-10-30 より前の予定を片付ける（以後に過ぎた予定だけ「過去の予定」に残す）=====
+function cleanupOldSchedules() {
+  const CUT = '2026-10-30';
+  const schedules = STORE.get('schedules');
+  const old = schedules.filter(s => (s.date || '') < CUT);
+  if (!old.length) return;
+  // 念のため控えを残す（端末内）
+  try {
+    const bk = JSON.parse(localStorage.getItem('urimachi_schedules_removed') || '[]');
+    old.forEach(s => { if (!bk.some(x => x.id === s.id)) bk.push(s); });
+    localStorage.setItem('urimachi_schedules_removed', JSON.stringify(bk));
+  } catch(e) {}
+  STORE.set('schedules', schedules.filter(s => (s.date || '') >= CUT));
+}
+
 // ===== INIT =====
 function initApp() {
   seedSasaMatsuri2026();
   seedRiji20261026();
   seedKasaiHoken20261028();
   seedRiji20261026Tasks2();
+  cleanupOldSchedules();
   updateWelcome();
   renderAll();
 }
