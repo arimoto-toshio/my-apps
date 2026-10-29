@@ -1849,11 +1849,38 @@ function seedKasaiHoken20261028() {
   localStorage.setItem(FLAG, '1');
 }
 
+// ===== 理事会（2026-10-26）やること追加＋上に並べ直し =====
+function seedRiji20261026Tasks2() {
+  const FLAG = 'urimachi_seed_riji20261026b';
+  if (localStorage.getItem(FLAG) === '1') return;
+
+  const tasks = STORE.get('tasks');
+  const add = [
+    { k:8,  t:'第34回ワンコインの出店受付（締切11/17）', a:'', due:'2026-11-17' },
+    { k:9,  t:'クリスマスマーケットの4mツリーを作成', a:'', due:'2026-11-27' },
+    { k:10, t:'クリスマスマーケットの会場準備', a:'', due:'2026-12-17' },
+  ];
+  add.forEach(t => {
+    const tid = 'riji20261026-task-' + t.k;
+    if (!tasks.some(x => x.seedId === tid)) {
+      tasks.push({ id: 1761400002000 + t.k, seedId: tid, title: t.t, assign: t.a, due: t.due, done: false });
+    }
+  });
+  // 10/26理事会の分を一覧の上へ（期限の近い順、期限なしは後ろ）
+  const isNew = x => (x.seedId || '').indexOf('riji20261026-task-') === 0;
+  const key = x => x.due || '9999-12-31';
+  const fresh = tasks.filter(isNew).sort((a, b) => key(a) < key(b) ? -1 : key(a) > key(b) ? 1 : 0);
+  STORE.set('tasks', fresh.concat(tasks.filter(x => !isNew(x))));
+
+  localStorage.setItem(FLAG, '1');
+}
+
 // ===== INIT =====
 function initApp() {
   seedSasaMatsuri2026();
   seedRiji20261026();
   seedKasaiHoken20261028();
+  seedRiji20261026Tasks2();
   updateWelcome();
   renderAll();
 }
