@@ -1455,7 +1455,7 @@
 
 <script>
 // ===== 最新版チェック（公開版を開いた人も自動で最新に）=====
-const APP_VERSION = '2026-10-29e';
+const APP_VERSION = '2026-10-29f';
 (function checkLatest() {
   if (location.protocol !== 'https:') return;
   fetch(location.pathname + '?v=' + Date.now(), { cache: 'no-store' })
@@ -2083,20 +2083,25 @@ function addSchedule() {
 function renderSchedules() {
   const schedules = STORE.get('schedules');
   const el = document.getElementById('sched-list');
-  const today = new Date().toISOString().split('T')[0];
+  const n = new Date();
+  const today = n.getFullYear() + '-' + String(n.getMonth()+1).padStart(2,'0') + '-' + String(n.getDate()).padStart(2,'0');
   if (!schedules.length) { el.innerHTML = '<div class="empty-state"><div class="empty-icon">📭</div><p>予定がありません</p></div>'; return; }
   const upcoming = schedules.filter(s => s.date >= today);
   const past = schedules.filter(s => s.date < today);
   let html = '';
   if (upcoming.length) {
     html += upcoming.map(s => schedHtml(s, today)).join('');
+  } else {
+    html += '<div class="empty-state"><div class="empty-icon">📭</div><p>これからの予定はありません</p></div>';
   }
+  // 過去の予定はふだん隠す（データは残す。ボタンで見られる）
   if (past.length) {
-    html += '<div style="font-size:0.82rem;color:var(--text2);margin:16px 0 8px;font-weight:600">── 過去の予定 ──</div>';
-    html += past.reverse().map(s => schedHtml(s, today)).join('');
+    html += `<div style="text-align:center;margin:16px 0 8px"><button class="btn btn-sm" style="background:var(--border)" onclick="showPastSched=!showPastSched;renderSchedules()">${showPastSched ? '過去の予定を隠す' : '過去の予定を見る（' + past.length + '件）'}</button></div>`;
+    if (showPastSched) html += past.reverse().map(s => schedHtml(s, today)).join('');
   }
   el.innerHTML = html;
 }
+let showPastSched = false;
 
 function schedHtml(s, today) {
   const d = new Date(s.date + 'T00:00:00');
