@@ -1455,7 +1455,7 @@
 
 <script>
 // ===== 最新版チェック（公開版を開いた人も自動で最新に）=====
-const APP_VERSION = '2026-10-30a';
+const APP_VERSION = '2026-10-30b';
 (function checkLatest() {
   if (location.protocol !== 'https:') return;
   fetch(location.pathname + '?v=' + Date.now(), { cache: 'no-store' })
@@ -1970,10 +1970,15 @@ function seedRiji20261026Tasks2() {
 }
 
 // ===== 2026-10-30 より前の予定を片付ける（以後に過ぎた予定だけ「過去の予定」に残す）=====
+// 日付の書き方（2026/5/18・2026年5月18日・2026-5-18 など）をそろえる
+function normDate(v) {
+  const m = String(v || '').match(/(\d{4})\D+(\d{1,2})\D+(\d{1,2})/);
+  return m ? m[1] + '-' + m[2].padStart(2,'0') + '-' + m[3].padStart(2,'0') : String(v || '');
+}
 function cleanupOldSchedules() {
   const CUT = '2026-10-30';
   const schedules = STORE.get('schedules');
-  const old = schedules.filter(s => (s.date || '') < CUT);
+  const old = schedules.filter(s => normDate(s.date) < CUT);
   if (!old.length) return;
   // 念のため控えを残す（端末内）
   try {
@@ -1981,7 +1986,7 @@ function cleanupOldSchedules() {
     old.forEach(s => { if (!bk.some(x => x.id === s.id)) bk.push(s); });
     localStorage.setItem('urimachi_schedules_removed', JSON.stringify(bk));
   } catch(e) {}
-  STORE.set('schedules', schedules.filter(s => (s.date || '') >= CUT));
+  STORE.set('schedules', schedules.filter(s => normDate(s.date) >= CUT));
 }
 
 // ===== INIT =====
@@ -2102,8 +2107,8 @@ function renderSchedules() {
   const n = new Date();
   const today = n.getFullYear() + '-' + String(n.getMonth()+1).padStart(2,'0') + '-' + String(n.getDate()).padStart(2,'0');
   if (!schedules.length) { el.innerHTML = '<div class="empty-state"><div class="empty-icon">📭</div><p>予定がありません</p></div>'; return; }
-  const upcoming = schedules.filter(s => s.date >= today);
-  const past = schedules.filter(s => s.date < today);
+  const upcoming = schedules.filter(s => normDate(s.date) >= today);
+  const past = schedules.filter(s => normDate(s.date) < today);
   let html = '';
   if (upcoming.length) {
     html += upcoming.map(s => schedHtml(s, today)).join('');
