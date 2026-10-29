@@ -1455,7 +1455,7 @@
 
 <script>
 // ===== 最新版チェック（公開版を開いた人も自動で最新に）=====
-const APP_VERSION = '2026-10-30b';
+const APP_VERSION = '2026-10-30c';
 (function checkLatest() {
   if (location.protocol !== 'https:') return;
   fetch(location.pathname + '?v=' + Date.now(), { cache: 'no-store' })
@@ -1989,6 +1989,19 @@ function cleanupOldSchedules() {
   STORE.set('schedules', schedules.filter(s => normDate(s.date) >= CUT));
 }
 
+// ===== 笹まつり実行委員会の議事録（第4回・第5回）を片付ける =====
+function cleanupSasaMinutes() {
+  const minutes = STORE.get('minutes');
+  const rm = minutes.filter(m => m.seed === 'sasa4' || m.seed === 'sasa5');
+  if (!rm.length) return;
+  try {
+    const bk = JSON.parse(localStorage.getItem('urimachi_minutes_removed') || '[]');
+    rm.forEach(m => { if (!bk.some(x => x.id === m.id)) bk.push(m); });
+    localStorage.setItem('urimachi_minutes_removed', JSON.stringify(bk));
+  } catch(e) {}
+  STORE.set('minutes', minutes.filter(m => m.seed !== 'sasa4' && m.seed !== 'sasa5'));
+}
+
 // ===== INIT =====
 function initApp() {
   seedSasaMatsuri2026();
@@ -1996,6 +2009,7 @@ function initApp() {
   seedKasaiHoken20261028();
   seedRiji20261026Tasks2();
   cleanupOldSchedules();
+  cleanupSasaMinutes();
   updateWelcome();
   renderAll();
 }
