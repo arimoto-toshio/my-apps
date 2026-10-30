@@ -186,7 +186,7 @@
    +'.clk-b input{width:100%;box-sizing:border-box;font-size:19px;padding:11px;border:1px solid #ddd2c6;border-radius:10px;margin-bottom:9px}'
    +'.clk-e{color:#c62828;font-weight:bold;font-size:14px;min-height:1.2em;margin-bottom:6px}.clk-r{display:flex;gap:8px}'
    +'.clk-r button{flex:1;font-size:15px;padding:12px;border-radius:10px;border:1px solid #ddd2c6;background:#fff;cursor:pointer}.clk-r button.p{background:#b5452f;color:#fff;border-color:#b5452f;font-weight:bold}'
-   +'.clk-pill{position:fixed;right:10px;bottom:10px;z-index:2147482000;background:#2f7d4f;color:#fff;font:12px -apple-system,sans-serif;padding:4px 10px;border-radius:999px;opacity:.85;cursor:pointer}';
+   +'@media print{.clk-pill,.clk-ov{display:none!important}}.clk-pill{position:fixed;right:10px;bottom:10px;z-index:2147482000;background:#2f7d4f;color:#fff;font:12px -apple-system,sans-serif;padding:4px 10px;border-radius:999px;opacity:.85;cursor:pointer}';
   let shown=false;
   async function showLock(why){
     if(shown) return; shown=true;
