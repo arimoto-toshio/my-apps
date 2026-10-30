@@ -123,6 +123,57 @@
   .extras-total { display: flex; justify-content: space-between; align-items: center; margin-top: 12px; padding: 12px; background: #f5e6c8; border-radius: 8px; font-weight: 700; }
   .extras-total span:first-child { color: #6b1f1f; font-size: 15px; }
   .extras-total span:last-child { color: #2a0a0a; font-size: 22px; }
+
+  /* 同期の状態・次の試合 */
+  .sync-state { margin-left: auto; align-self: center; font-size: 11px; color: rgba(255,255,255,0.85); text-align: right; }
+  .sync-state.warn { color: #ffe082; font-weight: 700; }
+  .next-game { margin-top: 8px; padding: 6px 10px; background: rgba(255,255,255,0.14); border-radius: 6px; font-size: 12.5px; cursor: pointer; }
+
+  /* 📋 まとめて入力（全員を1つの表で） */
+  .view-switch { display: flex; gap: 4px; margin-left: auto; }
+  .view-switch button { border: 1.5px solid #2e7d32; background: white; color: #2e7d32; border-radius: 6px; padding: 4px 8px; font-size: 12px; font-weight: 700; font-family: inherit; cursor: pointer; }
+  .view-switch button.on { background: #2e7d32; color: white; }
+  .q-table { width: 100%; border-collapse: collapse; }
+  .q-table th { font-size: 10.5px; color: #666; font-weight: 700; padding: 2px 1px 5px; text-align: center; }
+  .q-table td { padding: 3px 1px; border-top: 1px solid #eef3ee; text-align: center; vertical-align: middle; }
+  .q-table td.q-name { text-align: left; font-weight: 700; font-size: 14px; word-break: keep-all; }
+  .q-table .handi-input { width: 38px; padding: 7px 1px; font-size: 13px; }
+  .q-table .score-input { width: 46px; padding: 7px 1px; }
+  .score-input.odd { border-color: #e65100; background: #fff3e0; }
+  .q-table input::-webkit-outer-spin-button, .q-table input::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
+  .q-table .vs-mark { font-size: 13px; }
+  .q-table .money { margin: 0; padding: 4px 1px; border: none; background: none; font-size: 12.5px; font-weight: 700; white-space: nowrap; }
+  .q-table tr.win-double { background: #e8f5e9; }
+  .q-table tr.lose-double { background: #ffebee; }
+  .q-count { font-size: 11.5px; color: #666; margin-top: 8px; }
+  .q-count b.left { color: #c62828; }
+
+  /* 🏅 ネット順位 */
+  .rank-row { display: flex; align-items: baseline; gap: 8px; padding: 6px 0; border-bottom: 1px solid #eef3ee; font-size: 14px; }
+  .rank-row .pos { width: 26px; font-weight: 900; color: #8b6914; text-align: right; }
+  .rank-row .who { flex: 1; font-weight: 700; }
+  .rank-row.me .who { color: #8b6914; }
+  .rank-row .num { font-variant-numeric: tabular-nums; color: #555; font-size: 12.5px; }
+  .rank-row .num b { color: #1a3322; font-size: 14px; }
+  .rank-actions { display: flex; gap: 8px; margin-top: 10px; }
+  .rank-actions .btn { flex: 1; padding: 9px 6px; font-size: 13px; background: #2e7d32; color: white; }
+  .rank-note { font-size: 11px; color: #888; margin-top: 6px; }
+
+  /* 📈 成績 */
+  .stat-switch { display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 10px; }
+  .stat-switch button { border: 1.5px solid #2e7d32; background: white; color: #2e7d32; border-radius: 999px; padding: 5px 14px; font-size: 13px; font-weight: 700; font-family: inherit; cursor: pointer; }
+  .stat-switch button.on { background: #2e7d32; color: white; }
+  .stat-tiles { display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; }
+  .stat-tile { background: #f7faf7; border-radius: 6px; padding: 8px 4px; text-align: center; }
+  .stat-tile .label { font-size: 10.5px; color: #666; }
+  .stat-tile .val { font-size: 17px; font-weight: 900; color: #1a3322; font-variant-numeric: tabular-nums; }
+  .stat-table { width: 100%; border-collapse: collapse; font-size: 13px; }
+  .stat-table th { background: #2a4a2a; color: white; font-size: 11px; padding: 6px 3px; font-weight: 700; }
+  .stat-table td { padding: 6px 3px; border-bottom: 1px solid #eef3ee; text-align: right; font-variant-numeric: tabular-nums; white-space: nowrap; }
+  .stat-table td.nm { text-align: left; font-weight: 700; }
+  .stat-table .plus { color: #1565c0; font-weight: 700; }
+  .stat-table .minus { color: #c62828; font-weight: 700; }
+  .stat-note { font-size: 11px; color: #888; margin-top: 6px; }
 </style>
 </head>
 <body>
@@ -132,7 +183,9 @@
   <div style="display:flex;gap:6px;margin-top:6px;">
     <button onclick="syncUpload()" style="background:rgba(46,204,113,0.3);border:1px solid rgba(46,204,113,0.6);color:white;padding:6px 10px;border-radius:6px;font-size:12px;cursor:pointer;">☁↑ 同期UP</button>
     <button onclick="syncDownload()" style="background:rgba(52,152,219,0.3);border:1px solid rgba(52,152,219,0.6);color:white;padding:6px 10px;border-radius:6px;font-size:12px;cursor:pointer;">☁↓ 同期DOWN</button>
+    <span class="sync-state" id="syncState"></span>
   </div>
+  <div class="next-game hidden" id="nextGame"></div>
   <div class="row">
     <input type="date" id="gameDate" />
     <input type="text" id="gameMemo" placeholder="メモ（コース名など）" />
@@ -143,21 +196,12 @@
 
 <div class="tabs">
   <div class="tab active" data-page="game" onclick="showPage('game')">⛳ スコア</div>
-  <div class="tab" data-page="history" onclick="showPage('history')">📅 履歴・集計</div>
+  <div class="tab" data-page="history" onclick="showPage('history')">📈 成績・履歴</div>
   <div class="tab" data-page="members" onclick="showPage('members')">👥 メンバー</div>
 </div>
 
 <!-- スコアページ -->
 <div id="page-game" class="page">
-
-  <!-- 🏆 この回の優勝者（手入力） -->
-  <div class="card" style="border-left:5px solid #d4a017;display:flex;align-items:center;gap:10px;">
-    <div style="font-weight:700;white-space:nowrap;">🏆 優勝者</div>
-    <input type="text" id="gameWinner" list="memberNames" placeholder="名前を入力（一覧から選択も可）"
-           onchange="updateWinner(this.value)"
-           style="flex:1;padding:10px;border:1.5px solid #ddd;border-radius:6px;font-size:15px;">
-    <datalist id="memberNames"></datalist>
-  </div>
 
   <!-- 👥 今日の参加（お休みの人はカードを畳む） -->
   <div class="card">
@@ -196,6 +240,16 @@
     </div>
   </div>
 
+  <!-- メンバー一覧（カード／まとめて入力） -->
+  <div class="card" style="padding:8px 14px;display:flex;align-items:center;gap:8px;margin-bottom:8px;">
+    <span style="font-size:13px;font-weight:700;color:#1b5e20;">👥 メンバーのスコア</span>
+    <div class="view-switch">
+      <button id="viewQuick" onclick="setScoreView('quick')">📋 まとめて</button>
+      <button id="viewCard" onclick="setScoreView('card')">🃏 カード</button>
+    </div>
+  </div>
+  <div id="memCards"></div>
+
   <!-- 合計 -->
   <div class="total-card">
     <h2>💰 にぎり（有本視点・この試合）</h2>
@@ -214,8 +268,24 @@
     </table>
   </div>
 
-  <!-- メンバー一覧 -->
-  <div id="memCards"></div>
+  <!-- 🏅 この試合のネット順位 -->
+  <div class="card">
+    <div class="card-h">🏅 この試合のネット順位</div>
+    <div id="rankBody"></div>
+    <div class="rank-actions">
+      <button class="btn" onclick="shareResult()">📋 結果文をコピー（LINE用）</button>
+    </div>
+    <div class="rank-note">結果文は順位とスコアだけです。にぎりの金額は入りません</div>
+  </div>
+
+  <!-- 🏆 この回の優勝者（手入力） -->
+  <div class="card" style="border-left:5px solid #d4a017;display:flex;align-items:center;gap:10px;">
+    <div style="font-weight:700;white-space:nowrap;">🏆 優勝者</div>
+    <input type="text" id="gameWinner" list="memberNames" placeholder="名前を入力（一覧から選択も可）"
+           onchange="updateWinner(this.value)"
+           style="flex:1;padding:10px;border:1.5px solid #ddd;border-radius:6px;font-size:15px;">
+    <datalist id="memberNames"></datalist>
+  </div>
 
   <!-- 追加収支（賞金・馬・にぎり） -->
   <div class="card extras-card">
@@ -245,6 +315,7 @@
 
 <!-- 履歴・集計ページ -->
 <div id="page-history" class="page hidden">
+  <div id="statsBody"></div>
   <div id="historyBody"></div>
 </div>
 
@@ -352,7 +423,7 @@ function loadApp() {
         if (g.arimotoHandi == null) g.arimotoHandi = 36;
         if (g.arimotoAm == null) g.arimotoAm = '';
         if (g.arimotoPm == null) g.arimotoPm = '';
-        if (!g.date) g.date = new Date().toISOString().slice(0, 10);
+        if (!g.date) g.date = todayStr();
         if (g.memo == null) g.memo = '';
         if (g.winner == null) g.winner = '';
         if (g.extraPrize == null) g.extraPrize = '';
@@ -468,13 +539,23 @@ function toggleAbsent(i) {
 }
 
 let booted = false;   // 起動時の初期描画では savedAt を進めない
-let dirty = false;    // この画面でユーザーが編集したか
-function save() {
-  if (booted) {
-    dirty = true;
+let dirty = false;    // まだクラウドへ送れていない編集があるか
+let lastSnap = '';    // 前回保存した時の中身（試合を見て回るだけなら「編集」にしない）
+const UNSENT_KEY = 'golf_unsent';   // 未送信の印（閉じても残す）
+function dataSnap() { return JSON.stringify({ members: app.members, games: app.games }); }
+function setDirty(v) {
+  dirty = v;
+  try { if (v) localStorage.setItem(UNSENT_KEY, '1'); else localStorage.removeItem(UNSENT_KEY); } catch (e) {}
+  showSyncState();
+}
+function save(force) {
+  const snap = dataSnap();
+  if (booted && (force || snap !== lastSnap)) {
+    setDirty(true);
     app.savedAt = Date.now();
     scheduleCloudSave();   // 編集の1.5秒後に自動でクラウドへ保存
   }
+  lastSnap = snap;
   localStorage.setItem(STORAGE_KEY, JSON.stringify(app));
 }
 
@@ -485,7 +566,7 @@ function showPage(name) {
     document.getElementById('page-' + p).classList.toggle('hidden', p !== name);
   });
   if (name === 'game') render();
-  if (name === 'history') renderHistory();
+  if (name === 'history') { renderStats(); renderHistory(); }
   if (name === 'members') renderMembers();
 }
 
@@ -520,6 +601,9 @@ function render() {
   // メンバーカード
   const wrap = document.getElementById('memCards');
   renderAttendance();
+  document.getElementById('viewQuick').classList.toggle('on', scoreView === 'quick');
+  document.getElementById('viewCard').classList.toggle('on', scoreView === 'card');
+  if (scoreView === 'quick') { wrap.innerHTML = quickTableHTML(c); recalc(); return; }
   wrap.innerHTML = app.members.map((m, i) => {
     if (isAbsent(c, m)) return '';
     const sc = c.scores[m.name] || { am: '', pm: '' };
@@ -559,6 +643,185 @@ function render() {
   }).join('');
 
   recalc();
+}
+
+// 📋 まとめて入力：参加者全員を1つの表で（欄のidはカードと同じなので計算は共通）
+let scoreView = 'quick';
+try { scoreView = localStorage.getItem('golf_score_view') || 'quick'; } catch (e) {}
+function setScoreView(v) {
+  scoreView = v;
+  try { localStorage.setItem('golf_score_view', v); } catch (e) {}
+  render();
+}
+function quickTableHTML(c) {
+  const rows = app.members.map((m, i) => {
+    if (isAbsent(c, m)) return '';
+    const sc = c.scores[m.name] || { am: '', pm: '' };
+    return `<tr id="card-${i}">
+      <td class="q-name">${esc(m.name)}</td>
+      <td><input type="number" class="handi-input" value="${hOf(c, m)}" onchange="updateHandi(${i}, this.value)" inputmode="numeric"></td>
+      <td><input type="number" class="score-input am" value="${sc.am}" oninput="updateScore(${i}, 'am', this.value)" inputmode="numeric" enterkeyhint="next"></td>
+      <td><input type="number" class="score-input pm" value="${sc.pm}" oninput="updateScore(${i}, 'pm', this.value)" inputmode="numeric" enterkeyhint="next"></td>
+      <td><span class="vs-mark" id="v-am-${i}">—</span><span class="vs-mark" id="v-pm-${i}">—</span></td>
+      <td><div class="money zero" id="m-${i}">¥0</div></td>
+    </tr>`;
+  }).join('');
+  return `<div class="card" style="padding:10px 8px;">
+    <table class="q-table">
+      <thead><tr><th style="text-align:left;">名前</th><th>ハンデ</th><th>午前</th><th>午後</th><th>勝敗</th><th>にぎり</th></tr></thead>
+      <tbody>${rows}</tbody>
+    </table>
+    <div class="q-count" id="qCount"></div>
+  </div>`;
+}
+// 入力の数と、打ち間違いらしいハーフスコアの印
+function markQuick(c) {
+  document.querySelectorAll('#page-game .score-input').forEach(x => {
+    const v = +x.value;
+    x.classList.toggle('odd', x.value !== '' && String(x.value).length >= 2 && (v < 25 || v > 80));
+  });
+  const el = document.getElementById('qCount');
+  if (!el) return;
+  const on = app.members.filter(m => !isAbsent(c, m));
+  const done = f => on.filter(m => { const s = c.scores[m.name]; return s && s[f] !== '' && s[f] != null; }).length;
+  const am = done('am'), pm = done('pm');
+  el.innerHTML = `入力済み 午前 ${am}/${on.length}・午後 ${pm}/${on.length}` +
+    (am + pm < on.length * 2 ? '' : '　<b style="color:#2e7d32;">全員入りました</b>') +
+    (document.querySelector('#page-game .odd') ? '　<b class="left">オレンジの欄は確かめてください</b>' : '');
+}
+
+// 🏅 ネット順位（合計スコア−ハンデ。午前・午後とも入った人だけ）
+function gameRanking(g) {
+  const list = [];
+  const num = v => (v === '' || v == null) ? null : +v;
+  const aA = num(g.arimotoAm), aP = num(g.arimotoPm);
+  if (aA != null && aP != null) list.push({ name: '有本', me: true, gross: aA + aP, net: aA + aP - (+g.arimotoHandi || 0) });
+  app.members.forEach(m => {
+    const sc = (g.scores && g.scores[m.name]) || {};
+    const a = num(sc.am), p = num(sc.pm);
+    if (a != null && p != null) list.push({ name: m.name, gross: a + p, net: a + p - hOf(g, m) });
+  });
+  list.sort((x, y) => (x.net - y.net) || (x.gross - y.gross));
+  let pos = 0;
+  list.forEach((r, i) => { if (i === 0 || r.net !== list[i - 1].net) pos = i + 1; r.pos = pos; });
+  return list;
+}
+function fmtNum(v) { return Number.isInteger(v) ? String(v) : v.toFixed(1); }
+function renderRanking() {
+  const el = document.getElementById('rankBody');
+  if (!el) return;
+  const list = gameRanking(app.current);
+  el.innerHTML = list.length ? list.map(r =>
+    `<div class="rank-row${r.me ? ' me' : ''}"><span class="pos">${r.pos}</span><span class="who">${esc(r.name)}${r.name === app.current.winner ? ' 🏆' : ''}</span><span class="num">グロス ${r.gross}　ネット <b>${fmtNum(r.net)}</b></span></div>`
+  ).join('') : '<div style="color:#999;font-size:13px;">午前・午後のスコアが入ると順位が出ます</div>';
+}
+function resultText() {
+  const g = app.current;
+  const list = gameRanking(g);
+  const lines = [`⛳ 山水会ゴルフ ${g.year}年 第${g.num}回`];
+  lines.push((g.date || '') + (g.memo ? ' ' + g.memo : ''));
+  if (g.winner) lines.push(`🏆 優勝 ${g.winner}さん`);
+  lines.push('');
+  list.forEach(r => lines.push(`${r.pos}位 ${r.name}　${r.gross}（ネット${fmtNum(r.net)}）`));
+  return lines.join('\n');
+}
+async function shareResult() {
+  if (!gameRanking(app.current).length) { toast('スコアが入ってから使えます'); return; }
+  const text = resultText();
+  try {
+    await navigator.clipboard.writeText(text);
+    toast('結果文をコピーしました。LINEに貼り付けできます');
+  } catch (e) {
+    prompt('下の文をコピーしてください', text);
+  }
+}
+
+// ⛳ 次の試合（今日以降でいちばん近い日）
+function nextGameInfo() {
+  const today = todayStr();
+  const ord = orderedIdx().filter(i => app.games[i].date >= today).sort((a, b) => String(app.games[a].date).localeCompare(String(app.games[b].date)));
+  return ord.length ? { idx: ord[0], g: app.games[ord[0]] } : null;
+}
+function renderNextGame() {
+  const el = document.getElementById('nextGame');
+  const nx = nextGameInfo();
+  if (!nx) { el.classList.add('hidden'); return; }
+  const days = Math.round((new Date(nx.g.date + 'T00:00:00') - new Date(todayStr() + 'T00:00:00')) / 86400000);
+  const [, mo, da] = nx.g.date.split('-').map(Number);
+  el.classList.remove('hidden');
+  el.textContent = `⛳ ${days === 0 ? '今日の試合' : '次の試合 あと' + days + '日'}：${mo}/${da} ${nx.g.memo || '第' + nx.g.num + '回'}`;
+  el.onclick = () => { openGame(nx.idx); };
+}
+
+// 📈 成績（有本の平均・相手別の勝敗と金額・優勝回数）
+let statYear = 'this';
+function setStatYear(v) { statYear = v; renderStats(); }
+function renderStats() {
+  const el = document.getElementById('statsBody');
+  const nowY = new Date().getFullYear();
+  const years = [...new Set(app.games.map(g => g.year))].sort((a, b) => b - a);
+  const inYear = statYear === 'all' ? app.games : app.games.filter(g => g.year === (statYear === 'this' ? nowY : statYear));
+  const moneyStr = v => v === 0 ? '±0' : (v > 0 ? '+¥' : '-¥') + Math.abs(v).toLocaleString();
+  const num = v => (v === '' || v == null) ? null : +v;
+
+  // 有本
+  const played = inYear.filter(g => num(g.arimotoAm) != null && num(g.arimotoPm) != null);
+  const sums = played.map(g => +g.arimotoAm + +g.arimotoPm);
+  const avg = a => a.length ? a.reduce((s, v) => s + v, 0) / a.length : null;
+  const f1 = v => v == null ? '—' : v.toFixed(1);
+  const nigiri = inYear.reduce((s, g) => s + gameNets(g).net, 0);
+  let W = 0, L = 0, D = 0;
+
+  // 相手別
+  const rows = app.members.map(m => {
+    let w = 0, l = 0, d = 0, money = 0, n = 0; const halves = [];
+    inYear.forEach(g => {
+      const aHalf = (+g.arimotoHandi || 0) / 2, half = hOf(g, m) / 2;
+      const sc = (g.scores && g.scores[m.name]) || {};
+      let any = false;
+      [['am', 'arimotoAm'], ['pm', 'arimotoPm']].forEach(([f, af]) => {
+        const v = num(sc[f]);
+        if (v != null) { halves.push(v); any = true; }
+        const r = compare(num(g[af]) == null ? null : num(g[af]) - aHalf, v == null ? null : v - half);
+        if (r === 'win') w++; else if (r === 'lose') l++; else if (r === 'tie') d++;
+      });
+      if (any) n++;
+      money += memberGameMoney(g, m);
+    });
+    W += w; L += l; D += d;
+    return { name: m.name, w, l, d, money, n, avg: avg(halves) };
+  }).filter(r => r.n > 0).sort((a, b) => b.money - a.money);
+
+  // 優勝回数
+  const wins = {};
+  inYear.forEach(g => { if (g.winner) wins[g.winner] = (wins[g.winner] || 0) + 1; });
+  const winList = Object.entries(wins).sort((a, b) => b[1] - a[1]);
+
+  const btn = (v, t) => `<button class="${statYear === v ? 'on' : ''}" onclick='setStatYear(${JSON.stringify(v)})'>${t}</button>`;
+  el.innerHTML = `<div class="stat-switch">${btn('this', '今年')}${years.filter(y => y !== nowY).map(y => btn(y, y + '年')).join('')}${btn('all', '通算')}</div>
+  <div class="card">
+    <div class="card-h">⭐ 有本の成績（${played.length}試合）</div>
+    <div class="stat-tiles">
+      <div class="stat-tile"><div class="label">平均スコア</div><div class="val">${f1(avg(sums))}</div></div>
+      <div class="stat-tile"><div class="label">ベスト</div><div class="val">${sums.length ? Math.min(...sums) : '—'}</div></div>
+      <div class="stat-tile"><div class="label">にぎり計</div><div class="val" style="font-size:15px;color:${nigiri > 0 ? '#1565c0' : nigiri < 0 ? '#c62828' : '#999'};">${moneyStr(nigiri)}</div></div>
+      <div class="stat-tile"><div class="label">午前の平均</div><div class="val">${f1(avg(played.map(g => +g.arimotoAm)))}</div></div>
+      <div class="stat-tile"><div class="label">午後の平均</div><div class="val">${f1(avg(played.map(g => +g.arimotoPm)))}</div></div>
+      <div class="stat-tile"><div class="label">勝-敗-分</div><div class="val" style="font-size:15px;">${W}-${L}-${D}</div></div>
+    </div>
+  </div>
+  <div class="card">
+    <div class="card-h">🤝 相手別（有本から見て）</div>
+    ${rows.length ? `<table class="stat-table">
+      <thead><tr><th style="text-align:left;">相手</th><th>勝-敗-分</th><th>にぎり</th><th>相手の平均<br>(ハーフ)</th></tr></thead>
+      <tbody>${rows.map(r => `<tr><td class="nm">${esc(r.name)}</td><td>${r.w}-${r.l}-${r.d}</td><td class="${r.money > 0 ? 'plus' : r.money < 0 ? 'minus' : ''}">${moneyStr(r.money)}</td><td>${f1(r.avg)}</td></tr>`).join('')}</tbody>
+    </table>
+    <div class="stat-note">勝-敗-分は午前・午後を1つずつ数えています。金額の多い順です</div>` : '<div style="color:#999;font-size:13px;">まだスコアがありません</div>'}
+  </div>
+  <div class="card">
+    <div class="card-h">🏆 優勝回数</div>
+    ${winList.length ? winList.map(([n, c]) => `<div class="rank-row"><span class="who">${esc(n)}</span><span class="num"><b>${c}</b> 回</span></div>`).join('') : '<div style="color:#999;font-size:13px;">まだ優勝者の記録がありません</div>'}
+  </div>`;
 }
 
 // 1試合分の収支（対戦分・追加収支）をデータから計算
@@ -745,6 +1008,9 @@ function recalc() {
 
   recalcExtras();
   renderPM();
+  renderRanking();
+  renderNextGame();
+  markQuick(c);
 
   document.getElementById('totalWin').textContent = '¥' + totalWin.toLocaleString();
   document.getElementById('totalLose').textContent = '¥' + totalLose.toLocaleString();
@@ -896,6 +1162,7 @@ function newGame() {
   ng.extraPrize = cur.extraPrize;
   ng.extraUma = cur.extraUma;
   ng.extraNigiri = cur.extraNigiri;
+  ng.arimotoHandi = cur.arimotoHandi;   // 有本のハンデも前の試合から
   app.games.push(ng);
   app.curIdx = app.games.length - 1;
   app.current = ng;
@@ -943,12 +1210,14 @@ function updateGameMeta(sfx = '') {
 function updateWinner(val) {
   app.current.winner = (val || '').trim();
   save();
+  renderRanking();
 }
 
 function deleteCurrentGame() {
   if (app.games.length <= 1) { toast('最後の試合は削除できません'); return; }
   const c = app.current;
-  if (!confirm(`${c.year}年${c.month}月 第${c.num}回 を削除しますか？`)) return;
+  const filled = app.members.filter(m => hasScore(c, m)).length;
+  if (!confirm(`${c.year}年${c.month}月 第${c.num}回 を削除しますか？` + (filled ? `\n${filled}人分のスコアも消えます。` : ''))) return;
   app.games.splice(app.curIdx, 1);
   if (app.curIdx >= app.games.length) app.curIdx = app.games.length - 1;
   app.current = app.games[app.curIdx];
@@ -984,7 +1253,14 @@ document.getElementById('page-game').addEventListener('focusin', e => {
 });
 
 // 入力時
-document.getElementById('gameDate').addEventListener('change', recalc);
+document.getElementById('gameDate').addEventListener('change', e => {
+  const v = e.target.value;
+  if (v) {   // 日付に合わせて年・月も動かす（外す月や今年の集計がずれないように）
+    const [y, mo] = v.split('-').map(Number);
+    app.current.date = v; app.current.year = y; app.current.month = mo;
+    render();
+  } else recalc();
+});
 document.getElementById('gameMemo').addEventListener('input', recalc);
 
 // ============================================================
@@ -997,22 +1273,46 @@ let cloudReady = false, cloudTimer = null;
 function storageOK() {
   try { localStorage.setItem('__synctest', '1'); localStorage.removeItem('__synctest'); return true; } catch (e) { return false; }
 }
+// この端末に記録が無く、まだクラウドを読めていない間は送らない（空のデータで上書きしないため）
+// （'golf_fresh' は、初めて開いた端末がクラウドを読めるまで残す印）
+let freshDevice = false;
+try {
+  freshDevice = !localStorage.getItem(STORAGE_KEY) || !!localStorage.getItem('golf_fresh');
+  if (freshDevice) localStorage.setItem('golf_fresh', '1');
+} catch (e) {}
+function cloudSeen() { freshDevice = false; try { localStorage.removeItem('golf_fresh'); } catch (e) {} }
+let syncFailed = false;
+function showSyncState() {
+  const el = document.getElementById('syncState');
+  if (!el) return;
+  const wait = dirty && (syncFailed || freshDevice);
+  el.textContent = wait ? '⚠ 未送信（端末には保存）' : dirty ? '☁ 保存中…' : '☁ 保存済み';
+  el.classList.toggle('warn', wait);
+}
 function scheduleCloudSave() {
   if (!cloudReady) return;
   clearTimeout(cloudTimer);
   cloudTimer = setTimeout(pushCloudSilent, 1500);
 }
 async function pushCloudSilent() {
-  if (!storageOK()) return;
+  if (!storageOK() || freshDevice) return;
+  const sent = app.savedAt;
   try {
     const res = await fetch(SYNC_URL + '?action=save&key=' + SYNC_KEY, { method: 'POST', body: JSON.stringify(app) });
     const j = await res.json();
-    if (j && j.success) toast('☁ 自動保存しました');
-  } catch(e) { /* オフライン等は端末内に保存済み */ }
+    if (j && j.success) {
+      syncFailed = false;
+      if (app.savedAt === sent) setDirty(false);   // 送っている間に次の入力があれば、もう一度送る
+      toast('☁ 自動保存しました');
+    } else { syncFailed = true; showSyncState(); }
+  } catch(e) { syncFailed = true; showSyncState(); /* オフライン等は端末内に保存済み。電波が戻ったら送る */ }
 }
 function flushCloudSave() {   // 閉じる瞬間に送る（編集していない画面からは送らない）
-  if (!dirty || !storageOK()) return;
-  try { navigator.sendBeacon(SYNC_URL + '?action=save&key=' + SYNC_KEY, JSON.stringify(app)); } catch(e) {}
+  if (!dirty || !storageOK() || freshDevice) return;
+  try {
+    // 受け付けられたら済みとする（届かなくても、手元の方が新しいので次に開いた時に送り直す）
+    if (navigator.sendBeacon(SYNC_URL + '?action=save&key=' + SYNC_KEY, JSON.stringify(app))) { clearTimeout(cloudTimer); setDirty(false); }
+  } catch(e) {}
 }
 // クラウドデータの検証（ゴルフのデータ以外で上書きしない）
 function parseCloudGolf(d) {
@@ -1023,9 +1323,16 @@ function parseCloudGolf(d) {
   return null;
 }
 function applyCloudGolf(d) {
+  const viewingId = app.current && app.current.id;   // 見ている試合はそのまま（端末ごとに別でよい）
   localStorage.setItem(STORAGE_KEY, JSON.stringify(d));
   app = loadApp();   // loadAppの補完処理を通して安全に取り込む
+  const keep = app.games.findIndex(g => g.id === viewingId);
+  if (keep >= 0) { app.curIdx = keep; app.current = app.games[keep]; }
+  const was = booted;
+  booted = false;    // 読み込んだだけでは「編集」にしない
   render();
+  booted = was;
+  lastSnap = dataSnap();
 }
 
 async function syncUpload() {
@@ -1035,7 +1342,7 @@ async function syncUpload() {
       method: 'POST', body: JSON.stringify(app)
     });
     const json = await res.json();
-    if (json.success) toast('クラウドに保存しました');
+    if (json.success) { cloudSeen(); syncFailed = false; setDirty(false); toast('クラウドに保存しました'); }
     else toast('エラー: ' + json.message);
   } catch(e) { toast('通信エラー: ' + e.message); }
 }
@@ -1048,6 +1355,7 @@ async function syncDownload() {
     const d = parseCloudGolf(json && json.success ? json.data : null);
     if (d) {
       applyCloudGolf(d);
+      cloudSeen(); syncFailed = false; setDirty(false);
       toast('クラウドから読み込みました');
     } else toast('クラウドにデータがありません');
   } catch(e) { toast('通信エラー: ' + e.message); }
@@ -1058,11 +1366,27 @@ async function autoRestore() {   // 開いたら自動でクラウドから読�
     const res = await fetch(SYNC_URL + '?action=load&key=' + SYNC_KEY);
     const json = await res.json();
     const d = parseCloudGolf(json && json.success ? json.data : null);
-    if (!d) return;
+    syncFailed = false; showSyncState();
+    const wasFresh = freshDevice;
+    if (!d) { if (json && json.success) cloudSeen(); return; }
+    cloudSeen();
+    if (wasFresh) { applyCloudGolf(d); setDirty(false); return; }   // 初めての端末は必ずクラウドの記録を使う
     // 手元の方が新しい場合はクラウドで上書きせず、逆に手元をクラウドへ送る
     if (d.savedAt && app.savedAt && app.savedAt > d.savedAt) { pushCloudSilent(); return; }
+    if (d.savedAt && d.savedAt === app.savedAt) { if (dirty) pushCloudSilent(); return; }   // 同じ中身なら画面はそのまま
+    // 未送信の入力があるのにクラウドの方が新しい（別の端末でも入力した）時は勝手に消さない
+    if (dirty && !confirm('この端末にまだ送っていない入力があります。\n別の端末でも更新されています。\n\nOK＝クラウドの内容に入れ替える（この端末の未送信分は消えます）\nキャンセル＝この端末の内容をクラウドへ送る')) {
+      save(true); pushCloudSilent(); return;
+    }
     applyCloudGolf(d);
-  } catch(e) { /* オフライン等は端末内データのまま */ }
+    setDirty(false);
+  } catch(e) { syncFailed = dirty; showSyncState(); /* オフライン等は端末内データのまま */ }
+}
+// 当日開いたら、その日の試合を出す
+function jumpToToday() {
+  const t = todayStr();
+  const i = app.games.findIndex(g => g.date === t);
+  if (i >= 0 && i !== app.curIdx) { app.curIdx = i; app.current = app.games[i]; render(); }
 }
 
 // ====== バックアップ ======
@@ -1070,7 +1394,7 @@ function exportBackup() {
   const blob = new Blob([JSON.stringify(app, null, 2)], { type: 'application/json' });
   const a = document.createElement('a');
   a.href = URL.createObjectURL(blob);
-  a.download = 'ゴルフスコア_控え_' + new Date().toISOString().slice(0, 10) + '.json';
+  a.download = 'ゴルフスコア_控え_' + todayStr() + '.json';
   a.click();
   toast('控え(JSON)を書き出しました');
 }
@@ -1083,7 +1407,7 @@ function importBackup(ev) {
       if (!d || !Array.isArray(d.games)) { toast('ゴルフのデータではありません'); return; }
       if (!confirm('控えを読み込み、今のデータを置き換えます。よろしいですか？')) return;
       applyCloudGolf(d);
-      save();
+      save(true);
       toast('控えを読み戻しました');
     } catch(err) { toast('読み込み失敗'); }
   };
@@ -1112,10 +1436,21 @@ document.getElementById('gameNavBottom').innerHTML = gameNavHTML('2', 'margin-to
 
 // 初期描画 → クラウドから自動読込 → 以後は編集のたび自動保存
 render();
+lastSnap = dataSnap();
 booted = true;
-autoRestore().finally(() => { cloudReady = true; if (golfMigrated) { golfMigrated = false; save(); } });
+try { dirty = !!localStorage.getItem(UNSENT_KEY); } catch (e) {}
+showSyncState();
+autoRestore().finally(() => {
+  cloudReady = true;
+  if (golfMigrated) { golfMigrated = false; save(true); }
+  jumpToToday();
+});
 window.addEventListener('beforeunload', flushCloudSave);
 window.addEventListener('pagehide', flushCloudSave);
+// 開きっぱなしの画面に戻ってきた時・電波が戻った時に追いつく（古い内容で上書きしないため）
+function catchUp() { if (cloudReady) autoRestore(); }
+document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'visible') catchUp(); });
+window.addEventListener('online', catchUp);
 </script>
 </body>
 </html>
