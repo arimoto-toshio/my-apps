@@ -73,6 +73,21 @@ textarea.t{min-height:60px;resize:vertical}
 .toast{position:fixed;left:50%;bottom:24px;transform:translateX(-50%);background:#333;color:#fff;padding:10px 18px;border-radius:999px;font-size:14px;opacity:0;transition:opacity .25s;z-index:50;pointer-events:none}
 .toast.show{opacity:.92}
 .stat{font-size:13px;color:var(--sub);margin-top:2px}
+/* 写真 */
+.photos{display:flex;flex-wrap:wrap;gap:8px}
+.ph{position:relative;width:96px;height:96px;border-radius:10px;overflow:hidden;background:var(--tag);border:1px solid var(--line);cursor:pointer;display:flex;align-items:center;justify-content:center;color:var(--sub);font-size:12px;flex-direction:column;gap:2px}
+.ph img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;display:none}
+.ph img.ok{display:block}
+.ph .rm{position:absolute;top:3px;right:3px;background:rgba(0,0,0,.55);color:#fff;border:none;border-radius:50%;width:26px;height:26px;font-size:13px;cursor:pointer;z-index:2}
+.ph .dt{position:absolute;left:0;right:0;bottom:0;background:rgba(0,0,0,.45);color:#fff;font-size:11px;text-align:center;padding:1px 0;z-index:2}
+.ph.add{border:2px dashed #d9cbbd;background:#fff;font-size:13px}
+.ph.add b{font-size:26px;font-weight:normal}
+.card .thumb{float:right;width:58px;height:58px;border-radius:8px;object-fit:cover;margin:0 0 4px 10px;display:none}
+.card .thumb.ok{display:block}
+.pv{position:fixed;inset:0;background:rgba(0,0,0,.88);z-index:60;display:none;align-items:center;justify-content:center;flex-direction:column;padding:16px}
+.pv.show{display:flex}
+.pv img{max-width:100%;max-height:82vh;border-radius:8px}
+.pv .cap{color:#fff;margin-top:10px;font-size:14px}
 /* 合言葉の画面 */
 .lock{position:fixed;inset:0;background:var(--bg);z-index:40;display:none;align-items:center;justify-content:center;padding:20px}
 .lock.show{display:flex}
@@ -110,6 +125,8 @@ textarea.t{min-height:60px;resize:vertical}
   <div class="panel" id="panel"></div>
 </div>
 <div class="toast" id="toast"></div>
+<input type="file" id="phfile" accept="image/*" multiple style="display:none" onchange="onPhotoFiles(this)">
+<div class="pv" id="pv" onclick="closePhoto()"><img id="pvimg" alt=""><div class="cap" id="pvcap">タップで閉じる</div></div>
 <div class="lock" id="lock"><div class="box" id="lockBox"></div></div>
 
 <script>
@@ -180,7 +197,7 @@ async function pushCloud(silent,skipFetch){
     }
     if(!data.customers.length){ if(!silent) toast('お客様が0人なので保存しません'); return false; }
     const res=await fetch(SYNC_URL+'?action=save&key='+SYNC_KEY,{method:'POST',body:JSON.stringify(await encryptData(data,PASS))}); const j=await res.json();
-    if(j.success){ if(!silent) toast('☁️ クラウドに保存しました（合言葉つき）'); return true; }
+    if(j.success){ if(!silent) toast('☁️ クラウドに保存しました（合言葉つき）'); setTimeout(flushPhotos,0); return true; }
     if(!silent) toast('エラー: '+(j.message||''));
   }catch(e){
     if(e.code==='badpass'){ forgetPass(); showLock(); toast('合言葉が変わっています。入れ直してください'); }
@@ -192,6 +209,108 @@ async function cloudUpload(){ await pushCloud(false); }
 async function cloudDownload(){ await pushCloud(false); }   // 読込も「合体」して保存
 function forgetPass(){ PASS=null; try{ localStorage.removeItem(PASS_KEY); }catch(e){} }
 function setPass(p){ PASS=p; try{ localStorage.setItem(PASS_KEY,p); }catch(e){} }
+
+
+/* ---------- 写真（1枚ずつ別のクラウドkeyに合言葉つきで保存。手元は IndexedDB に控える） ---------- */
+const PHOTO_PREFIX='okyakusama_photo_';
+const PEND_KEY='okyakusama_photo_pending';
+const memPhotos={};
+let _idb=null;
+function idb(){ if(!_idb) _idb=new Promise((res,rej)=>{ try{ const r=indexedDB.open('okyakusama_photos',1); r.onupgradeneeded=()=>r.result.createObjectStore('p'); r.onsuccess=()=>res(r.result); r.onerror=()=>rej(r.error); }catch(e){ rej(e); } }); return _idb; }
+async function idbGet(id){ if(memPhotos[id]) return memPhotos[id]; try{ const db=await idb(); return await new Promise(res=>{ const q=db.transaction('p').objectStore('p').get(id); q.onsuccess=()=>{ if(q.result) memPhotos[id]=q.result; res(q.result||null); }; q.onerror=()=>res(null); }); }catch(e){ return null; } }
+async function idbPut(id,v){ memPhotos[id]=v; try{ const db=await idb(); await new Promise(res=>{ const t=db.transaction('p','readwrite'); t.objectStore('p').put(v,id); t.oncomplete=res; t.onerror=res; }); }catch(e){} }
+async function idbDel(id){ delete memPhotos[id]; try{ const db=await idb(); await new Promise(res=>{ const t=db.transaction('p','readwrite'); t.objectStore('p').delete(id); t.oncomplete=res; t.onerror=res; }); }catch(e){} }
+function getPend(){ try{ return JSON.parse(localStorage.getItem(PEND_KEY)||'[]'); }catch(e){ return []; } }
+function setPend(a){ try{ localStorage.setItem(PEND_KEY,JSON.stringify(a)); }catch(e){} }
+function pend(id){ const a=getPend(); if(!a.includes(id)){ a.push(id); setPend(a); } }
+function unpend(id){ setPend(getPend().filter(x=>x!==id)); }
+function photoInUse(id){ return data.customers.some(c=>(c.photos||[]).some(p=>p.id===id)); }
+async function uploadPhoto(id,pass){
+  const v=await idbGet(id); if(!v) return false;
+  const res=await fetch(SYNC_URL+'?action=save&key='+PHOTO_PREFIX+id,{method:'POST',body:JSON.stringify(await encryptData({img:v,savedAt:Date.now()},pass||PASS))});
+  const j=await res.json(); return !!j.success;
+}
+let flushing=false;
+async function flushPhotos(){
+  if(flushing||!PASS||!storageOK()) return; flushing=true;
+  try{ for(const id of getPend()){ if(!photoInUse(id)) continue; if(await uploadPhoto(id)) unpend(id); else break; } }
+  catch(e){} finally{ flushing=false; }
+}
+const photoLoading={};
+async function photoSrc(id,localOnly){
+  const v=await idbGet(id); if(v||localOnly) return v;
+  if(!PASS) return null;
+  if(!photoLoading[id]) photoLoading[id]=(async()=>{
+    try{ const res=await fetch(SYNC_URL+'?action=load&key='+PHOTO_PREFIX+id,{cache:'no-store'}); const j=await res.json(); let d=j&&j.data; if(typeof d==='string') d=JSON.parse(d);
+      if(d&&d.enc){ const o=await decryptData(d,PASS); if(o&&o.img){ await idbPut(id,o.img); return o.img; } } }catch(e){}
+    return null; })().finally(()=>{ delete photoLoading[id]; });
+  return photoLoading[id];
+}
+function fillPhotos(root,localOnly){
+  root.querySelectorAll('img[data-ph]').forEach(img=>{ if(img.classList.contains('ok')) return;
+    photoSrc(img.dataset.ph,localOnly).then(src=>{ const ld=img.parentNode&&img.parentNode.querySelector('.ld');
+      if(src){ img.src=src; img.classList.add('ok'); if(ld) ld.remove(); } else if(!localOnly&&ld) ld.textContent=PASS?'読めません':'合言葉が必要'; }); });
+}
+// 起動時などに、まだ手元に無い写真をクラウドから順に取ってくる（一覧の小さい写真用）
+let prefetching=false;
+async function prefetchPhotos(){
+  if(prefetching||!PASS) return; prefetching=true;
+  try{ let got=0; for(const c of data.customers){ for(const p of (c.photos||[])){ if(!(await idbGet(p.id))){ if(await photoSrc(p.id)) got++; } } }
+    if(got&&!curId) renderList(); }finally{ prefetching=false; }
+}
+async function shrinkImage(file){
+  const url=URL.createObjectURL(file);
+  try{
+    const img=new Image(); await new Promise((res,rej)=>{ img.onload=res; img.onerror=rej; img.src=url; });
+    const max=800; const sc=Math.min(1,max/Math.max(img.naturalWidth,img.naturalHeight));
+    const cv=document.createElement('canvas'); cv.width=Math.round(img.naturalWidth*sc); cv.height=Math.round(img.naturalHeight*sc);
+    const g=cv.getContext('2d'); g.fillStyle='#fff'; g.fillRect(0,0,cv.width,cv.height); g.drawImage(img,0,0,cv.width,cv.height);
+    let q=0.75, out=cv.toDataURL('image/jpeg',q);
+    while(out.length>120000&&q>0.35){ q-=0.1; out=cv.toDataURL('image/jpeg',q); }
+    return out;
+  }finally{ URL.revokeObjectURL(url); }
+}
+function photoHtml(c){
+  const ps=c.photos||[];
+  return ps.map(p=>'<div class="ph" onclick="viewPhoto(\''+p.id+'\')"><span class="ld">読込中…</span><img data-ph="'+p.id+'" alt=""><span class="dt">'+fmtDateY(p.date)+'</span><button class="rm" title="消す" onclick="event.stopPropagation();rmPhoto(\''+p.id+'\')">✕</button></div>').join('')
+    +'<div class="ph add" onclick="document.getElementById(\'phfile\').click()"><b>📷</b>写真を追加</div>';
+}
+function redrawPhotos(){ const el=document.getElementById('phlist'); if(!el) return; el.innerHTML=photoHtml(draft); fillPhotos(el); }
+async function onPhotoFiles(input){
+  const files=[...input.files]; input.value=''; if(!files.length||!draft) return;
+  let n=0;
+  for(const f of files){
+    try{ const v=await shrinkImage(f); const id=uid(); await idbPut(id,v); draft.photos=draft.photos||[]; draft.photos.push({id,date:today()}); pend(id); n++; }
+    catch(e){ toast('この写真は読み込めませんでした'); }
+  }
+  if(!n) return;
+  redrawPhotos(); autoPersist(); toast('📷 写真を'+n+'枚追加しました');
+}
+function rmPhoto(id){
+  if(!confirm('この写真を消しますか？')) return;
+  draft.photos=(draft.photos||[]).filter(p=>p.id!==id); redrawPhotos(); autoPersist();
+  if(!draft._new) cloudDelPhoto(id); else { idbDel(id); unpend(id); }
+}
+function cloudDelPhoto(id){
+  idbDel(id); unpend(id);
+  if(PASS&&storageOK()) fetch(SYNC_URL+'?action=save&key='+PHOTO_PREFIX+id,{method:'POST',body:JSON.stringify({deleted:1,savedAt:Date.now()})}).catch(()=>{});
+}
+async function viewPhoto(id){
+  const src=await photoSrc(id); if(!src){ toast('写真を読み込めませんでした'); return; }
+  document.getElementById('pvimg').src=src; document.getElementById('pv').classList.add('show');
+}
+function closePhoto(){ document.getElementById('pv').classList.remove('show'); }
+// 合言葉を変えたら、写真も新しい合言葉でかけ直す
+async function reencryptPhotos(oldPass){
+  const ids=[]; data.customers.forEach(c=>(c.photos||[]).forEach(p=>ids.push(p.id)));
+  let ok=0;
+  for(const id of ids){
+    let v=await idbGet(id);
+    if(!v&&oldPass){ try{ const res=await fetch(SYNC_URL+'?action=load&key='+PHOTO_PREFIX+id,{cache:'no-store'}); const j=await res.json(); let d=j&&j.data; if(typeof d==='string') d=JSON.parse(d); if(d&&d.enc){ const o=await decryptData(d,oldPass); if(o&&o.img){ v=o.img; await idbPut(id,v); } } }catch(e){} }
+    if(v){ try{ if(await uploadPhoto(id)) { ok++; unpend(id); } else pend(id); }catch(e){ pend(id); } }
+  }
+  if(ids.length) toast('📷 写真'+ok+'/'+ids.length+'枚を新しい合言葉でかけ直しました');
+}
 
 /* ---------- 合言葉の画面 ---------- */
 let lockMode='';
@@ -221,7 +340,7 @@ async function lockOK(){
     if(!p1){ err.textContent='合言葉を入れてください'; return; }
     err.textContent='確認中...';
     try{ const c=await fetchCloud(p1); setPass(p1); if(c){ data=mergeData(data,c); try{ localStorage.setItem(STORAGE_KEY,JSON.stringify(data)); }catch(e){} }
-      renderAll(); hideLock(); toast('🔓 開きました（'+data.customers.length+'人）');
+      renderAll(); hideLock(); toast('🔓 開きました（'+data.customers.length+'人）'); flushPhotos(); prefetchPhotos();
     }catch(e){ err.textContent=e.code==='badpass'?'❌ 合言葉がちがいます':'電波を確認してください'; }
     return;
   }
@@ -232,8 +351,8 @@ async function lockOK(){
     // 今のクラウドの分を（今の合言葉で）合体してから、新しい合言葉でかけ直す
     const c=await fetchCloud(); if(c) data=mergeData(data,c);
     try{ localStorage.setItem(STORAGE_KEY,JSON.stringify(data)); }catch(e){}
-    setPass(p1); renderAll(); hideLock();
-    if(await pushCloud(false,true)) toast('🔑 合言葉でカギをかけて保存しました');
+    const oldPass=PASS; setPass(p1); renderAll(); hideLock();
+    if(await pushCloud(false,true)){ toast('🔑 合言葉でカギをかけて保存しました'); await reencryptPhotos(oldPass); }
   }catch(e){ err.textContent=e.code==='badpass'?'❌ 今のクラウドの合言葉とちがいます':'電波を確認してください'; }
 }
 function exportJson(){
@@ -309,15 +428,16 @@ function renderList(){
   el.innerHTML=arr.map(c=>{
     const lv=lastVisit(c);
     const feats=c.features.slice(-3).reverse().map(f=>hl(f.text,qRaw)).join('　／　');
-    let h='<div class="card" onclick="openDetail(\''+c.id+'\')"><div class="top"><span class="nm">'+hl(c.name,qRaw)+'</span>';
+    let h='<div class="card" onclick="openDetail(\''+c.id+'\')">'+((c.photos||[]).length?'<img class="thumb" data-ph="'+c.photos[0].id+'" alt="">':'')+'<div class="top"><span class="nm">'+hl(c.name,qRaw)+'</span>';
     if(c.kana) h+='<span class="kn">'+hl(c.kana,qRaw)+'</span>';
     h+='<span class="vis">'+(c.visits.length?'来店'+c.visits.length+'回・最終 '+fmtDate(lv)+'（'+daysAgo(lv)+'）':'来店記録なし')+'</span></div>';
     if((c.ng||'').trim()) h+='<div class="ngline">⚠️ '+hl(c.ng,qRaw)+'</div>';
     if(c.likes) h+='<div class="feat">❤️ '+hl(c.likes,qRaw)+'</div>';
     if(feats) h+='<div class="feat">📝 '+feats+'</div>';
     if((c.tags||[]).length) h+='<div class="tags">'+c.tags.map(t=>'<span>'+esc(t)+'</span>').join('')+'</div>';
-    return h+'</div>';
+    return h+'<div style="clear:both"></div></div>';
   }).join('');
+  fillPhotos(el,true);
 }
 
 /* ---------- 詳細 ---------- */
@@ -326,7 +446,7 @@ function openNew(name){
   curId=null; renderDetail(c);
 }
 function openDetail(id){ curId=id; renderDetail(find(id)); }
-function closeDetail(){ document.getElementById('ov').classList.remove('show'); curId=null; }
+function closeDetail(){ if(draft&&draft._new){ (draft.photos||[]).forEach(p=>{ idbDel(p.id); unpend(p.id); }); } document.getElementById('ov').classList.remove('show'); curId=null; }
 let draft=null;
 function renderDetail(c){
   draft=c;
@@ -336,6 +456,7 @@ function renderDetail(c){
   h+='<div class="sec"><h3>基本</h3><div class="row2"><div><label class="f">お名前 *</label><input class="t" id="f_name" value="'+esc(c.name)+'" placeholder="田中 一郎"></div>'
     +'<div><label class="f">ふりがな（検索用）</label><input class="t" id="f_kana" value="'+esc(c.kana)+'" placeholder="たなか いちろう"></div></div>'
     +'<label class="f">電話・連絡先（任意）</label><input class="t" id="f_phone" value="'+esc(c.phone)+'" placeholder="090-…"></div>';
+  h+='<div class="sec"><h3>📷 写真</h3><div class="photos" id="phlist">'+photoHtml(c)+'</div><div class="stat">顔・一緒に来た人・記念日の写真など。タップで大きく表示</div></div>';
   h+='<div class="sec"><h3>タグ</h3><div class="tagpick" id="tagpick">'+tagPickHtml(c)+'</div>'
     +'<div class="addrow"><input class="t" id="newtag" placeholder="新しいタグ（例：〇〇会社）"><button class="btn sm" onclick="addTag()">追加</button></div></div>';
   h+='<div class="sec"><h3>好み・苦手</h3><label class="f">❤️ 好きなもの・よく頼むもの</label><textarea class="t" id="f_likes" placeholder="タン塩・上ミノ。ビールは瓶。焼き加減はしっかり">'+esc(c.likes)+'</textarea>'
@@ -349,6 +470,7 @@ function renderDetail(c){
   document.getElementById('panel').innerHTML=h;
   document.getElementById('ov').classList.add('show');
   document.getElementById('ov').scrollTop=0;
+  fillPhotos(document.getElementById('phlist'));
   if(isNew) setTimeout(()=>document.getElementById(c.name?'f_kana':'f_name').focus(),50);
 }
 function tagPickHtml(c){ return data.tags.map(t=>'<span class="chip'+((c.tags||[]).includes(t)?' on':'')+'" onclick="toggleTag(\''+esc(t)+'\')">'+esc(t)+'</span>').join(''); }
@@ -384,15 +506,15 @@ function saveDetail(){
 }
 function delCustomer(){
   if(!confirm('「'+draft.name+'」さんを削除しますか？\n特徴・来店記録もすべて消えます。')) return;
-  data.customers=data.customers.filter(c=>c.id!==draft.id); (data.deleted=data.deleted||[]).push({id:draft.id,at:Date.now()}); save(); renderTags(); closeDetail(); toast('削除しました');
+  (draft.photos||[]).forEach(p=>cloudDelPhoto(p.id)); data.customers=data.customers.filter(c=>c.id!==draft.id); (data.deleted=data.deleted||[]).push({id:draft.id,at:Date.now()}); save(); renderTags(); closeDetail(); toast('削除しました');
 }
 
 /* ---------- 起動 ---------- */
 document.getElementById('q').addEventListener('input',renderList);
-document.addEventListener('keydown',e=>{ if(e.key==='Escape') closeDetail(); });
+document.addEventListener('keydown',e=>{ if(e.key==='Escape'){ if(document.getElementById('pv').classList.contains('show')) closePhoto(); else closeDetail(); } });
 renderAll();
 // 起動時: 合言葉があればクラウドと合体、無ければ合言葉の画面
-if(storageOK()){ if(PASS) pushCloud(true); else showLock(); }
+if(storageOK()){ if(PASS){ pushCloud(true).then(()=>{ flushPhotos(); prefetchPhotos(); }); } else showLock(); }
 </script>
 </body>
 </html>
