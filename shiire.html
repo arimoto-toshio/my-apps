@@ -21,6 +21,16 @@
   .tab{border:2px solid #e2dccf;background:#f6f1e7;border-radius:18px;padding:6px 14px;cursor:pointer;font-size:14px;max-width:200px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
   .tab.active{background:#fff;border-color:#8a5a36;font-weight:700;}
   .tab.add{background:#eaf3ea;border-color:#cfe3cf;color:#3a7a2a;font-weight:600;}
+  .tab .tb{font-size:11px;color:var(--shiharai);margin-left:6px;font-variant-numeric:tabular-nums;}
+  .tab .tb.zero{color:#9a9080;}
+  .kaikake{margin-left:auto;font-size:13px;color:var(--head);background:#fbf6ea;border:1px solid #eadfc6;border-radius:18px;padding:6px 12px;white-space:nowrap;}
+  .kaikake b{color:var(--shiharai);font-variant-numeric:tabular-nums;}
+  td.col-si.auto input{font-style:italic;}   /* 数量×単価で自動計算した仕入金額 */
+  .paybtn{display:block;width:100%;text-align:left;border:1.5px solid #e8cfc8;background:#fff8f6;border-radius:10px;padding:10px 12px;margin:6px 0;cursor:pointer;font-size:14px;}
+  .paybtn:hover{background:#fdeeea;}
+  .paybtn b{color:var(--shiharai);float:right;font-variant-numeric:tabular-nums;}
+  .paybtn small{color:#998;display:block;font-size:11px;margin-top:2px;}
+  @media print{ .tab .tb,.kaikake{display:none;} }
   .meta{background:var(--card);border-radius:12px;box-shadow:0 1px 4px rgba(0,0,0,.08);padding:10px 14px;margin-bottom:12px;display:flex;gap:16px;flex-wrap:wrap;align-items:center;}
   .meta label{font-size:13px;color:var(--head);font-weight:700;display:flex;align-items:center;gap:6px;}
   .meta input{border:1px solid var(--line);border-radius:6px;padding:5px 9px;font-size:14px;font-family:inherit;}
@@ -62,6 +72,7 @@
   tr.memo-row .col-si input{color:#8a6a3a;font-weight:700;}
   tr.memo-row .bal input{color:#8a7a5a;}
   tr.pay-row .hinmei input{color:var(--shiharai);font-weight:700;}
+  tr.pay-row .col-y input, tr.pay-row .col-m input, tr.pay-row .col-d input{color:var(--shiharai);font-weight:700;}
   .addrow{margin-top:10px;text-align:center;}
   .addrow button{border:1px dashed #c2a86a;background:#fbf6ea;color:#8a5a2a;border-radius:8px;padding:8px 18px;cursor:pointer;font-size:14px;font-weight:600;}
   .hint{font-size:12px;color:#998;margin:10px 2px;text-align:center;}
@@ -71,6 +82,12 @@
   .filterbar input{border:1px solid var(--line);border-radius:8px;padding:7px 10px;font-size:14px;flex:1;min-width:170px;font-family:inherit;}
   .filterbar .clr{border:none;background:#efe9dc;color:#7a5a36;border-radius:8px;padding:7px 12px;cursor:pointer;font-size:13px;}
   #filterInfo{color:#8a5a36;font-weight:700;font-size:13px;white-space:nowrap;}
+  .fybar{display:flex;gap:8px;align-items:center;flex-wrap:wrap;padding:2px 6px 8px;font-weight:700;color:#5a4a2e;}
+  .fybar select{border:1.5px solid #b8862e;border-radius:8px;padding:6px 10px;font-size:14px;font-family:inherit;background:#fffaf0;color:#5a4a2e;font-weight:700;}
+  #fyInfo{font-size:12px;color:#8a7a5e;font-weight:400;}
+  .meta input.op[readonly]{background:#f4f0e6;color:#6a5a3e;}
+  #fyCap{font-size:13px;letter-spacing:0;margin-left:10px;color:#6a5a3e;}
+  @media print{ .fybar{display:none !important;} }
   .modal{position:fixed;inset:0;background:rgba(0,0,0,.45);display:none;z-index:1200;overflow:auto;padding:18px 12px;}
   .modal.show{display:block;}
   .modal .box{background:#fff;max-width:660px;margin:0 auto;border-radius:14px;padding:16px 18px;box-shadow:0 6px 24px rgba(0,0,0,.3);}
@@ -100,6 +117,22 @@
     body.print-sum #sumModal{display:block !important;position:static;background:none;padding:0;overflow:visible;}
     body.print-sum #sumModal .box{box-shadow:none;max-width:none;border-radius:0;padding:0;}
     body.print-sum #sumModal .close-x{display:none !important;}
+  }
+  /* 決算用（税理士さんへ渡す1年分のまとめ） */
+  #kessanModal .box{max-width:980px;}
+  #kessanModal .kscroll{overflow-x:auto;}
+  #kessanModal th,#kessanModal td{white-space:nowrap;}
+  #kessanModal table.mx th,#kessanModal table.mx td{white-space:nowrap;padding:5px 6px;}
+  #kessanModal .kbar{display:flex;gap:10px;align-items:center;flex-wrap:wrap;font-size:14px;margin-bottom:4px;}
+  #kessanModal select{padding:6px 8px;border:1px solid var(--line);border-radius:6px;font-size:14px;font-family:inherit;}
+  #kessanModal .knote{font-size:12px;color:#776;line-height:1.7;background:#fbf6ea;border:1px solid #eadfc6;border-radius:8px;padding:8px 10px;margin-top:10px;}
+  @media print{
+    body.print-kessan header, body.print-kessan .wrap, body.print-kessan #histModal, body.print-kessan #sumModal{display:none !important;}
+    body.print-kessan #kessanModal{display:block !important;position:static;background:none;padding:0;overflow:visible;}
+    body.print-kessan #kessanModal .box{box-shadow:none;max-width:none;border-radius:0;padding:0;}
+    body.print-kessan #kessanModal .noprint{display:none !important;}
+    body.print-kessan #kessanModal table{font-size:10px;}
+    body.print-kessan #kessanModal h3{break-after:avoid;}
   }
 </style>
 <!--cloudlock:start-->
@@ -262,6 +295,18 @@
     </div>
   </div>
 </div>
+<div class="modal" id="kessanModal" onclick="if(event.target===this)this.classList.remove('show')">
+  <div class="box">
+    <h2>🧾 決算用まとめ <small style="font-weight:500;font-size:12px;color:#887;">焼肉ありもと 仕入帳</small></h2>
+    <div class="kbar noprint">事業年度 <select id="kessanFy" onchange="kessanFy=+this.value;renderKessan()"></select></div>
+    <div id="kessanBody"></div>
+    <div class="noprint" style="text-align:right;margin-top:10px;display:flex;gap:8px;justify-content:flex-end;flex-wrap:wrap;">
+      <button class="close-x" style="background:#1d7a44;color:#fff;" onclick="exportKessanCSV()">📊 Excelで書き出す</button>
+      <button class="close-x" style="background:#2f6fb0;color:#fff;" onclick="printKessan()">🖨 これを印刷</button>
+      <button class="close-x" onclick="document.getElementById('kessanModal').classList.remove('show')">閉じる</button>
+    </div>
+  </div>
+</div>
 <div class="modal" id="histModal" onclick="if(event.target===this)this.classList.remove('show')">
   <div class="box">
     <h2>🕘 保存履歴（バックアップ）</h2>
@@ -270,10 +315,22 @@
     <div style="text-align:right;margin-top:8px;"><button class="close-x" onclick="document.getElementById('histModal').classList.remove('show')">閉じる</button></div>
   </div>
 </div>
+<div class="modal" id="payModal" onclick="if(event.target===this)this.classList.remove('show')">
+  <div class="box">
+    <h2>💴 支払を記録</h2>
+    <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap;font-size:14px;margin-bottom:6px;">
+      支払日 <input type="date" id="payDate" style="padding:6px 8px;border:1px solid var(--line);border-radius:6px;font-size:14px;">
+    </div>
+    <div style="font-size:12px;color:#887;margin-bottom:4px;">いくら払ったかを選ぶと、表の最後に「支払」の行が入ります。</div>
+    <div id="payBody"></div>
+    <div style="text-align:right;margin-top:8px;"><button class="close-x" onclick="document.getElementById('payModal').classList.remove('show')">閉じる</button></div>
+  </div>
+</div>
 <header>
   <h1>🐮 焼肉ありもと <small>仕入帳（買掛帳）</small> <small style="opacity:.7;font-size:11px;">v7・月別集計/検索/履歴</small></h1>
   <div class="tools">
     <button class="btn" onclick="openSummary()">📅 月別集計</button>
+    <button class="btn" style="background:#b8862e;" onclick="openKessan()">🧾 決算用</button>
     <button class="btn" onclick="openHistory()">🕘 履歴</button>
     <button class="btn" onclick="window.print()">🖨 印刷</button>
     <button class="btn csv" onclick="exportCSV()">📊 Excel（税理士用）</button>
@@ -288,10 +345,11 @@
   <div class="meta">
     <label>仕入先 <input class="nm" id="supName" oninput="onMeta('name',this.value)" placeholder="仕入先名"></label>
     <label>住所 <input class="ad" id="supAddr" oninput="onMeta('addr',this.value)" placeholder="住所など"></label>
-    <label>前回繰越 <input class="op" id="opening" inputmode="numeric" oninput="onOpening(this)" onblur="refmt(this)"></label>
+    <label><span id="openLbl">前回繰越</span> <input class="op" id="opening" inputmode="numeric" oninput="onOpening(this)" onblur="refmt(this)"></label>
     <button class="del" onclick="delSupplier()">この仕入先を削除</button>
   </div>
   <div class="card">
+    <div class="fybar">📅 <select id="fySel" onchange="setViewFy(this.value)"></select><span id="fyInfo"></span></div>
     <div class="filterbar">
       🔍 <input id="filterQ" placeholder="品名や月で絞り込み（例: ロース、5）" oninput="onFilter(this.value)">
       <button class="clr" onclick="clearFilter()">✕ クリア</button>
@@ -299,7 +357,7 @@
     </div>
     <div class="scroll">
       <table>
-        <caption>仕　入　帳</caption>
+        <caption>仕　入　帳<span id="fyCap"></span></caption>
         <thead><tr>
           <th class="col-y">年</th><th class="col-m">月</th><th class="col-d">日</th>
           <th>品名</th><th class="col-qty">数量</th><th class="col-price">単価</th>
@@ -312,7 +370,7 @@
         </tr></tfoot>
       </table>
     </div>
-    <div class="addrow"><button onclick="addRows(5)">＋ 5行追加</button> <button onclick="addBreakdown()">＋ 10%・8%内訳</button></div>
+    <div class="addrow"><button onclick="addRows(5)">＋ 5行追加</button> <button onclick="addBreakdown()">＋ 10%・8%内訳</button> <button onclick="openPay()" style="border-color:#e0a89c;background:#fff4f1;color:var(--shiharai);">💴 支払を記録</button></div>
     <div class="hint">差引残高 = 前残高 ＋ 仕入金額 − 支払金額（自動計算）／入力すると自動でクラウド保存</div>
   </div>
   <!-- 下側にも仕入先タブ（下まで入力した後に上へ戻らず切り替えられる） -->
@@ -355,10 +413,20 @@ function save(){ localStorage.setItem(STORAGE_KEY, JSON.stringify(data)); snapsh
 function sup(){ return data.suppliers.find(s=>s.id===data.cur) || data.suppliers[0]; }
 function page(){ if(!data.pages[data.cur]) data.pages[data.cur]={opening:0,rows:[blankRow()]}; const p=data.pages[data.cur]; if(!p.rows||!p.rows.length) p.rows=[blankRow()]; return p; }
 
+// その仕入先の今の残高（まだ払っていない額）。表の差引残高の一番下と同じ計算
+function endBalOf(p){
+  let bal=toNum(p&&p.opening);
+  ((p&&p.rows)||[]).forEach(r=>{ const manual=(r.bal!==''&&r.bal!=null); if(manual) bal=toNum(r.bal); else if(!r.memo) bal+=toNum(r.shiire)-toNum(r.shiharai); });
+  return bal;
+}
 function renderTabs(){
-  let h='';
-  data.suppliers.forEach(s=>{ h+=`<div class="tab${s.id===data.cur?' active':''}" onclick="switchSup('${s.id}')">${esc(s.name||'(無名)')}</div>`; });
+  let h='', total=0;
+  data.suppliers.forEach(s=>{
+    const b=endBalOf(data.pages[s.id]); total+=b;
+    h+=`<div class="tab${s.id===data.cur?' active':''}" onclick="switchSup('${s.id}')" title="まだ払っていない残高 ¥${fmt(b)}">${esc(s.name||'(無名)')}<span class="tb${Math.round(b)===0?' zero':''}">¥${fmt(b)}</span></div>`;
+  });
   h+=`<div class="tab add" onclick="addSupplier()">＋ 仕入先を追加</div>`;
+  h+=`<div class="kaikake" title="全仕入先の差引残高の合計（買掛金）">買掛金の合計 <b>¥${fmt(total)}</b></div>`;
   document.getElementById('tabs').innerHTML=h;
   const b=document.getElementById('tabsBottom'); if(b) b.innerHTML=h;   // 下側にも同じタブ
 }
@@ -369,51 +437,108 @@ function render(){
   const s=sup(), p=page();
   document.getElementById('supName').value=s.name||'';
   document.getElementById('supAddr').value=s.addr||'';
-  const oi=document.getElementById('opening'); if(document.activeElement!==oi) oi.value=fmt(toNum(p.opening));
-  let bal=toNum(p.opening), sumSi=0, sumSh=0, html='';
+  renderFyBar();
+  const v=calcView(p);
+  const oi=document.getElementById('opening'); if(document.activeElement!==oi) oi.value=fmt(v.open);
+  oi.readOnly=!v.openEditable;
+  oi.title=v.openEditable?'':'前の期の終わりの残高から自動で引き継いでいます（直すときは前の期の行を直してください）';
+  document.getElementById('openLbl').textContent=v.openEditable?'前回繰越':'前期からの繰越';
+  let html='';
   p.rows.forEach((r,i)=>{
     const si=toNum(r.shiire), sh=toNum(r.shiharai); const memo=!!r.memo;
     const manual=(r.bal!==''&&r.bal!=null);
-    if(manual){ bal=toNum(r.bal); } else if(!memo){ bal+=si-sh; }
-    if(!memo){ sumSi+=si; sumSh+=sh; }
+    const bal=v.bals[i];
+    const ov=v.ovr[i];   // 新しい期の空行は、その期の年月を見せる（打ち始めたら書き込む）
     const rowCls=[memo?'memo-row':'', (r.hinmei==='支払')?'pay-row':''].filter(Boolean).join(' ');
     html+=`<tr data-i="${i}" class="${rowCls}">
-      <td class="col-y" data-c="0"><input value="${r.y??''}" inputmode="numeric" oninput="upd(${i},'y',this.value)"></td>
-      <td class="col-m" data-c="1"><input value="${r.m??''}" inputmode="numeric" oninput="upd(${i},'m',this.value)"></td>
+      <td class="col-y" data-c="0"><input value="${ov?ov.y:(r.y??'')}" inputmode="numeric" oninput="upd(${i},'y',this.value)"></td>
+      <td class="col-m" data-c="1"><input value="${ov?ov.m:(r.m??'')}" inputmode="numeric" oninput="upd(${i},'m',this.value)"></td>
       <td class="col-d" data-c="2"><input value="${r.d??''}" inputmode="numeric" oninput="upd(${i},'d',this.value)"></td>
       <td class="hinmei" data-c="3"><input value="${esc(r.hinmei)}" oninput="upd(${i},'hinmei',this.value)"></td>
       <td class="num col-qty" data-c="4"><input value="${esc(r.qty)}" inputmode="numeric" oninput="upd(${i},'qty',this.value)"></td>
       <td class="num col-price" data-c="5"><input value="${r.price!==''&&r.price!=null?fmt(toNum(r.price)):''}" inputmode="numeric" oninput="updN(${i},'price',this.value)" onblur="refmt(this)"></td>
-      <td class="num shiire col-si" data-c="6"><input value="${r.shiire!==''&&r.shiire!=null?fmt(si):''}" inputmode="numeric" oninput="updN(${i},'shiire',this.value)" onblur="refmt(this)"></td>
+      <td class="num shiire col-si${r.autoSi?' auto':''}" data-c="6" title="${r.autoSi?'数量×単価で自動計算（金額を打ち直せば手入力になります）':''}"><input value="${r.shiire!==''&&r.shiire!=null?fmt(si):''}" inputmode="numeric" oninput="updN(${i},'shiire',this.value)" onblur="refmt(this)"></td>
       <td class="num shiharai col-sh" data-c="7"><input value="${r.shiharai!==''&&r.shiharai!=null?fmt(sh):''}" inputmode="numeric" oninput="updN(${i},'shiharai',this.value)" onblur="refmt(this)"></td>
       <td class="bal col-bal${manual?' bal-manual':''}" data-c="8"><input value="${(memo&&!manual)?'':fmt(bal)}" inputmode="numeric" oninput="updBal(${i},this.value)" onblur="refmt(this)"></td>
       <td class="col-del"><button class="delbtn" onclick="delRow(${i})">✕</button></td></tr>`;
   });
   document.getElementById('tbody').innerHTML=html;
-  document.getElementById('sumSi').textContent=fmt(sumSi);
-  document.getElementById('sumSh').textContent=fmt(sumSh);
-  document.getElementById('endBal').textContent=fmt(bal);
+  document.getElementById('sumSi').textContent=fmt(v.sumSi);
+  document.getElementById('sumSh').textContent=fmt(v.sumSh);
+  document.getElementById('endBal').textContent=fmt(v.endBal);
   applyFilter();
 }
 function liveRecalc(){
-  const p=page(); let bal=toNum(p.opening), sumSi=0, sumSh=0;
+  const p=page(), v=calcView(p);
   const trs=document.querySelectorAll('#tbody tr');
-  p.rows.forEach((r,i)=>{ const si=toNum(r.shiire),sh=toNum(r.shiharai); const manual=(r.bal!==''&&r.bal!=null); if(manual){ bal=toNum(r.bal); } else if(!r.memo){ bal+=si-sh; } if(!r.memo){ sumSi+=si; sumSh+=sh; } const tr=trs[i]; if(tr){ tr.querySelector('.bal')?.classList.toggle('bal-manual',manual); const b=tr.querySelector('.bal input'); if(b && document.activeElement!==b) b.value=(r.memo&&!manual)?'':fmt(bal);} });
-  document.getElementById('sumSi').textContent=fmt(sumSi);
-  document.getElementById('sumSh').textContent=fmt(sumSh);
-  document.getElementById('endBal').textContent=fmt(bal);
+  p.rows.forEach((r,i)=>{ const manual=(r.bal!==''&&r.bal!=null); const tr=trs[i]; if(tr){ tr.querySelector('.bal')?.classList.toggle('bal-manual',manual); const b=tr.querySelector('.bal input'); if(b && document.activeElement!==b) b.value=(r.memo&&!manual)?'':fmt(v.bals[i]);} });
+  document.getElementById('sumSi').textContent=fmt(v.sumSi);
+  document.getElementById('sumSh').textContent=fmt(v.sumSh);
+  document.getElementById('endBal').textContent=fmt(v.endBal);
+  renderTabs();   // タブの残高・買掛金の合計も更新
 }
-function upd(i,k,v){ if(k==='y'||k==='m'||k==='d') v=z2h(v).trim(); page().rows[i][k]=v; if(k==='hinmei'){ const tr=document.querySelector(`#tbody tr[data-i="${i}"]`); if(tr) tr.classList.toggle('pay-row', String(v).trim()==='支払'); } save(); }
-function updBal(i,v){ page().rows[i].bal=(String(v).trim()===''?'':toNum(v)); liveRecalc(); save(); }
-function updN(i,k,v){ page().rows[i][k]=toNum(v); liveRecalc(); save(); }
+function upd(i,k,v){ if(k==='y'||k==='m'||k==='d') v=z2h(v).trim(); claimRow(i); page().rows[i][k]=v; if(k==='hinmei'){ const tr=document.querySelector(`#tbody tr[data-i="${i}"]`); if(tr) tr.classList.toggle('pay-row', String(v).trim()==='支払'); } if(k==='qty' && autoShiire(i)) liveRecalc(); save(); }
+function updBal(i,v){ claimRow(i); page().rows[i].bal=(String(v).trim()===''?'':toNum(v)); liveRecalc(); save(); }
+function updN(i,k,v){
+  claimRow(i);
+  const r=page().rows[i];
+  r[k]=toNum(v);
+  if(k==='shiire') r.autoSi = false;   // 手で入れた仕入金額は、あとから自動計算で上書きしない
+  if(k==='price') autoShiire(i);
+  liveRecalc(); save();
+}
+// 数量×単価で仕入金額を入れる。仕入金額が空のとき（または前に自動で入れた値のとき）だけ
+function autoShiire(i){
+  const r=page().rows[i];
+  const q=toNum(r.qty), pr=toNum(r.price);
+  const empty = r.shiire===''||r.shiire==null||toNum(r.shiire)===0;
+  if(!(q>0 && pr>0) || !(empty || r.autoSi)) return false;
+  r.shiire=Math.round(q*pr); r.autoSi=true;
+  const td=document.querySelector(`#tbody tr[data-i="${i}"] td.col-si`);
+  if(td){ td.classList.add('auto'); const inp=td.querySelector('input'); if(inp && document.activeElement!==inp) inp.value=fmt(r.shiire); }
+  return true;
+}
 function refmt(el){ const n=toNum(el.value); el.value=(el.value.trim()==='')?'':fmt(n); }
-function onOpening(el){ page().opening=toNum(el.value); liveRecalc(); save(); }
+function onOpening(el){ if(el.readOnly) return; page().opening=toNum(el.value); liveRecalc(); save(); }
 function onMeta(k,v){ sup()[k]=v; if(k==='name') renderTabs(); save(); }
 
-function addRow(){ const p=page(); const last=p.rows[p.rows.length-1]; const nr=blankRow(); if(last){ nr.y=last.y; nr.m=last.m; } p.rows.push(nr); save(); render(); const trs=document.querySelectorAll('#tbody tr'); const di=trs[trs.length-1]?.querySelector('.col-d input'); if(di) di.focus(); }
-function addRows(n){ const p=page(); const last=p.rows[p.rows.length-1]; for(let k=0;k<n;k++){ const nr=blankRow(); if(last){ nr.y=last.y; nr.m=last.m; } p.rows.push(nr); } save(); render(); const trs=document.querySelectorAll('#tbody tr'); const di=trs[trs.length-n]?.querySelector('.col-d input'); if(di) di.focus(); }
+function addRow(){ toLatestForAdd(); const p=page(); const last=p.rows[p.rows.length-1]; const nr=blankRow(); if(last){ nr.y=last.y; nr.m=last.m; } p.rows.push(nr); save(); render(); const trs=document.querySelectorAll('#tbody tr'); const di=trs[trs.length-1]?.querySelector('.col-d input'); if(di) di.focus(); }
+function addRows(n){ toLatestForAdd(); const p=page(); const last=p.rows[p.rows.length-1]; for(let k=0;k<n;k++){ const nr=blankRow(); if(last){ nr.y=last.y; nr.m=last.m; } p.rows.push(nr); } save(); render(); const trs=document.querySelectorAll('#tbody tr'); const di=trs[trs.length-n]?.querySelector('.col-d input'); if(di) di.focus(); }
 function delRow(i){ const p=page(); if(p.rows.length<=1) p.rows[0]=blankRow(); else p.rows.splice(i,1); save(); render(); }
-function addBreakdown(){ const p=page(); const last=p.rows[p.rows.length-1]; const y=last?last.y:8, m=last?last.m:''; p.rows.push({y,m,d:'',hinmei:'10%',qty:'',price:'',shiire:'',shiharai:'',bal:'',memo:true}); p.rows.push({y,m,d:'',hinmei:'8%',qty:'',price:'',shiire:'',shiharai:'',bal:'',memo:true}); save(); render(); const trs=document.querySelectorAll('#tbody tr'); const si=trs[trs.length-2]?.querySelector('.col-si input'); if(si){ si.focus(); si.select&&si.select(); } toast('内訳行(10%/8%)を追加'); }
+function addBreakdown(){ toLatestForAdd(); const p=page(); const last=p.rows[p.rows.length-1]; const y=last?last.y:8, m=last?last.m:''; p.rows.push({y,m,d:'',hinmei:'10%',qty:'',price:'',shiire:'',shiharai:'',bal:'',memo:true}); p.rows.push({y,m,d:'',hinmei:'8%',qty:'',price:'',shiire:'',shiharai:'',bal:'',memo:true}); save(); render(); const trs=document.querySelectorAll('#tbody tr'); const si=trs[trs.length-2]?.querySelector('.col-si input'); if(si){ si.focus(); si.select&&si.select(); } toast('内訳行(10%/8%)を追加'); }
+// ============ 支払を記録 ============
+function isBlankRow(r){ return !String(r.hinmei||'').trim() && !toNum(r.shiire) && !toNum(r.shiharai) && !String(r.d||'').trim(); }
+function openPay(){
+  const now=new Date();
+  document.getElementById('payDate').value=now.getFullYear()+'-'+String(now.getMonth()+1).padStart(2,'0')+'-'+String(now.getDate()).padStart(2,'0');
+  const p=page(), months=calcMonthly(p).filter(m=>m.key!=='(月不明)' && m.si>0).slice(-3).reverse();
+  const bal=endBalOf(p);
+  let h='';
+  months.forEach(m=>{ h+=`<button class="paybtn" onclick="payWith(${Math.round(m.si)})">${esc(mLabel(m.key))}分の仕入を払う<b>¥${fmt(m.si)}</b><small>その月に入れた仕入金額の合計（消費税の行も含む）</small></button>`; });
+  h+=`<button class="paybtn" onclick="payWith(${Math.round(bal)})">今の残高をぜんぶ払う<b>¥${fmt(bal)}</b><small>差引残高が 0 になります</small></button>`;
+  h+=`<button class="paybtn" onclick="payWith(null)">金額を自分で入れる…<small>請求書の金額と違うときなど</small></button>`;
+  document.getElementById('payBody').innerHTML=h;
+  document.getElementById('payModal').classList.add('show');
+}
+function payWith(amount){
+  if(amount==null){
+    const v=prompt('支払った金額（円）を入れてください'); if(v==null) return;
+    amount=Math.round(toNum(v)); if(!amount){ toast('金額が入っていません'); return; }
+  }
+  const dv=document.getElementById('payDate').value; if(!dv){ toast('支払日を入れてください'); return; }
+  const [Y,M,D]=dv.split('-').map(Number);
+  const p=page();
+  const row=Object.assign(blankRow(),{y:Y-2018, m:String(M), d:String(D), hinmei:'支払', shiharai:amount});   // 年は令和（2026年＝8）
+  // 最後の空行たちの前に入れる（空行はそのまま下に残す）
+  let at=p.rows.length; while(at>0 && isBlankRow(p.rows[at-1])) at--;
+  p.rows.splice(at,0,row);
+  const pfy=fyOfYM(Y-2018,M); if(viewFy!=='all' && viewFy!==pfy) setViewFy(pfy,true);   // 支払った日の期を表示する
+  save(); render();
+  document.getElementById('payModal').classList.remove('show');
+  const tr=document.querySelector(`#tbody tr[data-i="${at}"]`); if(tr) tr.scrollIntoView({block:'center'});
+  toast(`💴 支払 ¥${fmt(amount)} を記録しました`);
+}
+
 function switchSup(id){ data.cur=id; save(); render(); }
 function addSupplier(){ const id='s'+Date.now(); data.suppliers.push({id,name:'',addr:''}); data.pages[id]={opening:0,rows:[blankRow()]}; data.cur=id; save(); render(); document.getElementById('supName').focus(); }
 function delSupplier(){ const s=sup(); if(!confirm(`「${s.name||'この仕入先'}」を削除しますか？\n（この仕入先の全データが消えます）`)) return; delete data.pages[data.cur]; data.suppliers=data.suppliers.filter(x=>x.id!==data.cur); if(!data.suppliers.length){ data=defData(); } else data.cur=data.suppliers[0].id; save(); render(); }
@@ -423,13 +548,15 @@ function exportCSV(){
   const esc2=s=>{ s=String(s==null?'':s); return /[",\n]/.test(s)?'"'+s.replace(/"/g,'""')+'"':s; };
   let csv='﻿仕入先,年,月,日,品名,数量,単価,仕入金額,支払金額,差引残高\n';
   data.suppliers.forEach(s=>{ const p=data.pages[s.id]; if(!p) return; let bal=toNum(p.opening);
-    csv+=`${esc2(s.name)},,,,前回繰越,,,,,${bal}\n`;
-    (p.rows||[]).forEach(r=>{ const si=toNum(r.shiire),sh=toNum(r.shiharai); if(r.bal!==''&&r.bal!=null) bal=toNum(r.bal); else if(!r.memo) bal+=si-sh;
+    const mask=viewMask(p), ts=trailStart(p);
+    csv+=`${esc2(s.name)},,,,${viewFy==='all'?'前回繰越':'前期からの繰越'},,,,,${viewFy==='all'?bal:balAtMonthEnd(p,viewFy-1,9)}\n`;
+    (p.rows||[]).forEach((r,i)=>{ const si=toNum(r.shiire),sh=toNum(r.shiharai); if(r.bal!==''&&r.bal!=null) bal=toNum(r.bal); else if(!r.memo) bal+=si-sh;
+      if(!mask[i] || i>=ts) return;
       csv+=[esc2(s.name),r.y??'',r.m??'',r.d??'',esc2(r.hinmei),esc2(r.qty),(r.price||''),(si||''),(sh||''),bal].join(',')+'\n'; });
   });
-  const b=new Blob([csv],{type:'text/csv;charset=utf-8'}); const a=document.createElement('a'); a.href=URL.createObjectURL(b); a.download='仕入帳_税理士提出_'+new Date().toISOString().slice(0,10)+'.csv'; a.click(); toast('📊 Excel(CSV)で書き出しました');
+  const b=new Blob([csv],{type:'text/csv;charset=utf-8'}); const a=document.createElement('a'); a.href=URL.createObjectURL(b); a.download='仕入帳_税理士提出_'+(viewFy==='all'?'':'令和'+viewFy+'年9月期_')+new Date().toISOString().slice(0,10)+'.csv'; a.click(); toast('📊 Excel(CSV)で書き出しました');
 }
-function importData(e){ const f=e.target.files[0]; if(!f) return; const r=new FileReader(); r.onload=ev=>{ try{ snapshot(true); data=normalizeData(JSON.parse(ev.target.result)); localStorage.setItem(STORAGE_KEY,JSON.stringify(data)); render(); toast('⬆ 読み込みました'); }catch(err){ toast('❌ 読込エラー'); } }; r.readAsText(f); e.target.value=''; }
+function importData(e){ const f=e.target.files[0]; if(!f) return; const r=new FileReader(); r.onload=ev=>{ try{ snapshot(true); data=normalizeData(JSON.parse(ev.target.result)); localStorage.setItem(STORAGE_KEY,JSON.stringify(data)); render(); cloudAutoSave(); toast('⬆ 読み込みました'); }catch(err){ toast('❌ 読込エラー'); } }; r.readAsText(f); e.target.value=''; }
 function toast(m){ const t=document.getElementById('toast'); t.textContent=m; t.classList.add('show'); clearTimeout(toast._t); toast._t=setTimeout(()=>t.classList.remove('show'),2000); }
 
 // ============ 検索・絞り込み ============
@@ -438,12 +565,13 @@ function onFilter(v){ filterQ=v.trim(); applyFilter(); }
 function clearFilter(){ filterQ=''; document.getElementById('filterQ').value=''; applyFilter(); }
 function applyFilter(){
   const q=filterQ, p=page(), trs=document.querySelectorAll('#tbody tr'); let shown=0;
+  const mask=viewMask(p);
   p.rows.forEach((r,i)=>{ const tr=trs[i]; if(!tr) return;
-    let ok=true;
+    let ok=mask[i];
     if(q){
       const empty=!String(r.hinmei||'').trim() && !toNum(r.shiire) && !toNum(r.shiharai);
       const qn=z2h(q).replace(/月$/,''); const isNum=/^\d+$/.test(qn);
-      ok = empty || String(r.hinmei||'').includes(q) || (isNum && z2h(String(r.m??'')).trim()===qn);
+      ok = ok && (empty || String(r.hinmei||'').includes(q) || (isNum && z2h(String(r.m??'')).trim()===qn));
     }
     tr.style.display=ok?'':'none'; if(ok) shown++;
   });
@@ -471,8 +599,8 @@ function calcMonthly(p){
 function mLabel(k){ if(k==='(月不明)') return k; const a=String(k).split('-'); return (a[0]?('R'+a[0]+'年'):'')+a[1]+'月'; }
 function openSummary(){
   const s=sup(), p=page();
-  const cur=calcMonthly(p);
-  let h='<h3>'+esc(s.name||'(無名)')+'</h3>';
+  const cur=calcMonthly(p).filter(m=>inViewKey(m.key));
+  let h=(viewFy==='all'?'':'<div style="font-weight:700;color:#8a5a36;margin-bottom:4px;">📅 '+esc(fyLabel(viewFy))+'</div>')+'<h3>'+esc(s.name||'(無名)')+'</h3>';
   h+='<table><tr><th>月</th><th>仕入合計</th><th>支払合計</th><th>月末残高</th></tr>';
   let tsi=0,tsh=0;
   cur.forEach(m=>{ tsi+=m.si; tsh+=m.sh; h+='<tr><td>'+esc(mLabel(m.key))+'</td><td class="r si2">'+fmt(m.si)+'</td><td class="r sh2">'+fmt(m.sh)+'</td><td class="r">'+fmt(m.bal)+'</td></tr>'; });
@@ -480,7 +608,7 @@ function openSummary(){
   if(data.suppliers.length>1){
     const agg={}, order=[];
     data.suppliers.forEach(su=>{ const pg=data.pages[su.id]; if(!pg) return;
-      calcMonthly(pg).forEach(m=>{ if(!agg[m.key]){ agg[m.key]={si:0,sh:0}; order.push(m.key); } agg[m.key].si+=m.si; agg[m.key].sh+=m.sh; });
+      calcMonthly(pg).filter(m=>inViewKey(m.key)).forEach(m=>{ if(!agg[m.key]){ agg[m.key]={si:0,sh:0}; order.push(m.key); } agg[m.key].si+=m.si; agg[m.key].sh+=m.sh; });
     });
     order.sort((a,b)=>{ if(a==='(月不明)') return 1; if(b==='(月不明)') return -1; const pa=a.split('-'),pb=b.split('-'); return (toNum(pa[0])-toNum(pb[0]))||(toNum(pa[1])-toNum(pb[1])); });
     let gsi=0,gsh=0;
@@ -498,6 +626,237 @@ function printSummary(){
   window.addEventListener('afterprint',done);
   setTimeout(done,3000); // afterprintが来ない環境の保険
   window.print();
+}
+
+// ============ 決算用まとめ（税理士さんへ渡す1年分） ============
+// 決算は9月末締め（10月〜翌9月）。年は令和で持つ（2026年＝8）。期は終わりの年で呼ぶ（R8＝R7年10月〜R8年9月）
+// 期首・期末の残高は棚卸アプリの買掛金と同じ計算（その月末までの行を上から順に、手入力の残高はそれに置き換え）
+let kessanFy=null;
+function rowYMs(p){ let py=0,pm=0; return (p.rows||[]).map(r=>{ const y=Math.round(toNum(r.y))||py, m=Math.round(toNum(r.m))||pm; py=y; pm=m; return {y,m}; }); }
+function balAtMonthEnd(p,ty,tm){
+  let bal=toNum(p.opening); const ym=rowYMs(p);
+  for(let i=0;i<(p.rows||[]).length;i++){ const r=p.rows[i], {y,m}=ym[i];
+    if(y>ty || (y===ty && m>tm)) break;
+    if(r.bal!==''&&r.bal!=null) bal=toNum(r.bal); else if(!r.memo) bal+=toNum(r.shiire)-toNum(r.shiharai); }
+  return Math.round(bal);
+}
+function fyOfYM(y,m){ return m>=10? y+1 : y; }
+function kessanFyList(){
+  const set=new Set();
+  data.suppliers.forEach(s=>{ const p=data.pages[s.id]; if(!p) return; rowYMs(p).forEach(({y,m},i)=>{ const r=p.rows[i]; if(y>0&&m>0&&(toNum(r.shiire)||toNum(r.shiharai))) set.add(fyOfYM(y,m)); }); });
+  return [...set].sort((a,b)=>b-a);
+}
+function kessanMonths(fy){ const a=[]; for(let k=0;k<12;k++){ const m=(9+k)%12+1; a.push({y:m>=10?fy-1:fy, m}); } return a; }
+function kessanCalc(fy){
+  const months=kessanMonths(fy), res=[];
+  data.suppliers.forEach(s=>{ const p=data.pages[s.id]; if(!p) return;
+    const ym=rowYMs(p), mon=months.map(()=>0), rows=[]; let si=0, sh=0, t10=0, t8=0, manual=false;
+    (p.rows||[]).forEach((r,i)=>{ const {y,m}=ym[i]; if(fyOfYM(y,m)!==fy || !m) return;
+      const a=toNum(r.shiire), b=toNum(r.shiharai);
+      if(!String(r.hinmei||'').trim() && !a && !b) return;
+      rows.push({r,y,m});
+      if(r.bal!==''&&r.bal!=null) manual=true;
+      if(r.memo){ const h=z2h(String(r.hinmei||'')); if(/10/.test(h)) t10+=a; else if(/8/.test(h)) t8+=a; return; }
+      si+=a; sh+=b; mon[months.findIndex(x=>x.y===y&&x.m===m)]+=a;
+    });
+    const open=balAtMonthEnd(p,fy-1,9), close=balAtMonthEnd(p,fy,9);
+    if(!rows.length && !open && !close) return;
+    res.push({id:s.id, seikyu:p.seikyu||{}, name:s.name||'(無名)', open, si, sh, close, mon, t10, t8, manual, rows, diff:Math.round(open+si-sh-close)!==0});
+  });
+  return {months, res};
+}
+const fyLabel=fy=>`令和${fy}年9月期（令和${fy-1}年10月〜令和${fy}年9月）`;
+
+// ============ 期の切り替え（表示だけを期ごとに分ける） ============
+// データは1本のまま（棚卸・仕入集計表も同じデータを読むため）。残高は前の期から自動で続く
+// どの期を見ているかは端末ごとの覚え書き（クラウドには送らない）
+const VIEWFY_KEY='yakiniku_shiire_viewfy_v1';
+function nowFy(){ const n=new Date(); return fyOfYM(n.getFullYear()-2018, n.getMonth()+1); }
+let viewFy=(()=>{ try{ const v=localStorage.getItem(VIEWFY_KEY); if(v==='all') return 'all'; if(v&&+v>0) return +v; }catch(e){} return nowFy(); })();
+function fyList(){ const s=new Set(kessanFyList()); s.add(nowFy()); return [...s].sort((a,b)=>b-a); }
+function latestFy(){ return fyList()[0]; }
+function trailStart(p){ let at=(p.rows||[]).length; while(at>0 && isBlankRow(p.rows[at-1])) at--; return at; }   // 末尾の空行の始まり
+// 各行が今の表示に入るか（末尾の空行は最新の期に見せる）
+function viewMask(p){
+  const rows=p.rows||[];
+  if(viewFy==='all') return rows.map(()=>true);
+  const ym=rowYMs(p), ts=trailStart(p), last=(viewFy===latestFy());
+  return rows.map((r,i)=> i>=ts ? last : fyOfYM(ym[i].y, ym[i].m)===viewFy);
+}
+// 末尾の空行が前の期の年月のままなら、見ている期の年月にして見せる
+function blankYM(fy){ const n=new Date(), y=n.getFullYear()-2018, m=n.getMonth()+1; return fyOfYM(y,m)===fy ? {y, m:String(m)} : {y:fy-1, m:'10'}; }
+function rowOverride(p,i,ym,ts){
+  if(viewFy==='all' || i<ts) return null;
+  const {y,m}=ym[i]; if(m && fyOfYM(y,m)===viewFy) return null;
+  return blankYM(viewFy);
+}
+function claimRow(i){
+  const p=page(), ts=trailStart(p); if(i<ts) return;
+  const ov=rowOverride(p,i,rowYMs(p),ts); if(!ov) return;
+  p.rows[i].y=ov.y; p.rows[i].m=ov.m;
+}
+// 表の数字：残高は全部の行で通して計算、合計はこの期の行だけ
+function calcView(p){
+  const rows=p.rows||[], mask=viewMask(p), ym=rowYMs(p), ts=trailStart(p);
+  const firstFy=rows.reduce((a,r,i)=> i<ts && ym[i].m ? Math.min(a, fyOfYM(ym[i].y, ym[i].m)) : a, Infinity);
+  const openEditable = viewFy==='all' || viewFy<=firstFy;
+  const open = openEditable ? toNum(p.opening) : balAtMonthEnd(p, viewFy-1, 9);
+  let bal=toNum(p.opening), sumSi=0, sumSh=0, endBal=open; const bals=[], ovr=[];
+  rows.forEach((r,i)=>{
+    const si=toNum(r.shiire), sh=toNum(r.shiharai), manual=(r.bal!==''&&r.bal!=null);
+    if(manual) bal=toNum(r.bal); else if(!r.memo) bal+=si-sh;
+    bals.push(bal); ovr.push(rowOverride(p,i,ym,ts));
+    if(!mask[i]) return;
+    if(!r.memo){ sumSi+=si; sumSh+=sh; }
+    endBal=bal;
+  });
+  return {mask, bals, ovr, open, openEditable, sumSi, sumSh, endBal};
+}
+function inViewKey(k){
+  if(viewFy==='all') return true;
+  const a=String(k).split('-'), y=toNum(a[0]), m=toNum(a[1]);
+  return !!(y && m) && fyOfYM(y,m)===viewFy;
+}
+function renderFyBar(){
+  const sel=document.getElementById('fySel'); if(!sel) return;
+  const list=fyList(), nf=nowFy();
+  if(viewFy!=='all' && !list.includes(viewFy)) viewFy=nf;
+  sel.innerHTML=list.map(fy=>`<option value="${fy}"${fy===viewFy?' selected':''}>${fyLabel(fy)}${fy===nf?' ← 今の期':''}</option>`).join('')
+    + `<option value="all"${viewFy==='all'?' selected':''}>すべての期をまとめて表示</option>`;
+  document.getElementById('fyInfo').textContent = viewFy==='all' ? '' : (viewFy===nf ? '残高は前の期から自動で続きます' : '過去の期（新しい行は今の期へ）');
+  document.getElementById('fyCap').textContent = viewFy==='all' ? '' : '令和'+viewFy+'年9月期';
+}
+function setViewFy(v, quiet){
+  viewFy = v==='all' ? 'all' : +v;
+  try{ localStorage.setItem(VIEWFY_KEY, String(viewFy)); }catch(e){}
+  if(quiet) return;
+  render(); scrollToLatest();
+}
+function toLatestForAdd(){
+  if(viewFy==='all' || viewFy===latestFy()) return;
+  setViewFy(latestFy(), true); toast('今の期の表示に切り替えました');
+}
+function openKessan(){
+  const list=kessanFyList();
+  if(!list.length){ toast('まだ仕入のデータがありません'); return; }
+  // 初めは「いちばん最近終わった期」。データがそれより古ければ、データのある最新の期
+  const now=new Date(), cy=now.getFullYear()-2018, cm=now.getMonth()+1;
+  const ended=fyOfYM(cy,cm)-1;
+  if(kessanFy==null || !list.includes(kessanFy)) kessanFy = list.includes(ended)? ended : list[0];
+  document.getElementById('kessanFy').innerHTML=list.map(fy=>`<option value="${fy}"${fy===kessanFy?' selected':''}>${fyLabel(fy)}</option>`).join('');
+  renderKessan();
+  document.getElementById('kessanModal').classList.add('show');
+}
+function renderKessan(){
+  const fy=kessanFy, {months,res}=kessanCalc(fy);
+  const sum=k=>res.reduce((s,x)=>s+x[k],0);
+  let h=`<div style="font-weight:700;color:#5a3a17;margin:2px 0 8px;">${fyLabel(fy)}</div>`;
+  // ① 仕入先ごとのまとめ
+  h+='<h3>① 仕入先ごとのまとめ</h3><div class="kscroll"><table><tr><th>仕入先</th><th>期首の買掛金<br><small>（R'+(fy-1)+'年9月末）</small></th><th>1年間の仕入</th><th>1年間の支払</th><th>期末の買掛金<br><small>（R'+fy+'年9月末・未払い）</small></th></tr>';
+  res.forEach(x=>{ h+=`<tr><td style="text-align:left;">${esc(x.name)}${x.diff?' <span style="color:#c0392b;">※</span>':''}</td><td class="r">${fmt(x.open)}</td><td class="r si2">${fmt(x.si)}</td><td class="r sh2">${fmt(x.sh)}</td><td class="r"><b>${fmt(x.close)}</b></td></tr>`; });
+  h+=`<tr class="ttl"><td>合計</td><td class="r">${fmt(sum('open'))}</td><td class="r si2">${fmt(sum('si'))}</td><td class="r sh2">${fmt(sum('sh'))}</td><td class="r">${fmt(sum('close'))}</td></tr></table></div>`;
+  if(res.some(x=>x.diff)) h+='<div style="font-size:11px;color:#c0392b;">※ 差引残高を手で入れた行があるため「期首＋仕入−支払」と期末が合いません（期末は帳簿の差引残高のとおり）</div>';
+  // ② 月別×仕入先
+  h+='<h3>② 月ごとの仕入（仕入先別）</h3><div class="kscroll"><table class="mx"><tr><th>月</th>'+res.map(x=>`<th>${esc(x.name)}</th>`).join('')+'<th>合計</th></tr>';
+  months.forEach((mo,j)=>{ const t=res.reduce((s,x)=>s+x.mon[j],0); h+=`<tr><td>R${mo.y}年${mo.m}月</td>`+res.map(x=>`<td class="r">${x.mon[j]?fmt(x.mon[j]):''}</td>`).join('')+`<td class="r"><b>${fmt(t)}</b></td></tr>`; });
+  h+='<tr class="ttl"><td>合計</td>'+res.map(x=>`<td class="r">${fmt(x.si)}</td>`).join('')+`<td class="r">${fmt(sum('si'))}</td></tr></table></div>`;
+  // ③ 消費税の内訳（10%・8%の内訳行を入れている仕入先だけ）
+  const tx=res.filter(x=>x.t10||x.t8);
+  if(tx.length){
+    h+='<h3>③ 消費税率の内訳（「10%・8%内訳」行の合計）</h3><table><tr><th>仕入先</th><th>10%対象</th><th>8%対象</th></tr>';
+    tx.forEach(x=>{ h+=`<tr><td style="text-align:left;">${esc(x.name)}</td><td class="r">${fmt(x.t10)}</td><td class="r">${fmt(x.t8)}</td></tr>`; });
+    h+='</table>';
+  }
+  // ④ 請求書とのチェック（その月の請求書の額を入れて、仕入帳の月合計と照らし合わせる）
+  if(kessanChkM==null || !months.some(mo=>mo.y+'-'+mo.m===kessanChkM)) kessanChkM=fy+'-9';
+  h+=`<h3>④ 請求書とのチェック　<select class="noprint" onchange="kessanChkM=this.value;renderKessan()">${months.map(mo=>`<option value="${mo.y}-${mo.m}"${mo.y+'-'+mo.m===kessanChkM?' selected':''}>R${mo.y}年${mo.m}月</option>`).join('')}</select><span class="kchkm"></span></h3>`;
+  h+='<div class="noprint" style="font-size:12px;color:#887;margin-bottom:4px;">請求書（その月分）の合計額を入れてください。仕入帳の月の合計（消費税の行も含む）と合えば ✅ になります。</div>';
+  const [cy,cm]=kessanChkM.split('-').map(Number), j=months.findIndex(mo=>mo.y===cy&&mo.m===cm);
+  h+=`<div class="kscroll"><table><tr><th>仕入先</th><th>仕入帳（R${cy}年${cm}月）</th><th>請求書の額</th><th>差</th><th>判定</th></tr>`;
+  res.forEach((x,i)=>{ const v=(x.seikyu||{})[kessanChkM];
+    h+=`<tr data-k="${i}"><td style="text-align:left;">${esc(x.name)}</td><td class="r">${fmt(x.mon[j])}</td>`
+      +`<td style="padding:0;"><input class="kin" inputmode="numeric" value="${v!=null&&v!==''?fmt(v):''}" placeholder="入力" oninput="onSeikyu('${x.id}',${i},this.value,${x.mon[j]})" onblur="refmt(this)" style="width:110px;border:none;background:#fffbea;text-align:right;padding:6px;font-size:14px;font-family:inherit;"></td>`
+      +`<td class="r kdiff"></td><td class="kok"></td></tr>`; });
+  h+='</table></div><div id="kdone" style="margin-top:6px;"></div>';
+  h+=`<div class="knote">📌 金額は仕入帳に入れたとおり（消費税の行も含む）です。<br>
+    📌 税理士さんには、これと一緒に<b>請求書・納品書</b>、<b>期末の棚卸</b>（棚卸アプリ）も渡してください。<br>
+    📌 「Excelで書き出す」には、この表に加えて期間中の全明細も入ります。</div>`;
+  h+='<div style="font-size:11px;color:#887;text-align:right;margin-top:6px;">有限会社 焼肉ありもと　'+new Date().toLocaleDateString('ja-JP',{year:'numeric',month:'long',day:'numeric'})+' 作成</div>';
+  document.getElementById('kessanBody').innerHTML=h;
+  res.forEach((x,i)=>paintSeikyu(i,(x.seikyu||{})[kessanChkM],x.mon[j]));
+  kessanState={res,j}; paintDone();
+}
+let kessanChkM=null, kessanState=null;
+// 請求書チェックの状況。全社そろったら「確認済み」にでき、その日付を各仕入先のページ（seikyuOk）に残す
+function seikyuStatus(){
+  const {res,j}=kessanState, M=kessanChkM;
+  const need=res.filter(x=>x.mon[j] || ((data.pages[x.id]||{}).seikyu||{})[M]!=null);
+  const ok=need.filter(x=>{ const v=((data.pages[x.id]||{}).seikyu||{})[M]; return v!=null && Math.round(x.mon[j]-toNum(v))===0; });
+  const date=res.map(x=>((data.pages[x.id]||{}).seikyuOk||{})[M]).find(Boolean)||null;
+  return {need,ok,date,allOk:need.length>0 && ok.length===need.length};
+}
+function paintDone(){
+  const el=document.getElementById('kdone'); if(!el||!kessanState) return;
+  const st=seikyuStatus(), [y,m]=kessanChkM.split('-'), lbl=`R${y}年${m}月分`;
+  const box=(bg,bd,t)=>`<div style="background:${bg};border:1.5px solid ${bd};border-radius:10px;padding:9px 12px;font-size:14px;display:flex;gap:10px;align-items:center;flex-wrap:wrap;">${t}</div>`;
+  const btn=(t,f,c)=>`<button class="close-x noprint" style="background:${c};color:#fff;padding:6px 14px;" onclick="${f}">${t}</button>`;
+  if(st.date && st.allOk) el.innerHTML=box('#eaf6ec','#7cc48a',`<b style="color:#1a7a3a;">✅ ${lbl}の請求書チェック 完了</b><span style="color:#556;">（${esc(st.date)} 確認・${st.need.length}社すべて一致）</span><span style="margin-left:auto;">${btn('取り消す','setSeikyuOk(false)','#998')}</span>`);
+  else if(st.date) el.innerHTML=box('#fff4e5','#f0b45a',`<b style="color:#b06000;">⚠️ ${esc(st.date)} に確認済みにしたあと、金額が変わっています</b><span>（一致 ${st.ok.length}／${st.need.length}社）</span><span style="margin-left:auto;">${btn('確認済みを外す','setSeikyuOk(false)','#998')}</span>`);
+  else if(st.allOk) el.innerHTML=box('#eef5ff','#8fb3e0',`<b>${st.need.length}社すべて一致しました</b><span style="margin-left:auto;">${btn('✔ 確認済みにする','setSeikyuOk(true)','#1a7a3a')}</span>`);
+  else el.innerHTML=`<div style="font-size:13px;color:#776;">一致 <b>${st.ok.length}</b>／${st.need.length}社　（全社が ✅ になると「確認済み」にできます）</div>`;
+}
+function setSeikyuOk(on){
+  const {res}=kessanState, M=kessanChkM, d=new Date();
+  const ds=d.getFullYear()+'/'+(d.getMonth()+1)+'/'+d.getDate();
+  if(!on && !confirm('「確認済み」を外しますか？')) return;
+  res.forEach(x=>{ const p=data.pages[x.id]; if(!p) return; if(!p.seikyuOk) p.seikyuOk={}; if(on) p.seikyuOk[M]=ds; else delete p.seikyuOk[M]; });
+  save(); paintDone(); toast(on?'✅ 確認済みにしました':'確認済みを外しました');
+}
+function paintSeikyu(i,v,book){
+  const tr=document.querySelector(`#kessanBody tr[data-k="${i}"]`); if(!tr) return;
+  const has=v!=null&&v!=='', d=has?Math.round(book-toNum(v)):0;
+  tr.querySelector('.kdiff').textContent=has&&d?(d>0?'+':'−')+fmt(Math.abs(d)):'';
+  const ok=tr.querySelector('.kok');
+  ok.innerHTML=!has?'<span style="color:#aaa;">未入力</span>':(d===0?'✅ 一致':`<b style="color:#c0392b;">⚠️ ${d>0?'仕入帳が多い':'仕入帳が少ない'}</b>`);
+}
+function onSeikyu(id,i,val,book){
+  const p=data.pages[id]; if(!p) return;
+  if(!p.seikyu) p.seikyu={};
+  const t=String(val).trim();
+  if(t==='') delete p.seikyu[kessanChkM]; else p.seikyu[kessanChkM]=toNum(t);
+  paintSeikyu(i,p.seikyu[kessanChkM],book);
+  save(); paintDone();
+}
+function printKessan(){
+  document.body.classList.add('print-kessan');
+  const done=()=>{ document.body.classList.remove('print-kessan'); window.removeEventListener('afterprint',done); };
+  window.addEventListener('afterprint',done);
+  setTimeout(done,3000);
+  window.print();
+}
+function exportKessanCSV(){
+  const fy=kessanFy, {months,res}=kessanCalc(fy);
+  const q=s=>{ s=String(s==null?'':s); return /[",\n]/.test(s)?'"'+s.replace(/"/g,'""')+'"':s; };
+  const L=[];
+  L.push(['焼肉ありもと 仕入帳 決算用まとめ', fyLabel(fy)]);
+  L.push([]); L.push(['① 仕入先ごとのまとめ']);
+  L.push(['仕入先',`期首の買掛金(R${fy-1}年9月末)`,'1年間の仕入','1年間の支払',`期末の買掛金(R${fy}年9月末)`]);
+  res.forEach(x=>L.push([x.name,x.open,x.si,x.sh,x.close]));
+  L.push(['合計',...['open','si','sh','close'].map(k=>res.reduce((s,x)=>s+x[k],0))]);
+  L.push([]); L.push(['② 月ごとの仕入（仕入先別）']);
+  L.push(['月',...res.map(x=>x.name),'合計']);
+  months.forEach((mo,j)=>L.push([`R${mo.y}年${mo.m}月`,...res.map(x=>x.mon[j]),res.reduce((s,x)=>s+x.mon[j],0)]));
+  L.push(['合計',...res.map(x=>x.si),res.reduce((s,x)=>s+x.si,0)]);
+  if(res.some(x=>x.t10||x.t8)){ L.push([]); L.push(['③ 消費税率の内訳']); L.push(['仕入先','10%対象','8%対象']); res.filter(x=>x.t10||x.t8).forEach(x=>L.push([x.name,x.t10,x.t8])); }
+  { const chk=months.map((mo,j)=>({k:mo.y+'-'+mo.m,j,mo})).filter(o=>res.some(x=>x.seikyu[o.k]!=null));
+    if(chk.length){ L.push([]); L.push(['請求書とのチェック']); L.push(['月','仕入先','仕入帳','請求書','差']);
+      chk.forEach(o=>{ res.forEach(x=>{ const v=x.seikyu[o.k]; if(v==null) return; L.push([`R${o.mo.y}年${o.mo.m}月`,x.name,x.mon[o.j],v,Math.round(x.mon[o.j]-v)]); });
+        const ok=res.map(x=>((data.pages[x.id]||{}).seikyuOk||{})[o.k]).find(Boolean); if(ok) L.push([`R${o.mo.y}年${o.mo.m}月`,'確認済み',ok]); }); } }
+  L.push([]); L.push(['④ 明細（期間中の全行）']);
+  L.push(['仕入先','年(令和)','月','日','品名','数量','単価','仕入金額','支払金額','区分']);
+  res.forEach(x=>x.rows.forEach(({r,y,m})=>L.push([x.name,y,m,r.d??'',r.hinmei,r.qty,r.price||'',toNum(r.shiire)||'',toNum(r.shiharai)||'',r.memo?'税率内訳(集計外)':(toNum(r.shiharai)?'支払':'仕入')])));
+  const csv='﻿'+L.map(a=>a.map(q).join(',')).join('\n')+'\n';
+  const b=new Blob([csv],{type:'text/csv;charset=utf-8'}); const a=document.createElement('a'); a.href=URL.createObjectURL(b); a.download=`仕入帳_決算用_R${fy}年9月期.csv`; a.click(); toast('📊 決算用のExcel(CSV)を書き出しました');
 }
 
 // ============ 保存履歴（バックアップ世代） ============
@@ -537,11 +896,71 @@ function restoreHist(i){
   toast('🕘 復元しました');
 }
 
-let autoCloudTimer=null;
-function cloudAutoSave(){ clearTimeout(autoCloudTimer); autoCloudTimer=setTimeout(()=>pushCloud(true),2500); }
-async function pushCloud(silent){ if(!silent) toast('☁️ アップロード中...'); try{ const res=await fetch(SYNC_URL+'?action=save&key='+SYNC_KEY,{method:'POST',body:JSON.stringify(data)}); const j=await res.json(); if(j.success){ if(!silent) toast('☁️ クラウドに保存しました'); return true;} if(!silent) toast('エラー: '+(j.message||'')); }catch(e){ if(!silent) toast('通信エラー: '+e.message);} return false; }
+// ============ Macとスマホの自動同期 ============
+// 最後にクラウドとそろえた時点の中身（base）を覚えておき、
+//   クラウドだけ変わっていた → クラウドを読み込む（ほかの端末で入れた分）
+//   手元だけ変わっていた     → クラウドへ送る
+//   両方変わっていた         → どちらを残すか聞く（読み込む前の状態は履歴に残る）
+// 以前は、手元が空のときしかクラウドを読まず、編集のたびに手元の内容で上書きしていたため、
+// ほかの端末で入れた分が消えることがあった。
+// 表示中の仕入先（cur）は比べない（タブを切り替えただけで「変更あり」にしないため）。
+const BASE_KEY='yakiniku_shiire_syncbase_v1';
+function fpOf(d){ return JSON.stringify({s:d.suppliers||[], p:d.pages||{}}); }
+function getBase(){ try{ return localStorage.getItem(BASE_KEY); }catch(e){ return null; } }
+function setBase(d){ try{ localStorage.setItem(BASE_KEY, fpOf(d)); }catch(e){} }
+let autoCloudTimer=null, syncing=false, cloudReady=false, lastSync=0;
+function cloudAutoSave(){ if(!cloudReady) return; clearTimeout(autoCloudTimer); autoCloudTimer=setTimeout(syncNow,2500); }
+async function fetchCloud(){
+  const res=await fetch(SYNC_URL+'?action=load&key='+SYNC_KEY,{cache:'no-store'}); const j=await res.json();
+  let d=j&&j.data; if(typeof d==='string'){ try{ d=JSON.parse(d);}catch(e){ d=null; } }
+  return (d&&d.suppliers&&d.pages) ? normalizeData(d) : null;
+}
+function takeCloud(d, msg){
+  snapshot(true);   // 読み込む前の手元の状態を履歴へ
+  const cur=data.cur;
+  data=d; if(data.suppliers.some(s=>s.id===cur)) data.cur=cur;
+  localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
+  setBase(data);
+  render();
+  if(msg) toast(msg);
+}
+async function syncNow(){
+  if(syncing) return;
+  syncing=true; lastSync=Date.now();
+  clearTimeout(autoCloudTimer); autoCloudTimer=null;
+  try{
+    const cloud=await fetchCloud();
+    const hasLocal=localStorage.getItem(STORAGE_KEY)!==null;
+    const local=fpOf(data), base=getBase();
+    if(!cloud){
+      if(hasLocal) await pushCloud(true);                       // クラウドが空なら手元を送る
+    }else{
+      const cs=fpOf(cloud);
+      if(cs===local) setBase(data);                             // 同じ
+      else if(!hasLocal) takeCloud(cloud,'☁️ クラウドから読み込みました');   // この端末では初めて
+      else{
+        if(base===null){ takeCloud(cloud,'☁️ クラウドの内容を読み込みました（前の内容は🕘履歴に残っています）'); syncing=false; cloudReady=true; return; }   // 公開版のみ：この端末で新しい版を初めて開いたときは、クラウドを正とする（古い手元でクラウドを上書きしない）
+        const cloudChanged = base===null || cs!==base;
+        const localChanged = base===null || local!==base;
+        if(cloudChanged && !localChanged) takeCloud(cloud,'☁️ ほかの端末で入れた分を読み込みました');
+        else if(!cloudChanged && localChanged) await pushCloud(true);
+        else if(confirm('⚠️ この画面とクラウド（ほかの端末）の両方に、違う内容があります。\n\n'
+                      + 'OK＝クラウドの内容を読み込む（この画面の内容は履歴に残ります）\n'
+                      + 'キャンセル＝この画面の内容でクラウドを上書きする')) takeCloud(cloud,'☁️ クラウドの内容を読み込みました');
+        else await pushCloud(true);
+      }
+    }
+  }catch(e){ /* オフライン等。手元には保存済み */ }
+  syncing=false; cloudReady=true;
+}
+async function pushCloud(silent){ if(!silent) toast('☁️ アップロード中...'); try{ const sent=JSON.stringify(data); const res=await fetch(SYNC_URL+'?action=save&key='+SYNC_KEY,{method:'POST',body:sent}); const j=await res.json(); if(j.success){ setBase(JSON.parse(sent)); if(!silent) toast('☁️ クラウドに保存しました'); return true;} if(!silent) toast('エラー: '+(j.message||'')); }catch(e){ if(!silent) toast('通信エラー: '+e.message);} return false; }
 async function cloudUpload(){ await pushCloud(false); }
-function applyCloud(j){ if(!j||!j.success||!j.data) return false; let d=j.data; if(typeof d==='string'){ try{ d=JSON.parse(d);}catch(e){ return false; } } if(!d||!d.suppliers) return false; snapshot(true); data=normalizeData(d); localStorage.setItem(STORAGE_KEY,JSON.stringify(data)); render(); return true; }
+function applyCloud(j){ if(!j||!j.success||!j.data) return false; let d=j.data; if(typeof d==='string'){ try{ d=JSON.parse(d);}catch(e){ return false; } } if(!d||!d.suppliers) return false; snapshot(true); data=normalizeData(d); localStorage.setItem(STORAGE_KEY,JSON.stringify(data)); setBase(data); render(); return true; }
+// 画面に戻ってきたときにも同期（スマホで入れた分をすぐ反映）
+document.addEventListener('visibilitychange',()=>{
+  if(document.visibilityState==='hidden'){ if(autoCloudTimer) syncNow(); return; }   // 送る前の編集があれば送っておく
+  if(cloudReady && !autoCloudTimer && Date.now()-lastSync>30*1000) syncNow();
+});
 async function cloudDownload(){ toast('☁️ ダウンロード中...'); try{ const res=await fetch(SYNC_URL+'?action=load&key='+SYNC_KEY); const j=await res.json(); let d=j&&j.data; if(typeof d==='string'){ try{ d=JSON.parse(d);}catch(e){} } if(!d||!d.suppliers){ toast('クラウドにデータがありません'); return; } if(!confirm('クラウドのデータを読み込みますか？\n今の内容は上書きされます。')) return; if(applyCloud(j)) toast('☁️ クラウドから読み込みました'); }catch(e){ toast('エラー'); } }
 
 // セルをクリック/移動したら中の文字を自動選択（Command+Cでコピーしやすく）
@@ -561,6 +980,7 @@ document.getElementById('tbody').addEventListener('keydown', e=>{
     const ni=nxt.children[colIdx]?.querySelector('input');
     if(ni){ ni.focus(); ni.select&&ni.select(); }
   }else{
+    if(viewFy!=='all' && viewFy!==latestFy()){ toast('過去の期を表示中です（新しい行は今の期に入れてください）'); return; }
     addRow();  // 再描画される
     const trs=document.querySelectorAll('#tbody tr');
     const ni=trs[trs.length-1]?.children[colIdx]?.querySelector('input');
@@ -577,8 +997,9 @@ function scrollToLatest(){
   }));
 }
 data=load(); render(); scrollToLatest();
-if(migrated){ migrated=false; save(); } // 全角→半角の修復があればクラウドにも反映
-(async()=>{ if(localStorage.getItem(STORAGE_KEY)!==null) return; try{ const res=await fetch(SYNC_URL+'?action=load&key='+SYNC_KEY); const j=await res.json(); let d=j&&j.data; if(typeof d==='string'){ try{ d=JSON.parse(d);}catch(e){} } if(d&&d.suppliers){ data=normalizeData(d); localStorage.setItem(STORAGE_KEY,JSON.stringify(data)); render(); scrollToLatest(); if(migrated){ migrated=false; save(); } toast('☁️ クラウドから自動復元しました'); } }catch(e){} })();
+if(migrated){ migrated=false; save(); } // 全角→半角の修復があれば手元に保存（クラウドへは下の同期で送る）
+// 開いたらクラウドと突き合わせる（新しい方にそろえる）
+syncNow().then(()=>scrollToLatest());
 
 // ============================================================
 // セル範囲選択 → コピー（Excelのように選んで Command+C）

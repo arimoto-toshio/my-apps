@@ -6,282 +6,546 @@
 <title>🏃 ランニング記録</title>
 <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' rx='22' fill='%23ff7a93'/><g stroke='%23ffffff' stroke-width='3.4' stroke-linecap='round' opacity='0.9'><line x1='9' y1='45' x2='22' y2='45'/><line x1='7' y1='55' x2='24' y2='55'/><line x1='11' y1='65' x2='21' y2='65'/></g><rect x='26' y='62' width='56' height='10' rx='5' fill='%23ffffff'/><path d='M34 62 L34 47 Q34 40 41 40 L51 40 Q56 40 58 44 L66 58 Q68 62 73 62 Z' fill='%232ec4b6'/><circle cx='40' cy='50' r='2.5' fill='%2322343a'/><circle cx='47' cy='50' r='2.5' fill='%2322343a'/><path d='M39 55 Q43.5 59 48 55' stroke='%2322343a' stroke-width='2' fill='none' stroke-linecap='round'/><circle cx='36.5' cy='54' r='2' fill='%23ff8fa3'/><circle cx='50.5' cy='54' r='2' fill='%23ff8fa3'/></svg>">
 <style>
+  :root {
+    --bg: #eef6ef; --card: #ffffff; --ink: #1d3328; --sub: #5f7a6b; --line: #e0ece3;
+    --navy: #1f4d3a; --navy2: #2f7a55; --coral: #3fa45f; --coral2: #8fd27a;
+    --teal: #2ec4b6; --sun: #fde047; --gold: #f59e0b;
+  }
   * { box-sizing: border-box; margin: 0; padding: 0; }
-  body { font-family: 'Meiryo','メイリオ',sans-serif; background: #f0f4f8; color: #1a1a2e; font-size: 13px; }
+  body {
+    font-family: -apple-system, 'Hiragino Sans', 'Hiragino Kaku Gothic ProN', 'Meiryo', sans-serif;
+    background: linear-gradient(180deg, var(--m-bgtop, #e3f2e6) 0, var(--bg) 320px) no-repeat, var(--bg); color: var(--ink); font-size: 14px; line-height: 1.5;
+    -webkit-font-smoothing: antialiased;
+  }
+  .num { font-variant-numeric: tabular-nums; }
 
+  /* ===== ヘッダー ===== */
   .header {
-    background: linear-gradient(135deg, #ff9a8b 0%, #ff6b8b 45%, #ffa6c9 100%);
-    color: white; padding: 18px 22px;
-    display: flex; align-items: center; justify-content: space-between;
-    box-shadow: 0 3px 12px rgba(255,107,139,0.35); flex-wrap: wrap; gap: 8px;
-    position: sticky; top: 0; z-index: 100;
+    background: linear-gradient(90deg, #17402f, #24624a); color: #fff; padding: 10px 18px;
+    display: flex; align-items: center; justify-content: space-between; gap: 10px;
+    position: sticky; top: 0; z-index: 100; box-shadow: 0 2px 12px rgba(23,64,47,0.25);
   }
-  .header h1 { font-size: 22px; text-shadow: 0 1px 3px rgba(0,0,0,0.15); }
-  .header-btns { display: flex; gap: 8px; flex-wrap: wrap; }
-  .btn {
-    padding: 6px 14px; border: none; border-radius: 6px; cursor: pointer;
-    font-size: 12px; font-weight: 600; font-family: inherit;
+  .header h1 { font-size: 18px; font-weight: 800; display: flex; align-items: center; gap: 9px; letter-spacing: 0.5px; }
+  .header-right { display: flex; align-items: center; gap: 10px; position: relative; }
+  .sync-st { font-size: 11.5px; color: #cfe8d6; white-space: nowrap; }
+  .menu-btn { background: rgba(255,255,255,0.12); color: #fff; border: 1px solid rgba(255,255,255,0.25); border-radius: 10px; padding: 7px 12px; font-size: 13px; font-weight: 700; cursor: pointer; font-family: inherit; }
+  .menu {
+    display: none; position: absolute; right: 0; top: calc(100% + 8px); background: #fff; color: var(--ink);
+    border-radius: 14px; box-shadow: 0 12px 36px rgba(23,64,47,0.25); padding: 8px; min-width: 210px; z-index: 200;
   }
-  .btn-gold { background: #fff3c4; color: #b45309; }
-  .btn-outline { background: rgba(255,255,255,0.22); color: white; border: 1px solid rgba(255,255,255,0.55); }
-
-  .main { padding: 16px; max-width: 1100px; margin: 0 auto; }
-
-  /* Summary cards */
-  .summary { display: flex; gap: 12px; margin-bottom: 20px; flex-wrap: wrap; }
-  .sum-card {
-    background: white; border-radius: 10px; padding: 14px 20px;
-    box-shadow: 0 2px 8px rgba(0,0,0,0.07); flex: 1; min-width: 150px; text-align: center;
+  .menu.open { display: block; }
+  .menu button, .menu label {
+    display: flex; align-items: center; gap: 10px; width: 100%; text-align: left; background: none; border: none;
+    padding: 10px 12px; border-radius: 9px; font-size: 13.5px; font-family: inherit; color: var(--ink); cursor: pointer; font-weight: 600;
   }
-  .sum-label { font-size: 11px; color: #888; margin-bottom: 4px; }
-  .sum-value { font-size: 22px; font-weight: 700; color: #1a3a6e; font-variant-numeric: tabular-nums; }
-  .sum-unit  { font-size: 11px; color: #888; margin-top: 2px; }
-  .sum-delta { display: inline-block; font-size: 10.5px; font-weight: 700; border-radius: 999px; padding: 1px 8px; margin-top: 4px; }
-  .sum-delta.up   { background: #dcfce7; color: #15803d; }
-  .sum-delta.down { background: #fee2e2; color: #b91c1c; }
-  .sum-delta.flat { background: #f1f5f9; color: #64748b; }
+  .menu button:hover, .menu label:hover { background: #eef7f0; }
+  .menu hr { border: none; border-top: 1px solid var(--line); margin: 6px 4px; }
 
-  /* Charts */
-  .charts-flex { display: flex; gap: 20px; flex-wrap: wrap; }
-  .chart-box { flex: 1; min-width: 280px; }
-  .chart-label { font-size: 12px; font-weight: 700; color: #1a3a6e; margin-bottom: 6px; }
-  .chart-box canvas { display: block; max-width: 100%; }
+  .main { padding: 18px 16px 40px; max-width: 1080px; margin: 0 auto; display: flex; flex-direction: column; gap: 16px; }
+  .card { background: var(--card); border-radius: 18px; padding: 18px 20px; box-shadow: 0 1px 3px rgba(31,77,58,0.06), 0 6px 18px rgba(31,77,58,0.06); }
+  .card-title { font-size: 15px; font-weight: 800; color: var(--navy); margin-bottom: 12px; display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+  .card-title .right { margin-left: auto; font-size: 12px; font-weight: 600; color: var(--sub); }
+  .two-col { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
 
-  /* Tables */
-  .table-section { background: white; border-radius: 10px; padding: 16px; margin-bottom: 20px; box-shadow: 0 2px 8px rgba(0,0,0,0.07); overflow-x: auto; }
-  .section-title { font-size: 15px; font-weight: 700; color: #1a3a6e; margin-bottom: 12px; display: flex; align-items: center; gap: 8px; }
-
-  /* sticky列を効かせるため separate + 右下ボーダー方式 */
-  table { border-collapse: separate; border-spacing: 0; min-width: 100%; border: 1px solid #d1d9e6; }
-  th, td { border-right: 1px solid #d1d9e6; border-bottom: 1px solid #d1d9e6; text-align: center; padding: 5px 4px; white-space: nowrap; font-variant-numeric: tabular-nums; background: white; }
-  th:last-child, td:last-child { border-right: none; }
-  tfoot tr:last-child td { border-bottom: none; }
-  tbody tr:nth-child(even) td { background: #f6f9fc; }
-  th { background: #1a3a6e; color: white; font-weight: 600; font-size: 12px; padding: 7px 6px; }
-  th.year-col { background: #1e40af; }
-  th.cur-month-col { background: #16a34a; }
-  td.year-cell { background: #e8edf8 !important; font-weight: 700; color: #1a3a6e; }
-  td.total-cell { background: #fef08a !important; font-weight: 700; color: #92400e; }
-  td.grand-total { background: #ef4444 !important; color: white; font-weight: 700; }
-  /* 年の列を左に固定（横スクロールしても見える） */
-  th.year-col, td.year-cell, td.grand-total:first-child { position: sticky; left: 0; z-index: 2; box-shadow: 2px 0 4px rgba(0,0,0,0.08); }
-
-  /* Editable input */
-  .ci {
-    width: 54px; border: none; background: transparent;
-    text-align: center; font-size: 12px; font-family: inherit;
-    padding: 2px; outline: none;
+  /* ===== ヒーロー（今月） ===== */
+  .hero {
+    background: linear-gradient(160deg, #1d5a42 0%, #2f8a5c 55%, #5fb37a 100%); color: #fff;
+    border-radius: 22px; padding: 22px 24px 64px; position: relative; overflow: hidden;
+    box-shadow: 0 10px 30px rgba(31,90,66,0.28);
   }
-  .ci:focus { background: #dbeafe; border-radius: 3px; }
-  .ci::-webkit-inner-spin-button { opacity: 0.4; }
-
-  /* Current month highlight（枠線方式：ヒートマップ色と共存） */
-  .cur-month { box-shadow: inset 0 0 0 2.5px #16a34a !important; }
-  .cur-month .ci { background: transparent; }
-  .cur-month .ci:focus { background: #bbf7d0; }
-
-  /* Best month highlight（距離表は枠線、回数表は背景） */
-  .best-dist { box-shadow: inset 0 0 0 2px #f59e0b; }
-  .best-cnt  { background: #fff7ed !important; }
-
-  /* 距離ヒートマップ（km帯ごとの色分け） */
-  td.h1 { background: #e0f2fe !important; }  /* 〜99km */
-  td.h2 { background: #dcfce7 !important; }  /* 100〜149km */
-  td.h3 { background: #fde68a !important; }  /* 150〜199km */
-  td.h4 { background: #fdba74 !important; }  /* 200km〜 */
-  .heat-legend { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; font-size: 11px; color: #64748b; margin-bottom: 10px; }
-  .hl { display: inline-block; border-radius: 5px; padding: 2px 9px; font-weight: 700; color: #334155; border: 1px solid rgba(0,0,0,0.08); }
-  .hl.h1 { background: #e0f2fe; }
-  .hl.h2 { background: #dcfce7; }
-  .hl.h3 { background: #fde68a; }
-  .hl.h4 { background: #fdba74; }
-  .hl.hb { background: white; box-shadow: inset 0 0 0 2px #f59e0b; }
-
-  /* Year add */
-  .year-controls { display: flex; gap: 8px; align-items: center; margin-top: 12px; flex-wrap: wrap; }
-  .year-controls input { padding: 6px 10px; border: 1px solid #ccc; border-radius: 6px; font-size: 13px; width: 90px; }
-
-  /* Toast */
-  #toast { position: fixed; bottom: 20px; right: 20px; background: #1a1a2e; color: white; padding: 10px 18px; border-radius: 8px; font-size: 13px; z-index: 9999; opacity: 0; transition: opacity 0.3s; pointer-events: none; }
-  #toast.show { opacity: 1; }
-
-  /* 愛媛一周チャレンジ */
-  .ehime-card {
-    background: linear-gradient(135deg, #0b1f4d 0%, #1e40af 60%, #2563eb 100%);
-    border-radius: 14px; padding: 18px 22px; margin-bottom: 20px;
-    color: #fff; box-shadow: 0 6px 20px rgba(20,40,110,0.25);
-    position: relative; overflow: hidden;
+  .hero::after {
+    content: ''; position: absolute; right: -40px; top: -80px; width: 300px; height: 300px; border-radius: 50%;
+    background: radial-gradient(circle, rgba(255,246,190,0.45), rgba(255,246,190,0.12) 45%, transparent 70%); pointer-events: none;
   }
-  .ehime-card::after {
-    content: ''; position: absolute; top: -40px; right: -40px;
-    width: 160px; height: 160px; border-radius: 50%;
-    background: radial-gradient(circle, rgba(253,224,71,0.18), transparent 70%);
+  .hero .forest { position: absolute; left: 0; right: 0; bottom: 0; width: 100%; height: 70px; pointer-events: none; }
+  .hero-top { display: flex; gap: 24px; align-items: center; flex-wrap: wrap; position: relative; z-index: 1; }
+  .ring { position: relative; width: 150px; height: 150px; flex: none; }
+  .ring svg { width: 150px; height: 150px; transform: rotate(-90deg); }
+  .ring .ring-bg { stroke: rgba(255,255,255,0.2); }
+  .ring .ring-fg { stroke: url(#ringGrad); transition: stroke-dashoffset 1s ease; }
+  .ring-center { position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; }
+  .ring-center .pct { font-size: 30px; font-weight: 800; line-height: 1; }
+  .ring-center .pct small { font-size: 14px; }
+  .ring-center .lbl { font-size: 11px; color: #d6eedc; margin-top: 4px; }
+  .hero-main { flex: 1; min-width: 220px; }
+  .hero-label { font-size: 12.5px; color: #d6eedc; font-weight: 700; letter-spacing: 1px; }
+  .hero-km { font-size: 54px; font-weight: 800; line-height: 1.05; letter-spacing: -1px; }
+  .hero-km span { font-size: 20px; font-weight: 700; margin-left: 4px; color: #e6f5ea; letter-spacing: 0; }
+  .hero-sub { font-size: 13px; color: #e6f5ea; margin-top: 4px; }
+  .hero-sub b { color: #fff; }
+  .hero-goal { margin-top: 10px; font-size: 13px; color: #e6f5ea; display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
+  .hero-goal input {
+    width: 76px; padding: 5px 8px; border-radius: 8px; border: 1px solid rgba(255,255,255,0.3);
+    background: rgba(255,255,255,0.12); color: #fff; font-size: 15px; font-weight: 800; text-align: right; font-family: inherit;
   }
-  .ehime-title { font-size: 15px; font-weight: 700; margin-bottom: 14px; letter-spacing: 1px; display:flex; align-items:center; gap:7px; }
-  .ehime-flex { display: flex; gap: 24px; align-items: center; flex-wrap: wrap; position: relative; z-index: 1; }
-  .ehime-map { flex: 0 0 auto; }
-  .ehime-map svg { width: 350px; height: 344px; display: block; filter: drop-shadow(0 3px 6px rgba(0,0,0,0.3)); overflow: visible; }
-  .ehime-stats { flex: 1; min-width: 180px; }
-  .lap-big { font-size: 52px; font-weight: 800; line-height: 0.95; color: #fde047; text-shadow: 0 2px 8px rgba(0,0,0,0.25); }
-  .lap-big span { font-size: 22px; margin-left: 4px; color: #fff; font-weight: 700; }
-  .lap-cheer { font-size: 14px; font-weight: 700; color: #fff; margin: 4px 0 12px; }
-  .lap-bar-wrap { background: rgba(255,255,255,0.18); border-radius: 20px; height: 14px; overflow: hidden; margin-bottom: 6px; }
-  .lap-bar { height: 100%; background: linear-gradient(90deg, #fde047, #fb923c); border-radius: 20px; transition: width 1s ease; }
-  .lap-prog-txt { font-size: 12px; color: #cbd5e1; margin-bottom: 12px; }
-  .lap-prog-txt b { color: #fde047; font-size: 13px; }
-  .lap-detail { font-size: 11.5px; color: #c7d2fe; line-height: 1.7; border-top: 1px solid rgba(255,255,255,0.15); padding-top: 10px; }
-  .lap-detail b { color: #fff; }
-  @keyframes runnerBob { 0%,100% { transform: translateY(0); } 50% { transform: translateY(-2px); } }
-  #ehimeRunner .runner-bob { animation: runnerBob 0.8s ease-in-out infinite; }
+  .hero-goal input:focus { outline: none; border-color: var(--sun); }
+  .hero-msg { margin-top: 8px; font-size: 13px; color: #fff; background: rgba(255,255,255,0.14); border-radius: 10px; padding: 8px 12px; }
+  .hero-msg b { color: #fff59d; }
+  .hero-chips { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; margin-top: 18px; position: relative; z-index: 1; }
+  .chip { background: rgba(255,255,255,0.14); backdrop-filter: blur(2px); border-radius: 14px; padding: 10px 12px; }
+  .chip .c-l { font-size: 11px; color: #d6eedc; font-weight: 700; }
+  .chip .c-v { font-size: 22px; font-weight: 800; margin-top: 2px; }
+  .chip .c-v small { font-size: 12px; font-weight: 700; color: #e6f5ea; margin-left: 2px; }
+  .delta { display: inline-block; font-size: 10.5px; font-weight: 800; border-radius: 999px; padding: 1px 8px; margin-top: 3px; }
+  .delta.up { background: rgba(255,255,255,0.22); color: #ecfccb; }
+  .delta.down { background: rgba(120,53,15,0.28); color: #fde2c7; }
+  .delta.flat { background: rgba(255,255,255,0.12); color: #cbd5e1; }
 
-  /* 🎯 月間目標 */
-  .goal-bar-wrap { background: #e2e8f0; border-radius: 20px; height: 16px; overflow: hidden; margin: 10px 0 8px; }
-  .goal-bar { height: 100%; background: linear-gradient(90deg, #2ec4b6, #16a34a); border-radius: 20px; transition: width 0.8s ease; }
-  .goal-bar.done { background: linear-gradient(90deg, #fde047, #fb923c); }
-  .goal-text { font-size: 13px; color: #334155; line-height: 1.7; }
-  .goal-text b { color: #1a3a6e; }
-  #goalInput { width: 80px; padding: 4px 8px; border: 1.5px solid #cbd5e1; border-radius: 6px; font-size: 14px; font-weight: 700; text-align: right; color: #1a3a6e; }
-  .goal-done-msg { font-size: 15px; font-weight: 800; color: #d97706; }
+  /* ===== 記録フォーム ===== */
+  .rec-form { display: grid; grid-template-columns: 175px 120px 130px 1fr auto; gap: 10px; align-items: end; }
+  .fld { display: flex; flex-direction: column; gap: 4px; }
+  .fld label { font-size: 11.5px; font-weight: 700; color: var(--sub); }
+  .fld input {
+    width: 100%; padding: 10px 12px; border: 1.5px solid #cfe0d4; border-radius: 12px; background: #fff;
+    font-size: 17px; font-weight: 700; color: var(--ink); font-family: inherit; font-variant-numeric: tabular-nums;
+  }
+  .fld input.memo { font-size: 15px; font-weight: 500; }
+  .fld input:focus { outline: none; border-color: #3fa45f; box-shadow: 0 0 0 3px rgba(63,164,95,0.18); }
+  .rec-btn {
+    background: linear-gradient(135deg, var(--coral2), var(--coral)); color: #fff; border: none; border-radius: 12px;
+    padding: 12px 22px; font-size: 16px; font-weight: 800; cursor: pointer; font-family: inherit;
+    box-shadow: 0 4px 12px rgba(63,164,95,0.35); white-space: nowrap;
+  }
+  .rec-btn:active { transform: translateY(1px); }
+  .rec-hint { font-size: 12px; color: var(--sub); margin-top: 10px; display: flex; gap: 14px; flex-wrap: wrap; align-items: center; }
+  .rec-hint .pace-live { font-weight: 800; color: var(--navy); }
+  .rec-hint .cancel-edit { background: #eef2f8; border: none; border-radius: 8px; padding: 4px 10px; font-size: 12px; font-weight: 700; cursor: pointer; color: var(--sub); font-family: inherit; }
+  .editing .rec-btn { background: linear-gradient(135deg, #fbbf24, #d97706); box-shadow: 0 4px 12px rgba(217,119,6,0.3); }
 
-  /* 🏅 ベスト記録・バッジ */
-  .best-flex { display: flex; gap: 12px; flex-wrap: wrap; margin-bottom: 12px; }
-  .best-chip { flex: 1; min-width: 140px; background: #f7f9fb; border-radius: 10px; padding: 10px 14px; text-align: center; }
-  .best-chip .bc-label { font-size: 11px; color: #888; }
-  .best-chip .bc-value { font-size: 19px; font-weight: 800; color: #1a3a6e; margin-top: 2px; font-variant-numeric: tabular-nums; }
-  .best-chip .bc-sub { font-size: 11px; color: #64748b; margin-top: 2px; }
+  /* ===== カレンダー ===== */
+  .cal-nav { display: flex; align-items: center; gap: 6px; margin-left: auto; }
+  .cal-nav button { border: none; background: #e8f3eb; color: var(--navy); border-radius: 9px; width: 32px; height: 30px; font-size: 13px; cursor: pointer; font-weight: 800; }
+  .cal-nav .today-btn { width: auto; padding: 0 10px; font-size: 12px; }
+  .cal-stats { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; margin-bottom: 12px; }
+  .cal-stat { background: #f2f8f3; border-radius: 12px; padding: 8px 10px; text-align: center; }
+  .cal-stat .l { font-size: 10.5px; color: var(--sub); font-weight: 700; }
+  .cal-stat .v { font-size: 17px; font-weight: 800; color: var(--navy); }
+  .cal-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 5px; }
+  .cal-dow { font-size: 11px; text-align: center; color: var(--sub); font-weight: 700; padding-bottom: 2px; }
+  .cal-dow.sat { color: #3b82f6; } .cal-dow.sun { color: #ef4444; }
+  .cal-cell {
+    aspect-ratio: 1 / 0.82; border-radius: 10px; background: #f3f7f3; display: flex; flex-direction: column;
+    align-items: center; justify-content: center; cursor: pointer; position: relative; border: none; font-family: inherit; color: var(--ink);
+  }
+  .cal-cell.empty { background: transparent; cursor: default; }
+  .cal-cell .d { position: absolute; top: 4px; left: 6px; font-size: 10.5px; color: var(--sub); font-weight: 700; }
+  .cal-cell .k { font-size: 14px; font-weight: 800; margin-top: 8px; }
+  .cal-cell.l1 { background: #e2f5d8; } .cal-cell.l2 { background: #b8e3a4; }
+  .cal-cell.l3 { background: #6cc077; color: #0f2e1a; } .cal-cell.l4 { background: #2f7a55; color: #fff; }
+  .cal-cell.l4 .d { color: rgba(255,255,255,0.9); }
+  .cal-cell.today { box-shadow: inset 0 0 0 2.5px #e0a526; }
+  .cal-cell.future { opacity: 0.45; }
+  .cal-legend { display: flex; gap: 6px; align-items: center; font-size: 11px; color: var(--sub); margin-top: 10px; flex-wrap: wrap; }
+  .cal-legend i { display: inline-block; width: 14px; height: 14px; border-radius: 4px; vertical-align: middle; }
+  .cal-note { background: #fff7ed; color: #9a3412; border-radius: 10px; padding: 8px 12px; font-size: 12.5px; margin-bottom: 10px; }
+
+  /* ===== 記録リスト ===== */
+  .run-list { display: flex; flex-direction: column; }
+  .run-row { display: grid; grid-template-columns: 78px 1fr auto; gap: 10px; align-items: center; padding: 10px 4px; border-bottom: 1px solid var(--line); }
+  .run-row:last-child { border-bottom: none; }
+  .run-date { font-size: 13px; font-weight: 800; color: var(--navy); }
+  .run-date small { display: block; font-size: 11px; color: var(--sub); font-weight: 600; }
+  .run-main { display: flex; gap: 14px; align-items: baseline; flex-wrap: wrap; }
+  .run-km { font-size: 19px; font-weight: 800; }
+  .run-km small { font-size: 12px; color: var(--sub); margin-left: 1px; }
+  .run-t { font-size: 13px; color: var(--sub); }
+  .run-pace { font-size: 13px; font-weight: 800; color: #2f7a55; background: #e6f4e3; border-radius: 999px; padding: 1px 9px; }
+  .run-memo { font-size: 12.5px; color: var(--sub); flex-basis: 100%; }
+  .run-ops { display: flex; gap: 6px; }
+  .run-ops button { border: none; background: #e8f3eb; border-radius: 9px; padding: 6px 10px; font-size: 12px; font-weight: 700; color: var(--navy); cursor: pointer; font-family: inherit; }
+  .run-ops button.del { background: #fdecef; color: #be123c; }
+  .run-empty { color: var(--sub); font-size: 13px; padding: 14px 4px; }
+
+  /* ===== 着地予想 ===== */
+  .proj-main { font-size: 13.5px; color: #334155; line-height: 1.8; }
+  .proj-main .big { font-size: 28px; font-weight: 800; color: var(--navy); }
+  .proj-bars { display: flex; flex-direction: column; gap: 8px; margin: 12px 0 8px; }
+  .proj-bar-row { display: flex; align-items: center; gap: 10px; font-size: 12px; color: var(--sub); }
+  .proj-bar-row .pl { width: 92px; flex: none; white-space: nowrap; }
+  .proj-bar-row .pt { flex: 1; height: 14px; background: #eaf3ec; border-radius: 20px; overflow: hidden; position: relative; }
+  .proj-bar-row .pt span { display: block; height: 100%; border-radius: 20px; }
+  .proj-bar-row .pt span.done { background: linear-gradient(90deg, #8fd27a, #3fa45f); }
+  .proj-bar-row .pt span.fore { background: repeating-linear-gradient(135deg, #cdeac3 0 6px, #e3f4dc 6px 12px); position: absolute; top: 0; }
+  .proj-bar-row .pt span.last { background: #a7bfae; }
+  .proj-bar-row .pt span.best { background: var(--gold); }
+  .proj-bar-row .pv { width: 80px; flex: none; text-align: right; font-weight: 800; color: #334155; }
+  .proj-sub { font-size: 12.5px; color: #475569; line-height: 1.8; }
+  .proj-sub b { color: #b45309; }
+
+  /* ===== ベスト・バッジ ===== */
+  .best-flex { display: grid; grid-template-columns: repeat(auto-fit, minmax(130px, 1fr)); gap: 10px; margin-bottom: 14px; }
+  .best-chip { background: #f2f8f3; border-radius: 14px; padding: 10px 12px; text-align: center; }
+  .best-chip .bc-label { font-size: 11px; color: var(--sub); font-weight: 700; }
+  .best-chip .bc-value { font-size: 19px; font-weight: 800; color: var(--navy); margin-top: 2px; }
+  .best-chip .bc-sub { font-size: 11px; color: var(--sub); margin-top: 1px; }
   .badge-row { display: flex; gap: 10px; flex-wrap: wrap; margin-bottom: 12px; }
-  .badge { display: flex; flex-direction: column; align-items: center; gap: 3px; width: 86px; text-align: center; }
-  .badge .b-icon { width: 52px; height: 52px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 24px;
-    background: radial-gradient(circle at 35% 30%, #fef3c7, #f59e0b); box-shadow: 0 2px 6px rgba(245,158,11,0.4); }
+  .badge { display: flex; flex-direction: column; align-items: center; gap: 3px; width: 80px; text-align: center; }
+  .badge .b-icon { width: 50px; height: 50px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 23px;
+    background: radial-gradient(circle at 35% 30%, #fef3c7, var(--gold)); box-shadow: 0 2px 6px rgba(245,158,11,0.4); }
   .badge.locked .b-icon { background: #e2e8f0; box-shadow: none; filter: grayscale(1); opacity: 0.55; }
   .badge .b-label { font-size: 10.5px; font-weight: 700; color: #92400e; line-height: 1.3; }
   .badge.locked .b-label { color: #94a3b8; }
   .next-milestone { font-size: 12.5px; color: #334155; }
   .next-milestone b { color: #b45309; }
+  .total-row { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; margin-bottom: 14px; }
+  .total-row .best-chip { background: #fbf8ec; }
 
-  /* 🕘 履歴モーダル */
-  #histModal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 1000; align-items: center; justify-content: center; padding: 20px; }
-  #histModal .box { background: white; border-radius: 12px; padding: 20px; max-width: 520px; width: 100%; max-height: 85vh; overflow-y: auto; box-shadow: 0 8px 32px rgba(0,0,0,0.3); }
-  .hist-item { display: flex; align-items: center; gap: 10px; border: 1px solid #e2e8f0; border-radius: 10px; padding: 9px 12px; margin: 7px 0; font-size: 12.5px; }
-  .hist-item .when { font-weight: 700; color: #1a3a6e; }
-  .hist-item .info { color: #888; }
-  .hist-item button { margin-left: auto; border: none; background: #2f6fb0; color: #fff; border-radius: 8px; padding: 7px 14px; cursor: pointer; font-size: 12px; font-weight: 600; white-space: nowrap; }
+  /* ===== 愛媛一周 ===== */
+  .ehime-card {
+    background: linear-gradient(135deg, #123c2c 0%, #1f6b4a 60%, #2f8a5c 100%);
+    border-radius: 22px; padding: 20px 22px; color: #fff; box-shadow: 0 8px 24px rgba(18,60,44,0.28);
+    position: relative; overflow: hidden;
+  }
+  .ehime-card::after { content: ''; position: absolute; top: -40px; right: -40px; width: 160px; height: 160px; border-radius: 50%;
+    background: radial-gradient(circle, rgba(253,224,71,0.18), transparent 70%); }
+  .ehime-title { font-size: 15px; font-weight: 800; margin-bottom: 14px; letter-spacing: 1px; display:flex; align-items:center; gap:7px; }
+  .ehime-flex { display: flex; gap: 24px; align-items: center; flex-wrap: wrap; position: relative; z-index: 1; }
+  .ehime-map { flex: 0 0 auto; }
+  .ehime-map svg { width: 330px; height: 324px; display: block; filter: drop-shadow(0 3px 6px rgba(0,0,0,0.3)); overflow: visible; }
+  .ehime-stats { flex: 1; min-width: 180px; }
+  .lap-big { font-size: 52px; font-weight: 800; line-height: 0.95; color: var(--sun); text-shadow: 0 2px 8px rgba(0,0,0,0.25); }
+  .lap-big span { font-size: 22px; margin-left: 4px; color: #fff; font-weight: 700; }
+  .lap-cheer { font-size: 14px; font-weight: 700; color: #fff; margin: 4px 0 12px; }
+  .lap-bar-wrap { background: rgba(255,255,255,0.18); border-radius: 20px; height: 14px; overflow: hidden; margin-bottom: 6px; }
+  .lap-bar { height: 100%; background: linear-gradient(90deg, #fde047, #fb923c); border-radius: 20px; transition: width 1s ease; }
+  .lap-prog-txt { font-size: 12px; color: #d6eedc; margin-bottom: 12px; }
+  .lap-prog-txt b { color: var(--sun); font-size: 13px; }
+  .lap-detail { font-size: 11.5px; color: #d6eedc; line-height: 1.7; border-top: 1px solid rgba(255,255,255,0.15); padding-top: 10px; }
+  .lap-detail b { color: #fff; }
+  @keyframes runnerBob { 0%,100% { transform: translateY(0); } 50% { transform: translateY(-2px); } }
+  #ehimeRunner .runner-bob { animation: runnerBob 0.8s ease-in-out infinite; }
 
+  /* ===== グラフ ===== */
+  .charts-flex { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+  .chart-box { min-width: 0; }
+  .chart-label { font-size: 12px; font-weight: 800; color: var(--navy); margin-bottom: 6px; }
+  .chart-box canvas { display: block; max-width: 100%; }
+
+  /* ===== 月別の表 ===== */
+  details.tables > summary { cursor: pointer; list-style: none; font-size: 15px; font-weight: 800; color: var(--navy); display: flex; align-items: center; gap: 8px; }
+  details.tables > summary::-webkit-details-marker { display: none; }
+  details.tables > summary .arrow { transition: transform 0.2s; display: inline-block; }
+  details.tables[open] > summary .arrow { transform: rotate(90deg); }
+  details.tables > summary .right { margin-left: auto; font-size: 12px; color: var(--sub); font-weight: 600; }
+  .tbl-wrap { overflow-x: auto; margin-top: 12px; }
+  .tbl-title { font-size: 13.5px; font-weight: 800; color: var(--navy); margin: 16px 0 8px; }
+  table { border-collapse: separate; border-spacing: 0; min-width: 100%; border: 1px solid #cfe0d4; border-radius: 10px; overflow: hidden; }
+  th, td { border-right: 1px solid #e0ece3; border-bottom: 1px solid #e0ece3; text-align: center; padding: 5px 4px; white-space: nowrap; font-variant-numeric: tabular-nums; background: white; font-size: 12.5px; }
+  th:last-child, td:last-child { border-right: none; }
+  tfoot tr:last-child td { border-bottom: none; }
+  th { background: var(--navy); color: white; font-weight: 700; font-size: 12px; padding: 7px 6px; }
+  th.cur-month-col { background: #c98a1b; }
+  td.year-cell { background: #eaf4ec !important; font-weight: 800; color: var(--navy); }
+  td.total-cell { background: #fef3c7 !important; font-weight: 800; color: #92400e; }
+  td.grand-total { background: var(--coral) !important; color: white; font-weight: 800; }
+  th.year-col, td.year-cell, td.grand-total:first-child { position: sticky; left: 0; z-index: 2; box-shadow: 2px 0 4px rgba(0,0,0,0.06); }
+  .ci { width: 54px; border: none; background: transparent; text-align: center; font-size: 12.5px; font-family: inherit; padding: 2px; outline: none; color: var(--ink); }
+  .ci:focus { background: #dbeafe; border-radius: 3px; }
+  .ci[readonly] { color: #2f7a55; font-weight: 800; cursor: default; }
+  .ci::-webkit-inner-spin-button { opacity: 0.4; }
+  .cur-month { box-shadow: inset 0 0 0 2.5px #c98a1b !important; }
+  .best-dist { box-shadow: inset 0 0 0 2px var(--gold); }
+  .best-cnt  { background: #fff7ed !important; }
+  td.h1 { background: #e0f2fe !important; } td.h2 { background: #dcfce7 !important; }
+  td.h3 { background: #fde68a !important; } td.h4 { background: #fdba74 !important; }
+  .heat-legend { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; font-size: 11px; color: var(--sub); margin-bottom: 8px; }
+  .hl { display: inline-block; border-radius: 5px; padding: 2px 9px; font-weight: 700; color: #334155; border: 1px solid rgba(0,0,0,0.08); }
+  .hl.h1 { background: #e0f2fe; } .hl.h2 { background: #dcfce7; } .hl.h3 { background: #fde68a; } .hl.h4 { background: #fdba74; }
+  .hl.hb { background: white; box-shadow: inset 0 0 0 2px var(--gold); }
+  .hl.ha { background: white; color: #2f7a55; }
+  .year-controls { display: flex; gap: 8px; align-items: center; margin-top: 12px; flex-wrap: wrap; }
+  .year-controls input { padding: 7px 10px; border: 1px solid #ccd5e3; border-radius: 9px; font-size: 13px; width: 100px; font-family: inherit; }
+  .small-btn { background: #fef3c7; color: #b45309; border: none; border-radius: 9px; padding: 8px 14px; font-size: 12.5px; font-weight: 800; cursor: pointer; font-family: inherit; }
+
+  /* ===== トースト・履歴 ===== */
+  #toast { position: fixed; bottom: 22px; left: 50%; transform: translateX(-50%); background: var(--navy); color: white; padding: 11px 20px; border-radius: 12px; font-size: 13.5px; font-weight: 700; z-index: 9999; opacity: 0; transition: opacity 0.3s; pointer-events: none; box-shadow: 0 6px 20px rgba(0,0,0,0.25); white-space: nowrap; }
+  #toast.show { opacity: 1; }
+  #histModal { display: none; position: fixed; inset: 0; background: rgba(15,40,28,0.5); z-index: 1000; align-items: center; justify-content: center; padding: 20px; }
+  #histModal .box { background: white; border-radius: 18px; padding: 20px; max-width: 520px; width: 100%; max-height: 85vh; overflow-y: auto; box-shadow: 0 8px 32px rgba(0,0,0,0.3); }
+  .hist-item { display: flex; align-items: center; gap: 10px; border: 1px solid var(--line); border-radius: 12px; padding: 9px 12px; margin: 7px 0; font-size: 12.5px; }
+  .hist-item .when { font-weight: 800; color: var(--navy); }
+  .hist-item .info { color: var(--sub); }
+  .hist-item button { margin-left: auto; border: none; background: var(--navy2); color: #fff; border-radius: 9px; padding: 7px 14px; cursor: pointer; font-size: 12px; font-weight: 700; white-space: nowrap; font-family: inherit; }
+
+  @media (max-width: 760px) {
+    .two-col, .charts-flex { grid-template-columns: 1fr; }
+    .rec-form { grid-template-columns: 1fr 1fr; }
+    .rec-form .fld.memo-f { grid-column: 1 / -1; }
+    .rec-form .rec-btn { grid-column: 1 / -1; padding: 14px; }
+    .hero-chips { grid-template-columns: repeat(2, 1fr); }
+    .total-row { grid-template-columns: repeat(2, 1fr); }
+  }
   @media (max-width: 600px) {
-    .main { padding: 10px; }
+    .header { position: static; padding: 10px 12px; }
+    .header h1 { font-size: 16px; }
+    .sync-st { display: none; }
+    .main { padding: 12px 10px 30px; gap: 12px; }
+    .card { padding: 15px 14px; border-radius: 16px; }
+    .hero { padding: 18px 16px 52px; border-radius: 18px; }
+    .hero .forest { height: 48px; }
+    .hero-top { gap: 16px; }
+    .ring, .ring svg { width: 116px; height: 116px; }
+    .ring-center .pct { font-size: 24px; }
+    .hero-km { font-size: 44px; }
+    .cal-stats { grid-template-columns: repeat(2, 1fr); }
+    .cal-cell { aspect-ratio: 1 / 1; }
+    .cal-cell .d { top: 3px; left: 5px; font-size: 9.5px; }
+    .cal-cell .k { font-size: 11.5px; margin-top: 12px; }
+    .run-row { grid-template-columns: 62px 1fr; }
+    .run-ops { grid-column: 1 / -1; justify-content: flex-end; }
     .ci { width: 42px; font-size: 11px; }
     th, td { padding: 4px 2px; font-size: 11px; }
     .ehime-flex { gap: 14px; justify-content: center; }
     .ehime-map svg { width: 270px; height: 265px; max-width: 100%; }
     .lap-big { font-size: 44px; }
   }
+
+  /* ===== 森の演出 ===== */
+  body::before {
+    content: ''; position: fixed; left: 0; right: 0; bottom: 0; height: 190px; z-index: -1; pointer-events: none;
+    background: url("data:image/svg+xml,%3Csvg%20xmlns%3D%27http%3A//www.w3.org/2000/svg%27%20viewBox%3D%270%200%201200%20130%27%20preserveAspectRatio%3D%27xMidYMax%20slice%27%3E%3Cpath%20fill%3D%27%23d3e9d6%27%20d%3D%27M-13.6%20130%20V122.9%20H-6.4%20V130%20Z%20M-10.0%2070.5%20L-1.8%2099.1%20L-18.2%2099.1%20Z%20M-10.0%2083.6%20L1.5%20111.0%20L-21.5%20111.0%20Z%20M-10.0%2096.7%20L4.7%20122.9%20L-24.7%20122.9%20Z%20M17.0%20130%20V122.2%20H24.8%20V130%20Z%20M20.9%2065.2%20L29.8%2096.3%20L12.0%2096.3%20Z%20M20.9%2079.5%20L33.4%20109.3%20L8.4%20109.3%20Z%20M20.9%2093.7%20L36.9%20122.2%20L4.8%20122.2%20Z%20M48.5%20130%20V121.0%20H57.5%20V130%20Z%20M53.0%2055.0%20L63.3%2091.0%20L42.6%2091.0%20Z%20M53.0%2071.5%20L67.4%20106.0%20L38.5%20106.0%20Z%20M53.0%2088.0%20L71.5%20121.0%20L34.4%20121.0%20Z%20M71.2%20130%20V123.9%20H77.3%20V130%20Z%20M74.3%2079.5%20L81.2%20103.7%20L67.3%20103.7%20Z%20M74.3%2090.6%20L84.0%20113.8%20L64.5%20113.8%20Z%20M74.3%20101.7%20L86.8%20123.9%20L61.8%20123.9%20Z%20M107.4%20130%20V122.8%20H114.6%20V130%20Z%20M111.0%2069.6%20L119.3%2098.6%20L102.7%2098.6%20Z%20M111.0%2082.9%20L122.6%20110.7%20L99.4%20110.7%20Z%20M111.0%2096.2%20L126.0%20122.8%20L96.1%20122.8%20Z%20M130.3%20130%20V119.2%20H141.1%20V130%20Z%20M135.7%2040.2%20L148.1%2083.3%20L123.4%2083.3%20Z%20M135.7%2059.9%20L153.0%20101.3%20L118.4%20101.3%20Z%20M135.7%2079.7%20L157.9%20119.2%20L113.5%20119.2%20Z%20M160.1%20130%20V120.0%20H170.1%20V130%20Z%20M165.1%2046.5%20L176.6%2086.6%20L153.6%2086.6%20Z%20M165.1%2064.9%20L181.2%20103.3%20L149.0%20103.3%20Z%20M165.1%2083.3%20L185.8%20120.0%20L144.5%20120.0%20Z%20M190.1%20130%20V120.9%20H199.2%20V130%20Z%20M194.6%2054.4%20L205.0%2090.7%20L184.3%2090.7%20Z%20M194.6%2071.1%20L209.2%20105.8%20L180.1%20105.8%20Z%20M194.6%2087.7%20L213.3%20120.9%20L175.9%20120.9%20Z%20M213.1%20130%20V121.0%20H222.2%20V130%20Z%20M217.7%2054.6%20L228.0%2090.8%20L207.3%2090.8%20Z%20M217.7%2071.2%20L232.2%20105.9%20L203.1%20105.9%20Z%20M217.7%2087.8%20L236.3%20121.0%20L199.0%20121.0%20Z%20M250.8%20130%20V121.5%20H259.3%20V130%20Z%20M255.0%2059.1%20L264.8%2093.1%20L245.3%2093.1%20Z%20M255.0%2074.7%20L268.7%20107.3%20L241.4%20107.3%20Z%20M255.0%2090.3%20L272.6%20121.5%20L237.5%20121.5%20Z%20M285.2%20130%20V120.8%20H294.5%20V130%20Z%20M289.8%2053.1%20L300.4%2090.0%20L279.3%2090.0%20Z%20M289.8%2070.1%20L304.6%20105.4%20L275.0%20105.4%20Z%20M289.8%2087.0%20L308.9%20120.8%20L270.8%20120.8%20Z%20M306.3%20130%20V120.4%20H315.9%20V130%20Z%20M311.1%2049.7%20L322.2%2088.2%20L300.1%2088.2%20Z%20M311.1%2067.3%20L326.6%20104.3%20L295.7%20104.3%20Z%20M311.1%2085.0%20L331.0%20120.4%20L291.2%20120.4%20Z%20M339.2%20130%20V122.6%20H346.7%20V130%20Z%20M342.9%2067.9%20L351.5%2097.7%20L334.4%2097.7%20Z%20M342.9%2081.6%20L354.9%20110.1%20L331.0%20110.1%20Z%20M342.9%2095.3%20L358.3%20122.6%20L327.6%20122.6%20Z%20M358.5%20130%20V119.8%20H368.6%20V130%20Z%20M363.6%2045.4%20L375.2%2086.0%20L351.9%2086.0%20Z%20M363.6%2064.0%20L379.9%20102.9%20L347.3%20102.9%20Z%20M363.6%2082.6%20L384.5%20119.8%20L342.6%20119.8%20Z%20M388.3%20130%20V120.5%20H397.7%20V130%20Z%20M393.0%2051.2%20L403.8%2089.0%20L382.2%2089.0%20Z%20M393.0%2068.6%20L408.2%20104.8%20L377.9%20104.8%20Z%20M393.0%2085.9%20L412.5%20120.5%20L373.5%20120.5%20Z%20M425.9%20130%20V120.6%20H435.3%20V130%20Z%20M430.6%2051.4%20L441.4%2089.1%20L419.8%2089.1%20Z%20M430.6%2068.7%20L445.7%20104.9%20L415.5%20104.9%20Z%20M430.6%2086.0%20L450.0%20120.6%20L411.1%20120.6%20Z%20M465.1%20130%20V122.1%20H473.0%20V130%20Z%20M469.0%2064.2%20L478.1%2095.8%20L460.0%2095.8%20Z%20M469.0%2078.7%20L481.7%20108.9%20L456.4%20108.9%20Z%20M469.0%2093.2%20L485.3%20122.1%20L452.7%20122.1%20Z%20M501.0%20130%20V121.9%20H509.1%20V130%20Z%20M505.0%2062.2%20L514.4%2094.8%20L495.7%2094.8%20Z%20M505.0%2077.1%20L518.1%20108.3%20L492.0%20108.3%20Z%20M505.0%2092.0%20L521.8%20121.9%20L488.3%20121.9%20Z%20M538.6%20130%20V119.8%20H548.9%20V130%20Z%20M543.7%2044.8%20L555.5%2085.7%20L532.0%2085.7%20Z%20M543.7%2063.6%20L560.1%20102.8%20L527.4%20102.8%20Z%20M543.7%2082.3%20L564.8%20119.8%20L522.7%20119.8%20Z%20M562.4%20130%20V123.3%20H569.0%20V130%20Z%20M565.7%2074.6%20L573.3%20101.2%20L558.1%20101.2%20Z%20M565.7%2086.8%20L576.4%20112.3%20L555.0%20112.3%20Z%20M565.7%2099.0%20L579.4%20123.3%20L552.0%20123.3%20Z%20M584.7%20130%20V119.4%20H595.4%20V130%20Z%20M590.0%2041.4%20L602.2%2083.9%20L577.8%2083.9%20Z%20M590.0%2060.9%20L607.1%20101.6%20L573.0%20101.6%20Z%20M590.0%2080.4%20L612.0%20119.4%20L568.1%20119.4%20Z%20M614.3%20130%20V121.0%20H623.3%20V130%20Z%20M618.8%2054.9%20L629.1%2091.0%20L608.4%2091.0%20Z%20M618.8%2071.4%20L633.2%20106.0%20L604.3%20106.0%20Z%20M618.8%2088.0%20L637.3%20121.0%20L600.2%20121.0%20Z%20M640.6%20130%20V121.6%20H649.0%20V130%20Z%20M644.8%2059.7%20L654.4%2093.4%20L635.1%2093.4%20Z%20M644.8%2075.2%20L658.3%20107.5%20L631.2%20107.5%20Z%20M644.8%2090.6%20L662.2%20121.6%20L627.4%20121.6%20Z%20M668.7%20130%20V122.3%20H676.3%20V130%20Z%20M672.5%2066.0%20L681.3%2096.7%20L663.7%2096.7%20Z%20M672.5%2080.1%20L684.8%20109.5%20L660.2%20109.5%20Z%20M672.5%2094.1%20L688.3%20122.3%20L656.6%20122.3%20Z%20M699.8%20130%20V121.2%20H708.6%20V130%20Z%20M704.2%2056.6%20L714.3%2091.8%20L694.1%2091.8%20Z%20M704.2%2072.8%20L718.3%20106.5%20L690.1%20106.5%20Z%20M704.2%2088.9%20L722.4%20121.2%20L686.0%20121.2%20Z%20M737.6%20130%20V120.7%20H746.9%20V130%20Z%20M742.3%2052.7%20L752.9%2089.8%20L731.7%2089.8%20Z%20M742.3%2069.7%20L757.2%20105.3%20L727.4%20105.3%20Z%20M742.3%2086.7%20L761.4%20120.7%20L723.2%20120.7%20Z%20M775.8%20130%20V119.9%20H785.9%20V130%20Z%20M780.9%2045.7%20L792.4%2086.2%20L769.3%2086.2%20Z%20M780.9%2064.3%20L797.1%20103.0%20L764.6%20103.0%20Z%20M780.9%2082.8%20L801.7%20119.9%20L760.0%20119.9%20Z%20M816.1%20130%20V120.8%20H825.3%20V130%20Z%20M820.7%2053.1%20L831.2%2090.0%20L810.1%2090.0%20Z%20M820.7%2070.1%20L835.5%20105.4%20L805.9%20105.4%20Z%20M820.7%2087.0%20L839.7%20120.8%20L801.7%20120.8%20Z%20M838.9%20130%20V119.9%20H849.0%20V130%20Z%20M843.9%2045.6%20L855.6%2086.1%20L832.3%2086.1%20Z%20M843.9%2064.1%20L860.2%20103.0%20L827.7%20103.0%20Z%20M843.9%2082.7%20L864.8%20119.9%20L823.0%20119.9%20Z%20M878.1%20130%20V119.7%20H888.4%20V130%20Z%20M883.2%2043.8%20L895.1%2085.2%20L871.4%2085.2%20Z%20M883.2%2062.8%20L899.8%20102.4%20L866.6%20102.4%20Z%20M883.2%2081.7%20L904.6%20119.7%20L861.9%20119.7%20Z%20M909.9%20130%20V120.6%20H919.3%20V130%20Z%20M914.6%2051.4%20L925.4%2089.2%20L903.8%2089.2%20Z%20M914.6%2068.7%20L929.7%20104.9%20L899.5%20104.9%20Z%20M914.6%2086.0%20L934.1%20120.6%20L895.2%20120.6%20Z%20M933.8%20130%20V120.0%20H943.8%20V130%20Z%20M938.8%2046.7%20L950.3%2086.7%20L927.4%2086.7%20Z%20M938.8%2065.1%20L954.9%20103.4%20L922.8%20103.4%20Z%20M938.8%2083.4%20L959.4%20120.0%20L918.2%20120.0%20Z%20M966.6%20130%20V122.6%20H974.0%20V130%20Z%20M970.3%2068.6%20L978.8%2098.1%20L961.9%2098.1%20Z%20M970.3%2082.1%20L982.1%20110.4%20L958.5%20110.4%20Z%20M970.3%2095.6%20L985.5%20122.6%20L955.1%20122.6%20Z%20M986.5%20130%20V119.9%20H996.6%20V130%20Z%20M991.6%2045.8%20L1003.2%2086.2%20L980.0%2086.2%20Z%20M991.6%2064.4%20L1007.8%20103.1%20L975.4%20103.1%20Z%20M991.6%2082.9%20L1012.4%20119.9%20L970.8%20119.9%20Z%20M1028.2%20130%20V123.6%20H1034.6%20V130%20Z%20M1031.4%2076.5%20L1038.7%20102.2%20L1024.0%20102.2%20Z%20M1031.4%2088.2%20L1041.7%20112.9%20L1021.1%20112.9%20Z%20M1031.4%20100.0%20L1044.6%20123.6%20L1018.1%20123.6%20Z%20M1063.4%20130%20V122.0%20H1071.4%20V130%20Z%20M1067.4%2063.6%20L1076.5%2095.5%20L1058.3%2095.5%20Z%20M1067.4%2078.2%20L1080.2%20108.7%20L1054.6%20108.7%20Z%20M1067.4%2092.8%20L1083.8%20122.0%20L1050.9%20122.0%20Z%20M1086.7%20130%20V122.6%20H1094.1%20V130%20Z%20M1090.4%2068.2%20L1098.9%2097.9%20L1081.9%2097.9%20Z%20M1090.4%2081.8%20L1102.3%20110.2%20L1078.5%20110.2%20Z%20M1090.4%2095.4%20L1105.7%20122.6%20L1075.1%20122.6%20Z%20M1120.7%20130%20V119.8%20H1130.9%20V130%20Z%20M1125.8%2045.1%20L1137.5%2085.8%20L1114.1%2085.8%20Z%20M1125.8%2063.8%20L1142.1%20102.8%20L1109.4%20102.8%20Z%20M1125.8%2082.5%20L1146.8%20119.8%20L1104.8%20119.8%20Z%20M1142.2%20130%20V121.1%20H1151.1%20V130%20Z%20M1146.7%2055.4%20L1156.9%2091.2%20L1136.4%2091.2%20Z%20M1146.7%2071.8%20L1161.0%20106.1%20L1132.3%20106.1%20Z%20M1146.7%2088.2%20L1165.1%20121.1%20L1128.2%20121.1%20Z%20M1162.8%20130%20V120.6%20H1172.3%20V130%20Z%20M1167.6%2051.3%20L1178.4%2089.1%20L1156.7%2089.1%20Z%20M1167.6%2068.6%20L1182.7%20104.8%20L1152.4%20104.8%20Z%20M1167.6%2085.9%20L1187.0%20120.6%20L1148.1%20120.6%20Z%20M1189.1%20130%20V119.8%20H1199.3%20V130%20Z%20M1194.2%2044.8%20L1205.9%2085.7%20L1182.5%2085.7%20Z%20M1194.2%2063.5%20L1210.6%20102.7%20L1177.8%20102.7%20Z%20M1194.2%2082.3%20L1215.3%20119.8%20L1173.1%20119.8%20Z%20M0%20130%20V120%20H1200%20V130%20Z%27/%3E%3Cpath%20fill%3D%27%23bfdfc4%27%20d%3D%27M-12.7%20130%20V124.6%20H-7.3%20V130%20Z%20M-10.0%2084.8%20L-3.8%20106.5%20L-16.2%20106.5%20Z%20M-10.0%2094.8%20L-1.3%20115.5%20L-18.7%20115.5%20Z%20M-10.0%20104.7%20L1.2%20124.6%20L-21.2%20124.6%20Z%20M39.6%20130%20V125.3%20H44.3%20V130%20Z%20M42.0%2090.7%20L47.4%20109.6%20L36.6%20109.6%20Z%20M42.0%2099.4%20L49.5%20117.4%20L34.4%20117.4%20Z%20M42.0%20108.0%20L51.7%20125.3%20L32.2%20125.3%20Z%20M68.9%20130%20V124.2%20H74.7%20V130%20Z%20M71.8%2082.0%20L78.4%20105.0%20L65.2%20105.0%20Z%20M71.8%2092.6%20L81.1%20114.6%20L62.6%20114.6%20Z%20M71.8%20103.1%20L83.7%20124.2%20L59.9%20124.2%20Z%20M98.4%20130%20V125.7%20H102.7%20V130%20Z%20M100.6%2094.1%20L105.5%20111.3%20L95.6%20111.3%20Z%20M100.6%20102.0%20L107.5%20118.5%20L93.6%20118.5%20Z%20M100.6%20109.9%20L109.5%20125.7%20L91.7%20125.7%20Z%20M135.5%20130%20V124.2%20H141.3%20V130%20Z%20M138.4%2081.7%20L145.0%20104.9%20L131.7%20104.9%20Z%20M138.4%2092.3%20L147.7%20114.5%20L129.1%20114.5%20Z%20M138.4%20102.9%20L150.3%20124.2%20L126.4%20124.2%20Z%20M168.1%20130%20V126.2%20H172.1%20V130%20Z%20M170.1%2098.7%20L174.4%20113.7%20L165.8%20113.7%20Z%20M170.1%20105.6%20L176.1%20120.0%20L164.1%20120.0%20Z%20M170.1%20112.5%20L177.8%20126.2%20L162.4%20126.2%20Z%20M216.6%20130%20V125.3%20H221.3%20V130%20Z%20M218.9%2090.6%20L224.4%20109.5%20L213.5%20109.5%20Z%20M218.9%2099.3%20L226.5%20117.4%20L211.3%20117.4%20Z%20M218.9%20107.9%20L228.7%20125.3%20L209.2%20125.3%20Z%20M266.5%20130%20V123.2%20H273.4%20V130%20Z%20M269.9%2073.1%20L277.8%20100.4%20L262.1%20100.4%20Z%20M269.9%2085.6%20L280.9%20111.8%20L259.0%20111.8%20Z%20M269.9%2098.1%20L284.0%20123.2%20L255.9%20123.2%20Z%20M304.4%20130%20V124.7%20H309.6%20V130%20Z%20M307.0%2086.2%20L313.0%20107.2%20L301.0%20107.2%20Z%20M307.0%2095.8%20L315.4%20116.0%20L298.6%20116.0%20Z%20M307.0%20105.5%20L317.8%20124.7%20L296.2%20124.7%20Z%20M344.5%20130%20V124.1%20H350.4%20V130%20Z%20M347.5%2080.7%20L354.3%20104.4%20L340.7%20104.4%20Z%20M347.5%2091.5%20L357.0%20114.2%20L338.0%20114.2%20Z%20M347.5%20102.4%20L359.7%20124.1%20L335.3%20124.1%20Z%20M387.0%20130%20V124.4%20H392.6%20V130%20Z%20M389.8%2083.2%20L396.2%20105.7%20L383.4%20105.7%20Z%20M389.8%2093.5%20L398.8%20115.0%20L380.8%20115.0%20Z%20M389.8%20103.8%20L401.4%20124.4%20L378.2%20124.4%20Z%20M429.2%20130%20V123.0%20H436.2%20V130%20Z%20M432.7%2071.8%20L440.7%2099.7%20L424.7%2099.7%20Z%20M432.7%2084.6%20L443.9%20111.4%20L421.5%20111.4%20Z%20M432.7%2097.4%20L447.1%20123.0%20L418.3%20123.0%20Z%20M470.3%20130%20V124.8%20H475.4%20V130%20Z%20M472.8%2087.1%20L478.7%20107.7%20L466.9%20107.7%20Z%20M472.8%2096.5%20L481.1%20116.3%20L464.6%20116.3%20Z%20M472.8%20106.0%20L483.5%20124.8%20L462.2%20124.8%20Z%20M515.9%20130%20V125.5%20H520.3%20V130%20Z%20M518.1%2092.9%20L523.2%20110.7%20L513.0%20110.7%20Z%20M518.1%20101.0%20L525.3%20118.1%20L511.0%20118.1%20Z%20M518.1%20109.2%20L527.3%20125.5%20L508.9%20125.5%20Z%20M549.8%20130%20V122.9%20H556.9%20V130%20Z%20M553.3%2070.7%20L561.5%2099.1%20L545.2%2099.1%20Z%20M553.3%2083.7%20L564.8%20111.0%20L541.9%20111.0%20Z%20M553.3%2096.8%20L568.0%20122.9%20L538.7%20122.9%20Z%20M591.1%20130%20V124.4%20H596.6%20V130%20Z%20M593.9%2083.5%20L600.2%20105.8%20L587.5%20105.8%20Z%20M593.9%2093.8%20L602.8%20115.1%20L584.9%20115.1%20Z%20M593.9%20104.0%20L605.4%20124.4%20L582.4%20124.4%20Z%20M619.6%20130%20V124.9%20H624.7%20V130%20Z%20M622.1%2087.5%20L628.0%20107.9%20L616.3%20107.9%20Z%20M622.1%2096.9%20L630.3%20116.4%20L614.0%20116.4%20Z%20M622.1%20106.2%20L632.6%20124.9%20L611.6%20124.9%20Z%20M662.0%20130%20V126.3%20H666.0%20V130%20Z%20M664.0%2099.4%20L668.3%20114.1%20L659.8%20114.1%20Z%20M664.0%20106.1%20L669.9%20120.2%20L658.2%20120.2%20Z%20M664.0%20112.9%20L671.6%20126.3%20L656.5%20126.3%20Z%20M703.9%20130%20V124.1%20H709.8%20V130%20Z%20M706.8%2081.0%20L713.6%20104.5%20L700.1%20104.5%20Z%20M706.8%2091.8%20L716.3%20114.3%20L697.4%20114.3%20Z%20M706.8%20102.6%20L718.9%20124.1%20L694.7%20124.1%20Z%20M733.3%20130%20V124.1%20H739.2%20V130%20Z%20M736.3%2081.2%20L743.0%20104.6%20L729.6%20104.6%20Z%20M736.3%2091.9%20L745.7%20114.4%20L726.9%20114.4%20Z%20M736.3%20102.7%20L748.4%20124.1%20L724.2%20124.1%20Z%20M772.4%20130%20V124.0%20H778.5%20V130%20Z%20M775.5%2079.6%20L782.4%20103.8%20L768.5%20103.8%20Z%20M775.5%2090.7%20L785.2%20113.9%20L765.8%20113.9%20Z%20M775.5%20101.8%20L787.9%20124.0%20L763.0%20124.0%20Z%20M808.8%20130%20V123.9%20H815.0%20V130%20Z%20M811.9%2078.8%20L819.0%20103.4%20L804.9%20103.4%20Z%20M811.9%2090.1%20L821.8%20113.6%20L802.1%20113.6%20Z%20M811.9%20101.3%20L824.6%20123.9%20L799.2%20123.9%20Z%20M855.6%20130%20V126.3%20H859.6%20V130%20Z%20M857.6%2099.3%20L861.9%20114.1%20L853.4%20114.1%20Z%20M857.6%20106.1%20L863.5%20120.2%20L851.7%20120.2%20Z%20M857.6%20112.8%20L865.2%20126.3%20L850.0%20126.3%20Z%20M884.1%20130%20V124.0%20H890.1%20V130%20Z%20M887.1%2079.7%20L894.0%20103.9%20L880.2%20103.9%20Z%20M887.1%2090.8%20L896.8%20113.9%20L877.4%20113.9%20Z%20M887.1%20101.8%20L899.5%20124.0%20L874.6%20124.0%20Z%20M936.0%20130%20V125.5%20H940.5%20V130%20Z%20M938.2%2092.5%20L943.4%20110.5%20L933.0%20110.5%20Z%20M938.2%20100.7%20L945.4%20118.0%20L931.0%20118.0%20Z%20M938.2%20109.0%20L947.5%20125.5%20L928.9%20125.5%20Z%20M974.3%20130%20V124.3%20H980.0%20V130%20Z%20M977.2%2082.2%20L983.7%20105.2%20L970.6%20105.2%20Z%20M977.2%2092.7%20L986.4%20114.7%20L968.0%20114.7%20Z%20M977.2%20103.2%20L989.0%20124.3%20L965.3%20124.3%20Z%20M1010.4%20130%20V125.1%20H1015.3%20V130%20Z%20M1012.8%2089.1%20L1018.5%20108.7%20L1007.2%20108.7%20Z%20M1012.8%2098.1%20L1020.7%20116.9%20L1005.0%20116.9%20Z%20M1012.8%20107.1%20L1023.0%20125.1%20L1002.7%20125.1%20Z%20M1045.9%20130%20V125.1%20H1050.8%20V130%20Z%20M1048.3%2088.9%20L1054.0%20108.6%20L1042.7%20108.6%20Z%20M1048.3%2098.0%20L1056.3%20116.9%20L1040.4%20116.9%20Z%20M1048.3%20107.0%20L1058.5%20125.1%20L1038.2%20125.1%20Z%20M1088.3%20130%20V125.3%20H1093.0%20V130%20Z%20M1090.6%2091.0%20L1096.0%20109.7%20L1085.3%20109.7%20Z%20M1090.6%2099.6%20L1098.1%20117.5%20L1083.1%20117.5%20Z%20M1090.6%20108.2%20L1100.3%20125.3%20L1081.0%20125.3%20Z%20M1124.5%20130%20V123.6%20H1130.9%20V130%20Z%20M1127.7%2076.8%20L1135.0%20102.4%20L1120.4%20102.4%20Z%20M1127.7%2088.5%20L1137.9%20113.0%20L1117.5%20113.0%20Z%20M1127.7%20100.2%20L1140.9%20123.6%20L1114.5%20123.6%20Z%20M1153.5%20130%20V124.4%20H1159.2%20V130%20Z%20M1156.3%2082.9%20L1162.8%20105.5%20L1149.9%20105.5%20Z%20M1156.3%2093.3%20L1165.4%20114.9%20L1147.3%20114.9%20Z%20M1156.3%20103.6%20L1168.0%20124.4%20L1144.7%20124.4%20Z%20M1199.6%20130%20V125.3%20H1204.3%20V130%20Z%20M1202.0%2090.7%20L1207.4%20109.6%20L1196.6%20109.6%20Z%20M1202.0%2099.3%20L1209.5%20117.4%20L1194.4%20117.4%20Z%20M1202.0%20108.0%20L1211.7%20125.3%20L1192.3%20125.3%20Z%20M0%20130%20V126%20H1200%20V130%20Z%27/%3E%3C/svg%3E") bottom center / auto 100% repeat-x;
+    opacity: 0.85;
+  }
+  body { position: relative; }
+  .header { background-image: linear-gradient(90deg, #143a2a, #215c44 55%, #2f7a55); }
+  .hero .forest { height: 110px !important; }
+  .hero { padding-bottom: 96px !important; background: linear-gradient(165deg, #164d37 0%, #237451 40%, #3f9a63 75%, #7cc38a 100%) !important; }
+  .rays {
+    position: absolute; inset: -20% -10% auto auto; width: 70%; height: 140%; pointer-events: none;
+    background: repeating-linear-gradient(115deg, rgba(255,250,200,0.10) 0 26px, transparent 26px 70px);
+    -webkit-mask-image: radial-gradient(ellipse at 85% 0%, #000 0%, transparent 65%); mask-image: radial-gradient(ellipse at 85% 0%, #000 0%, transparent 65%);
+  }
+  .leaves { position: absolute; inset: 0; pointer-events: none; overflow: hidden; }
+  .leaves i { position: absolute; top: -30px; font-style: normal; font-size: 18px; opacity: 0.6; animation: leafFall 14s linear infinite; }
+  .leaves i:nth-child(1) { left: 12%; animation-delay: 0s; }
+  .leaves i:nth-child(2) { left: 34%; animation-delay: -5s; font-size: 14px; animation-duration: 17s; }
+  .leaves i:nth-child(3) { left: 55%; animation-delay: -9s; font-size: 16px; }
+  .leaves i:nth-child(4) { left: 72%; animation-delay: -2s; font-size: 13px; animation-duration: 19s; }
+  .leaves i:nth-child(5) { left: 88%; animation-delay: -11s; font-size: 15px; animation-duration: 21s; }
+  .leaves i:nth-child(6) { left: 46%; animation-delay: -15s; font-size: 12px; animation-duration: 16s; }
+  @keyframes leafFall {
+    0% { transform: translate(0, 0) rotate(0deg); opacity: 0; }
+    10% { opacity: 0.6; }
+    50% { transform: translate(40px, 200px) rotate(160deg); }
+    90% { opacity: 0.7; }
+    100% { transform: translate(-20px, 420px) rotate(320deg); opacity: 0; }
+  }
+  @media (prefers-reduced-motion: reduce) { .leaves { display: none; } }
+  .card { border: 1px solid #dcebdf; position: relative; }
+  .card::before {
+    content: ''; position: absolute; left: 20px; right: 20px; top: 0; height: 3px; border-radius: 0 0 3px 3px;
+    background: linear-gradient(90deg, #8fd27a, #3fa45f 50%, #c9a46a);
+    opacity: 0.7;
+  }
+  .ehime-card .forest { position: absolute; left: 0; right: 0; bottom: 0; width: 100%; height: 90px; pointer-events: none; }
+  .ehime-card { padding-bottom: 60px; background: linear-gradient(160deg, #0f3626 0%, #1b5e41 55%, #2f8a5c 100%) !important; }
+  .ehime-flex { position: relative; z-index: 1; }
+  .chip { border: 1px solid rgba(255,255,255,0.14); }
+  .rec-btn::before { content: '🌱 '; }
+  .hero-label::before { content: var(--m-icon, '🌲') ' '; }
+  .season-badge {
+    position: absolute; top: 14px; right: 16px; z-index: 2; font-size: 12px; font-weight: 800; color: #fff;
+    background: rgba(255,255,255,0.16); border: 1px solid rgba(255,255,255,0.25); border-radius: 999px; padding: 4px 12px;
+  }
+
+  /* ===== 月ごとの森（JSが body に変数とアニメの種類をセット） ===== */
+  body.themed { --bg: var(--m-bg); }
+  body.themed .hero { background: var(--m-hero) !important; }
+  body.themed .rays { background: repeating-linear-gradient(115deg, var(--m-rays) 0 26px, transparent 26px 70px); }
+  body.themed .hero .forest path:nth-child(1) { fill: var(--m-t1); }
+  body.themed .hero .forest path:nth-child(2) { fill: var(--m-t2); }
+  body.themed .hero .forest path:nth-child(3) { fill: var(--m-t3); }
+  body.themed::before { filter: var(--m-pf); }
+  body.themed .card::before { background: var(--m-line); }
+  body.themed .ehime-card { background: var(--m-ehime) !important; }
+
+  /* 落ちてくるものの動き方 */
+  body.anim-sway .leaves i { animation-name: leafSway; }
+  body.anim-snow .leaves i { animation-name: snowFall; opacity: 0.85; }
+  body.anim-petal .leaves i { animation-name: petalFloat; }
+  body.anim-rain .leaves i { animation-name: rainFall; animation-timing-function: linear; }
+  body.anim-firefly .leaves i { animation-name: fireflyFloat; top: auto; bottom: 40px; filter: drop-shadow(0 0 6px #fef08a); }
+  @keyframes leafSway {
+    0% { transform: translate(0, 0) rotate(0deg); opacity: 0; }
+    10% { opacity: 0.75; }
+    25% { transform: translate(50px, 100px) rotate(90deg); }
+    50% { transform: translate(-30px, 210px) rotate(200deg); }
+    75% { transform: translate(40px, 320px) rotate(290deg); }
+    100% { transform: translate(-10px, 430px) rotate(380deg); opacity: 0; }
+  }
+  @keyframes snowFall {
+    0% { transform: translate(0, 0); opacity: 0; }
+    10% { opacity: 0.9; }
+    50% { transform: translate(12px, 210px); }
+    100% { transform: translate(-8px, 430px); opacity: 0; }
+  }
+  @keyframes petalFloat {
+    0% { transform: translate(0, 0) rotate(0deg) scale(0.9); opacity: 0; }
+    10% { opacity: 0.85; }
+    50% { transform: translate(70px, 190px) rotate(120deg) scale(1.05); }
+    100% { transform: translate(140px, 420px) rotate(260deg) scale(0.9); opacity: 0; }
+  }
+  @keyframes rainFall {
+    0% { transform: translate(0, 0); opacity: 0; }
+    8% { opacity: 0.7; }
+    100% { transform: translate(-30px, 440px); opacity: 0.2; }
+  }
+  @keyframes fireflyFloat {
+    0% { transform: translate(0, 0); opacity: 0; }
+    20% { opacity: 0.9; }
+    40% { transform: translate(25px, -70px); opacity: 0.3; }
+    60% { transform: translate(-15px, -140px); opacity: 0.95; }
+    80% { transform: translate(20px, -200px); opacity: 0.4; }
+    100% { transform: translate(0, -260px); opacity: 0; }
+  }
+  .main { padding-bottom: 170px; }
+  @media (max-width: 600px) {
+    .hero .forest { height: 80px !important; }
+    .hero { padding-bottom: 70px !important; }
+    body::before { height: 120px; }
+  }
 </style>
 </head>
 <body>
 
 <div class="header">
-  <h1 style="display:flex;align-items:center;gap:9px;">
-    <svg width="56" height="56" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="ランニング" style="flex:none;filter:drop-shadow(0 2px 5px rgba(0,0,0,0.22));">
-      <defs>
-        <linearGradient id="rgBg" x1="0" y1="0" x2="0" y2="1">
-          <stop offset="0" stop-color="#ffb199"/>
-          <stop offset="1" stop-color="#ff6b8b"/>
-        </linearGradient>
-      </defs>
+  <h1>
+    <svg width="38" height="38" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="ランニング" style="flex:none;">
       <circle cx="50" cy="50" r="48" fill="#ffffff"/>
       <g stroke="#ff9aae" stroke-width="3.4" stroke-linecap="round" opacity="0.95">
-        <line x1="9" y1="45" x2="22" y2="45"/>
-        <line x1="7" y1="55" x2="24" y2="55"/>
-        <line x1="11" y1="65" x2="21" y2="65"/>
+        <line x1="9" y1="45" x2="22" y2="45"/><line x1="7" y1="55" x2="24" y2="55"/><line x1="11" y1="65" x2="21" y2="65"/>
       </g>
       <rect x="26" y="62" width="56" height="10" rx="5" fill="#5eead4"/>
       <path d="M34 62 L34 47 Q34 40 41 40 L51 40 Q56 40 58 44 L66 58 Q68 62 73 62 Z" fill="#2ec4b6"/>
-      <g stroke="#ffffff" stroke-width="2.4" stroke-linecap="round">
-        <line x1="54" y1="46" x2="60" y2="50"/>
-        <line x1="57" y1="50" x2="63" y2="54"/>
-      </g>
-      <circle cx="40" cy="50" r="2.5" fill="#22343a"/>
-      <circle cx="47" cy="50" r="2.5" fill="#22343a"/>
+      <g stroke="#ffffff" stroke-width="2.4" stroke-linecap="round"><line x1="54" y1="46" x2="60" y2="50"/><line x1="57" y1="50" x2="63" y2="54"/></g>
+      <circle cx="40" cy="50" r="2.5" fill="#22343a"/><circle cx="47" cy="50" r="2.5" fill="#22343a"/>
       <path d="M39 55 Q43.5 59 48 55" stroke="#22343a" stroke-width="2" fill="none" stroke-linecap="round"/>
-      <circle cx="36.5" cy="54" r="2" fill="#ff8fa3"/>
-      <circle cx="50.5" cy="54" r="2" fill="#ff8fa3"/>
+      <circle cx="36.5" cy="54" r="2" fill="#ff8fa3"/><circle cx="50.5" cy="54" r="2" fill="#ff8fa3"/>
     </svg>
     ランニング記録
   </h1>
-  <div class="header-btns">
-    <button class="btn btn-outline" onclick="exportData()">⬇ 書き出し</button>
-    <label class="btn btn-outline" style="cursor:pointer;">⬆ 読み込み<input type="file" accept=".json" onchange="importData(event)" style="display:none"></label>
-    <button class="btn btn-gold" onclick="saveAll()">💾 保存</button>
-    <button class="btn" style="background:#3a8a4a;color:#fff;" onclick="cloudUpload()">☁️↑ クラウド保存</button>
-    <button class="btn" style="background:#2f6fb0;color:#fff;" onclick="cloudDownload()">☁️↓ クラウド読込</button>
-    <button class="btn btn-outline" onclick="openHist()">🕘 履歴</button>
+  <div class="header-right">
+    <span class="sync-st" id="syncSt"></span>
+    <button class="menu-btn" onclick="toggleMenu(event)">☰ メニュー</button>
+    <div class="menu" id="menu" onclick="event.stopPropagation()">
+      <button onclick="closeMenu();saveAll()">💾 保存＋クラウド保存</button>
+      <button onclick="closeMenu();cloudDownload()">☁️↓ クラウドから読み込む</button>
+      <button onclick="closeMenu();openHist()">🕘 保存履歴（元に戻す）</button>
+      <hr>
+      <button onclick="closeMenu();exportData()">⬇ ファイルに書き出し</button>
+      <label>⬆ ファイルから読み込み<input type="file" accept=".json" onchange="closeMenu();importData(event)" style="display:none"></label>
+    </div>
   </div>
 </div>
 
 <!-- 履歴（バックアップ）モーダル -->
 <div id="histModal" onclick="if(event.target===this)closeHist()">
   <div class="box">
-    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;padding-bottom:8px;border-bottom:2px solid #ff6b8b;">
-      <div style="font-size:15px;font-weight:700;color:#1a3a6e;">🕘 保存履歴（バックアップ）</div>
-      <button class="btn" style="background:#fee2e2;color:#b91c1c;" onclick="closeHist()">✕ 閉じる</button>
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;padding-bottom:8px;border-bottom:2px solid var(--coral);">
+      <div style="font-size:15px;font-weight:800;color:var(--navy);">🕘 保存履歴（バックアップ）</div>
+      <button class="small-btn" style="background:#fee2e2;color:#b91c1c;" onclick="closeHist()">✕ 閉じる</button>
     </div>
     <div style="font-size:11.5px;color:#888;margin-bottom:10px;">記録のたびに自動で履歴が残ります（最大15世代）。間違って消したときはここから復元できます。</div>
     <div id="histBody"></div>
   </div>
 </div>
 
+<!-- グラデーション定義（目標リング用） -->
+<svg width="0" height="0" style="position:absolute">
+  <defs><linearGradient id="ringGrad" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#fff59d"/><stop offset="1" stop-color="#bef264"/></linearGradient></defs>
+</svg>
+
 <div class="main">
-  <!-- Summary -->
-  <div class="summary">
-    <div class="sum-card">
-      <div class="sum-label">累計距離</div>
-      <div class="sum-value" id="s-dist">0</div>
-      <div class="sum-unit">km</div>
+
+  <!-- ===== 今月（ヒーロー） ===== -->
+  <div class="hero">
+    <svg class="forest" viewBox="0 0 1200 130" preserveAspectRatio="xMidYMax slice" aria-hidden="true">
+      <path fill="rgba(255,255,255,0.10)" d="M-13.0 130 V124.0 H-7.0 V130 Z M-10.0 80.3 L-3.2 104.1 L-16.8 104.1 Z M-10.0 91.2 L-0.4 114.1 L-19.6 114.1 Z M-10.0 102.2 L2.3 124.0 L-22.3 124.0 Z M6.8 130 V122.9 H14.0 V130 Z M10.4 70.5 L18.6 99.0 L2.2 99.0 Z M10.4 83.6 L21.9 111.0 L-1.0 111.0 Z M10.4 96.7 L25.1 122.9 L-4.3 122.9 Z M26.2 130 V123.3 H32.9 V130 Z M29.6 73.9 L37.3 100.8 L21.9 100.8 Z M29.6 86.3 L40.4 112.1 L18.8 112.1 Z M29.6 98.6 L43.5 123.3 L15.7 123.3 Z M50.9 130 V125.0 H55.9 V130 Z M53.4 88.3 L59.2 108.3 L47.7 108.3 Z M53.4 97.4 L61.5 116.6 L45.4 116.6 Z M53.4 106.6 L63.8 125.0 L43.1 125.0 Z M77.1 130 V125.1 H82.0 V130 Z M79.5 88.9 L85.2 108.6 L73.9 108.6 Z M79.5 97.9 L87.5 116.8 L71.6 116.8 Z M79.5 107.0 L89.7 125.1 L69.4 125.1 Z M102.0 130 V124.9 H107.0 V130 Z M104.5 87.9 L110.3 108.1 L98.7 108.1 Z M104.5 97.2 L112.6 116.5 L96.4 116.5 Z M104.5 106.4 L114.9 124.9 L94.1 124.9 Z M120.8 130 V123.7 H127.1 V130 Z M123.9 77.3 L131.2 102.6 L116.7 102.6 Z M123.9 88.9 L134.1 113.1 L113.8 113.1 Z M123.9 100.5 L137.0 123.7 L110.9 123.7 Z M152.5 130 V124.8 H157.8 V130 Z M155.2 86.3 L161.2 107.3 L149.2 107.3 Z M155.2 95.9 L163.6 116.0 L146.7 116.0 Z M155.2 105.5 L166.0 124.8 L144.3 124.8 Z M173.2 130 V122.9 H180.3 V130 Z M176.7 71.2 L184.8 99.4 L168.6 99.4 Z M176.7 84.1 L188.1 111.2 L165.4 111.2 Z M176.7 97.1 L191.3 122.9 L162.2 122.9 Z M206.5 130 V123.1 H213.3 V130 Z M209.9 72.7 L217.8 100.2 L202.0 100.2 Z M209.9 85.3 L220.9 111.7 L198.9 111.7 Z M209.9 97.9 L224.1 123.1 L195.7 123.1 Z M230.1 130 V121.7 H238.4 V130 Z M234.2 60.7 L243.8 94.0 L224.7 94.0 Z M234.2 76.0 L247.6 107.8 L220.9 107.8 Z M234.2 91.2 L251.4 121.7 L217.1 121.7 Z M249.0 130 V122.1 H256.9 V130 Z M253.0 64.2 L262.0 95.8 L243.9 95.8 Z M253.0 78.7 L265.6 109.0 L240.3 109.0 Z M253.0 93.2 L269.3 122.1 L236.7 122.1 Z M273.0 130 V124.7 H278.3 V130 Z M275.6 85.7 L281.7 106.9 L269.5 106.9 Z M275.6 95.4 L284.2 115.8 L267.1 115.8 Z M275.6 105.2 L286.6 124.7 L264.7 124.7 Z M292.6 130 V124.1 H298.5 V130 Z M295.5 80.7 L302.3 104.4 L288.7 104.4 Z M295.5 91.6 L305.0 114.2 L286.0 114.2 Z M295.5 102.4 L307.7 124.1 L283.3 124.1 Z M323.8 130 V124.5 H329.3 V130 Z M326.6 84.6 L332.8 106.4 L320.3 106.4 Z M326.6 94.6 L335.3 115.5 L317.8 115.5 Z M326.6 104.6 L337.8 124.5 L315.3 124.5 Z M350.3 130 V122.9 H357.4 V130 Z M353.9 70.8 L362.0 99.2 L345.7 99.2 Z M353.9 83.8 L365.3 111.1 L342.5 111.1 Z M353.9 96.9 L368.5 122.9 L339.2 122.9 Z M374.4 130 V123.2 H381.2 V130 Z M377.8 73.6 L385.6 100.7 L370.1 100.7 Z M377.8 86.0 L388.7 111.9 L367.0 111.9 Z M377.8 98.4 L391.8 123.2 L363.9 123.2 Z M394.3 130 V125.0 H399.3 V130 Z M396.8 88.2 L402.6 108.3 L391.1 108.3 Z M396.8 97.4 L404.9 116.6 L388.8 116.6 Z M396.8 106.6 L407.2 125.0 L386.5 125.0 Z M414.5 130 V122.8 H421.8 V130 Z M418.1 69.6 L426.4 98.6 L409.8 98.6 Z M418.1 82.9 L429.8 110.7 L406.5 110.7 Z M418.1 96.2 L433.1 122.8 L403.2 122.8 Z M440.0 130 V124.1 H445.9 V130 Z M443.0 80.6 L449.8 104.3 L436.2 104.3 Z M443.0 91.4 L452.5 114.2 L433.5 114.2 Z M443.0 102.3 L455.2 124.1 L430.7 124.1 Z M467.1 130 V123.6 H473.6 V130 Z M470.3 76.4 L477.7 102.1 L463.0 102.1 Z M470.3 88.2 L480.7 112.8 L460.0 112.8 Z M470.3 100.0 L483.6 123.6 L457.1 123.6 Z M489.3 130 V122.3 H497.0 V130 Z M493.1 66.2 L501.9 96.8 L484.4 96.8 Z M493.1 80.2 L505.4 109.6 L480.8 109.6 Z M493.1 94.3 L508.9 122.3 L477.3 122.3 Z M519.5 130 V124.3 H525.2 V130 Z M522.3 82.7 L528.8 105.4 L515.8 105.4 Z M522.3 93.1 L531.4 114.9 L513.2 114.9 Z M522.3 103.5 L534.0 124.3 L510.6 124.3 Z M546.2 130 V123.3 H552.9 V130 Z M549.5 74.2 L557.2 101.0 L541.8 101.0 Z M549.5 86.5 L560.2 112.2 L538.8 112.2 Z M549.5 98.8 L563.3 123.3 L535.7 123.3 Z M577.8 130 V122.6 H585.2 V130 Z M581.5 68.1 L590.0 97.8 L573.0 97.8 Z M581.5 81.7 L593.4 110.2 L569.6 110.2 Z M581.5 95.3 L596.8 122.6 L566.2 122.6 Z M600.0 130 V121.7 H608.3 V130 Z M604.1 60.6 L613.7 93.9 L594.6 93.9 Z M604.1 75.9 L617.5 107.8 L590.8 107.8 Z M604.1 91.1 L621.3 121.7 L586.9 121.7 Z M620.9 130 V123.7 H627.2 V130 Z M624.0 77.5 L631.2 102.7 L616.8 102.7 Z M624.0 89.0 L634.1 113.2 L613.9 113.2 Z M624.0 100.6 L637.0 123.7 L611.0 123.7 Z M651.5 130 V124.7 H656.8 V130 Z M654.1 85.4 L660.3 106.8 L648.0 106.8 Z M654.1 95.2 L662.7 115.7 L645.5 115.7 Z M654.1 105.0 L665.2 124.7 L643.1 124.7 Z M677.5 130 V125.1 H682.4 V130 Z M679.9 88.8 L685.6 108.6 L674.3 108.6 Z M679.9 97.9 L687.9 116.8 L672.0 116.8 Z M679.9 106.9 L690.1 125.1 L669.8 125.1 Z M704.9 130 V122.4 H712.4 V130 Z M708.6 67.1 L717.3 97.3 L700.0 97.3 Z M708.6 80.9 L720.8 109.9 L696.5 109.9 Z M708.6 94.8 L724.2 122.4 L693.1 122.4 Z M731.8 130 V122.0 H739.8 V130 Z M735.8 63.7 L744.9 95.5 L726.7 95.5 Z M735.8 78.3 L748.6 108.8 L723.1 108.8 Z M735.8 92.9 L752.2 122.0 L719.4 122.0 Z M755.2 130 V122.7 H762.5 V130 Z M758.8 69.1 L767.2 98.4 L750.5 98.4 Z M758.8 82.5 L770.5 110.5 L747.1 110.5 Z M758.8 95.9 L773.9 122.7 L743.8 122.7 Z M782.9 130 V123.1 H789.8 V130 Z M786.3 72.6 L794.2 100.2 L778.4 100.2 Z M786.3 85.2 L797.4 111.6 L775.3 111.6 Z M786.3 97.9 L800.5 123.1 L772.1 123.1 Z M807.7 130 V122.2 H815.5 V130 Z M811.6 64.8 L820.6 96.1 L802.7 96.1 Z M811.6 79.1 L824.2 109.1 L799.1 109.1 Z M811.6 93.5 L827.8 122.2 L795.5 122.2 Z M841.5 130 V123.5 H848.0 V130 Z M844.8 75.8 L852.2 101.8 L837.3 101.8 Z M844.8 87.7 L855.2 112.6 L834.3 112.6 Z M844.8 99.6 L858.2 123.5 L831.3 123.5 Z M870.9 130 V125.0 H875.9 V130 Z M873.4 88.2 L879.1 108.3 L867.6 108.3 Z M873.4 97.4 L881.4 116.6 L865.3 116.6 Z M873.4 106.6 L883.7 125.0 L863.0 125.0 Z M899.0 130 V122.9 H906.2 V130 Z M902.6 70.6 L910.8 99.1 L894.4 99.1 Z M902.6 83.7 L914.0 111.0 L891.2 111.0 Z M902.6 96.7 L917.3 122.9 L887.9 122.9 Z M932.6 130 V122.2 H940.4 V130 Z M936.5 65.3 L945.4 96.4 L927.6 96.4 Z M936.5 79.6 L948.9 109.3 L924.0 109.3 Z M936.5 93.8 L952.5 122.2 L920.5 122.2 Z M955.9 130 V123.8 H962.1 V130 Z M959.0 78.4 L966.1 103.2 L952.0 103.2 Z M959.0 89.8 L969.0 113.5 L949.1 113.5 Z M959.0 101.1 L971.8 123.8 L946.3 123.8 Z M985.3 130 V125.1 H990.2 V130 Z M987.7 89.3 L993.3 108.8 L982.1 108.8 Z M987.7 98.3 L995.6 117.0 L979.9 117.0 Z M987.7 107.2 L997.8 125.1 L977.7 125.1 Z M1010.4 130 V124.6 H1015.8 V130 Z M1013.1 85.0 L1019.3 106.6 L1006.9 106.6 Z M1013.1 94.9 L1021.8 115.6 L1004.5 115.6 Z M1013.1 104.8 L1024.3 124.6 L1002.0 124.6 Z M1030.5 130 V125.0 H1035.5 V130 Z M1033.0 88.2 L1038.7 108.3 L1027.3 108.3 Z M1033.0 97.4 L1041.0 116.6 L1025.0 116.6 Z M1033.0 106.6 L1043.3 125.0 L1022.7 125.0 Z M1060.7 130 V124.7 H1065.9 V130 Z M1063.3 86.1 L1069.3 107.2 L1057.3 107.2 Z M1063.3 95.8 L1071.7 116.0 L1054.8 116.0 Z M1063.3 105.4 L1074.2 124.7 L1052.4 124.7 Z M1082.2 130 V123.8 H1088.4 V130 Z M1085.3 78.3 L1092.4 103.1 L1078.1 103.1 Z M1085.3 89.7 L1095.2 113.4 L1075.3 113.4 Z M1085.3 101.0 L1098.1 123.8 L1072.5 123.8 Z M1114.7 130 V124.9 H1119.7 V130 Z M1117.2 87.6 L1123.0 107.9 L1111.4 107.9 Z M1117.2 96.9 L1125.4 116.4 L1109.0 116.4 Z M1117.2 106.2 L1127.7 124.9 L1106.7 124.9 Z M1139.0 130 V123.2 H1145.8 V130 Z M1142.4 73.5 L1150.2 100.6 L1134.6 100.6 Z M1142.4 85.9 L1153.3 111.9 L1131.5 111.9 Z M1142.4 98.4 L1156.4 123.2 L1128.4 123.2 Z M1170.6 130 V122.3 H1178.4 V130 Z M1174.5 65.4 L1183.4 96.4 L1165.6 96.4 Z M1174.5 79.6 L1187.0 109.3 L1162.1 109.3 Z M1174.5 93.8 L1190.5 122.3 L1158.5 122.3 Z M1203.4 130 V124.2 H1209.2 V130 Z M1206.3 81.6 L1213.0 104.9 L1199.7 104.9 Z M1206.3 92.3 L1215.7 114.5 L1197.0 114.5 Z M1206.3 102.9 L1218.3 124.2 L1194.4 124.2 Z M0 130 V118 H1200 V130 Z"/>
+      <path fill="rgba(16,64,42,0.38)" d="M-12.4 130 V125.2 H-7.6 V130 Z M-10.0 90.0 L-4.5 109.2 L-15.5 109.2 Z M-10.0 98.8 L-2.3 117.2 L-17.7 117.2 Z M-10.0 107.6 L-0.1 125.2 L-19.9 125.2 Z M28.3 130 V123.2 H35.1 V130 Z M31.7 73.2 L39.5 100.5 L23.9 100.5 Z M31.7 85.7 L42.6 111.8 L20.7 111.8 Z M31.7 98.2 L45.7 123.2 L17.6 123.2 Z M56.6 130 V125.8 H60.8 V130 Z M58.7 95.1 L63.5 111.8 L53.9 111.8 Z M58.7 102.8 L65.4 118.8 L52.0 118.8 Z M58.7 110.4 L67.3 125.8 L50.1 125.8 Z M85.1 130 V125.6 H89.5 V130 Z M87.3 93.5 L92.4 111.0 L82.3 111.0 Z M87.3 101.5 L94.4 118.3 L80.3 118.3 Z M87.3 109.5 L96.4 125.6 L78.3 125.6 Z M118.3 130 V124.4 H123.8 V130 Z M121.0 83.5 L127.4 105.8 L114.6 105.8 Z M121.0 93.7 L130.0 115.1 L112.1 115.1 Z M121.0 104.0 L132.5 124.4 L109.5 124.4 Z M148.3 130 V126.4 H152.3 V130 Z M150.3 99.9 L154.4 114.3 L146.2 114.3 Z M150.3 106.5 L156.1 120.4 L144.5 120.4 Z M150.3 113.1 L157.7 126.4 L142.8 126.4 Z M180.3 130 V125.2 H185.1 V130 Z M182.7 89.7 L188.2 109.0 L177.1 109.0 Z M182.7 98.5 L190.4 117.1 L174.9 117.1 Z M182.7 107.4 L192.7 125.2 L172.7 125.2 Z M214.6 130 V123.2 H221.4 V130 Z M218.0 73.3 L225.8 100.5 L210.2 100.5 Z M218.0 85.8 L228.9 111.9 L207.1 111.9 Z M218.0 98.3 L232.0 123.2 L204.0 123.2 Z M253.1 130 V124.7 H258.5 V130 Z M255.8 85.6 L261.9 106.9 L249.7 106.9 Z M255.8 95.3 L264.4 115.8 L247.3 115.8 Z M255.8 105.1 L266.8 124.7 L244.8 124.7 Z M289.2 130 V124.1 H295.1 V130 Z M292.2 81.1 L298.9 104.6 L285.4 104.6 Z M292.2 91.8 L301.6 114.3 L282.7 114.3 Z M292.2 102.6 L304.3 124.1 L280.1 124.1 Z M313.9 130 V123.4 H320.6 V130 Z M317.2 74.8 L324.8 101.3 L309.7 101.3 Z M317.2 87.0 L327.9 112.3 L306.6 112.3 Z M317.2 99.1 L330.9 123.4 L303.6 123.4 Z M353.6 130 V123.5 H360.1 V130 Z M356.8 75.5 L364.3 101.7 L349.4 101.7 Z M356.8 87.5 L367.3 112.6 L346.4 112.6 Z M356.8 99.5 L370.3 123.5 L343.4 123.5 Z M394.3 130 V125.1 H399.3 V130 Z M396.8 89.0 L402.4 108.7 L391.2 108.7 Z M396.8 98.0 L404.7 116.9 L388.9 116.9 Z M396.8 107.0 L406.9 125.1 L386.7 125.1 Z M426.8 130 V126.1 H430.8 V130 Z M428.8 97.1 L433.3 112.9 L424.3 112.9 Z M428.8 104.3 L435.1 119.5 L422.4 119.5 Z M428.8 111.6 L436.9 126.1 L420.6 126.1 Z M463.5 130 V126.2 H467.5 V130 Z M465.5 98.3 L469.8 113.5 L461.1 113.5 Z M465.5 105.2 L471.6 119.8 L459.4 119.8 Z M465.5 112.2 L473.3 126.2 L457.6 126.2 Z M488.7 130 V125.7 H493.0 V130 Z M490.8 94.2 L495.7 111.4 L485.9 111.4 Z M490.8 102.0 L497.7 118.5 L483.9 118.5 Z M490.8 109.9 L499.7 125.7 L481.9 125.7 Z M515.7 130 V125.3 H520.4 V130 Z M518.1 90.5 L523.5 109.4 L512.6 109.4 Z M518.1 99.2 L525.7 117.4 L510.5 117.4 Z M518.1 107.9 L527.8 125.3 L508.3 125.3 Z M541.1 130 V126.4 H545.1 V130 Z M543.1 100.0 L547.2 114.4 L539.0 114.4 Z M543.1 106.6 L548.9 120.4 L537.3 120.4 Z M543.1 113.2 L550.5 126.4 L535.7 126.4 Z M568.1 130 V126.1 H572.1 V130 Z M570.1 97.2 L574.7 112.9 L565.6 112.9 Z M570.1 104.4 L576.5 119.5 L563.8 119.5 Z M570.1 111.6 L578.3 126.1 L562.0 126.1 Z M599.4 130 V126.3 H603.4 V130 Z M601.4 99.3 L605.6 114.0 L597.2 114.0 Z M601.4 106.0 L607.3 120.2 L595.5 120.2 Z M601.4 112.8 L609.0 126.3 L593.8 126.3 Z M640.1 130 V124.3 H645.7 V130 Z M642.9 82.8 L649.4 105.5 L636.4 105.5 Z M642.9 93.2 L652.0 114.9 L633.8 114.9 Z M642.9 103.6 L654.6 124.3 L631.2 124.3 Z M667.6 130 V125.6 H672.1 V130 Z M669.9 92.9 L675.0 110.7 L664.8 110.7 Z M669.9 101.1 L677.0 118.1 L662.7 118.1 Z M669.9 109.2 L679.0 125.6 L660.7 125.6 Z M698.4 130 V125.2 H703.2 V130 Z M700.8 89.8 L706.3 109.1 L695.3 109.1 Z M700.8 98.6 L708.6 117.1 L693.1 117.1 Z M700.8 107.5 L710.8 125.2 L690.9 125.2 Z M724.0 130 V123.5 H730.5 V130 Z M727.3 76.2 L734.7 102.0 L719.9 102.0 Z M727.3 88.1 L737.6 112.8 L716.9 112.8 Z M727.3 99.9 L740.6 123.5 L714.0 123.5 Z M768.5 130 V124.8 H773.7 V130 Z M771.1 87.0 L777.1 107.6 L765.2 107.6 Z M771.1 96.4 L779.4 116.2 L762.8 116.2 Z M771.1 105.9 L781.8 124.8 L760.5 124.8 Z M802.8 130 V126.1 H806.8 V130 Z M804.8 97.6 L809.3 113.1 L800.4 113.1 Z M804.8 104.7 L811.0 119.6 L798.6 119.6 Z M804.8 111.9 L812.8 126.1 L796.8 126.1 Z M828.5 130 V125.2 H833.2 V130 Z M830.9 90.4 L836.3 109.4 L825.4 109.4 Z M830.9 99.1 L838.5 117.3 L823.2 117.3 Z M830.9 107.8 L840.7 125.2 L821.1 125.2 Z M857.0 130 V123.6 H863.3 V130 Z M860.1 76.8 L867.5 102.3 L852.8 102.3 Z M860.1 88.5 L870.4 113.0 L849.9 113.0 Z M860.1 100.2 L873.3 123.6 L847.0 123.6 Z M885.4 130 V126.3 H889.4 V130 Z M887.4 99.4 L891.6 114.1 L883.2 114.1 Z M887.4 106.1 L893.3 120.2 L881.5 120.2 Z M887.4 112.8 L895.0 126.3 L879.8 126.3 Z M927.7 130 V124.6 H933.1 V130 Z M930.4 85.2 L936.6 106.7 L924.2 106.7 Z M930.4 95.1 L939.0 115.7 L921.8 115.7 Z M930.4 104.9 L941.5 124.6 L919.3 124.6 Z M954.6 130 V124.6 H960.0 V130 Z M957.3 84.8 L963.5 106.5 L951.1 106.5 Z M957.3 94.7 L966.0 115.5 L948.6 115.5 Z M957.3 104.7 L968.5 124.6 L946.1 124.6 Z M979.2 130 V124.6 H984.6 V130 Z M981.9 85.2 L988.0 106.7 L975.7 106.7 Z M981.9 95.1 L990.5 115.7 L973.2 115.7 Z M981.9 104.9 L993.0 124.6 L970.8 124.6 Z M1022.2 130 V123.5 H1028.7 V130 Z M1025.4 75.8 L1032.9 101.8 L1018.0 101.8 Z M1025.4 87.7 L1035.9 112.7 L1015.0 112.7 Z M1025.4 99.7 L1038.8 123.5 L1012.0 123.5 Z M1061.1 130 V125.5 H1065.6 V130 Z M1063.4 92.7 L1068.5 110.6 L1058.2 110.6 Z M1063.4 100.9 L1070.5 118.1 L1056.2 118.1 Z M1063.4 109.1 L1072.6 125.5 L1054.1 125.5 Z M1092.6 130 V125.8 H1096.8 V130 Z M1094.7 95.3 L1099.5 112.0 L1089.9 112.0 Z M1094.7 103.0 L1101.4 118.9 L1088.0 118.9 Z M1094.7 110.6 L1103.3 125.8 L1086.1 125.8 Z M1131.4 130 V124.6 H1136.8 V130 Z M1134.1 85.1 L1140.3 106.6 L1128.0 106.6 Z M1134.1 95.0 L1142.8 115.6 L1125.5 115.6 Z M1134.1 104.8 L1145.3 124.6 L1123.0 124.6 Z M1171.4 130 V125.3 H1176.1 V130 Z M1173.7 90.8 L1179.1 109.6 L1168.3 109.6 Z M1173.7 99.4 L1181.3 117.4 L1166.2 117.4 Z M1173.7 108.0 L1183.4 125.3 L1164.0 125.3 Z M1199.0 130 V123.7 H1205.3 V130 Z M1202.2 77.3 L1209.4 102.6 L1194.9 102.6 Z M1202.2 88.9 L1212.3 113.1 L1192.0 113.1 Z M1202.2 100.5 L1215.2 123.7 L1189.1 123.7 Z M0 130 V124 H1200 V130 Z"/>
+      <path fill="rgba(10,44,29,0.55)" d="M-12.3 130 V125.3 H-7.7 V130 Z M-10.0 91.2 L-4.7 109.8 L-15.3 109.8 Z M-10.0 99.8 L-2.5 117.6 L-17.5 117.6 Z M-10.0 108.3 L-0.4 125.3 L-19.6 125.3 Z M42.3 130 V125.4 H46.9 V130 Z M44.6 92.0 L49.8 110.2 L39.3 110.2 Z M44.6 100.4 L51.9 117.8 L37.3 117.8 Z M44.6 108.7 L54.0 125.4 L35.2 125.4 Z M95.3 130 V127.0 H99.3 V130 Z M97.3 105.0 L100.7 117.0 L93.9 117.0 Z M97.3 110.5 L102.1 122.0 L92.5 122.0 Z M97.3 116.0 L103.5 127.0 L91.1 127.0 Z M141.8 130 V126.7 H145.8 V130 Z M143.8 102.2 L147.6 115.5 L140.0 115.5 Z M143.8 108.3 L149.1 121.1 L138.4 121.1 Z M143.8 114.4 L150.7 126.7 L136.9 126.7 Z M174.6 130 V127.5 H178.6 V130 Z M176.6 109.4 L179.4 119.3 L173.8 119.3 Z M176.6 113.9 L180.6 123.4 L172.6 123.4 Z M176.6 118.5 L181.7 127.5 L171.5 127.5 Z M214.4 130 V126.9 H218.4 V130 Z M216.4 104.3 L219.9 116.6 L212.9 116.6 Z M216.4 110.0 L221.4 121.8 L211.5 121.8 Z M216.4 115.6 L222.8 126.9 L210.1 126.9 Z M265.3 130 V125.1 H270.3 V130 Z M267.8 89.0 L273.4 108.7 L262.2 108.7 Z M267.8 98.0 L275.7 116.9 L259.9 116.9 Z M267.8 107.0 L278.0 125.1 L257.6 125.1 Z M309.9 130 V125.1 H314.8 V130 Z M312.3 89.4 L317.9 108.9 L306.7 108.9 Z M312.3 98.3 L320.1 117.0 L304.5 117.0 Z M312.3 107.3 L322.4 125.1 L302.3 125.1 Z M369.5 130 V125.1 H374.5 V130 Z M372.0 89.0 L377.6 108.7 L366.4 108.7 Z M372.0 98.0 L379.9 116.9 L364.1 116.9 Z M372.0 107.0 L382.1 125.1 L361.8 125.1 Z M412.2 130 V127.0 H416.2 V130 Z M414.2 105.1 L417.6 117.1 L410.8 117.1 Z M414.2 110.6 L419.0 122.0 L409.4 122.0 Z M414.2 116.1 L420.4 127.0 L408.1 127.0 Z M450.6 130 V127.1 H454.6 V130 Z M452.6 105.7 L455.9 117.3 L449.2 117.3 Z M452.6 111.0 L457.2 122.2 L447.9 122.2 Z M452.6 116.4 L458.6 127.1 L446.5 127.1 Z M488.3 130 V126.0 H492.3 V130 Z M490.3 96.3 L494.9 112.5 L485.6 112.5 Z M490.3 103.7 L496.8 119.2 L483.8 119.2 Z M490.3 111.1 L498.6 126.0 L481.9 126.0 Z M545.2 130 V125.4 H549.8 V130 Z M547.5 91.5 L552.8 110.0 L542.2 110.0 Z M547.5 100.0 L554.9 117.7 L540.1 117.7 Z M547.5 108.4 L557.0 125.4 L538.0 125.4 Z M590.8 130 V125.9 H595.0 V130 Z M592.9 95.6 L597.6 112.1 L588.2 112.1 Z M592.9 103.2 L599.5 119.0 L586.3 119.0 Z M592.9 110.8 L601.4 125.9 L584.4 125.9 Z M645.3 130 V127.4 H649.3 V130 Z M647.3 108.1 L650.3 118.6 L644.3 118.6 Z M647.3 112.9 L651.5 123.0 L643.1 123.0 Z M647.3 117.8 L652.7 127.4 L641.9 127.4 Z M695.4 130 V125.2 H700.2 V130 Z M697.8 90.0 L703.3 109.2 L692.3 109.2 Z M697.8 98.8 L705.5 117.2 L690.1 117.2 Z M697.8 107.6 L707.7 125.2 L687.9 125.2 Z M749.5 130 V125.6 H753.9 V130 Z M751.7 93.5 L756.7 111.0 L746.7 111.0 Z M751.7 101.5 L758.7 118.3 L744.7 118.3 Z M751.7 109.6 L760.7 125.6 L742.7 125.6 Z M795.1 130 V127.1 H799.1 V130 Z M797.1 106.1 L800.4 117.6 L793.8 117.6 Z M797.1 111.3 L801.7 122.3 L792.5 122.3 Z M797.1 116.6 L803.0 127.1 L791.2 127.1 Z M849.2 130 V126.7 H853.2 V130 Z M851.2 102.7 L854.9 115.8 L847.4 115.8 Z M851.2 108.7 L856.4 121.3 L845.9 121.3 Z M851.2 114.7 L857.9 126.7 L844.4 126.7 Z M903.1 130 V125.0 H908.1 V130 Z M905.6 88.6 L911.3 108.5 L899.9 108.5 Z M905.6 97.7 L913.6 116.8 L897.6 116.8 Z M905.6 106.8 L915.8 125.0 L895.4 125.0 Z M946.7 130 V126.5 H950.7 V130 Z M948.7 101.2 L952.7 115.0 L944.7 115.0 Z M948.7 107.5 L954.2 120.8 L943.1 120.8 Z M948.7 113.9 L955.8 126.5 L941.6 126.5 Z M1005.0 130 V125.7 H1009.4 V130 Z M1007.2 94.1 L1012.1 111.3 L1002.3 111.3 Z M1007.2 102.0 L1014.1 118.5 L1000.3 118.5 Z M1007.2 109.9 L1016.1 125.7 L998.3 125.7 Z M1042.0 130 V127.3 H1046.0 V130 Z M1044.0 107.2 L1047.1 118.1 L1040.8 118.1 Z M1044.0 112.2 L1048.3 122.7 L1039.6 122.7 Z M1044.0 117.2 L1049.6 127.3 L1038.3 127.3 Z M1077.8 130 V125.2 H1082.6 V130 Z M1080.2 90.1 L1085.7 109.2 L1074.7 109.2 Z M1080.2 98.9 L1087.9 117.2 L1072.5 117.2 Z M1080.2 107.7 L1090.1 125.2 L1070.3 125.2 Z M1132.8 130 V127.2 H1136.8 V130 Z M1134.8 106.8 L1138.0 117.9 L1131.6 117.9 Z M1134.8 111.9 L1139.2 122.6 L1130.3 122.6 Z M1134.8 117.0 L1140.5 127.2 L1129.0 127.2 Z M1187.4 130 V125.0 H1192.4 V130 Z M1189.9 88.4 L1195.6 108.4 L1184.2 108.4 Z M1189.9 97.6 L1197.9 116.7 L1181.9 116.7 Z M1189.9 106.7 L1200.2 125.0 L1179.6 125.0 Z M0 130 V127 H1200 V130 Z"/>
+    </svg>
+    <div class="rays" aria-hidden="true"></div>
+    <div class="leaves" id="leaves" aria-hidden="true"></div>
+    <div class="season-badge" id="seasonBadge"></div>
+    <div class="hero-top">
+      <div class="ring">
+        <svg viewBox="0 0 120 120"><circle class="ring-bg" cx="60" cy="60" r="52" fill="none" stroke-width="12"/>
+          <circle class="ring-fg" id="ringFg" cx="60" cy="60" r="52" fill="none" stroke-width="12" stroke-linecap="round" stroke-dasharray="326.7" stroke-dashoffset="326.7"/></svg>
+        <div class="ring-center"><div class="pct" id="ringPct">—</div><div class="lbl" id="ringLbl">目標</div></div>
+      </div>
+      <div class="hero-main">
+        <div class="hero-label" id="heroLabel">今月の距離</div>
+        <div class="hero-km num"><span id="heroKm" style="font-size:inherit;color:inherit;margin:0;font-weight:inherit;">0</span><span>km</span></div>
+        <div class="hero-sub" id="heroSub"></div>
+        <div class="hero-goal">🎯 今月の目標 <input type="number" id="goalInput" min="0" step="10" inputmode="numeric" onchange="onGoalChange(this)"> km</div>
+        <div class="hero-msg" id="heroMsg" style="display:none"></div>
+      </div>
     </div>
-    <div class="sum-card">
-      <div class="sum-label">累計回数</div>
-      <div class="sum-value" id="s-cnt">0</div>
-      <div class="sum-unit">回</div>
-    </div>
-    <div class="sum-card">
-      <div class="sum-label">平均距離</div>
-      <div class="sum-value" id="s-avg">0</div>
-      <div class="sum-unit">km / 回</div>
-    </div>
-    <div class="sum-card">
-      <div class="sum-label">今年の距離</div>
-      <div class="sum-value" id="s-year">0</div>
-      <div class="sum-unit">km</div>
-      <div id="s-year-delta"></div>
-    </div>
-    <div class="sum-card">
-      <div class="sum-label">今月の距離</div>
-      <div class="sum-value" id="s-month">0</div>
-      <div class="sum-unit">km</div>
-      <div id="s-month-delta"></div>
-    </div>
-    <div class="sum-card">
-      <div class="sum-label">活動年数</div>
-      <div class="sum-value" id="s-years">0</div>
-      <div class="sum-unit">年</div>
+    <div class="hero-chips">
+      <div class="chip"><div class="c-l">今週（月〜日）</div><div class="c-v num" id="cWeek">0<small>km</small></div><div id="cWeekSub" style="font-size:11px;color:#b8c4e0;"></div></div>
+      <div class="chip"><div class="c-l">先月</div><div class="c-v num" id="cPrev">0<small>km</small></div><div id="cMonthDelta"></div></div>
+      <div class="chip"><div class="c-l" id="cYearL">今年</div><div class="c-v num" id="cYear">0<small>km</small></div><div id="cYearDelta"></div></div>
+      <div class="chip"><div class="c-l">これまでの累計</div><div class="c-v num" id="cTotal">0<small>km</small></div><div id="cTotalSub" style="font-size:11px;color:#b8c4e0;"></div></div>
     </div>
   </div>
 
-  <!-- 🎯 今月の目標 -->
-  <div class="table-section">
-    <div class="section-title">🎯 今月の目標　<input type="number" id="goalInput" min="0" step="10" onchange="onGoalChange(this)"> km</div>
-    <div class="goal-bar-wrap"><div class="goal-bar" id="goalBar" style="width:0%"></div></div>
-    <div class="goal-text" id="goalText"></div>
+  <!-- ===== 記録を入れる ===== -->
+  <div class="card" id="recCard">
+    <div class="card-title" id="recTitle">✏️ 走った記録を入れる</div>
+    <div class="rec-form">
+      <div class="fld"><label for="fDate">日付</label><input type="date" id="fDate"></div>
+      <div class="fld"><label for="fKm">距離（km）</label><input type="number" id="fKm" inputmode="decimal" step="0.01" min="0" placeholder="10.5" oninput="livePace()"></div>
+      <div class="fld"><label for="fTime">時間（なくてもOK）</label><input type="text" id="fTime" inputmode="numeric" placeholder="58:30" oninput="livePace()"></div>
+      <div class="fld memo-f"><label for="fMemo">メモ（コース・体調など）</label><input type="text" id="fMemo" class="memo" placeholder="例: 内子〜大洲 往復"></div>
+      <button class="rec-btn" id="recBtn" onclick="submitRun()">記録する</button>
+    </div>
+    <div class="rec-hint">
+      <span>時間は「58:30」（58分30秒）や「1:05:20」、分だけなら「58」でOK</span>
+      <span class="pace-live" id="paceLive"></span>
+      <button class="cancel-edit" id="cancelEdit" style="display:none" onclick="cancelEdit()">修正をやめる</button>
+    </div>
   </div>
 
-  <!-- 🏅 ベスト記録・バッジ -->
-  <div class="table-section">
-    <div class="section-title">🏅 ベスト記録・バッジ</div>
-    <div id="bestBody"></div>
+  <!-- ===== カレンダー＋記録一覧 ===== -->
+  <div class="two-col">
+    <div class="card">
+      <div class="card-title">📅 <span id="calTitle"></span>
+        <div class="cal-nav">
+          <button onclick="moveCal(-1)">◀</button>
+          <button class="today-btn" onclick="calToday()">今月</button>
+          <button onclick="moveCal(1)">▶</button>
+        </div>
+      </div>
+      <div class="cal-stats" id="calStats"></div>
+      <div id="calNote"></div>
+      <div class="cal-grid" id="calGrid"></div>
+      <div class="cal-legend">日をタップするとその日の記録を入れられます
+        <i style="background:#e2f5d8"></i>〜5 <i style="background:#b8e3a4"></i>〜10 <i style="background:#6cc077"></i>〜15 <i style="background:#2f7a55"></i>15km〜</div>
+    </div>
+    <div class="card">
+      <div class="card-title">🏃 <span id="listTitle">この月の記録</span><span class="right" id="listSum"></span></div>
+      <div class="run-list" id="runList"></div>
+    </div>
   </div>
 
-  <!-- 愛媛一周チャレンジ -->
+  <!-- ===== 着地予想・ベスト ===== -->
+  <div class="two-col">
+    <div class="card">
+      <div class="card-title" id="projTitle">📈 今年の着地予想</div>
+      <div id="projBody"></div>
+    </div>
+    <div class="card">
+      <div class="card-title">🏅 ベスト記録・バッジ</div>
+      <div id="bestBody"></div>
+    </div>
+  </div>
+
+  <!-- ===== 愛媛一周チャレンジ ===== -->
   <div class="ehime-card">
+    <svg class="forest" viewBox="0 0 1200 130" preserveAspectRatio="xMidYMax slice" aria-hidden="true">
+      <path fill="rgba(255,255,255,0.06)" d="M-13.2 130 V123.6 H-6.8 V130 Z M-10.0 76.4 L-2.6 102.1 L-17.4 102.1 Z M-10.0 88.2 L0.3 112.9 L-20.3 112.9 Z M-10.0 100.0 L3.3 123.6 L-23.3 123.6 Z M14.9 130 V121.9 H23.0 V130 Z M19.0 62.3 L28.3 94.8 L9.6 94.8 Z M19.0 77.2 L32.0 108.3 L5.9 108.3 Z M19.0 92.1 L35.7 121.9 L2.2 121.9 Z M43.1 130 V123.4 H49.7 V130 Z M46.4 74.8 L54.0 101.3 L38.8 101.3 Z M46.4 86.9 L57.0 112.3 L35.8 112.3 Z M46.4 99.1 L60.1 123.4 L32.7 123.4 Z M73.1 130 V124.5 H78.5 V130 Z M75.8 84.5 L82.1 106.3 L69.5 106.3 Z M75.8 94.5 L84.6 115.4 L67.0 115.4 Z M75.8 104.5 L87.1 124.5 L64.5 124.5 Z M100.5 130 V122.9 H107.5 V130 Z M104.0 71.1 L112.1 99.4 L95.9 99.4 Z M104.0 84.1 L115.3 111.2 L92.7 111.2 Z M104.0 97.0 L118.6 122.9 L89.4 122.9 Z M134.1 130 V124.9 H139.3 V130 Z M136.7 87.2 L142.6 107.7 L130.8 107.7 Z M136.7 96.6 L144.9 116.3 L128.4 116.3 Z M136.7 106.0 L147.3 124.9 L126.1 124.9 Z M159.0 130 V124.9 H164.1 V130 Z M161.5 87.3 L167.4 107.8 L155.7 107.8 Z M161.5 96.7 L169.8 116.3 L153.3 116.3 Z M161.5 106.1 L172.1 124.9 L151.0 124.9 Z M190.8 130 V122.7 H198.1 V130 Z M194.5 69.2 L202.9 98.4 L186.1 98.4 Z M194.5 82.6 L206.2 110.5 L182.8 110.5 Z M194.5 96.0 L209.5 122.7 L179.4 122.7 Z M211.0 130 V121.7 H219.3 V130 Z M215.2 60.5 L224.7 93.9 L205.6 93.9 Z M215.2 75.8 L228.5 107.8 L201.8 107.8 Z M215.2 91.1 L232.4 121.7 L198.0 121.7 Z M247.0 130 V122.8 H254.2 V130 Z M250.6 70.4 L258.8 99.0 L242.4 99.0 Z M250.6 83.5 L262.1 110.9 L239.1 110.9 Z M250.6 96.6 L265.4 122.8 L235.8 122.8 Z M277.8 130 V124.6 H283.1 V130 Z M280.4 85.3 L286.6 106.7 L274.3 106.7 Z M280.4 95.1 L289.1 115.7 L271.8 115.7 Z M280.4 105.0 L291.5 124.6 L269.4 124.6 Z M297.3 130 V123.3 H304.0 V130 Z M300.7 74.1 L308.4 101.0 L293.0 101.0 Z M300.7 86.4 L311.4 112.1 L289.9 112.1 Z M300.7 98.7 L314.5 123.3 L286.9 123.3 Z M318.9 130 V124.5 H324.4 V130 Z M321.6 84.3 L327.9 106.2 L315.4 106.2 Z M321.6 94.3 L330.4 115.4 L312.8 115.4 Z M321.6 104.4 L333.0 124.5 L310.3 124.5 Z M343.1 130 V125.1 H348.0 V130 Z M345.5 89.1 L351.1 108.7 L339.9 108.7 Z M345.5 98.1 L353.4 116.9 L337.6 116.9 Z M345.5 107.1 L355.6 125.1 L335.4 125.1 Z M369.7 130 V123.6 H376.1 V130 Z M372.9 76.8 L380.3 102.3 L365.6 102.3 Z M372.9 88.5 L383.2 113.0 L362.7 113.0 Z M372.9 100.2 L386.1 123.6 L359.8 123.6 Z M403.1 130 V123.3 H409.7 V130 Z M406.4 74.4 L414.1 101.1 L398.8 101.1 Z M406.4 86.7 L417.1 112.2 L395.7 112.2 Z M406.4 98.9 L420.2 123.3 L392.7 123.3 Z M433.4 130 V123.4 H440.0 V130 Z M436.7 75.0 L444.2 101.4 L429.1 101.4 Z M436.7 87.1 L447.2 112.4 L426.1 112.4 Z M436.7 99.2 L450.3 123.4 L423.0 123.4 Z M464.0 130 V123.6 H470.5 V130 Z M467.3 76.3 L474.6 102.1 L459.9 102.1 Z M467.3 88.1 L477.6 112.8 L456.9 112.8 Z M467.3 99.9 L480.6 123.6 L454.0 123.6 Z M487.5 130 V121.6 H495.9 V130 Z M491.7 60.1 L501.3 93.6 L482.1 93.6 Z M491.7 75.5 L505.2 107.6 L478.2 107.6 Z M491.7 90.8 L509.0 121.6 L474.4 121.6 Z M523.7 130 V122.2 H531.6 V130 Z M527.6 64.8 L536.6 96.1 L518.7 96.1 Z M527.6 79.1 L540.2 109.1 L515.1 109.1 Z M527.6 93.5 L543.8 122.2 L511.5 122.2 Z M556.0 130 V124.1 H561.9 V130 Z M559.0 80.5 L565.8 104.3 L552.2 104.3 Z M559.0 91.4 L568.5 114.2 L549.4 114.2 Z M559.0 102.3 L571.2 124.1 L546.7 124.1 Z M579.7 130 V124.2 H585.6 V130 Z M582.6 81.3 L589.3 104.7 L575.9 104.7 Z M582.6 92.0 L592.0 114.4 L573.3 114.4 Z M582.6 102.7 L594.7 124.2 L570.6 124.2 Z M600.0 130 V122.4 H607.5 V130 Z M603.8 67.0 L612.4 97.2 L595.1 97.2 Z M603.8 80.9 L615.9 109.8 L591.6 109.8 Z M603.8 94.7 L619.4 122.4 L588.2 122.4 Z M626.2 130 V122.2 H634.1 V130 Z M630.2 64.6 L639.2 96.0 L621.2 96.0 Z M630.2 79.0 L642.8 109.1 L617.6 109.1 Z M630.2 93.4 L646.4 122.2 L614.0 122.2 Z M652.2 130 V121.8 H660.5 V130 Z M656.4 61.3 L665.8 94.3 L646.9 94.3 Z M656.4 76.4 L669.6 108.0 L643.1 108.0 Z M656.4 91.5 L673.4 121.8 L639.3 121.8 Z M687.5 130 V125.2 H692.3 V130 Z M689.9 90.0 L695.4 109.2 L684.4 109.2 Z M689.9 98.8 L697.6 117.2 L682.2 117.2 Z M689.9 107.6 L699.8 125.2 L680.0 125.2 Z M709.2 130 V121.9 H717.3 V130 Z M713.3 62.7 L722.5 95.0 L704.0 95.0 Z M713.3 77.5 L726.2 108.5 L700.3 108.5 Z M713.3 92.3 L729.9 121.9 L696.6 121.9 Z M736.6 130 V121.7 H744.9 V130 Z M740.8 60.6 L750.3 93.9 L731.2 93.9 Z M740.8 75.9 L754.1 107.8 L727.4 107.8 Z M740.8 91.1 L758.0 121.7 L723.6 121.7 Z M764.6 130 V124.9 H769.7 V130 Z M767.1 87.8 L772.9 108.1 L761.3 108.1 Z M767.1 97.1 L775.3 116.5 L759.0 116.5 Z M767.1 106.4 L777.6 124.9 L756.7 124.9 Z M793.4 130 V122.4 H801.0 V130 Z M797.2 66.6 L805.9 97.1 L788.5 97.1 Z M797.2 80.6 L809.4 109.7 L785.0 109.7 Z M797.2 94.5 L812.9 122.4 L781.5 122.4 Z M819.0 130 V124.9 H824.1 V130 Z M821.5 87.4 L827.4 107.8 L815.7 107.8 Z M821.5 96.8 L829.7 116.4 L813.3 116.4 Z M821.5 106.1 L832.1 124.9 L811.0 124.9 Z M842.7 130 V121.7 H851.0 V130 Z M846.9 61.1 L856.3 94.2 L837.4 94.2 Z M846.9 76.2 L860.1 107.9 L833.6 107.9 Z M846.9 91.4 L863.9 121.7 L829.8 121.7 Z M876.4 130 V124.8 H881.6 V130 Z M879.0 86.5 L885.0 107.4 L873.0 107.4 Z M879.0 96.0 L887.4 116.1 L870.6 116.1 Z M879.0 105.6 L889.8 124.8 L868.2 124.8 Z M900.3 130 V124.8 H905.5 V130 Z M902.9 87.0 L908.8 107.6 L897.0 107.6 Z M902.9 96.4 L911.2 116.2 L894.6 116.2 Z M902.9 105.9 L913.6 124.8 L892.3 124.8 Z M920.0 130 V122.3 H927.7 V130 Z M923.9 66.1 L932.7 96.8 L915.1 96.8 Z M923.9 80.1 L936.2 109.5 L911.6 109.5 Z M923.9 94.2 L939.7 122.3 L908.1 122.3 Z M943.3 130 V123.2 H950.1 V130 Z M946.7 73.2 L954.5 100.5 L938.9 100.5 Z M946.7 85.7 L957.7 111.8 L935.8 111.8 Z M946.7 98.2 L960.8 123.2 L932.7 123.2 Z M971.1 130 V124.5 H976.6 V130 Z M973.9 84.3 L980.2 106.2 L967.6 106.2 Z M973.9 94.3 L982.7 115.4 L965.1 115.4 Z M973.9 104.4 L985.2 124.5 L962.6 124.5 Z M1003.0 130 V124.7 H1008.2 V130 Z M1005.6 86.1 L1011.6 107.2 L999.6 107.2 Z M1005.6 95.7 L1014.0 115.9 L997.1 115.9 Z M1005.6 105.4 L1016.5 124.7 L994.7 124.7 Z M1033.3 130 V124.8 H1038.5 V130 Z M1035.9 86.5 L1041.9 107.4 L1029.9 107.4 Z M1035.9 96.1 L1044.3 116.1 L1027.5 116.1 Z M1035.9 105.6 L1046.7 124.8 L1025.1 124.8 Z M1059.8 130 V124.4 H1065.4 V130 Z M1062.6 83.6 L1069.0 105.9 L1056.2 105.9 Z M1062.6 93.8 L1071.6 115.2 L1053.7 115.2 Z M1062.6 104.0 L1074.1 124.4 L1051.1 124.4 Z M1082.8 130 V121.7 H1091.1 V130 Z M1086.9 60.9 L1096.4 94.1 L1077.4 94.1 Z M1086.9 76.1 L1100.2 107.9 L1073.6 107.9 Z M1086.9 91.3 L1104.1 121.7 L1069.8 121.7 Z M1116.8 130 V124.1 H1122.7 V130 Z M1119.8 80.9 L1126.6 104.5 L1113.0 104.5 Z M1119.8 91.7 L1129.3 114.3 L1110.3 114.3 Z M1119.8 102.5 L1132.0 124.1 L1107.6 124.1 Z M1151.2 130 V124.4 H1156.7 V130 Z M1154.0 83.7 L1160.3 105.9 L1147.6 105.9 Z M1154.0 93.9 L1162.9 115.2 L1145.0 115.2 Z M1154.0 104.1 L1165.4 124.4 L1142.5 124.4 Z M1176.3 130 V122.1 H1184.2 V130 Z M1180.3 64.4 L1189.3 95.9 L1171.2 95.9 Z M1180.3 78.8 L1192.9 109.0 L1167.6 109.0 Z M1180.3 93.2 L1196.5 122.1 L1164.0 122.1 Z M1208.0 130 V124.8 H1213.1 V130 Z M1210.5 87.0 L1216.4 107.6 L1204.6 107.6 Z M1210.5 96.5 L1218.8 116.2 L1202.3 116.2 Z M1210.5 105.9 L1221.2 124.8 L1199.9 124.8 Z "/>
+      <path fill="rgba(6,30,20,0.45)" d="M-12.0 130 V126.7 H-8.0 V130 Z M-10.0 102.9 L-6.3 115.9 L-13.7 115.9 Z M-10.0 108.8 L-4.8 121.3 L-15.2 121.3 Z M-10.0 114.8 L-3.3 126.7 L-16.7 126.7 Z M25.8 130 V125.1 H30.6 V130 Z M28.2 89.5 L33.8 108.9 L22.6 108.9 Z M28.2 98.4 L36.0 117.0 L20.4 117.0 Z M28.2 107.3 L38.2 125.1 L18.2 125.1 Z M66.1 130 V126.5 H70.1 V130 Z M68.1 100.9 L72.1 114.9 L64.1 114.9 Z M68.1 107.3 L73.7 120.7 L62.5 120.7 Z M68.1 113.7 L75.3 126.5 L60.9 126.5 Z M99.9 130 V127.1 H103.9 V130 Z M101.9 105.8 L105.2 117.4 L98.5 117.4 Z M101.9 111.2 L106.5 122.3 L97.2 122.3 Z M101.9 116.5 L107.8 127.1 L95.9 127.1 Z M145.8 130 V126.7 H149.8 V130 Z M147.8 102.2 L151.7 115.5 L144.0 115.5 Z M147.8 108.3 L153.2 121.1 L142.5 121.1 Z M147.8 114.4 L154.7 126.7 L141.0 126.7 Z M192.3 130 V126.3 H196.3 V130 Z M194.3 99.1 L198.5 113.9 L190.0 113.9 Z M194.3 105.9 L200.2 120.1 L188.3 120.1 Z M194.3 112.7 L201.9 126.3 L186.6 126.3 Z M234.4 130 V124.6 H239.8 V130 Z M237.1 85.0 L243.3 106.6 L231.0 106.6 Z M237.1 94.9 L245.8 115.6 L228.5 115.6 Z M237.1 104.8 L248.3 124.6 L226.0 124.6 Z M278.6 130 V125.7 H282.9 V130 Z M280.8 94.2 L285.7 111.4 L275.8 111.4 Z M280.8 102.1 L287.6 118.5 L273.9 118.5 Z M280.8 110.0 L289.6 125.7 L271.9 125.7 Z M331.6 130 V126.8 H335.6 V130 Z M333.6 103.6 L337.2 116.3 L329.9 116.3 Z M333.6 109.4 L338.6 121.6 L328.5 121.6 Z M333.6 115.2 L340.1 126.8 L327.0 126.8 Z M366.6 130 V124.7 H371.9 V130 Z M369.3 86.2 L375.3 107.2 L363.2 107.2 Z M369.3 95.8 L377.7 116.0 L360.8 116.0 Z M369.3 105.5 L380.1 124.7 L358.4 124.7 Z M418.9 130 V126.6 H422.9 V130 Z M420.9 102.0 L424.7 115.4 L417.0 115.4 Z M420.9 108.2 L426.3 121.0 L415.5 121.0 Z M420.9 114.3 L427.8 126.6 L414.0 126.6 Z M455.1 130 V125.2 H459.8 V130 Z M457.4 90.3 L462.9 109.3 L452.0 109.3 Z M457.4 99.0 L465.1 117.3 L449.8 117.3 Z M457.4 107.7 L467.3 125.2 L447.6 125.2 Z M510.0 130 V126.8 H514.0 V130 Z M512.0 103.3 L515.7 116.1 L508.3 116.1 Z M512.0 109.2 L517.1 121.5 L506.9 121.5 Z M512.0 115.0 L518.6 126.8 L505.4 126.8 Z M564.2 130 V124.8 H569.4 V130 Z M566.8 86.8 L572.7 107.6 L560.9 107.6 Z M566.8 96.3 L575.1 116.2 L558.5 116.2 Z M566.8 105.8 L577.5 124.8 L556.1 124.8 Z M611.3 130 V126.1 H615.3 V130 Z M613.3 97.9 L617.7 113.3 L608.9 113.3 Z M613.3 105.0 L619.5 119.7 L607.1 119.7 Z M613.3 112.0 L621.2 126.1 L605.3 126.1 Z M645.8 130 V127.2 H649.8 V130 Z M647.8 107.1 L650.9 118.1 L644.6 118.1 Z M647.8 112.1 L652.2 122.7 L643.4 122.7 Z M647.8 117.2 L653.5 127.2 L642.1 127.2 Z M700.9 130 V126.7 H704.9 V130 Z M702.9 102.3 L706.7 115.6 L699.1 115.6 Z M702.9 108.4 L708.2 121.1 L697.6 121.1 Z M702.9 114.5 L709.8 126.7 L696.0 126.7 Z M749.8 130 V126.6 H753.8 V130 Z M751.8 101.8 L755.7 115.4 L747.9 115.4 Z M751.8 108.0 L757.2 121.0 L746.4 121.0 Z M751.8 114.2 L758.8 126.6 L744.8 126.6 Z M801.4 130 V125.6 H805.7 V130 Z M803.6 93.7 L808.6 111.1 L798.6 111.1 Z M803.6 101.7 L810.6 118.4 L796.6 118.4 Z M803.6 109.7 L812.6 125.6 L794.6 125.6 Z M840.6 130 V126.9 H844.6 V130 Z M842.6 103.8 L846.2 116.4 L839.0 116.4 Z M842.6 109.6 L847.7 121.6 L837.6 121.6 Z M842.6 115.3 L849.1 126.9 L836.1 126.9 Z M889.9 130 V127.2 H893.9 V130 Z M891.9 106.3 L895.2 117.7 L888.6 117.7 Z M891.9 111.6 L896.5 122.4 L887.3 122.4 Z M891.9 116.8 L897.8 127.2 L886.0 127.2 Z M927.3 130 V125.7 H931.5 V130 Z M929.4 94.6 L934.3 111.6 L924.5 111.6 Z M929.4 102.4 L936.2 118.7 L922.6 118.7 Z M929.4 110.2 L938.1 125.7 L920.6 125.7 Z M979.6 130 V125.6 H984.0 V130 Z M981.8 93.3 L986.9 110.9 L976.8 110.9 Z M981.8 101.3 L988.9 118.2 L974.8 118.2 Z M981.8 109.4 L990.9 125.6 L972.7 125.6 Z M1017.9 130 V124.7 H1023.2 V130 Z M1020.6 86.0 L1026.6 107.1 L1014.5 107.1 Z M1020.6 95.7 L1029.0 115.9 L1012.1 115.9 Z M1020.6 105.4 L1031.5 124.7 L1009.7 124.7 Z M1055.5 130 V127.3 H1059.5 V130 Z M1057.5 107.6 L1060.5 118.4 L1054.4 118.4 Z M1057.5 112.5 L1061.8 122.8 L1053.1 122.8 Z M1057.5 117.5 L1063.0 127.3 L1051.9 127.3 Z M1093.9 130 V126.1 H1097.9 V130 Z M1095.9 97.3 L1100.4 113.0 L1091.4 113.0 Z M1095.9 104.5 L1102.2 119.5 L1089.6 119.5 Z M1095.9 111.7 L1104.0 126.1 L1087.8 126.1 Z M1127.4 130 V126.9 H1131.4 V130 Z M1129.4 103.8 L1133.0 116.4 L1125.8 116.4 Z M1129.4 109.5 L1134.4 121.6 L1124.3 121.6 Z M1129.4 115.3 L1135.9 126.9 L1122.9 126.9 Z M1168.1 130 V125.7 H1172.4 V130 Z M1170.2 94.3 L1175.1 111.4 L1165.3 111.4 Z M1170.2 102.1 L1177.1 118.6 L1163.3 118.6 Z M1170.2 110.0 L1179.1 125.7 L1161.4 125.7 Z M1203.4 130 V126.3 H1207.4 V130 Z M1205.4 99.3 L1209.6 114.0 L1201.2 114.0 Z M1205.4 106.1 L1211.3 120.2 L1199.5 120.2 Z M1205.4 112.8 L1213.0 126.3 L1197.8 126.3 Z M0 130 V127 H1200 V130 Z"/>
+    </svg>
     <div class="ehime-title">🗾 愛媛県一周チャレンジ〈内子スタート〉</div>
     <div class="ehime-flex">
       <div class="ehime-map">
@@ -297,23 +561,18 @@
             L50,108 L26,120 L11,125 L25,117 L37,110 L54,102 L60,99 L66,93 Z"
             fill="rgba(255,255,255,0.10)" stroke="rgba(255,255,255,0.35)" stroke-width="2.5"
             stroke-linecap="round" stroke-linejoin="round"/>
-          <path id="ehimeProg" d=""
-            fill="none" stroke="#fde047" stroke-width="3.5"
-            stroke-linecap="round" stroke-linejoin="round"/>
-          <!-- 都市ラベル -->
+          <path id="ehimeProg" d="" fill="none" stroke="#fde047" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"/>
           <g font-family="-apple-system, sans-serif" font-size="9" font-weight="700" fill="rgba(255,255,255,0.85)">
             <circle cx="104" cy="47" r="2" fill="rgba(255,255,255,0.8)"/><text x="109" y="50">松山</text>
             <circle cx="140" cy="16" r="2" fill="rgba(255,255,255,0.8)"/><text x="145" y="19">今治</text>
             <circle cx="79" cy="143" r="2" fill="rgba(255,255,255,0.8)"/><text x="84" y="147">宇和島</text>
             <text x="8" y="138" font-size="8.5">佐田岬</text>
           </g>
-          <!-- スタート（内子の最寄り海岸・長浜） -->
           <g id="startGroup" font-family="-apple-system, sans-serif">
             <line x1="70" y1="84" x2="92" y2="93" stroke="#fb7185" stroke-width="1.6" stroke-dasharray="3 2"/>
             <circle cx="70" cy="84" r="4" fill="#fde047" stroke="#0b1f4d" stroke-width="1.4"/>
             <text x="64" y="76" font-size="9.5" font-weight="700" fill="#fde047" text-anchor="end">🚩スタート/ゴール</text>
           </g>
-          <!-- 内子⇄大洲 区間 -->
           <g id="ucozGroup" font-family="-apple-system, sans-serif">
             <line x1="79" y1="101" x2="92" y2="93" stroke="#fb7185" stroke-width="1.6" stroke-dasharray="3 2"/>
             <circle cx="79" cy="101" r="3" fill="#fb7185" stroke="#fff" stroke-width="1.2"/>
@@ -326,8 +585,7 @@
           <g id="ehimeRunner">
             <g class="runner-bob">
               <g stroke="#fde047" stroke-width="1.6" stroke-linecap="round" opacity="0.9">
-                <line x1="-14" y1="-2" x2="-9" y2="-2"/>
-                <line x1="-16" y1="2" x2="-10" y2="2"/>
+                <line x1="-14" y1="-2" x2="-9" y2="-2"/><line x1="-16" y1="2" x2="-10" y2="2"/>
               </g>
               <line x1="-2" y1="6" x2="-6" y2="11" stroke="#0b1f4d" stroke-width="2" stroke-linecap="round"/>
               <line x1="2" y1="6" x2="6" y2="10" stroke="#0b1f4d" stroke-width="2" stroke-linecap="round"/>
@@ -336,10 +594,8 @@
               <circle cx="0" cy="0" r="7.5" fill="#ffffff" stroke="#0b1f4d" stroke-width="1.2"/>
               <path d="M-7.2 -3.2 A7.5 7.5 0 0 1 7.2 -3.2 L7 -0.8 A7.5 7.5 0 0 0 -7 -0.8 Z" fill="#fde047"/>
               <path d="M7 -2 L11 -4 L10 -0.5 Z" fill="#fde047"/>
-              <circle cx="-2.4" cy="1" r="1.1" fill="#22343a"/>
-              <circle cx="2.4" cy="1" r="1.1" fill="#22343a"/>
-              <circle cx="-4.7" cy="3.2" r="1.4" fill="#ff8fa3"/>
-              <circle cx="4.7" cy="3.2" r="1.4" fill="#ff8fa3"/>
+              <circle cx="-2.4" cy="1" r="1.1" fill="#22343a"/><circle cx="2.4" cy="1" r="1.1" fill="#22343a"/>
+              <circle cx="-4.7" cy="3.2" r="1.4" fill="#ff8fa3"/><circle cx="4.7" cy="3.2" r="1.4" fill="#ff8fa3"/>
               <path d="M-1.6 3.6 Q0 5.4 1.6 3.6" stroke="#22343a" stroke-width="1" fill="none" stroke-linecap="round"/>
             </g>
           </g>
@@ -355,43 +611,33 @@
     </div>
   </div>
 
-  <!-- 推移グラフ -->
-  <div class="table-section">
-    <div class="section-title">📈 推移グラフ</div>
+  <!-- ===== グラフ ===== -->
+  <div class="card">
+    <div class="card-title">📊 推移グラフ</div>
     <div class="charts-flex">
-      <div class="chart-box">
-        <div class="chart-label">年間距離（km）</div>
-        <canvas id="yearChart"></canvas>
-      </div>
-      <div class="chart-box">
-        <div class="chart-label">直近12ヶ月の距離（km）</div>
-        <canvas id="monthChart"></canvas>
-      </div>
+      <div class="chart-box"><div class="chart-label">年間距離（km）</div><canvas id="yearChart"></canvas></div>
+      <div class="chart-box"><div class="chart-label">直近12ヶ月の距離（km）</div><canvas id="monthChart"></canvas></div>
+      <div class="chart-box" id="weekBox" style="display:none"><div class="chart-label">直近12週の距離（km・月曜はじまり）</div><canvas id="weekChart"></canvas></div>
     </div>
   </div>
 
-  <!-- 距離 table -->
-  <div class="table-section">
-    <div class="section-title">📏 距離（km）</div>
-    <div class="heat-legend">
-      色分け：
-      <span class="hl h1">〜99</span>
-      <span class="hl h2">100〜149</span>
-      <span class="hl h3">150〜199</span>
-      <span class="hl h4">200km〜</span>
-      <span class="hl hb">年間ベスト月</span>
-    </div>
-    <table id="distTable"></table>
-    <div class="year-controls">
-      <input type="number" id="addYearDist" placeholder="例: 2026" min="2000" max="2099">
-      <button class="btn btn-gold" onclick="addYear()">＋ 年を追加</button>
-    </div>
-  </div>
-
-  <!-- 回数 table -->
-  <div class="table-section">
-    <div class="section-title">🔢 回数</div>
-    <table id="cntTable"></table>
+  <!-- ===== 月別の表 ===== -->
+  <div class="card">
+    <details class="tables" id="tablesBox">
+      <summary><span class="arrow">▶</span> 📏 月別の表（2015年〜・過去の月の手入力）<span class="right">タップで開く</span></summary>
+      <div class="tbl-title">距離（km）</div>
+      <div class="heat-legend">
+        <span class="hl h1">〜99</span><span class="hl h2">100〜149</span><span class="hl h3">150〜199</span><span class="hl h4">200km〜</span>
+        <span class="hl hb">年間ベスト月</span><span class="hl ha">緑の太字＝1回ごとの記録から自動計算</span>
+      </div>
+      <div class="tbl-wrap"><table id="distTable"></table></div>
+      <div class="year-controls">
+        <input type="number" id="addYearDist" placeholder="例: 2014" min="2000" max="2099">
+        <button class="small-btn" onclick="addYear()">＋ 年を追加</button>
+      </div>
+      <div class="tbl-title">回数</div>
+      <div class="tbl-wrap"><table id="cntTable"></table></div>
+    </details>
   </div>
 </div>
 
@@ -403,10 +649,26 @@ const MONTHS = [1,2,3,4,5,6,7,8,9,10,11,12];
 const now = new Date();
 const CUR_YEAR  = now.getFullYear();
 const CUR_MONTH = now.getMonth() + 1;
+const WEEK = ['日','月','火','水','木','金','土'];
 
-let data = load();
+let data = normalize(load());
 
-// --- Data structure: { years: [2015,...], dist: {"2015-3": 102.99, ...}, cnt: {"2015-3": 14, ...} }
+// 形をそろえる（年は数字・昇順、今年の行が無ければ足す、1回ごとの記録 runs）
+function normalize(d) {
+  d = d || {};
+  d.dist = d.dist || {};
+  d.cnt  = d.cnt  || {};
+  d.runs = Array.isArray(d.runs) ? d.runs.filter(r => r && /^\d{4}-\d{2}-\d{2}$/.test(r.d) && +r.km > 0) : [];
+  d.years = [...new Set((d.years || []).map(Number).filter(y => y > 0))];
+  if (!d.years.includes(CUR_YEAR)) d.years.push(CUR_YEAR);
+  d.years.sort((a, b) => a - b);
+  return d;
+}
+
+// --- Data structure:
+// { years: [2015,...], dist: {"2015-3": 102.99, ...}, cnt: {"2015-3": 14, ...}, goalMonthly,
+//   runs: [{id, d:"2026-10-03", km:10.5, t:秒 or null, n:回数(ふつう1), memo}] }
+// runs がある月は dist/cnt を runs の合計で上書きする（ほかの集計・同期はそのまま dist/cnt を使う）
 function load() {
   try {
     const s = localStorage.getItem(STORAGE_KEY);
@@ -443,7 +705,16 @@ function load() {
   };
 }
 
-function save() { localStorage.setItem(STORAGE_KEY, JSON.stringify(data)); snapshot(); cloudAutoSave(); }
+// localStorage が使えない画面（プレビュー等）からはクラウドへ送らない
+function storageOK() { try { localStorage.setItem('__synctest', '1'); localStorage.removeItem('__synctest'); return true; } catch(e) { return false; } }
+
+function save() {
+  try { localStorage.setItem(STORAGE_KEY, JSON.stringify(data)); } catch(e) {}
+  snapshot(); cloudAutoSave();
+  setSyncSt('💾 保存済み ' + hhmm(new Date()));
+}
+function hhmm(d) { return d.toLocaleTimeString('ja-JP', { hour:'2-digit', minute:'2-digit' }); }
+function setSyncSt(s) { const el = document.getElementById('syncSt'); if (el) el.textContent = s; }
 
 // ===== 保存履歴（最大15世代・10分間隔） =====
 function histList() { try { return JSON.parse(localStorage.getItem('running_hist_v1')) || []; } catch(e) { return []; } }
@@ -463,7 +734,7 @@ function openHist() {
   if (!h.length) html = '<div style="color:#888;padding:10px 2px;">まだ履歴がありません（記録すると自動で貯まります）</div>';
   h.forEach((e, i) => {
     let info = '';
-    try { const d = JSON.parse(e.d); info = `${round2(grandTotal2(d.dist)).toLocaleString()} km・${(d.years||[]).length}年分`; } catch(_) {}
+    try { const d = JSON.parse(e.d); info = `${round2(grandTotal2(d.dist)).toLocaleString()} km・${(d.years||[]).length}年分` + ((d.runs||[]).length ? `・記録${d.runs.length}件` : ''); } catch(_) {}
     const when = new Date(e.t).toLocaleString('ja-JP', { month:'numeric', day:'numeric', hour:'2-digit', minute:'2-digit' });
     html += `<div class="hist-item"><span class="when">${when}</span><span class="info">${info}</span><button onclick="restoreHist(${i})">この時点に戻す</button></div>`;
   });
@@ -477,58 +748,123 @@ function restoreHist(i) {
   if (!e) return;
   if (!confirm('この時点のデータに戻しますか？\n（今の内容も履歴に残るので、あとで戻せます）')) return;
   snapshot(true);
-  data = JSON.parse(e.d);
-  localStorage.setItem(STORAGE_KEY, e.d);
+  data = normalize(JSON.parse(e.d));
+  localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
   render();
   closeHist();
   cloudAutoSave();
   toast('🕘 復元しました');
 }
-document.addEventListener('keydown', e => { if (e.key === 'Escape') closeHist(); });
+document.addEventListener('keydown', e => { if (e.key === 'Escape') { closeHist(); closeMenu(); } });
 function saveAll() { save(); pushCloud(false); }
 
-// ===== クラウド同期（Google）— 自動保存＋自動復元 =====
+// ===== メニュー =====
+function toggleMenu(ev) { ev.stopPropagation(); document.getElementById('menu').classList.toggle('open'); }
+function closeMenu() { document.getElementById('menu').classList.remove('open'); }
+document.addEventListener('click', closeMenu);
+
+// ===== Macとスマホの自動同期（Google） =====
+// 最後にクラウドとそろえた時点の中身（base）を覚えておき、
+//   クラウドだけ変わっていた → クラウドを読み込む（ほかの端末で入れた分）
+//   手元だけ変わっていた     → クラウドへ送る
+//   両方変わっていた         → どちらを残すか聞く（読み込む前の状態は履歴に残る）
 const SYNC_URL = 'https://script.google.com/macros/s/AKfycbxwL19mAenATUMILRsQYrDL0ThjU2C583Cj729OfzNHEH3drMcZCExYULRp4VGOZ11J/exec';
 const SYNC_KEY = 'running_log_data';
-let autoCloudTimer = null;
-function cloudAutoSave() { clearTimeout(autoCloudTimer); autoCloudTimer = setTimeout(() => pushCloud(true), 2500); }
+const BASE_KEY = 'running_syncbase_v1';   // running_hist_v1 と同じく、データ本体とは別キー
+// 比べるときはキーの並び順の違いを無視する（端末によって入れた順が違っても「同じ」とみなす）
+function canon(o) { const r = {}; Object.keys(o || {}).sort().forEach(k => { const v = o[k]; if (v !== '' && v != null) r[k] = +v; }); return r; }
+function canonRuns(rs) { return (rs || []).map(r => [String(r.id), r.d, +r.km, +r.t || 0, +r.n || 1, r.memo || '']).sort((a, b) => a[0] < b[0] ? -1 : a[0] > b[0] ? 1 : 0); }
+function fpOf(d) { return JSON.stringify({ y: [...(d.years || [])].map(Number).sort((a, b) => a - b), d: canon(d.dist), c: canon(d.cnt), g: +d.goalMonthly || 0, r: canonRuns(d.runs) }); }
+function getBase() { try { return localStorage.getItem(BASE_KEY); } catch(e) { return null; } }
+function setBase(d) { try { localStorage.setItem(BASE_KEY, fpOf(d)); } catch(e) {} }
+let autoCloudTimer = null, syncing = false, cloudReady = false, lastSync = 0, pendingPush = false;
+function cloudAutoSave() {
+  if (!cloudReady) { pendingPush = true; return; }   // 起動時の突き合わせが終わってから送る
+  clearTimeout(autoCloudTimer); autoCloudTimer = setTimeout(syncNow, 2500);
+}
+async function fetchCloud() {
+  const res = await fetch(SYNC_URL + '?action=load&key=' + SYNC_KEY, { cache: 'no-store' });
+  const j = await res.json();
+  let d = j && j.data; if (typeof d === 'string') { try { d = JSON.parse(d); } catch(e) { d = null; } }
+  return (d && d.dist) ? normalize(d) : null;
+}
+function takeCloud(d, msg) {
+  snapshot(true);   // 読み込む前の手元の状態を履歴へ
+  data = d;
+  localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
+  setBase(data);
+  render();
+  if (msg) toast(msg);
+}
+async function syncNow() {
+  if (syncing) return;
+  syncing = true; lastSync = Date.now();
+  clearTimeout(autoCloudTimer); autoCloudTimer = null;
+  try {
+    const cloud = await fetchCloud();
+    const hasLocal = localStorage.getItem(STORAGE_KEY) !== null;
+    const local = fpOf(data), base = getBase();
+    if (!cloud) {
+      if (hasLocal) await pushCloud(true);                              // クラウドが空なら手元を送る
+    } else {
+      const cs = fpOf(cloud);
+      if (cs === local) setBase(data);                                  // 同じ
+      else if (!hasLocal) takeCloud(cloud, '☁️ クラウドから読み込みました');  // この端末では初めて
+      else {
+        if (base === null) { takeCloud(cloud, '☁️ クラウドの記録を読み込みました（前の記録は履歴に残っています）'); }   // 公開版のみ：この端末で新しい版を初めて開いたときは、クラウドを正とする（古い手元でクラウドを上書きしない）
+        else {
+        const cloudChanged = base === null || cs !== base;
+        const localChanged = base === null || local !== base;
+        if (cloudChanged && !localChanged) takeCloud(cloud, '☁️ ほかの端末で入れた分を読み込みました');
+        else if (!cloudChanged && localChanged) await pushCloud(true);
+        else if (confirm('⚠️ この画面とクラウド（ほかの端末）の両方に、違う記録があります。\n\n'
+                       + 'OK＝クラウドの記録を読み込む（この画面の記録は履歴に残ります）\n'
+                       + 'キャンセル＝この画面の記録でクラウドを上書きする')) takeCloud(cloud, '☁️ クラウドの記録を読み込みました');
+        else await pushCloud(true);
+        }
+      }
+    }
+    setSyncSt('☁️ クラウドOK ' + hhmm(new Date()));
+  } catch(e) { setSyncSt('💾 この端末に保存済み（クラウド未接続）'); }
+  syncing = false;
+  if (!cloudReady) { cloudReady = true; if (pendingPush) { pendingPush = false; cloudAutoSave(); } }
+}
 async function pushCloud(silent) {
+  if (!storageOK()) return false;
   if (!silent) toast('☁️ アップロード中...');
   try {
-    const res = await fetch(SYNC_URL + '?action=save&key=' + SYNC_KEY, { method:'POST', body: JSON.stringify(data) });
+    const sent = JSON.stringify(data);
+    const res = await fetch(SYNC_URL + '?action=save&key=' + SYNC_KEY, { method:'POST', body: sent });
     const j = await res.json();
-    if (j.success) { if (!silent) toast('☁️ クラウドに保存しました'); return true; }
+    if (j.success) { setBase(JSON.parse(sent)); setSyncSt('☁️ クラウドOK ' + hhmm(new Date())); if (!silent) toast('☁️ クラウドに保存しました'); return true; }
     if (!silent) toast('エラー: ' + (j.message||''));
   } catch(e) { if (!silent) toast('通信エラー: ' + e.message); }
   return false;
 }
-function applyCloud(j) {
-  if (!j || !j.success || !j.data) return false;
-  let d = j.data;
-  if (typeof d === 'string') { try { d = JSON.parse(d); } catch(e) { return false; } }
-  if (!d || !d.dist) return false;
-  snapshot(true);   // 上書き前に現状を履歴へ
-  data = d;
-  localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
-  render();
-  return true;
-}
-async function cloudUpload() { await pushCloud(false); }
+// 画面に戻ってきたときにも同期（スマホで入れた分をすぐ反映）
+document.addEventListener('visibilitychange', () => {
+  if (document.visibilityState === 'hidden') { if (autoCloudTimer) syncNow(); return; }   // 送る前の編集があれば送っておく
+  if (cloudReady && !autoCloudTimer && Date.now() - lastSync > 30 * 1000) syncNow();
+});
 async function cloudDownload() {
   toast('☁️ ダウンロード中...');
   try {
-    const res = await fetch(SYNC_URL + '?action=load&key=' + SYNC_KEY);
-    const j = await res.json();
-    let d = j && j.data; if (typeof d === 'string') { try { d = JSON.parse(d); } catch(e) {} }
-    if (!d || !d.dist) { toast('クラウドにデータがありません'); return; }
-    if (!confirm('クラウドのデータを読み込みますか？\n今の記録は上書きされます。')) return;
-    if (applyCloud(j)) toast('☁️ クラウドから読み込みました');
+    const d = await fetchCloud();
+    if (!d) { toast('クラウドにデータがありません'); return; }
+    if (!confirm('クラウドのデータを読み込みますか？\n今の記録は上書きされます（今の記録は履歴に残ります）。')) return;
+    takeCloud(d, '☁️ クラウドから読み込みました');
   } catch(e) { toast('エラー: ' + (e&&e.message?e.message:e)); }
 }
 
+// ===== 共通 =====
 function key(y, m) { return `${y}-${m}`; }
-function getD(y, m) { return data.dist[key(y,m)] ?? ''; }
-function getC(y, m) { return data.cnt[key(y,m)]  ?? ''; }
+function pad2(n) { return String(n).padStart(2, '0'); }
+function ymd(dt) { return `${dt.getFullYear()}-${pad2(dt.getMonth() + 1)}-${pad2(dt.getDate())}`; }
+function parseYmd(s) { const [y, m, d] = s.split('-').map(Number); return new Date(y, m - 1, d); }
+function monthKeyOf(s) { const [y, m] = s.split('-').map(Number); return key(y, m); }
+function round2(v) { return Math.round(v * 100) / 100; }
+function fmtKm(v) { return round2(v).toLocaleString(undefined, { maximumFractionDigits: 2 }); }
+const TODAY = ymd(now);
 
 function rowTotal(obj, y) {
   return MONTHS.reduce((s, m) => { const v = obj[key(y,m)]; return v ? s + +v : s; }, 0);
@@ -537,50 +873,358 @@ function grandTotal(obj) {
   return data.years.reduce((s, y) => s + rowTotal(obj, y), 0);
 }
 
+// ===== 時間・ペース =====
+// "58:30"=58分30秒, "1:05:20"=1時間5分20秒, "58"=58分, "58.5"=58分30秒
+function parseTime(s) {
+  s = (s || '').trim().replace(/[：]/g, ':').replace(/[０-９]/g, c => String.fromCharCode(c.charCodeAt(0) - 0xFEE0));
+  if (!s) return null;
+  if (/^\d+(\.\d+)?$/.test(s)) { const v = Math.round(parseFloat(s) * 60); return v > 0 ? v : NaN; }
+  const p = s.split(':');
+  if (p.length < 2 || p.length > 3 || p.some(x => !/^\d+$/.test(x))) return NaN;
+  const n = p.map(Number);
+  const sec = p.length === 3 ? n[0] * 3600 + n[1] * 60 + n[2] : n[0] * 60 + n[1];
+  return sec > 0 ? sec : NaN;
+}
+function fmtTime(sec) {
+  if (!sec) return '';
+  sec = Math.round(sec);
+  const h = Math.floor(sec / 3600), m = Math.floor(sec % 3600 / 60), s = sec % 60;
+  return h ? `${h}:${pad2(m)}:${pad2(s)}` : `${m}:${pad2(s)}`;
+}
+function fmtPace(secPerKm) {
+  if (!secPerKm || !isFinite(secPerKm)) return '';
+  const r = Math.round(secPerKm);
+  return `${Math.floor(r / 60)}'${pad2(r % 60)}"`;
+}
+function paceOf(list) {   // 時間が入っている記録だけで平均ペース
+  const w = list.filter(r => +r.t > 0 && (+r.n || 1) === 1);
+  const km = w.reduce((s, r) => s + +r.km, 0), t = w.reduce((s, r) => s + +r.t, 0);
+  return km > 0 ? t / km : 0;
+}
+
+// ===== 1回ごとの記録 → 月の合計 =====
+function runsOfMonth(k) { return data.runs.filter(r => monthKeyOf(r.d) === k); }
+function applyRuns(keys) {
+  [...new Set(keys)].forEach(k => {
+    const list = runsOfMonth(k);
+    if (list.length) {
+      data.dist[k] = round2(list.reduce((s, r) => s + +r.km, 0));
+      data.cnt[k]  = list.reduce((s, r) => s + (+r.n || 1), 0);
+      const y = +k.split('-')[0];
+      if (!data.years.includes(y)) { data.years.push(y); data.years.sort((a, b) => a - b); }
+    } else {
+      delete data.dist[k]; delete data.cnt[k];
+    }
+  });
+}
+function newId() { return 'r' + Date.now().toString(36) + Math.random().toString(36).slice(2, 6); }
+
+let editingId = null;
+function submitRun() {
+  const date = document.getElementById('fDate').value;
+  const km = round2(+document.getElementById('fKm').value);
+  const tRaw = document.getElementById('fTime').value;
+  const t = parseTime(tRaw);
+  const memo = document.getElementById('fMemo').value.trim();
+  if (!date) { toast('日付を入れてください'); return; }
+  if (!(km > 0)) { toast('距離を入れてください'); document.getElementById('fKm').focus(); return; }
+  if (km > 200) { toast('距離が大きすぎます（km で入れてください）'); return; }
+  if (Number.isNaN(t)) { toast('時間は「58:30」のように入れてください'); document.getElementById('fTime').focus(); return; }
+  const k = monthKeyOf(date);
+  const [y, m] = date.split('-').map(Number);
+
+  // この月に「月の合計」だけが手入力されていたら、それを1件の記録として残してから足す
+  const others = data.runs.filter(r => monthKeyOf(r.d) === k && r.id !== editingId);
+  if (!others.length && +data.dist[k] > 0) {
+    const md = +data.dist[k], mc = +data.cnt[k] || 0;
+    if (!confirm(`${y}年${m}月は、月の合計 ${fmtKm(md)} km（${mc}回）がすでに入っています。\n\n`
+      + `この合計を「それまでの合計」として1件残して、今回の記録を足しますか？\n`
+      + `（以後、この月は1回ごとの記録の合計になります）`)) return;
+    data.runs.push({ id: newId(), d: `${y}-${pad2(m)}-01`, km: md, t: null, n: Math.max(1, mc), memo: 'それまでの合計（月の合計から移したもの）' });
+  }
+
+  const keys = [k];
+  if (editingId) {
+    const r = data.runs.find(x => x.id === editingId);
+    if (r) { keys.push(monthKeyOf(r.d)); Object.assign(r, { d: date, km, t: t || null, memo }); }
+  } else {
+    data.runs.push({ id: newId(), d: date, km, t: t || null, n: 1, memo });
+  }
+  const wasEdit = !!editingId;
+  applyRuns(keys);
+  save();
+  resetForm();
+  calY = y; calM = m;
+  render();
+  const pace = t ? `（${fmtPace(t / km)}/km）` : '';
+  toast(wasEdit ? '✏️ 記録を直しました' : `🏃 ${m}/${+date.slice(8)} ${fmtKm(km)} km を記録しました${pace}`);
+}
+function resetForm() {
+  editingId = null;
+  document.getElementById('fDate').value = TODAY;
+  ['fKm', 'fTime', 'fMemo'].forEach(id => document.getElementById(id).value = '');
+  document.getElementById('recBtn').textContent = '記録する';
+  document.getElementById('recTitle').textContent = '✏️ 走った記録を入れる';
+  document.getElementById('recCard').classList.remove('editing');
+  document.getElementById('cancelEdit').style.display = 'none';
+  livePace();
+}
+function cancelEdit() { resetForm(); }
+function editRun(id) {
+  const r = data.runs.find(x => x.id === id);
+  if (!r) return;
+  editingId = id;
+  document.getElementById('fDate').value = r.d;
+  document.getElementById('fKm').value = r.km;
+  document.getElementById('fTime').value = r.t ? fmtTime(r.t) : '';
+  document.getElementById('fMemo').value = r.memo || '';
+  document.getElementById('recBtn').textContent = '直す';
+  document.getElementById('recTitle').textContent = '✏️ 記録を直す';
+  document.getElementById('recCard').classList.add('editing');
+  document.getElementById('cancelEdit').style.display = '';
+  livePace();
+  document.getElementById('recCard').scrollIntoView({ behavior: 'smooth', block: 'center' });
+  setTimeout(() => document.getElementById('fKm').focus(), 350);
+}
+function deleteRun(id) {
+  const r = data.runs.find(x => x.id === id);
+  if (!r) return;
+  const dt = parseYmd(r.d);
+  if (!confirm(`${dt.getMonth() + 1}/${dt.getDate()} の ${fmtKm(r.km)} km を消しますか？\n（保存履歴から戻せます）`)) return;
+  snapshot(true);
+  data.runs = data.runs.filter(x => x.id !== id);
+  if (editingId === id) resetForm();
+  applyRuns([monthKeyOf(r.d)]);
+  save();
+  render();
+  toast('🗑 消しました');
+}
+function livePace() {
+  const km = +document.getElementById('fKm').value, t = parseTime(document.getElementById('fTime').value);
+  document.getElementById('paceLive').textContent = (km > 0 && t > 0) ? `→ ペース ${fmtPace(t / km)} /km` : '';
+}
+['fKm', 'fTime', 'fMemo', 'fDate'].forEach(id => document.getElementById(id).addEventListener('keydown', e => {
+  if (e.key === 'Enter' && !e.isComposing) { e.preventDefault(); submitRun(); }
+}));
+
+// ===== 描画 =====
 function render() {
   renderTable('distTable', data.dist, true);
   renderTable('cntTable',  data.cnt,  false);
-  renderSummary();
-  renderGoal();
+  renderHero();
+  renderCal();
+  renderList();
+  renderProj();
   renderBest();
   renderEhime();
   renderCharts();
 }
 
 // ============================================================
-// 🎯 今月の目標＆ペース
+// 今月（ヒーロー）＋目標
 // ============================================================
 function onGoalChange(el) {
   const v = +el.value || 0;
   data.goalMonthly = v > 0 ? v : undefined;
   save();
-  renderGoal();
+  renderHero();
 }
-function renderGoal() {
+function weekRange(dt) {   // 月曜はじまり
+  const mon = new Date(dt.getFullYear(), dt.getMonth(), dt.getDate() - (dt.getDay() + 6) % 7);
+  const sun = new Date(mon.getFullYear(), mon.getMonth(), mon.getDate() + 6);
+  return [ymd(mon), ymd(sun)];
+}
+function renderHero() {
+  const k = key(CUR_YEAR, CUR_MONTH);
+  const done = +data.dist[k] || 0, cnt = +data.cnt[k] || 0;
+  document.getElementById('heroLabel').textContent = `${CUR_YEAR}年${CUR_MONTH}月の距離`;
+  document.getElementById('heroKm').textContent = fmtKm(done);
+  const mRuns = runsOfMonth(k), pace = paceOf(mRuns);
+  const days = new Set(mRuns.map(r => r.d)).size;
+  let sub = `<b>${cnt}</b> 回`;
+  if (cnt) sub += `・1回平均 <b>${fmtKm(done / cnt)}</b> km`;
+  if (pace) sub += `・平均ペース <b>${fmtPace(pace)}</b>/km`;
+  document.getElementById('heroSub').innerHTML = sub;
+
+  // 目標リング
   const goal = +data.goalMonthly || 0;
   const inp = document.getElementById('goalInput');
   if (document.activeElement !== inp) inp.value = goal || '';
-  const done = +data.dist[key(CUR_YEAR, CUR_MONTH)] || 0;
-  const bar = document.getElementById('goalBar');
-  const txt = document.getElementById('goalText');
+  const C = 2 * Math.PI * 52;
+  const fg = document.getElementById('ringFg');
+  fg.setAttribute('stroke-dasharray', C.toFixed(1));
+  const msg = document.getElementById('heroMsg');
   if (!goal) {
-    bar.style.width = '0%'; bar.classList.remove('done');
-    txt.innerHTML = '目標のkm数を入れると、今月の進捗と「1日あと何km走ればいいか」が出ます（例: 150）';
+    fg.setAttribute('stroke-dashoffset', C.toFixed(1));
+    document.getElementById('ringPct').textContent = '—';
+    document.getElementById('ringLbl').textContent = '目標を入れてね';
+    msg.style.display = 'none';
+  } else {
+    const p = done / goal;
+    fg.setAttribute('stroke-dashoffset', (C * (1 - Math.min(1, p))).toFixed(1));
+    document.getElementById('ringPct').innerHTML = `${Math.floor(p * 100)}<small>%</small>`;
+    document.getElementById('ringLbl').textContent = `目標 ${goal.toLocaleString()} km`;
+    const daysInMonth = new Date(CUR_YEAR, CUR_MONTH, 0).getDate();
+    const remainDays = daysInMonth - now.getDate() + 1;   // 今日を含む残り日数
+    msg.style.display = '';
+    if (done >= goal) msg.innerHTML = `🎉 目標達成！ <b>+${fmtKm(done - goal)} km</b> 上乗せ中`;
+    else msg.innerHTML = `あと <b>${fmtKm(goal - done)} km</b>・残り${remainDays}日 → 1日 <b>${fmtKm((goal - done) / remainDays)} km</b> ペースで達成`;
+  }
+
+  // 今週
+  const [ws, we] = weekRange(now);
+  const wRuns = data.runs.filter(r => r.d >= ws && r.d <= we && (+r.n || 1) === 1);
+  const wKm = wRuns.reduce((s, r) => s + +r.km, 0);
+  document.getElementById('cWeek').innerHTML = `${fmtKm(wKm)}<small>km</small>`;
+  document.getElementById('cWeekSub').textContent = wRuns.length ? `${wRuns.length}回` : (data.runs.length ? 'まだ走っていません' : '1回ごとに記録すると出ます');
+
+  // 先月
+  const prevY = CUR_MONTH === 1 ? CUR_YEAR - 1 : CUR_YEAR, prevM = CUR_MONTH === 1 ? 12 : CUR_MONTH - 1;
+  const prevMonth = +data.dist[key(prevY, prevM)] || 0;
+  document.getElementById('cPrev').innerHTML = `${fmtKm(prevMonth)}<small>km</small>`;
+  document.getElementById('cMonthDelta').innerHTML = prevMonth ? sumDelta(done - prevMonth, '今月−先月') : '<span style="font-size:11px;color:#b8c4e0;">先月が未入力</span>';
+
+  // 今年（前年の同時期 1〜今月 と比較）
+  const sumPeriod = (y, mEnd) => MONTHS.filter(m => m <= mEnd).reduce((s, m) => s + (+data.dist[key(y,m)] || 0), 0);
+  const thisYear = sumPeriod(CUR_YEAR, 12), lastYearSame = sumPeriod(CUR_YEAR - 1, CUR_MONTH);
+  document.getElementById('cYearL').textContent = `${CUR_YEAR}年`;
+  document.getElementById('cYear').innerHTML = `${Math.round(thisYear).toLocaleString()}<small>km</small>`;
+  document.getElementById('cYearDelta').innerHTML = sumDelta(thisYear - lastYearSame, '前年同期比');
+
+  // 累計
+  const total = grandTotal(data.dist);
+  document.getElementById('cTotal').innerHTML = `${Math.round(total).toLocaleString()}<small>km</small>`;
+  document.getElementById('cTotalSub').textContent = `${data.years[0]}年から・${grandTotal(data.cnt).toLocaleString()}回`;
+}
+function sumDelta(diff, label) {
+  diff = round2(diff);
+  if (diff === 0) return `<span class="delta flat" title="${label}">±0</span>`;
+  const cls = diff > 0 ? 'up' : 'down';
+  return `<span class="delta ${cls}" title="${label}">${diff > 0 ? '▲' : '▼'} ${Math.round(Math.abs(diff)).toLocaleString()} km</span>`;
+}
+
+// ============================================================
+// 📅 カレンダー＋この月の記録
+// ============================================================
+let calY = CUR_YEAR, calM = CUR_MONTH;
+function moveCal(d) { calM += d; if (calM < 1) { calM = 12; calY--; } if (calM > 12) { calM = 1; calY++; } renderCal(); renderList(); }
+function calToday() { calY = CUR_YEAR; calM = CUR_MONTH; renderCal(); renderList(); }
+function pickDay(s) {
+  if (s > TODAY) { toast('未来の日には記録できません'); return; }
+  if (!editingId) resetForm();
+  document.getElementById('fDate').value = s;
+  document.getElementById('recCard').scrollIntoView({ behavior: 'smooth', block: 'center' });
+  setTimeout(() => document.getElementById('fKm').focus(), 350);
+}
+function calLevel(km) { return km >= 15 ? 'l4' : km >= 10 ? 'l3' : km >= 5 ? 'l2' : km > 0 ? 'l1' : ''; }
+function renderCal() {
+  const k = key(calY, calM);
+  document.getElementById('calTitle').textContent = `${calY}年${calM}月`;
+  const list = runsOfMonth(k);
+  const byDay = {};
+  list.forEach(r => { byDay[r.d] = (byDay[r.d] || 0) + +r.km; });
+  const dist = +data.dist[k] || 0, cnt = +data.cnt[k] || 0, pace = paceOf(list);
+  const longest = Math.max(0, ...list.filter(r => (+r.n || 1) === 1).map(r => +r.km));
+  document.getElementById('calStats').innerHTML = `
+    <div class="cal-stat"><div class="l">距離</div><div class="v num">${fmtKm(dist)}<small style="font-size:11px"> km</small></div></div>
+    <div class="cal-stat"><div class="l">回数</div><div class="v num">${cnt}<small style="font-size:11px"> 回</small></div></div>
+    <div class="cal-stat"><div class="l">平均ペース</div><div class="v num">${pace ? fmtPace(pace) : '—'}</div></div>
+    <div class="cal-stat"><div class="l">いちばん長い</div><div class="v num">${longest ? fmtKm(longest) : '—'}<small style="font-size:11px">${longest ? ' km' : ''}</small></div></div>`;
+  document.getElementById('calNote').innerHTML = (!list.length && dist > 0)
+    ? `<div class="cal-note">この月は「月の合計」だけが入っています（${fmtKm(dist)} km・${cnt}回）。この月に1回ごとの記録を足すと、合計を1件として残して切り替えます。</div>` : '';
+
+  const first = new Date(calY, calM - 1, 1);
+  const offset = (first.getDay() + 6) % 7;   // 月曜はじまり
+  const days = new Date(calY, calM, 0).getDate();
+  let html = ['月','火','水','木','金','土','日'].map((w, i) => `<div class="cal-dow ${i === 5 ? 'sat' : i === 6 ? 'sun' : ''}">${w}</div>`).join('');
+  for (let i = 0; i < offset; i++) html += `<div class="cal-cell empty"></div>`;
+  for (let d = 1; d <= days; d++) {
+    const s = `${calY}-${pad2(calM)}-${pad2(d)}`;
+    const km = byDay[s] || 0;
+    const cls = ['cal-cell', calLevel(km), s === TODAY ? 'today' : '', s > TODAY ? 'future' : ''].join(' ');
+    html += `<button class="${cls}" onclick="pickDay('${s}')" title="${km ? fmtKm(km) + ' km' : ''}"><span class="d">${d}</span><span class="k num">${km ? (km >= 100 ? Math.round(km) : round2(km).toFixed(1).replace(/\.0$/, '')) : ''}</span></button>`;
+  }
+  document.getElementById('calGrid').innerHTML = html;
+}
+function esc(s) { return String(s).replace(/[&<>"']/g, c => ({ '&':'&amp;', '<':'&lt;', '>':'&gt;', '"':'&quot;', "'":'&#39;' }[c])); }
+function renderList() {
+  const k = key(calY, calM);
+  const list = runsOfMonth(k).sort((a, b) => a.d < b.d ? 1 : a.d > b.d ? -1 : (a.id < b.id ? 1 : -1));
+  document.getElementById('listTitle').textContent = `${calM}月の記録`;
+  document.getElementById('listSum').textContent = list.length ? `${list.length}件` : '';
+  const box = document.getElementById('runList');
+  if (!list.length) {
+    box.innerHTML = `<div class="run-empty">${+data.dist[k] > 0 ? 'この月は月の合計だけです。上の欄から1回ごとの記録を入れられます。' : 'まだ記録がありません。上の欄から入れてください。'}</div>`;
     return;
   }
-  const pct = Math.min(100, done / goal * 100);
-  bar.style.width = pct.toFixed(1) + '%';
-  bar.classList.toggle('done', done >= goal);
-  const daysInMonth = new Date(CUR_YEAR, CUR_MONTH, 0).getDate();
-  const remainDays = daysInMonth - now.getDate() + 1;   // 今日を含む残り日数
-  if (done >= goal) {
-    txt.innerHTML = `<span class="goal-done-msg">🎉 目標達成！ ${round2(done).toLocaleString()} km / ${goal.toLocaleString()} km（+${round2(done-goal).toLocaleString()} km 上乗せ中）</span>`;
-  } else {
-    const remain = goal - done;
-    const perDay = remain / remainDays;
-    txt.innerHTML = `今月 <b>${round2(done).toLocaleString()} km</b> / ${goal.toLocaleString()} km（${pct.toFixed(0)}%）　`
-      + `残り <b>${remainDays}日</b> で あと <b>${round2(remain).toLocaleString()} km</b> → 1日 <b>${round2(perDay)} km</b> ペースで達成！`;
+  box.innerHTML = list.map(r => {
+    const dt = parseYmd(r.d), n = +r.n || 1;
+    const t = +r.t || 0;
+    return `<div class="run-row">
+      <div class="run-date">${dt.getMonth() + 1}/${dt.getDate()}<small>（${WEEK[dt.getDay()]}）</small></div>
+      <div class="run-main">
+        <span class="run-km num">${fmtKm(r.km)}<small>km</small></span>
+        ${n > 1 ? `<span class="run-t">${n}回分</span>` : ''}
+        ${t ? `<span class="run-t num">${fmtTime(t)}</span><span class="run-pace num">${fmtPace(t / r.km)}/km</span>` : ''}
+        ${r.memo ? `<span class="run-memo">${esc(r.memo)}</span>` : ''}
+      </div>
+      <div class="run-ops"><button onclick="editRun('${r.id}')">直す</button><button class="del" onclick="deleteRun('${r.id}')">消す</button></div>
+    </div>`;
+  }).join('');
+}
+
+// ============================================================
+// 📈 今年の着地予想
+// ============================================================
+function renderProj() {
+  const yearTotal = y => rowTotal(data.dist, y);
+  const done = yearTotal(CUR_YEAR);
+  const lastY = yearTotal(CUR_YEAR - 1);
+  let bestY = 0, bestV = 0;
+  data.years.forEach(y => { if (y !== CUR_YEAR) { const v = yearTotal(y); if (v > bestV) { bestV = v; bestY = y; } } });
+
+  // 今月が入っていれば今日まで、まだなら先月末までの記録として計算する
+  const curIn = +data.dist[key(CUR_YEAR, CUR_MONTH)] > 0;
+  const upTo = curIn ? now : new Date(CUR_YEAR, CUR_MONTH - 1, 0);
+  const jan1 = new Date(CUR_YEAR, 0, 1);
+  const daysInYear = Math.round((new Date(CUR_YEAR + 1, 0, 1) - jan1) / 864e5);
+  const daysDone = upTo < jan1 ? 0 : Math.floor((upTo - jan1) / 864e5) + 1;
+  const body = document.getElementById('projBody');
+  document.getElementById('projTitle').textContent = `📈 ${CUR_YEAR}年の着地予想`;
+  if (!done || daysDone < 1) {
+    body.innerHTML = `<div class="proj-sub">${CUR_YEAR}年の記録が入ると、「このペースなら今年は何km」が出ます。</div>`;
+    return;
   }
+  const fore = done / daysDone * daysInYear;
+  const upToLabel = curIn ? '今日' : `${upTo.getMonth() + 1}月末`;
+  const max = Math.max(fore, lastY, bestV, 1);
+  const pct = v => (v / max * 100).toFixed(1) + '%';
+  const row = (label, inner, val) => `<div class="proj-bar-row"><span class="pl">${label}</span><span class="pt">${inner}</span><span class="pv num">${val}</span></div>`;
+
+  let html = `<div class="proj-main">${upToLabel}までで <b>${fmtKm(done)} km</b>。このペースなら今年は
+    <span class="big num">約${Math.round(fore).toLocaleString()}</span> km</div>`;
+  html += `<div class="proj-bars">`;
+  html += row('今年（予想）', `<span class="fore" style="width:${pct(fore)}"></span><span class="done" style="width:${pct(done)};position:relative;"></span>`, `${Math.round(fore).toLocaleString()} km`);
+  if (lastY) html += row(`${CUR_YEAR - 1}年`, `<span class="last" style="width:${pct(lastY)}"></span>`, `${Math.round(lastY).toLocaleString()} km`);
+  if (bestV && bestY !== CUR_YEAR - 1) html += row(`${bestY}年（最高）`, `<span class="best" style="width:${pct(bestV)}"></span>`, `${Math.round(bestV).toLocaleString()} km`);
+  html += `</div>`;
+
+  const monthsLeft = 12 - (curIn ? CUR_MONTH : CUR_MONTH - 1);
+  const msgs = [];
+  if (lastY) {
+    const need = lastY - done;
+    if (need <= 0) msgs.push(`🎉 もう${CUR_YEAR - 1}年の ${Math.round(lastY).toLocaleString()} km を超えました！`);
+    else if (monthsLeft > 0) msgs.push(`${CUR_YEAR - 1}年を超えるには、残り${monthsLeft}か月で あと <b>${fmtKm(need)} km</b>（月 <b>${Math.ceil(need / monthsLeft).toLocaleString()} km</b> ペース）`);
+  }
+  // 自己ベスト年は、残りの月で「歴代ベスト月」以下のペースで届くときだけ出す
+  const bestMonth = Math.max(0, ...Object.values(data.dist).map(v => +v || 0));
+  if (bestV && bestY !== CUR_YEAR - 1 && done < bestV && monthsLeft > 0 && (bestV - done) / monthsLeft <= bestMonth) {
+    const need = bestV - done;
+    msgs.push(`自己ベスト（${bestY}年）まで あと <b>${fmtKm(need)} km</b>（月 <b>${Math.ceil(need / monthsLeft).toLocaleString()} km</b> ペース）`);
+  }
+  if (!curIn && CUR_MONTH > 1) msgs.push(`<span style="color:#94a3b8;">※ ${CUR_MONTH}月はまだ入っていないので、${CUR_MONTH - 1}月末までの記録で計算しています。</span>`);
+  html += `<div class="proj-sub">${msgs.join('<br>')}</div>`;
+  body.innerHTML = html;
 }
 
 // ============================================================
@@ -603,69 +1247,95 @@ function calcStreak() {
   return streak;
 }
 function renderBest() {
-  const total = grandTotal(data.dist);
-  // 歴代ベスト月
+  const total = grandTotal(data.dist), totalCnt = grandTotal(data.cnt);
   let bmK = '', bmV = 0;
   Object.keys(data.dist).forEach(k => { const v = +data.dist[k]; if (v > bmV) { bmV = v; bmK = k; } });
   const bmLabel = bmK ? bmK.replace('-', '年') + '月' : '—';
-  // 歴代ベスト年
   let byY = 0, byV = 0;
   data.years.forEach(y => { const v = rowTotal(data.dist, y); if (v > byV) { byV = v; byY = y; } });
   const streak = calcStreak();
 
-  let html = `<div class="best-flex">
-    <div class="best-chip"><div class="bc-label">歴代ベスト月</div><div class="bc-value">${round2(bmV).toLocaleString()} km</div><div class="bc-sub">${bmLabel}</div></div>
-    <div class="best-chip"><div class="bc-label">歴代ベスト年</div><div class="bc-value">${round2(byV).toLocaleString()} km</div><div class="bc-sub">${byY || '—'}年</div></div>
-    <div class="best-chip"><div class="bc-label">連続記録</div><div class="bc-value">${streak} か月</div><div class="bc-sub">毎月走り続けています</div></div>
+  let html = `<div class="total-row">
+    <div class="best-chip"><div class="bc-label">累計距離</div><div class="bc-value num">${Math.round(total).toLocaleString()}</div><div class="bc-sub">km</div></div>
+    <div class="best-chip"><div class="bc-label">累計回数</div><div class="bc-value num">${totalCnt.toLocaleString()}</div><div class="bc-sub">回</div></div>
+    <div class="best-chip"><div class="bc-label">平均距離</div><div class="bc-value num">${totalCnt ? fmtKm(total / totalCnt) : 0}</div><div class="bc-sub">km / 回</div></div>
+    <div class="best-chip"><div class="bc-label">活動年数</div><div class="bc-value num">${data.years.length}</div><div class="bc-sub">年</div></div>
   </div>`;
-
+  html += `<div class="best-flex">
+    <div class="best-chip"><div class="bc-label">歴代ベスト月</div><div class="bc-value num">${fmtKm(bmV)} km</div><div class="bc-sub">${bmLabel}</div></div>
+    <div class="best-chip"><div class="bc-label">歴代ベスト年</div><div class="bc-value num">${Math.round(byV).toLocaleString()} km</div><div class="bc-sub">${byY || '—'}年</div></div>
+    <div class="best-chip"><div class="bc-label">連続記録</div><div class="bc-value num">${streak} か月</div><div class="bc-sub">毎月走り続けています</div></div>`;
+  const singles = data.runs.filter(r => (+r.n || 1) === 1);
+  if (singles.length) {
+    const lr = singles.reduce((b, r) => +r.km > +b.km ? r : b);
+    html += `<div class="best-chip"><div class="bc-label">いちばん長いラン</div><div class="bc-value num">${fmtKm(lr.km)} km</div><div class="bc-sub">${lr.d.replace(/-/g, '/')}</div></div>`;
+    const timed = singles.filter(r => +r.t > 0 && +r.km >= 3);
+    if (timed.length) {
+      const fr = timed.reduce((b, r) => r.t / r.km < b.t / b.km ? r : b);
+      html += `<div class="best-chip"><div class="bc-label">最速ペース（3km以上）</div><div class="bc-value num">${fmtPace(fr.t / fr.km)}</div><div class="bc-sub">${fr.d.replace(/-/g, '/')}・${fmtKm(fr.km)} km</div></div>`;
+    }
+  }
+  html += `</div>`;
   html += `<div class="badge-row">` + MILESTONES.map(ms => {
     const got = total >= ms.km;
-    return `<div class="badge ${got ? '' : 'locked'}"><div class="b-icon">${ms.icon}</div><div class="b-label">${ms.label.replace('\n','<br>')}${got ? '' : ''}</div></div>`;
+    return `<div class="badge ${got ? '' : 'locked'}"><div class="b-icon">${ms.icon}</div><div class="b-label">${ms.label.replace('\n','<br>')}</div></div>`;
   }).join('') + `</div>`;
-
   const next = MILESTONES.find(ms => total < ms.km);
-  if (next) {
-    html += `<div class="next-milestone">次のバッジ「${next.label.replace('\n','')}」まで あと <b>${round2(next.km - total).toLocaleString()} km</b>（現在 ${round2(total).toLocaleString()} km）</div>`;
-  } else {
-    html += `<div class="next-milestone">🌏 全バッジ制覇！地球を一周しました！</div>`;
-  }
+  html += next
+    ? `<div class="next-milestone">次のバッジ「${next.label.replace('\n','')}」まで あと <b>${fmtKm(next.km - total)} km</b></div>`
+    : `<div class="next-milestone">🌏 全バッジ制覇！地球を一周しました！</div>`;
   document.getElementById('bestBody').innerHTML = html;
 }
 
 // ============================================================
-// 推移グラフ（年間・直近12ヶ月）
+// 推移グラフ（年間・直近12ヶ月・直近12週）
 // ============================================================
 function renderCharts() {
-  // 年間距離：今年はピンク、過去最高の年はゴールド
   const yearTotals = data.years.map(y => ({ y, total: rowTotal(data.dist, y) }));
   const bestYear = yearTotals.reduce((b, c) => c.total > b.total ? c : b, { total: 0 }).y;
   drawBars('yearChart', yearTotals.map(({ y, total }) => ({
-    label: `'${String(y).slice(2)}`,
-    value: total,
-    color: y === CUR_YEAR ? '#fb7185' : (y === bestYear ? '#f59e0b' : '#2ec4b6'),
-    cur: y === CUR_YEAR,
+    label: `'${String(y).slice(2)}`, value: total,
+    color: y === CUR_YEAR ? '#e0a526' : (y === bestYear ? '#2f7a55' : '#7cc38a'), cur: y === CUR_YEAR,
   })));
 
-  // 直近12ヶ月（今月を含む）
   const items = [];
   let y = CUR_YEAR, m = CUR_MONTH;
   for (let i = 0; i < 12; i++) {
     items.unshift({
       label: (m === 1 ? `${String(y).slice(2)}/1` : `${m}月`),
       value: +data.dist[key(y, m)] || 0,
-      color: (y === CUR_YEAR && m === CUR_MONTH) ? '#fb7185' : '#60a5fa',
+      color: (y === CUR_YEAR && m === CUR_MONTH) ? '#e0a526' : '#8cc7a1',
       cur: (y === CUR_YEAR && m === CUR_MONTH),
     });
     m--; if (m === 0) { m = 12; y--; }
   }
   drawBars('monthChart', items);
+
+  // 直近12週（1回ごとの記録があるときだけ）
+  const singles = data.runs.filter(r => (+r.n || 1) === 1);
+  const wb = document.getElementById('weekBox');
+  if (!singles.length) { wb.style.display = 'none'; return; }
+  wb.style.display = '';
+  const weeks = [];
+  const [thisMon] = weekRange(now);
+  const mon0 = parseYmd(thisMon);
+  for (let i = 11; i >= 0; i--) {
+    const s = new Date(mon0.getFullYear(), mon0.getMonth(), mon0.getDate() - i * 7);
+    const e = new Date(s.getFullYear(), s.getMonth(), s.getDate() + 6);
+    const ss = ymd(s), ee = ymd(e);
+    weeks.push({
+      label: `${s.getMonth() + 1}/${s.getDate()}`,
+      value: singles.filter(r => r.d >= ss && r.d <= ee).reduce((a, r) => a + +r.km, 0),
+      color: i === 0 ? '#e0a526' : '#6cc077', cur: i === 0,
+    });
+  }
+  drawBars('weekChart', weeks);
 }
 
 function drawBars(canvasId, items) {
   const canvas = document.getElementById(canvasId);
   if (!canvas) return;
-  const W = Math.max(300, canvas.parentElement.clientWidth || 500);
+  const W = Math.max(280, canvas.parentElement.clientWidth || 500);
   const H = 190;
   const dpr = window.devicePixelRatio || 1;
   canvas.width = W * dpr; canvas.height = H * dpr;
@@ -673,39 +1343,28 @@ function drawBars(canvasId, items) {
   const ctx = canvas.getContext('2d');
   ctx.scale(dpr, dpr);
   ctx.clearRect(0, 0, W, H);
-
   const max = Math.max(...items.map(i => i.value), 1);
-  const padT = 18, padB = 22, padX = 6;
-  const innerW = W - padX * 2;
-  const bw = innerW / items.length;
-
+  const padT = 18, padB = 22, padX = 4;
+  const bw = (W - padX * 2) / items.length;
   items.forEach((it, i) => {
     const h = (it.value / max) * (H - padT - padB);
-    const x = padX + i * bw + bw * 0.15;
-    const w = bw * 0.7;
-    const yPos = H - padB - h;
+    const x = padX + i * bw + bw * 0.15, w = bw * 0.7, yPos = H - padB - h;
     ctx.fillStyle = it.color;
     ctx.beginPath();
-    if (ctx.roundRect) ctx.roundRect(x, yPos, w, Math.max(h, 1), 3);
-    else ctx.rect(x, yPos, w, Math.max(h, 1));
+    if (ctx.roundRect) ctx.roundRect(x, yPos, w, Math.max(h, 1), [5, 5, 2, 2]); else ctx.rect(x, yPos, w, Math.max(h, 1));
     ctx.fill();
     ctx.textAlign = 'center';
     if (it.value > 0) {
-      ctx.fillStyle = '#475569';
-      ctx.font = '9px sans-serif';
+      ctx.fillStyle = '#3f5a4b'; ctx.font = '9.5px -apple-system, sans-serif';
       ctx.fillText(Math.round(it.value).toLocaleString(), x + w / 2, yPos - 4);
     }
-    ctx.fillStyle = it.cur ? '#be185d' : '#64748b';
-    ctx.font = (it.cur ? 'bold ' : '') + '10px sans-serif';
+    ctx.fillStyle = it.cur ? '#b45309' : '#5f7a6b';
+    ctx.font = (it.cur ? 'bold ' : '') + '10px -apple-system, sans-serif';
     ctx.fillText(it.label, x + w / 2, H - 7);
   });
 }
-
 let chartResizeTimer = null;
-window.addEventListener('resize', () => {
-  clearTimeout(chartResizeTimer);
-  chartResizeTimer = setTimeout(renderCharts, 200);
-});
+window.addEventListener('resize', () => { clearTimeout(chartResizeTimer); chartResizeTimer = setTimeout(renderCharts, 200); });
 
 // 愛媛県一周 ≒ 1,704 km（海岸線）
 const EHIME_PERIMETER = 1704;
@@ -713,21 +1372,15 @@ function renderEhime() {
   const total = grandTotal(data.dist);
   const laps = Math.floor(total / EHIME_PERIMETER);
   const remain = total - laps * EHIME_PERIMETER;
-  const frac = remain / EHIME_PERIMETER;            // 現在の周の進捗 0〜1
+  const frac = remain / EHIME_PERIMETER;
   const toNext = EHIME_PERIMETER - remain;
-
   document.getElementById('lapBig').innerHTML = `${laps + 1}<span>周目</span>`;
   document.getElementById('lapBar').style.width = (frac * 100).toFixed(1) + '%';
-  document.getElementById('lapProg').innerHTML =
-    `今の周：<b>${round2(remain).toLocaleString()} km</b> / 1,704 km（${(frac*100).toFixed(1)}%）`;
+  document.getElementById('lapProg').innerHTML = `今の周：<b>${fmtKm(remain)} km</b> / 1,704 km（${(frac*100).toFixed(1)}%）`;
   document.getElementById('lapDetail').innerHTML =
-    `累計 <b>${round2(total).toLocaleString()} km</b> ＝ 愛媛県を <b>${laps}周</b> 完走！<br>` +
-    `次の${laps+1}周目まで あと <b>${round2(toNext).toLocaleString()} km</b>`;
-
+    `累計 <b>${fmtKm(total)} km</b> ＝ 愛媛県を <b>${laps}周</b> 完走！<br>次の${laps+1}周目まで あと <b>${fmtKm(toNext)} km</b>`;
   const cheers = ['さあ出発！🏃','いい調子！','県境を快走中！','海岸線を制覇！','もう一周いこう！','止まらない走り！🔥'];
   document.getElementById('lapCheer').textContent = cheers[Math.min(laps, cheers.length - 1)];
-
-  // SVG 進捗トレース＆ランナー配置（パスの起点＝内子の最寄り海岸・長浜）
   const bg = document.getElementById('ehimeBg');
   const prog = document.getElementById('ehimeProg');
   const runner = document.getElementById('ehimeRunner');
@@ -740,84 +1393,38 @@ function renderEhime() {
   runner.setAttribute('transform', `translate(${pt.x}, ${pt.y - 4})`);
 }
 
+// ============================================================
+// 📏 月別の表（1回ごとの記録がある月は自動計算＝手で直せない）
+// ============================================================
+function runMonthSet() { return new Set(data.runs.map(r => monthKeyOf(r.d))); }
 function renderTable(id, obj, isDist) {
   const tbl = document.getElementById(id);
+  const auto = runMonthSet();
   const thead = `<thead><tr>
     <th class="year-col" style="min-width:46px;">年</th>
     ${MONTHS.map(m => `<th style="min-width:56px;" class="${m === CUR_MONTH ? 'cur-month-col' : ''}">${m}月</th>`).join('')}
     <th style="min-width:70px; background:#ca8a04;">合計</th>
   </tr></thead>`;
-
   const rows = data.years.map(y => {
     const total = rowTotal(obj, y);
-    // その年のベスト月（最大値）をハイライト
     let bestM = 0, bestV = 0;
     MONTHS.forEach(m => { const v = +obj[key(y,m)] || 0; if (v > bestV) { bestV = v; bestM = m; } });
     const cells = MONTHS.map(m => {
       const v = obj[key(y,m)] ?? '';
       const isCur = (y === CUR_YEAR && m === CUR_MONTH);
       const isBest = (m === bestM && bestV > 0);
-      const cls = (isCur ? 'cur-month ' : '')
-        + (isBest ? (isDist ? 'best-dist ' : 'best-cnt ') : '')
-        + (isDist ? heatClass(+v || 0) : '');
-      return `<td class="${cls}" ${isBest ? `title="この年のベスト月"` : ''}><input class="ci" type="number" step="${isDist ? 0.01 : 1}" min="0"
-        data-y="${y}" data-m="${m}" data-type="${isDist ? 'd' : 'c'}"
-        value="${v}" onchange="onInput(this)" placeholder=""></td>`;
+      const isAuto = auto.has(key(y, m));
+      const cls = (isCur ? 'cur-month ' : '') + (isBest ? (isDist ? 'best-dist ' : 'best-cnt ') : '') + (isDist ? heatClass(+v || 0) : '');
+      return `<td class="${cls}" ${isAuto ? 'title="1回ごとの記録から自動計算（上の記録欄で直してください）"' : (isBest ? 'title="この年のベスト月"' : '')}><input class="ci" type="number" step="${isDist ? 0.01 : 1}" min="0"
+        data-y="${y}" data-m="${m}" data-type="${isDist ? 'd' : 'c'}" value="${v}" ${isAuto ? 'readonly' : 'onchange="onInput(this)"'}></td>`;
     }).join('');
     const totalStr = total > 0 ? (isDist ? round2(total) : total) : '';
-    return `<tr>
-      <td class="year-cell">${y}</td>
-      ${cells}
-      <td class="total-cell" id="${isDist?'dt':'ct'}-${y}">${totalStr}</td>
-    </tr>`;
+    return `<tr><td class="year-cell">${y}</td>${cells}<td class="total-cell">${totalStr}</td></tr>`;
   }).join('');
-
   const gt = grandTotal(obj);
-  const gtStr = isDist ? round2(gt) : gt;
-  const foot = `<tfoot><tr>
-    <td class="grand-total">合計</td>
-    ${MONTHS.map(() => '<td></td>').join('')}
-    <td class="grand-total" id="${isDist?'d':'c'}-grand">${gt > 0 ? gtStr : ''}</td>
-  </tr></tfoot>`;
-
+  const foot = `<tfoot><tr><td class="grand-total">合計</td>${MONTHS.map(() => '<td></td>').join('')}<td class="grand-total">${gt > 0 ? (isDist ? round2(gt) : gt) : ''}</td></tr></tfoot>`;
   tbl.innerHTML = thead + `<tbody>${rows}</tbody>` + foot;
 }
-
-function renderSummary() {
-  const totalDist = round2(grandTotal(data.dist));
-  const totalCnt  = grandTotal(data.cnt);
-  const avg = totalCnt > 0 ? round2(totalDist / totalCnt) : 0;
-  document.getElementById('s-dist').textContent  = totalDist.toLocaleString();
-  document.getElementById('s-cnt').textContent   = totalCnt.toLocaleString();
-  document.getElementById('s-avg').textContent   = avg;
-  document.getElementById('s-years').textContent = data.years.length;
-
-  // 今年の距離（前年の同時期 1〜今月 と比較）
-  const sumPeriod = (y, mEnd) => MONTHS.filter(m => m <= mEnd)
-    .reduce((s, m) => s + (+data.dist[key(y,m)] || 0), 0);
-  const thisYear = sumPeriod(CUR_YEAR, 12);
-  const lastYearSame = sumPeriod(CUR_YEAR - 1, CUR_MONTH);
-  document.getElementById('s-year').textContent = round2(thisYear).toLocaleString();
-  document.getElementById('s-year-delta').innerHTML = sumDelta(thisYear - lastYearSame, '前年同期比');
-
-  // 今月の距離（先月と比較）
-  const prevY = CUR_MONTH === 1 ? CUR_YEAR - 1 : CUR_YEAR;
-  const prevM = CUR_MONTH === 1 ? 12 : CUR_MONTH - 1;
-  const thisMonth = +data.dist[key(CUR_YEAR, CUR_MONTH)] || 0;
-  const prevMonth = +data.dist[key(prevY, prevM)] || 0;
-  document.getElementById('s-month').textContent = round2(thisMonth).toLocaleString();
-  document.getElementById('s-month-delta').innerHTML = sumDelta(thisMonth - prevMonth, '先月比');
-}
-
-function sumDelta(diff, label) {
-  diff = round2(diff);
-  if (diff === 0) return `<span class="sum-delta flat" title="${label}">±0</span>`;
-  const cls = diff > 0 ? 'up' : 'down';
-  const arrow = diff > 0 ? '▲' : '▼';
-  return `<span class="sum-delta ${cls}" title="${label}">${arrow} ${Math.abs(diff).toLocaleString()} km</span>`;
-}
-
-// km帯ごとのヒートマップ色
 function heatClass(v) {
   if (!v || v <= 0) return '';
   if (v >= 200) return 'h4';
@@ -825,40 +1432,17 @@ function heatClass(v) {
   if (v >= 100) return 'h2';
   return 'h1';
 }
-
 function onInput(el) {
   const y = +el.dataset.y, m = +el.dataset.m, t = el.dataset.type;
-  const v = el.value === '' ? undefined : +el.value;
   const k = key(y, m);
-  if (v === undefined) { delete (t==='d' ? data.dist : data.cnt)[k]; }
-  else { (t==='d' ? data.dist : data.cnt)[k] = v; }
-
-  // ヒートマップ色を即時更新
-  if (t === 'd') {
-    const td = el.closest('td');
-    td.classList.remove('h1','h2','h3','h4');
-    const hc = heatClass(v || 0);
-    if (hc) td.classList.add(hc);
-  }
-
-  // 行合計更新
-  if (t === 'd') {
-    const total = rowTotal(data.dist, y);
-    document.getElementById(`dt-${y}`).textContent = total > 0 ? round2(total) : '';
-    document.getElementById('d-grand').textContent = round2(grandTotal(data.dist));
-  } else {
-    const total = rowTotal(data.cnt, y);
-    document.getElementById(`ct-${y}`).textContent = total > 0 ? total : '';
-    document.getElementById('c-grand').textContent = grandTotal(data.cnt) || '';
-  }
-  renderSummary();
-  renderGoal();
-  renderBest();
-  renderEhime();
-  renderCharts();
+  if (runMonthSet().has(k)) { render(); return; }
+  const obj = t === 'd' ? data.dist : data.cnt;
+  if (el.value === '') delete obj[k];
+  else obj[k] = t === 'd' ? round2(+el.value) : Math.round(+el.value);
   save();
+  render();
+  toast(`${y}年${m}月の${t === 'd' ? '距離' : '回数'}を記録しました`);
 }
-
 function addYear() {
   const inp = document.getElementById('addYearDist');
   const y = +inp.value;
@@ -872,8 +1456,7 @@ function addYear() {
   toast(`${y}年を追加しました`);
 }
 
-function round2(v) { return Math.round(v * 100) / 100; }
-
+// ===== 書き出し・読み込み =====
 async function exportData() {
   save();
   const json = JSON.stringify(data, null, 2);
@@ -892,7 +1475,6 @@ async function exportData() {
   setTimeout(() => { document.body.removeChild(a); URL.revokeObjectURL(url); }, 100);
   toast('書き出しました');
 }
-
 function importData(event) {
   const file = event.target.files[0];
   if (!file) return;
@@ -900,7 +1482,9 @@ function importData(event) {
   reader.onload = e => {
     try {
       snapshot(true);   // 上書き前に現状を履歴へ
-      data = JSON.parse(e.target.result);
+      const d = JSON.parse(e.target.result);
+      if (!d || !d.dist) throw new Error('形式が違います');
+      data = normalize(d);
       save(); render(); toast('読み込みました');
     } catch(e) { toast('読み込み失敗'); }
   };
@@ -908,24 +1492,94 @@ function importData(event) {
   event.target.value = '';
 }
 
+let toastTimer = null;
 function toast(msg) {
   const t = document.getElementById('toast');
   t.textContent = msg; t.classList.add('show');
-  setTimeout(() => t.classList.remove('show'), 2000);
+  clearTimeout(toastTimer); toastTimer = setTimeout(() => t.classList.remove('show'), 2400);
 }
 
+// ===== 月ごとの森（毎月変わる。?month=1〜12 で試し見できる） =====
+// hero=上の大きなカード / rays=木漏れ日 / t1〜t3=木立（遠・中・手前）/ pf=ページ下の森の色味 / line=カード上の線 / ehime=愛媛カード
+const MONTH_THEMES = {
+  1:  { name: '❄️ 1月・雪の森',     icon: '❄️', anim: 'snow',    items: ['❄️','❄️','❄️','❄️','❄️','❄️','❄️','❄️'],
+        hero: 'linear-gradient(165deg, #1b3644 0%, #2d5866 45%, #7aa3ae 78%, #dbeaf0 100%)', rays: 'rgba(255,255,255,0.10)',
+        t: ['rgba(255,255,255,0.50)','rgba(235,245,250,0.42)','rgba(20,48,60,0.55)'], pf: 'grayscale(0.8) brightness(1.1)',
+        line: 'linear-gradient(90deg, #d6eaf2, #7aa3ae 50%, #3b6876)', ehime: 'linear-gradient(160deg, #132a36 0%, #23505d 55%, #4f8291 100%)', bg: '#f0f5f8', bgtop: '#e2eef4' },
+  2:  { name: '🌺 2月・梅ほころぶ森', icon: '🌺', anim: 'petal',   items: ['🌺','❄️','🌺','❄️','🌺','❄️','🌺'],
+        hero: 'linear-gradient(165deg, #2a3a3a 0%, #4b5d58 40%, #a8667f 78%, #e6b3c4 100%)', rays: 'rgba(255,225,235,0.12)',
+        t: ['rgba(255,255,255,0.32)','rgba(70,40,55,0.36)','rgba(30,30,35,0.55)'], pf: 'grayscale(0.5) hue-rotate(-40deg) saturate(0.9)',
+        line: 'linear-gradient(90deg, #f2c2d2, #b5577a 50%, #4b5d58)', ehime: 'linear-gradient(160deg, #1f2a2c 0%, #4b4a55 55%, #8a5a6e 100%)', bg: '#f6f2f4', bgtop: '#f3e2e9' },
+  3:  { name: '🌼 3月・春めく森',   icon: '🌼', anim: 'petal',   items: ['🌼','🍃','🌼','🌱','🌼','🍃'],
+        hero: 'linear-gradient(165deg, #275a3d 0%, #4f9a5c 45%, #a9cf6a 78%, #f4e27a 100%)', rays: 'rgba(255,248,190,0.15)',
+        t: ['rgba(250,245,180,0.28)','rgba(40,110,60,0.36)','rgba(20,70,40,0.52)'], pf: 'hue-rotate(15deg) saturate(1.1)',
+        line: 'linear-gradient(90deg, #f4e27a, #a9cf6a 50%, #3fa45f)', ehime: 'linear-gradient(160deg, #143a26 0%, #2a7a4a 60%, #6aaa55 100%)', bg: '#f4f8ec', bgtop: '#f6f3d2' },
+  4:  { name: '🌸 4月・桜の森',     icon: '🌸', anim: 'petal',   items: ['🌸','🌸','🌸','🍃','🌸','🌸','🌸','🌸'],
+        hero: 'linear-gradient(165deg, #1f5a3e 0%, #3f9563 42%, #9acb8f 72%, #f4b5c8 100%)', rays: 'rgba(255,225,238,0.14)',
+        t: ['rgba(255,210,226,0.36)','rgba(40,110,70,0.36)','rgba(20,70,45,0.50)'], pf: 'hue-rotate(-10deg) saturate(1.05)',
+        line: 'linear-gradient(90deg, #f7b6c9, #8fd27a 60%, #3fa45f)', ehime: 'linear-gradient(160deg, #123826 0%, #1f6b4a 60%, #c27b95 100%)', bg: '#f5f8f2', bgtop: '#fbe6ee' },
+  5:  { name: '🌱 5月・新緑の森',   icon: '🌱', anim: 'sway',    items: ['🍃','🌱','🍃','🍃','🌿','🍃'],
+        hero: 'linear-gradient(165deg, #1a5a3a 0%, #2f9152 42%, #6cc56a 75%, #c9ec8a 100%)', rays: 'rgba(255,255,205,0.16)',
+        t: ['rgba(230,255,190,0.25)','rgba(30,115,60,0.38)','rgba(15,70,40,0.52)'], pf: 'saturate(1.25) hue-rotate(8deg)',
+        line: 'linear-gradient(90deg, #c9ec8a, #6cc56a 50%, #2f9152)', ehime: 'linear-gradient(160deg, #0f3d26 0%, #1f7a48 60%, #4fb05f 100%)', bg: '#eff8ee', bgtop: '#dff4d6' },
+  6:  { name: '💧 6月・雨の森',     icon: '💧', anim: 'rain',    items: ['💧','💧','💧','💧','💧','💧','💧','💧','💧'],
+        hero: 'linear-gradient(165deg, #1d3e47 0%, #2f6a6a 42%, #6b8fb8 75%, #b7a6d6 100%)', rays: 'rgba(220,230,255,0.08)',
+        t: ['rgba(200,215,240,0.25)','rgba(30,80,80,0.40)','rgba(15,45,50,0.55)'], pf: 'hue-rotate(40deg) saturate(0.8)',
+        line: 'linear-gradient(90deg, #b7a6d6, #6b8fb8 50%, #2f6a6a)', ehime: 'linear-gradient(160deg, #142d36 0%, #255a62 55%, #5d74a3 100%)', bg: '#eff4f6', bgtop: '#e4e6f4' },
+  7:  { name: '🌲 7月・夏の森',     icon: '🌲', anim: 'sway',    items: ['🍃','🌿','🍃','🍃','🌿','🍃'],
+        hero: 'linear-gradient(165deg, #0f4a2f 0%, #1c7c47 45%, #3fa45f 75%, #8ad67a 100%)', rays: 'rgba(255,255,210,0.16)',
+        t: ['rgba(255,255,255,0.10)','rgba(16,64,42,0.38)','rgba(10,44,29,0.55)'], pf: 'none',
+        line: 'linear-gradient(90deg, #8fd27a, #3fa45f 50%, #c9a46a)', ehime: 'linear-gradient(160deg, #0f3626 0%, #1b5e41 55%, #2f8a5c 100%)', bg: '#edf7ee', bgtop: '#d9f2de' },
+  8:  { name: '✨ 8月・ほたるの森',  icon: '✨', anim: 'firefly', items: ['✨','✨','✨','✨','✨','✨','✨'],
+        hero: 'linear-gradient(165deg, #0b1f2a 0%, #123a35 45%, #1d5a3e 78%, #3f8a55 100%)', rays: 'rgba(255,250,200,0.05)',
+        t: ['rgba(120,200,150,0.12)','rgba(5,30,20,0.45)','rgba(2,15,10,0.65)'], pf: 'brightness(0.9) saturate(1.2)',
+        line: 'linear-gradient(90deg, #fef08a, #3f8a55 50%, #123a35)', ehime: 'linear-gradient(160deg, #081a22 0%, #10362f 55%, #1d5a3e 100%)', bg: '#eaf3ee', bgtop: '#d4e6dd' },
+  9:  { name: '🌾 9月・実りの森',   icon: '🌾', anim: 'sway',    items: ['🍂','🍃','🌾','🍂','🍃','🍂'],
+        hero: 'linear-gradient(165deg, #23472f 0%, #4f7a3a 42%, #a8a24a 75%, #e8cf7a 100%)', rays: 'rgba(255,235,170,0.14)',
+        t: ['rgba(255,230,150,0.22)','rgba(70,90,30,0.38)','rgba(35,50,20,0.55)'], pf: 'sepia(0.3) hue-rotate(-10deg) saturate(1.3)',
+        line: 'linear-gradient(90deg, #e8cf7a, #8aa04a 50%, #4f7a3a)', ehime: 'linear-gradient(160deg, #1d3423 0%, #3f6630 55%, #8a8a3a 100%)', bg: '#f5f6ea', bgtop: '#f1ead0' },
+  10: { name: '🍁 10月・紅葉の森',  icon: '🍁', anim: 'sway',    items: ['🍁','🍂','🍁','🍂','🍁','🍂','🍁'],
+        hero: 'linear-gradient(165deg, #24412c 0%, #5b5a2a 38%, #b5652a 72%, #e7a548 100%)', rays: 'rgba(255,214,150,0.14)',
+        t: ['rgba(255,196,110,0.25)','rgba(130,52,20,0.42)','rgba(55,32,16,0.58)'], pf: 'sepia(0.55) hue-rotate(-28deg) saturate(1.7)',
+        line: 'linear-gradient(90deg, #e7a548, #c0532b 50%, #7a4a22)', ehime: 'linear-gradient(160deg, #2a2f1c 0%, #5b4a22 50%, #a3562a 100%)', bg: '#f6f2e9', bgtop: '#f6e3cc' },
+  11: { name: '🍂 11月・晩秋の森',  icon: '🍂', anim: 'sway',    items: ['🍂','🍁','🍂','🍂','🍁','🍂'],
+        hero: 'linear-gradient(165deg, #2b2a22 0%, #5a3a24 40%, #9c3b2a 72%, #d4793e 100%)', rays: 'rgba(255,200,150,0.10)',
+        t: ['rgba(240,160,110,0.22)','rgba(100,35,20,0.45)','rgba(40,22,14,0.62)'], pf: 'sepia(0.75) hue-rotate(-40deg) saturate(1.6) brightness(0.95)',
+        line: 'linear-gradient(90deg, #d4793e, #9c3b2a 50%, #5a3a24)', ehime: 'linear-gradient(160deg, #221e18 0%, #4a2f20 50%, #8a3626 100%)', bg: '#f6f0ea', bgtop: '#f1ddd0' },
+  12: { name: '🎄 12月・冬木立の森', icon: '🎄', anim: 'snow',    items: ['❄️','❄️','✨','❄️','❄️','✨','❄️'],
+        hero: 'linear-gradient(165deg, #142c2a 0%, #1f4a3e 45%, #3e7266 78%, #b8d3d0 100%)', rays: 'rgba(255,255,255,0.08)',
+        t: ['rgba(255,255,255,0.40)','rgba(20,60,50,0.42)','rgba(10,30,26,0.60)'], pf: 'grayscale(0.55) hue-rotate(20deg) brightness(1.05)',
+        line: 'linear-gradient(90deg, #e2f0ee, #3e7266 50%, #b33a3a)', ehime: 'linear-gradient(160deg, #0f2220 0%, #1d4038 55%, #3e7266 100%)', bg: '#eef4f3', bgtop: '#dde9e7' },
+};
+function applySeason() {
+  let q = null;
+  try { q = +new URLSearchParams(location.search).get('month'); } catch(e) {}
+  const m = MONTH_THEMES[q] ? q : CUR_MONTH;
+  const th = MONTH_THEMES[m];
+  const b = document.body, st = b.style;
+  b.classList.add('themed');
+  ['sway', 'snow', 'petal', 'rain', 'firefly'].forEach(a => b.classList.toggle('anim-' + a, a === th.anim));
+  st.setProperty('--m-hero', th.hero); st.setProperty('--m-rays', th.rays);
+  st.setProperty('--m-t1', th.t[0]); st.setProperty('--m-t2', th.t[1]); st.setProperty('--m-t3', th.t[2]);
+  st.setProperty('--m-pf', th.pf); st.setProperty('--m-line', th.line); st.setProperty('--m-ehime', th.ehime);
+  st.setProperty('--m-bg', th.bg); st.setProperty('--m-bgtop', th.bgtop); st.setProperty('--m-icon', `'${th.icon}'`);
+  const it = th.items;
+  const fast = th.anim === 'rain';
+  document.getElementById('leaves').innerHTML = it.map((e, i) => {
+    const left = Math.round((i + 0.5) / it.length * 100 + (i % 2 ? 4 : -4));
+    const dur = fast ? 2.2 + (i * 0.7) % 1.6 : 13 + (i * 3) % 9;
+    const delay = fast ? -((i * 0.9) % 3) : -((i * 5) % 17);
+    const size = fast ? 10 + (i * 3) % 6 : 12 + (i * 5) % 8;
+    return `<i style="left:${left}%;animation-duration:${dur}s;animation-delay:${delay}s;font-size:${size}px">${e}</i>`;
+  }).join('');
+  document.getElementById('seasonBadge').textContent = th.name;
+}
+applySeason();
+resetForm();
 render();
 
-// 起動時：ローカルに保存が無い（Mac更新等で消えた／初回）ならクラウドから自動復元
-(async () => {
-  if (localStorage.getItem(STORAGE_KEY) !== null) return;   // ローカルに保存あり → 何もしない
-  try {
-    const res = await fetch(SYNC_URL + '?action=load&key=' + SYNC_KEY);
-    const j = await res.json();
-    let d = j && j.data; if (typeof d === 'string') { try { d = JSON.parse(d); } catch(e) {} }
-    if (d && d.dist) { data = d; localStorage.setItem(STORAGE_KEY, JSON.stringify(data)); render(); toast('☁️ クラウドから自動復元しました'); }
-  } catch(e) {}
-})();
+// 開いたらクラウドと突き合わせる（ほかの端末で入れた分を読み込む／手元の分を送る）
+syncNow();
 </script>
 </body>
 </html>
