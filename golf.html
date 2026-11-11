@@ -388,11 +388,14 @@ const STORAGE_KEY = 'golf_score_app_v2';
 
 // ========== DATA ==========
 let golfMigrated = false;   // 読込時の一度きりの直しがあればクラウドへ送る
+let localBroken = false;        // この端末に保存できない（保存場所がいっぱい等）→ クラウドへは送らない
+const deletedIds = new Set();   // この画面で自分で削除した試合
+let cloudIds = null;            // 最後に見たクラウドの試合id
 let app = loadApp();
 
-function loadApp() {
+function loadApp(src) {
   try {
-    const s = localStorage.getItem(STORAGE_KEY);
+    const s = src != null ? src : localStorage.getItem(STORAGE_KEY);
     if (s) {
       const d = JSON.parse(s);
       if (!d.members || d.members.length === 0) d.members = defaultMembers();
@@ -556,7 +559,8 @@ function save(force) {
     scheduleCloudSave();   // 編集の1.5秒後に自動でクラウドへ保存
   }
   lastSnap = snap;
-  localStorage.setItem(STORAGE_KEY, JSON.stringify(app));
+  try { localStorage.setItem(STORAGE_KEY, JSON.stringify(app)); localBroken = false; }
+  catch (e) { localBroken = true; showSyncState(); }   // 保存場所がいっぱい → クラウドへは送らない
 }
 
 // ========== PAGE ==========
@@ -1221,6 +1225,7 @@ function deleteCurrentGame() {
   app.games.splice(app.curIdx, 1);
   if (app.curIdx >= app.games.length) app.curIdx = app.games.length - 1;
   app.current = app.games[app.curIdx];
+  deletedIds.add(c.id);   // 自分で消した試合（クラウドへ送ってよい）
   save();
   render();
   toast('試合を削除しました');
@@ -1280,14 +1285,21 @@ try {
   freshDevice = !localStorage.getItem(STORAGE_KEY) || !!localStorage.getItem('golf_fresh');
   if (freshDevice) localStorage.setItem('golf_fresh', '1');
 } catch (e) {}
+// 2026-11-11 安全装置：Safariの保存場所がいっぱいで古い手元データのまま送り、11月の試合が消えた事故の対策
+function gameIdsOf(d) { return (d && Array.isArray(d.games) ? d.games : []).map(g => String(g.id)); }
+// クラウドにあるのに手元に無い試合（自分で消したものは除く）
+function missingFromApp(ids) {
+  const mine = new Set(gameIdsOf(app));
+  return (ids || []).filter(id => !mine.has(id) && !deletedIds.has(Number(id)) && !deletedIds.has(id));
+}
 function cloudSeen() { freshDevice = false; try { localStorage.removeItem('golf_fresh'); } catch (e) {} }
 let syncFailed = false;
 function showSyncState() {
   const el = document.getElementById('syncState');
   if (!el) return;
   const wait = dirty && (syncFailed || freshDevice);
-  el.textContent = wait ? '⚠ 未送信（端末には保存）' : dirty ? '☁ 保存中…' : '☁ 保存済み';
-  el.classList.toggle('warn', wait);
+  el.textContent = localBroken ? '⚠ この端末の保存場所がいっぱい（クラウドへは送りません）' : wait ? '⚠ 未送信（端末には保存）' : dirty ? '☁ 保存中…' : '☁ 保存済み';
+  el.classList.toggle('warn', wait || localBroken);
 }
 function scheduleCloudSave() {
   if (!cloudReady) return;
@@ -1295,20 +1307,34 @@ function scheduleCloudSave() {
   cloudTimer = setTimeout(pushCloudSilent, 1500);
 }
 async function pushCloudSilent() {
-  if (!storageOK() || freshDevice) return;
+  if (!storageOK() || freshDevice || localBroken) { showSyncState(); return; }
   const sent = app.savedAt;
   try {
+    // 送る前にクラウドを読み、クラウドにある試合が消える送信はしない（古い手元データでの上書き防止）
+    const cj = await (await fetch(SYNC_URL + '?action=load&key=' + SYNC_KEY + '&_=' + Date.now())).json();
+    const cd = parseCloudGolf(cj && cj.success ? cj.data : null);
+    if (cd) {
+      cloudIds = gameIdsOf(cd);
+      const miss = missingFromApp(cloudIds);
+      if (miss.length) {
+        syncFailed = true; showSyncState();
+        toast('⚠ クラウドにこの端末に無い試合が' + miss.length + '件あるため送りませんでした。開き直してください');
+        return;
+      }
+    }
     const res = await fetch(SYNC_URL + '?action=save&key=' + SYNC_KEY, { method: 'POST', body: JSON.stringify(app) });
     const j = await res.json();
     if (j && j.success) {
       syncFailed = false;
+      cloudIds = gameIdsOf(app);
       if (app.savedAt === sent) setDirty(false);   // 送っている間に次の入力があれば、もう一度送る
       toast('☁ 自動保存しました');
     } else { syncFailed = true; showSyncState(); }
   } catch(e) { syncFailed = true; showSyncState(); /* オフライン等は端末内に保存済み。電波が戻ったら送る */ }
 }
 function flushCloudSave() {   // 閉じる瞬間に送る（編集していない画面からは送らない）
-  if (!dirty || !storageOK() || freshDevice) return;
+  if (!dirty || !storageOK() || freshDevice || localBroken) return;
+  if (!cloudIds || missingFromApp(cloudIds).length) return;   // クラウドの中身を確かめられない／試合が消える時は送らない
   try {
     // 受け付けられたら済みとする（届かなくても、手元の方が新しいので次に開いた時に送り直す）
     if (navigator.sendBeacon(SYNC_URL + '?action=save&key=' + SYNC_KEY, JSON.stringify(app))) { clearTimeout(cloudTimer); setDirty(false); }
@@ -1324,8 +1350,13 @@ function parseCloudGolf(d) {
 }
 function applyCloudGolf(d) {
   const viewingId = app.current && app.current.id;   // 見ている試合はそのまま（端末ごとに別でよい）
-  localStorage.setItem(STORAGE_KEY, JSON.stringify(d));
-  app = loadApp();   // loadAppの補完処理を通して安全に取り込む
+  const s = JSON.stringify(d);
+  try { localStorage.setItem(STORAGE_KEY, s); localBroken = false; }
+  catch (e) { localBroken = true; }   // 保存場所がいっぱいでも、画面はクラウドの内容で出す（古い手元データを使わない）
+  golfMigrated = false;
+  app = loadApp(s);   // loadAppの補完処理を通して安全に取り込む
+  cloudIds = gameIdsOf(app);
+  showSyncState();
   const keep = app.games.findIndex(g => g.id === viewingId);
   if (keep >= 0) { app.curIdx = keep; app.current = app.games[keep]; }
   const was = booted;
@@ -1336,8 +1367,13 @@ function applyCloudGolf(d) {
 }
 
 async function syncUpload() {
+  if (localBroken && !confirm('この端末は保存場所がいっぱいで、内容が古い可能性があります。\nそれでもクラウドへ送りますか？')) return;
   toast('アップロード中...');
   try {
+    const cj = await (await fetch(SYNC_URL + '?action=load&key=' + SYNC_KEY + '&_=' + Date.now())).json();
+    const cd = parseCloudGolf(cj && cj.success ? cj.data : null);
+    const miss = cd ? missingFromApp(gameIdsOf(cd)) : [];
+    if (miss.length && !confirm('クラウドには、この端末に無い試合が' + miss.length + '件あります。\n送るとその試合はクラウドから消えます。送りますか？')) return;
     const res = await fetch(SYNC_URL + '?action=save&key=' + SYNC_KEY, {
       method: 'POST', body: JSON.stringify(app)
     });
@@ -1370,6 +1406,7 @@ async function autoRestore() {   // 開いたら自動でクラウドから読�
     const wasFresh = freshDevice;
     if (!d) { if (json && json.success) cloudSeen(); return; }
     cloudSeen();
+    cloudIds = gameIdsOf(d);
     if (wasFresh) { applyCloudGolf(d); setDirty(false); return; }   // 初めての端末は必ずクラウドの記録を使う
     // 手元の方が新しい場合はクラウドで上書きせず、逆に手元をクラウドへ送る
     if (d.savedAt && app.savedAt && app.savedAt > d.savedAt) { pushCloudSilent(); return; }
