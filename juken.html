@@ -102,6 +102,46 @@
     background: linear-gradient(135deg, #ff8fab, #c9a7eb); color: #fff; cursor: pointer; box-shadow: 0 3px 10px rgba(255,143,171,0.35); }
   .add-btn:active { transform: scale(0.98); }
 
+  /* 入学までの費用 */
+  .cost-sum { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 12px; }
+  .cost-sum > div { flex: 1; min-width: 100px; background: #fdf7f9; border-radius: 12px; padding: 9px 8px; text-align: center; }
+  .cost-sum .cs-label { font-size: 10.5px; color: #a08694; font-weight: 800; }
+  .cost-sum .cs-num { font-size: 18px; font-weight: 800; color: #6d4a9e; font-variant-numeric: tabular-nums; }
+  .cost-sum .cs-num small { font-size: 11px; color: #a08694; }
+  .cost-sum .rest .cs-num { color: #ff6b8b; }
+  .cost-group { margin-bottom: 12px; }
+  .cost-group-head { display: flex; align-items: center; font-size: 13px; font-weight: 800; color: #9b6dd6; margin: 4px 0 6px; }
+  .cost-group-head span { margin-left: auto; font-size: 12px; color: #7a6875; font-variant-numeric: tabular-nums; }
+  .cost-item { display: grid; grid-template-columns: 22px 1fr 96px 92px 22px; gap: 6px; align-items: center; padding: 6px 0; border-bottom: 1px dashed #f3ecfb; }
+  .cost-item.paid .ci-name, .cost-item.paid .ci-amt { color: #b8a5b0; text-decoration: line-through; }
+  .cost-item input[type=checkbox] { width: 18px; height: 18px; accent-color: #ff6b8b; }
+  .cost-item input[type=text], .cost-item select { width: 100%; padding: 6px 7px; border: 2px solid #ffe3ea; border-radius: 9px; font-size: 13px;
+    font-family: inherit; color: #4a3b45; background: #fff; outline: none; }
+  .cost-item input:focus, .cost-item select:focus { border-color: #ff8fab; }
+  .cost-item .ci-amt { text-align: right; font-weight: 700; font-variant-numeric: tabular-nums; }
+  .cost-item .ci-del { border: none; background: none; color: #d6336c; cursor: pointer; font-size: 13px; }
+  .cost-add { border: 2px dashed #e4d4f4; background: none; color: #9b6dd6; border-radius: 10px; padding: 6px; width: 100%; font-size: 12px;
+    font-weight: 800; cursor: pointer; font-family: inherit; margin-top: 6px; }
+  .cost-plan { background: #f7f2fd; border-radius: 14px; padding: 12px; margin-top: 6px; }
+  .cost-plan .row { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; font-size: 12.5px; font-weight: 700; color: #7a6875; }
+  .cost-plan input { width: 120px; padding: 7px 9px; border: 2px solid #e4d4f4; border-radius: 9px; font-size: 15px; font-weight: 700; text-align: right; font-family: inherit; outline: none; }
+  .cost-plan .verdict { margin-top: 10px; }
+  .month-bars { margin-top: 12px; }
+  .mb-row { display: grid; grid-template-columns: 74px 1fr 82px; gap: 8px; align-items: center; font-size: 11.5px; margin: 3px 0; }
+  .mb-row .mb-m { color: #a08694; font-weight: 700; }
+  .mb-row .mb-bar { height: 12px; border-radius: 999px; background: linear-gradient(90deg, #ffb7c5, #c9a7eb); min-width: 3px; }
+  .mb-row .mb-v { text-align: right; font-weight: 800; color: #6d4a9e; font-variant-numeric: tabular-nums; }
+  @media (max-width: 520px) {
+    .cost-sum > div { min-width: 0; padding: 8px 4px; }
+    .cost-sum .cs-num { font-size: 15px; }
+    .cost-item { grid-template-columns: 22px 1fr 100px 22px; }
+    .cost-item input[type=checkbox] { grid-row: 1 / 3; grid-column: 1; }
+    .cost-item .ci-name { grid-row: 1; grid-column: 2 / 4; }
+    .cost-item .ci-del { grid-row: 1; grid-column: 4; }
+    .cost-item .ci-when { grid-row: 2; grid-column: 2; }
+    .cost-item .ci-amt { grid-row: 2; grid-column: 3; }
+  }
+
   /* 3方式ミニ辞典 */
   .ref { border: 2px solid #f3ecfb; border-radius: 12px; margin-bottom: 8px; overflow: hidden; }
   .ref summary { padding: 10px 14px; font-size: 13.5px; font-weight: 800; cursor: pointer; list-style: none; display: flex; align-items: center; gap: 8px; }
@@ -124,6 +164,77 @@
   .hist-item .info { color: #b8a5b0; }
   .hist-item button { margin-left: auto; border: none; background: #c9a7eb; color: #fff; border-radius: 999px; padding: 7px 13px; cursor: pointer; font-size: 11.5px; font-weight: 700; white-space: nowrap; font-family: inherit; }
 </style>
+<!--storageguard:start-->
+<script>
+/* ==== 保存場所見張り（storageguard v1）==== 2026-11-12
+   Safari の file:// はデスクトップの全HTMLアプリで保存場所（約5MB）を共用している。
+   いっぱいになると保存が黙って失敗し、入力が消えたりクラウドを古い中身で上書きしたりした（ゴルフ・請求書・バイト時間表）。
+   ・保存に失敗したら、どのアプリでも画面の上に赤い帯で知らせる（アプリの動きは変えない＝エラーはそのまま返す）
+   ・開いたときに残りが少なければ、黄色い帯で早めに知らせる
+   ・window.storageReport() で使用量と大きいキーの一覧を返す（ありもと総合の「困ったとき」で表示） */
+(function(){
+  if (window.__storageGuard) return; window.__storageGuard = true;
+  var LS; try { LS = window.localStorage; } catch (e) { return; }
+  if (!LS) return;
+  var orig = Storage.prototype.setItem;
+  function banner(kind, msg){
+    function put(){
+      var id = 'sg-banner-' + kind, el = document.getElementById(id);
+      if (!el) {
+        el = document.createElement('div'); el.id = id;
+        el.style.cssText = 'position:fixed;left:0;right:0;z-index:2147483646;padding:9px 40px 9px 14px;font:700 14px/1.5 -apple-system,"Hiragino Sans",sans-serif;text-align:center;box-shadow:0 2px 6px rgba(0,0,0,.25);'
+          + (kind === 'full' ? 'top:0;background:#c0392b;color:#fff;' : 'bottom:0;background:#f6c344;color:#3a2a00;');
+        var x = document.createElement('span'); x.textContent = '×';
+        x.style.cssText = 'position:absolute;right:12px;top:6px;cursor:pointer;font-size:18px;';
+        x.onclick = function(){ el.style.display = 'none'; };
+        el.appendChild(document.createElement('span')); el.appendChild(x);
+        document.body.appendChild(el);
+      }
+      el.firstChild.textContent = msg; el.style.display = 'block';
+    }
+    if (document.body) put(); else document.addEventListener('DOMContentLoaded', put);
+  }
+  Storage.prototype.setItem = function(k, v){
+    try { return orig.call(this, k, v); }
+    catch (e) {
+      if (this === LS && e && (e.name === 'QuotaExceededError' || e.code === 22 || e.code === 1014)) {
+        banner('full', '⚠ このMacのブラウザの保存場所がいっぱいで、保存できていません。閉じる前にクロコに「保存場所がいっぱい」と伝えてください');
+      }
+      throw e;
+    }
+  };
+  function usage(){
+    var total = 0, list = [];
+    for (var i = 0; i < LS.length; i++) {
+      var k = LS.key(i), v = LS.getItem(k) || '';
+      var n = (k.length + v.length) * 2; total += n; list.push({ key: k, bytes: n });
+    }
+    list.sort(function(a, b){ return b.bytes - a.bytes; });
+    return { total: total, list: list };
+  }
+  // 空きの見積もり：大きめの書き込みを試して、入る量を半分ずつ探す（すぐ消す）
+  function freeSpace(){
+    var probe = '__sg_probe__', size = 2 * 1024 * 1024, ok = 0;   // 文字数（約4MB）から
+    while (size >= 16 * 1024) {
+      try { orig.call(LS, probe, new Array(size + 1).join('x')); ok = size; LS.removeItem(probe); break; }
+      catch (e) { size = Math.floor(size / 2); }
+    }
+    try { LS.removeItem(probe); } catch (e) {}
+    return ok * 2;   // バイト（UTF-16）
+  }
+  window.storageReport = function(){ var u = usage(); u.free = freeSpace(); return u; };
+  try {
+    var last = +sessionStorage.getItem('__sg_checked') || 0;
+    if (Date.now() - last > 10 * 60 * 1000) {   // 10分に1回だけ確かめる
+      sessionStorage.setItem('__sg_checked', String(Date.now()));
+      var f = freeSpace();
+      if (f < 600 * 1024) banner('low', '⚠ このMacのブラウザの保存場所が残りわずかです（残り約' + Math.round(f / 1024) + 'KB）。クロコに「保存場所が残りわずか」と伝えてください');
+    }
+  } catch (e) {}
+})();
+
+</script>
+<!--storageguard:end-->
 </head>
 <body>
 <div id="toast"></div>
@@ -197,6 +308,22 @@
       </div>
       <div class="row"><input type="text" id="sMemo" placeholder="メモ（気になるところ・入試科目など）"></div>
       <button class="add-btn" onclick="addSchool()">＋ 志望校を追加</button>
+    </div>
+  </div>
+
+  <!-- 入学までの費用 -->
+  <div class="card">
+    <div class="card-title">💰 入学までの費用 <span class="prog" id="costProg"></span></div>
+    <div class="cost-sum" id="costSum"></div>
+    <div id="costList"></div>
+    <div class="cost-plan">
+      <div class="row">いま準備できているお金 <input type="text" id="costSaved" inputmode="numeric" placeholder="0" onchange="onCostSaved()"> 円</div>
+      <div id="costVerdict"></div>
+    </div>
+    <div class="month-bars" id="costMonths"></div>
+    <div class="grade-note">
+      💡 金額は<b>私立大学・一人暮らしを想定した目安</b>です。志望校が決まったら入試要項の「学費」ページの金額に書き換えてね。自宅から通うなら一人暮らしの項目は ✕ で消してOK。払い終わったら ☑ を付けると「残り」から引かれます。<br>
+      ⚠️ 総合型・推薦で合格すると、<b>入学金は年内（12月ごろ）に払う</b>ことが多いので早めに準備を。
     </div>
   </div>
 
@@ -300,7 +427,7 @@ function openHist() {
   if (!h.length) html = '<div style="color:#b8a5b0;padding:8px 2px;">まだ履歴がありません</div>';
   h.forEach((e, i) => {
     let info = '';
-    try { const d = JSON.parse(e.d); info = `チェック${Object.values(d.done||{}).filter(Boolean).length}個・志望校${(d.schools||[]).length}校`; } catch(_) {}
+    try { const d = JSON.parse(e.d); info = `チェック${Object.values(d.done||{}).filter(Boolean).length}個・志望校${(d.schools||[]).length}校` + (d.costs ? `・費用${d.costs.length}件` : ''); } catch(_) {}
     const when = new Date(e.t).toLocaleString('ja-JP', { month:'numeric', day:'numeric', hour:'2-digit', minute:'2-digit' });
     html += `<div class="hist-item"><span class="when">${when}</span><span class="info">${info}</span><button onclick="restoreHist(${i})">この時点に戻す</button></div>`;
   });
@@ -323,6 +450,8 @@ document.addEventListener('keydown', e => { if (e.key === 'Escape') closeHist();
 let autoCloudTimer = null;
 function cloudAutoSave() { clearTimeout(autoCloudTimer); autoCloudTimer = setTimeout(() => pushCloud(true), 2500); }
 async function pushCloud(silent) {
+  // 保存できない環境（エディタのプレビュー等）からはクラウドに書かない
+  try { localStorage.setItem('__synctest','1'); localStorage.removeItem('__synctest'); } catch(e) { return false; }
   if (!silent) toast('☁️ 保存中...');
   try {
     const res = await fetch(SYNC_URL + '?action=save&key=' + SYNC_KEY, { method:'POST', body: JSON.stringify(data) });
@@ -489,13 +618,134 @@ function delSchool(i) {
   save(); renderSchools();
 }
 
+// ============ 入学までの費用 ============
+// 目安（私立大学・一人暮らし想定）。データに costs が無いときだけ使う。
+const COST_GROUPS = [
+  { id:'exam',  name:'✏️ 受験にかかるお金' },
+  { id:'enter', name:'🏫 入学手続きのお金' },
+  { id:'life',  name:'🏠 一人暮らしの準備' },
+  { id:'etc',   name:'🎒 入学準備・そのほか' },
+];
+const COST_DEFAULTS = [
+  ['exam','オープンキャンパスの交通費・宿泊','2027-07',40000],
+  ['exam','模試・英検などの検定料','2027-06',20000],
+  ['exam','総合型・推薦の受験料（1校）','2027-10',35000],
+  ['exam','共通テスト検定料（3教科以上）','2027-10',18000],
+  ['exam','一般選抜の受験料（2校）','2028-01',70000],
+  ['exam','受験の交通費・宿泊','2028-02',60000],
+  ['enter','入学金','2027-12',250000],
+  ['enter','前期の授業料・施設費','2028-03',650000],
+  ['life','敷金・礼金・仲介料・前家賃','2028-02',250000],
+  ['life','家具・家電','2028-03',250000],
+  ['life','引っ越し代','2028-03',70000],
+  ['etc','教科書・パソコン','2028-03',200000],
+  ['etc','入学式のスーツ・靴・バッグ','2028-03',50000],
+];
+const COST_MONTHS = (() => { const a = []; for (let y = 2026, m = 11; y < 2028 || m <= 4; m++) { if (m > 12) { m = 1; y++; } a.push(`${y}-${String(m).padStart(2,'0')}`); } return a; })();
+const yen = n => (Math.round(n) || 0).toLocaleString();
+const monthLabel = ym => { const [y, m] = ym.split('-'); return `${y}年${+m}月`; };
+function ensureCosts() {
+  if (!Array.isArray(data.costs)) data.costs = COST_DEFAULTS.map((c, i) => ({ id:'c' + (i+1), g:c[0], name:c[1], when:c[2], amt:c[3], paid:false }));
+  if (data.costSaved == null) data.costSaved = 0;
+}
+function parseYen(s) { const n = parseInt(String(s).replace(/[^\d]/g, ''), 10); return isNaN(n) ? 0 : n; }
+function renderCosts() {
+  ensureCosts();
+  const cs = data.costs;
+  const total = cs.reduce((a, c) => a + c.amt, 0);
+  const paid = cs.filter(c => c.paid).reduce((a, c) => a + c.amt, 0);
+  const rest = total - paid;
+  document.getElementById('costProg').textContent = `${cs.filter(c => c.paid).length}/${cs.length} 支払済`;
+  document.getElementById('costSum').innerHTML =
+    `<div><div class="cs-label">ぜんぶで</div><div class="cs-num">${yen(total)}<small> 円</small></div></div>
+     <div><div class="cs-label">支払済み</div><div class="cs-num">${yen(paid)}<small> 円</small></div></div>
+     <div class="rest"><div class="cs-label">これから必要</div><div class="cs-num">${yen(rest)}<small> 円</small></div></div>`;
+
+  const opts = sel => COST_MONTHS.map(m => `<option value="${m}" ${m === sel ? 'selected' : ''}>${monthLabel(m)}</option>`).join('');
+  document.getElementById('costList').innerHTML = COST_GROUPS.map(g => {
+    const items = cs.filter(c => c.g === g.id);
+    const sum = items.reduce((a, c) => a + c.amt, 0);
+    const rows = items.map(c => `
+      <div class="cost-item ${c.paid ? 'paid' : ''}">
+        <input type="checkbox" ${c.paid ? 'checked' : ''} onchange="costEdit('${c.id}','paid',this.checked)" title="支払済み">
+        <input type="text" class="ci-name" value="${esc(c.name)}" onchange="costEdit('${c.id}','name',this.value)">
+        <select class="ci-when" onchange="costEdit('${c.id}','when',this.value)">${opts(c.when)}</select>
+        <input type="text" class="ci-amt" inputmode="numeric" value="${yen(c.amt)}" onfocus="this.select()" onchange="costEdit('${c.id}','amt',this.value)">
+        <button class="ci-del" onclick="costDel('${c.id}')" title="削除">✕</button>
+      </div>`).join('');
+    return `<div class="cost-group">
+      <div class="cost-group-head">${g.name}<span>${yen(sum)} 円</span></div>
+      ${rows}
+      <button class="cost-add" onclick="costAdd('${g.id}')">＋ 項目を足す</button>
+    </div>`;
+  }).join('');
+
+  // 準備金と毎月の積み立て
+  const savedEl = document.getElementById('costSaved');
+  if (document.activeElement !== savedEl) savedEl.value = data.costSaved ? yen(data.costSaved) : '';
+  const short = rest - (data.costSaved || 0);
+  const v = document.getElementById('costVerdict');
+  if (short <= 0) {
+    v.className = 'verdict ok';
+    v.innerHTML = `✅ これから必要な ${yen(rest)} 円は、いまの準備で足りています（あまり ${yen(-short)} 円）`;
+  } else {
+    // 支払いが近い順に「その月までにいくら要るか」を見て、一番きつい月で毎月の積立額を出す
+    const ym0 = now.getFullYear() * 12 + now.getMonth();
+    const byMonth = {};
+    cs.filter(c => !c.paid).forEach(c => { byMonth[c.when] = (byMonth[c.when] || 0) + c.amt; });
+    let need = 0, perMonth = 0, worst = null, acc = 0;
+    Object.keys(byMonth).sort().forEach(m => {
+      acc += byMonth[m];
+      const [y, mm] = m.split('-').map(Number);
+      const months = Math.max(1, y * 12 + (mm - 1) - ym0 + 1);  // 今月から支払月まで（両端含む）
+      const pm = Math.max(0, acc - (data.costSaved || 0)) / months;
+      if (pm > perMonth) { perMonth = pm; worst = m; need = acc; }
+    });
+    v.className = 'verdict ' + (perMonth > 150000 ? 'ng' : 'mid');
+    v.innerHTML = `あと <b>${yen(short)} 円</b> 足りません。<br>`
+      + (worst ? `支払いに間に合わせるには <b>毎月 約${yen(Math.ceil(perMonth / 1000) * 1000)} 円</b> ずつ準備（${monthLabel(worst)}までに合計 ${yen(need)} 円が必要なため）` : '');
+  }
+
+  // 月ごとの支払い予定
+  const mm = {};
+  cs.filter(c => !c.paid).forEach(c => { mm[c.when] = (mm[c.when] || 0) + c.amt; });
+  const keys = Object.keys(mm).sort(), max = Math.max(1, ...keys.map(k => mm[k]));
+  document.getElementById('costMonths').innerHTML = keys.length
+    ? '<div class="cost-group-head">📅 いつ・いくら払う？（未払いの分）</div>' + keys.map(k =>
+        `<div class="mb-row"><span class="mb-m">${monthLabel(k)}</span><div><div class="mb-bar" style="width:${mm[k] / max * 100}%"></div></div><span class="mb-v">${yen(mm[k])} 円</span></div>`).join('')
+    : '';
+}
+function costEdit(id, key, val) {
+  const c = data.costs.find(x => x.id === id); if (!c) return;
+  if (key === 'amt') val = parseYen(val);
+  if (key === 'name') val = String(val).trim() || c.name;
+  c[key] = val;
+  save(); renderCosts();
+}
+function costAdd(g) {
+  ensureCosts();
+  const id = 'c' + Date.now().toString(36);
+  data.costs.push({ id, g, name:'新しい項目', when:'2028-03', amt:0, paid:false });
+  save(); renderCosts();
+  const el = document.querySelector(`.cost-item:has(button[onclick="costDel('${id}')"]) .ci-name`);
+  if (el) { el.focus(); el.select(); }
+}
+function costDel(id) {
+  const c = data.costs.find(x => x.id === id); if (!c) return;
+  if (!confirm(`「${c.name}」を消しますか？`)) return;
+  snapshot(true);
+  data.costs = data.costs.filter(x => x.id !== id);
+  save(); renderCosts();
+}
+function onCostSaved() { ensureCosts(); data.costSaved = parseYen(document.getElementById('costSaved').value); save(); renderCosts(); }
+
 function toast(m) {
   const t = document.getElementById('toast');
   t.textContent = m; t.classList.add('show');
   clearTimeout(toast._t); toast._t = setTimeout(() => t.classList.remove('show'), 1800);
 }
 
-function render() { renderCount(); renderRoadmap(); renderGrade(); renderSchools(); }
+function render() { renderCount(); renderRoadmap(); renderGrade(); renderSchools(); renderCosts(); }
 render();
 
 // 起動時：ローカルが空ならクラウドから自動復元
