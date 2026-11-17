@@ -74,8 +74,10 @@ header.hero{display:flex;gap:14px;align-items:center;margin:4px 0 14px}
 .pill.sold{background:var(--red);color:#fff;font-weight:800}
 .card.allsold{background:var(--bg)}
 .kanbai{display:inline-block;background:var(--red);color:#fff;border-radius:6px;font-size:12px;padding:1px 7px;margin-left:6px;vertical-align:2px;font-weight:800}
-.sbtn{border:1px solid var(--red);background:transparent;color:var(--red);border-radius:8px;font-size:12px;font-weight:800;padding:2px 8px;cursor:pointer;margin-left:auto}
-.sbtn.on{background:var(--red);color:#fff}
+.sbtn{border:1.5px dashed var(--sub);background:var(--bg);color:var(--sub);border-radius:999px;font-size:12px;font-weight:700;padding:3px 10px;cursor:pointer;margin-left:auto;white-space:nowrap}
+.sbtn:hover{border-style:solid;color:var(--ink)}
+.sbtn.on{border:1.5px solid var(--line);background:var(--card);color:var(--ink)}
+.soldhint{font-size:13px;background:var(--red-soft);color:var(--red);border-radius:10px;padding:8px 12px;margin:0 0 10px;font-weight:700}
 .fb.soldmode.on{background:var(--red);border-color:var(--red);color:#fff;font-weight:800}
 .soldinfo{font-size:13px;color:var(--red);font-weight:700;margin:-4px 0 10px}
 #passDlg{border:none;border-radius:16px;padding:0;width:min(420px,calc(100vw - 24px));background:var(--card);color:var(--ink);box-shadow:0 10px 40px rgba(0,0,0,.3)}
@@ -111,7 +113,7 @@ dialog#dlg::backdrop{background:rgba(0,0,0,.45)}
 @media print{
   :root,:root:not([data-theme="light"]){--bg:#fff;--card:#fff;--ink:#000;--sub:#555;--line:#bbb;--gold:#c99a2e;--gold-soft:#f6e7bf;--red:#c8442f;--red-soft:#fbe5e0;--green:#2f6e47;--green-soft:#e2f2e7;--blue:#2a5a90;--blue-soft:#e3edf8}
   html,body{background:#fff;color:#000;-webkit-print-color-adjust:exact;print-color-adjust:exact}
-  .tabs,.search,.chips,.btns,.foot,.stats,.note,.toast,.count,.cat,dialog,.newb,.sbtn,.soldinfo{display:none!important}
+  .tabs,.search,.chips,.btns,.foot,.stats,.note,.toast,.count,.cat,dialog,.newb,.sbtn,.soldinfo,.soldhint{display:none!important}
   .wrap{max-width:none;padding:0}
   header.hero{margin:0 0 2mm;gap:8px}
   .hero h1{font-size:19px;display:inline}.kai{display:inline;font-size:15px;margin-right:6px}.hero .date{display:inline;margin-left:8px;font-size:13px}
@@ -161,6 +163,7 @@ dialog#dlg::backdrop{background:rgba(0,0,0,.45)}
     <button class="fb" id="reset">★と✓を全部消す</button>
   </div>
 
+  <div class="soldhint" id="soldHint" hidden>売り切れ入力中：売り切れた商品の「押すと売り切れ」を押してください。赤い「売り切れ」が付いたものだけが売り切れです。</div>
   <div class="soldinfo" id="soldInfo" hidden></div>
 
   <div class="tabs" role="tablist">
@@ -263,7 +266,7 @@ function itemHTML(it, s, i){
   let h = `<span>${esc(it.t)}</span>`;
   if(isSold){
     h += `<span class="pill sold">売り切れ</span>`;
-    if(soldMode) h += `<button class="sbtn on" data-sold="${k}">戻す</button>`;
+    if(soldMode) h += `<button class="sbtn on" data-sold="${k}">↩ 戻す</button>`;
     return `<li class="sold">${h}</li>`;
   }
   if(it.p) h += `<span class="pill p">${esc(it.p)}</span>`;
@@ -271,7 +274,7 @@ function itemHTML(it, s, i){
     const few = it.q <= 50;
     h += `<span class="pill ${few?'few':'q'}">${esc(it.qs || it.q+'個')}${few?'・早めに':''}</span>`;
   }
-  if(soldMode) h += `<button class="sbtn" data-sold="${k}">売切</button>`;
+  if(soldMode) h += `<button class="sbtn" data-sold="${k}">押すと売り切れ</button>`;
   return `<li>${h}</li>`;
 }
 function allSold(s){ return s.items.length > 0 && s.items.every((_, i) => sold.s[s.no + '-' + i]); }
@@ -512,7 +515,7 @@ $('soldBtn').onclick = async () => {
   if(!soldMode && !await ensureSigner()) return;
   soldMode = !soldMode; $('soldBtn').classList.toggle('on', soldMode);
   $('soldBtn').textContent = soldMode ? '売り切れ入力を終わる' : SOLD_LABEL;
-  if(soldMode) toast('商品の右の「売切」を押してください'); render();
+  $('soldHint').hidden = !soldMode; render();
 };
 $('reset').onclick = () => { if(confirm('★と✓を全部消しますか？\n（売り切れの印は消えません）')){ st={star:{},done:{}}; save(); render(); } };
 
