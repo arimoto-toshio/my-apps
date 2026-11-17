@@ -67,7 +67,7 @@ header.hero{display:flex;gap:14px;align-items:center;margin:4px 0 14px}
 .place.away{background:var(--red-soft);color:var(--red);font-weight:700}
 .cat{font-size:12px;color:var(--sub);border:1px solid var(--line);border-radius:6px;padding:0 6px}
 .empty{text-align:center;color:var(--sub);padding:30px 0}
-.foot{display:flex;flex-wrap:wrap;gap:8px;margin-top:18px}
+.foot{display:flex;flex-wrap:wrap;gap:6px;margin:0 0 12px}.foot .fb{flex:1 1 auto;padding:8px 10px;font-size:13px}
 .fb{border:1px solid var(--line);background:var(--card);color:var(--ink);border-radius:10px;padding:9px 14px;font-size:14px;cursor:pointer}
 .toast{position:fixed;left:50%;bottom:24px;transform:translateX(-50%);background:var(--ink);color:var(--bg);padding:8px 16px;border-radius:999px;font-size:14px;opacity:0;transition:opacity .2s;pointer-events:none}
 .toast.show{opacity:1}
@@ -115,6 +115,12 @@ header.hero{display:flex;gap:14px;align-items:center;margin:4px 0 14px}
     <div class="stat"><b id="sDone">0</b><span>✓ 行った</span></div>
   </div>
 
+  <div class="foot">
+    <button class="fb" id="copy">★行きたい店をコピー</button>
+    <button class="fb" onclick="window.print()">一覧を印刷（A4）</button>
+    <button class="fb" id="reset">★と✓を全部消す</button>
+  </div>
+
   <div class="tabs" role="tablist">
     <button class="tab" role="tab" data-tab="all" aria-selected="true">ぜんぶ</button>
     <button class="tab" role="tab" data-tab="star" aria-selected="false">★ 行きたい</button>
@@ -127,11 +133,6 @@ header.hero{display:flex;gap:14px;align-items:center;margin:4px 0 14px}
 
   <div class="list" id="list"></div>
 
-  <div class="foot">
-    <button class="fb" id="copy">★行きたい店をコピー</button>
-    <button class="fb" onclick="window.print()">一覧を印刷（A4）</button>
-    <button class="fb" id="reset">★と✓を全部消す</button>
-  </div>
 </div>
 <div class="toast" id="toast"></div>
 
