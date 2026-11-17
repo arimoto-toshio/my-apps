@@ -179,6 +179,30 @@ dialog#dlg::backdrop{background:rgba(0,0,0,.45)}
   </form>
 </dialog>
 
+<dialog id="dlg">
+  <form id="f" method="dialog" autocomplete="off">
+    <h3 id="dlgTitle">お店を新規登録</h3>
+    <label>店名（必ず）<input type="text" name="shopname" required placeholder="例：〇〇商店"></label>
+    <label id="repRow">代表者名<input type="text" name="rep" placeholder="Macの中だけに残ります（公開版には出ません）"></label>
+    <fieldset><legend>商品1</legend>
+      <input type="text" name="t1" placeholder="品名（例：焼きそば）">
+      <div class="row"><input type="number" name="q1" inputmode="numeric" min="1" placeholder="数量（個）"><input type="text" name="p1" placeholder="値段（例：500円）"></div>
+    </fieldset>
+    <fieldset><legend>商品2（なければ空欄）</legend>
+      <input type="text" name="t2" placeholder="品名">
+      <div class="row"><input type="number" name="q2" inputmode="numeric" min="1" placeholder="数量（個）"><input type="text" name="p2" placeholder="値段"></div>
+    </fieldset>
+    <label>出店場所<input type="text" name="place" placeholder="空欄なら「自店」（例：内子座駐車場）"></label>
+    <div><div style="font-size:13px;color:var(--sub);font-weight:700;margin-bottom:4px">分類（いくつでも）</div><div class="cbs" id="cbs"></div></div>
+    <p class="hint">登録すると、スマホの公開版にも自動で出ます（代表者名は出ません）。</p>
+    <div class="dlgbtns">
+      <button type="button" class="danger" id="delBtn">この店を消す</button>
+      <span class="sp"></span>
+      <button type="button" id="cancelBtn">やめる</button>
+      <button type="submit" class="primary" id="okBtn">登録する</button>
+    </div>
+  </form>
+</dialog>
 
 <script>
 const EVENT_DATE = new Date(2026, 10, 28);
@@ -285,7 +309,7 @@ function render(){
           ${s.rep?`<div class="rep">${esc(s.rep)}</div>`:''}
         </div>
         <div class="btns">
-          ${CAN_EDIT && s.added ? `<button class="ib edit" data-act="edit" data-no="${s.no}">直す</button>` : ''}
+          ${(CAN_EDIT || signer) && s.added ? `<button class="ib edit" data-act="edit" data-no="${s.no}">直す</button>` : ''}
         </div>
       </div>
       <ul class="items">${s.items.length ? s.items.map((it, i) => itemHTML(it, s, i)).join('') : '<li><span>（内容はまだ）</span></li>'}</ul>
@@ -379,40 +403,55 @@ function saveAddedLocal(){ try{ localStorage.setItem(ADD_KEY, JSON.stringify(add
 function publicShops(){ return added.shops.map(({rep, ...r}) => r); }
 
 async function pushCloud(noAsk){
-  if(!CAN_EDIT || !storageOK()) return;      // プレビュー等から書かせない
+  if(noAsk && !storageOK()) return;          // 自動の送り直しはプレビュー等からはしない
   try{
     if(!await ensureSigner(noAsk)) throw new Error('nosign');
     await signedSave(CLOUD_KEY, {savedAt: added.savedAt, shops: publicShops()});
     if(added.pending){ added.pending = false; saveAddedLocal(); }
-    toast('☁ 公開版にも反映しました');
+    if(!noAsk) toast('☁ 公開版にも反映しました');
   }catch(e){
     added.pending = true; saveAddedLocal();
     if(!noAsk) toast('公開版への送信に失敗。次に開いたとき送り直します');
   }
 }
+function fromCloud(d){                           // クラウドの登録店に、Macだけにある代表者名を戻す
+  const reps = Object.fromEntries(added.shops.map(x => [x.no, x.rep || '']));
+  return d.shops.map(x => ({...x, added: true, rep: reps[x.no] || ''}));
+}
 async function loadCloud(){
   try{
     const d = await verifiedLoad(CLOUD_KEY);
     if(!d || !Array.isArray(d.shops)) return;
-    if(!CAN_EDIT){                               // 公開版：クラウドのとおりに出す
-      if((d.savedAt||0) === added.savedAt) return;
-      added = {savedAt: d.savedAt||0, shops: d.shops.map(x => ({...x, added:true}))};
+    if((d.savedAt||0) > (added.savedAt||0)){     // ほかの端末で登録・直した分を取り込む
+      added = {savedAt: d.savedAt, shops: fromCloud(d)};
       saveAddedLocal(); rebuild(); render();
-    }else if(!added.shops.length && d.shops.length && (d.savedAt||0) > 0){   // Macの控えが消えたときの復元
-      added = {savedAt: d.savedAt, shops: d.shops.map(x => ({...x, added:true}))};
-      saveAddedLocal(); rebuild(); render(); toast('クラウドから登録店を戻しました');
     }
   }catch(e){}
 }
+let addBusy = false;
+async function changeAdded(fn){                   // 最新を読んでから変える＝Macとスマホで消し合わない
+  if(addBusy) return; addBusy = true;
+  try{
+    let shops = added.shops;
+    try{ const d = await verifiedLoad(CLOUD_KEY); if(d && Array.isArray(d.shops) && (d.savedAt||0) >= (added.savedAt||0)) shops = fromCloud(d); }catch(e){}
+    shops = shops.map(x => ({...x}));
+    const msg = fn(shops);
+    added = {savedAt: Date.now(), shops};
+    if(!saveAddedLocal() && CAN_EDIT){ alert('保存できませんでした（Safariの保存場所がいっぱいの可能性）'); return; }
+    rebuild(); render(); $('dlg').close(); toast(msg);
+    await pushCloud();
+  }finally{ addBusy = false; }
+}
 
 let editNo = null;
-if($('cbs')) $('cbs').innerHTML = CATS.map(c => `<label><input type="checkbox" name="cat" value="${c}">${ICON[c]} ${c}</label>`).join('');
+$('cbs').innerHTML = CATS.map(c => `<label><input type="checkbox" name="cat" value="${c}">${ICON[c]} ${c}</label>`).join('');
 function openDlg(no){
   const f = $('f'); f.reset(); editNo = no || null;
   const s = no ? added.shops.find(x => x.no === no) : null;
   $('dlgTitle').textContent = s ? `${s.no}番 ${s.name} を直す` : 'お店を新規登録';
   $('okBtn').textContent = s ? '直す' : '登録する';
   $('delBtn').style.display = s ? '' : 'none';
+  $('repRow').style.display = CAN_EDIT ? '' : 'none';
   if(s){
     f.shopname.value = s.name; f.rep.value = s.rep||''; f.place.value = s.place||'';
     [0,1].forEach(k => { const it = s.items[k]; if(it){ f['t'+(k+1)].value = it.t; f['q'+(k+1)].value = it.q||''; f['p'+(k+1)].value = it.p||''; } });
@@ -420,9 +459,9 @@ function openDlg(no){
   }
   $('dlg').showModal();
 }
-$('addBtn').onclick = () => openDlg(null);
-if(CAN_EDIT) $('cancelBtn').onclick = () => $('dlg').close();
-if(CAN_EDIT) $('f').addEventListener('submit', e => {
+$('addBtn').onclick = async () => { if(await ensureSigner()){ render(); openDlg(null); } };
+$('cancelBtn').onclick = () => $('dlg').close();
+$('f').addEventListener('submit', e => {
   e.preventDefault();
   const f = $('f'); const name = f.shopname.value.trim(); if(!name) return;
   const items = [1,2].map(k => {
@@ -430,33 +469,31 @@ if(CAN_EDIT) $('f').addEventListener('submit', e => {
     const it = {t}; const q = parseInt(f['q'+k].value, 10); if(q > 0) it.q = q;
     const pz = f['p'+k].value.trim(); if(pz) it.p = pz; return it;
   }).filter(Boolean);
-  const shop = {name, rep: f.rep.value.trim(), cats: [...f.querySelectorAll('[name=cat]:checked')].map(x => x.value),
-    place: f.place.value.trim() || undefined, items, added: true};
-  if(!shop.place) delete shop.place;
-  if(editNo){ const i = added.shops.findIndex(x => x.no === editNo); shop.no = editNo; added.shops[i] = shop; }
-  else { shop.no = Math.max(...SHOPS.map(x => x.no)) + 1; added.shops.push(shop); }
-  added.savedAt = Date.now();
-  if(!saveAddedLocal()){ alert('保存できませんでした（Safariの保存場所がいっぱいの可能性）'); return; }
-  rebuild(); render(); $('dlg').close();
-  toast(editNo ? '直しました' : `${shop.no}番で登録しました`);
-  pushCloud();
+  const shop = {name, rep: CAN_EDIT ? f.rep.value.trim() : '', cats: [...f.querySelectorAll('[name=cat]:checked')].map(x => x.value), items, added: true};
+  const place = f.place.value.trim(); if(place) shop.place = place;
+  const no = editNo;
+  changeAdded(shops => {
+    if(no){ const i = shops.findIndex(x => x.no === no);
+      if(i < 0) return 'その店はほかの端末で消されていました';
+      if(!CAN_EDIT) shop.rep = shops[i].rep || '';
+      shop.no = no; shops[i] = shop; return '直しました'; }
+    shop.no = Math.max(...BASE.map(x => x.no), ...shops.map(x => x.no)) + 1; shops.push(shop);
+    return `${shop.no}番で登録しました`;
+  });
 });
-if(CAN_EDIT) $('delBtn').onclick = () => {
+$('delBtn').onclick = () => {
   const s = added.shops.find(x => x.no === editNo); if(!s) return;
   if(!confirm(`${s.no}番「${s.name}」を一覧から消しますか？`)) return;
-  added.shops = added.shops.filter(x => x.no !== editNo);
-  added.savedAt = Date.now(); saveAddedLocal(); rebuild(); render(); $('dlg').close();
-  toast('消しました'); pushCloud();
+  const no = editNo;
+  changeAdded(shops => { const i = shops.findIndex(x => x.no === no); if(i >= 0) shops.splice(i, 1); return '消しました'; });
 };
-
 // ===== 売り切れ =====
 function saveSoldLocal(){ try{ localStorage.setItem(SOLD_KEY, JSON.stringify(sold)); return true; }catch(e){ return false; } }
 async function loadSold(){
   try{
     const d = await verifiedLoad(SOLD_KEY);
     if(!d || typeof d.s !== 'object') return;
-    if(!CAN_EDIT){ if((d.savedAt||0) !== sold.savedAt){ sold = {savedAt: d.savedAt||0, s: d.s}; saveSoldLocal(); render(); } }
-    else if(!Object.keys(sold.s).length && Object.keys(d.s).length && (d.savedAt||0) > 0){ sold = {savedAt: d.savedAt, s: d.s}; saveSoldLocal(); render(); }
+    if((d.savedAt||0) > (sold.savedAt||0)){ sold = {savedAt: d.savedAt, s: d.s}; saveSoldLocal(); render(); }
   }catch(e){}
 }
 async function pushSold(noAsk){
@@ -490,11 +527,12 @@ $('soldBtn').onclick = async () => {
 
 const SOLD_LABEL = CAN_EDIT ? '売り切れを付ける' : '🔒 売り切れを付ける（お店の人用）';
 $('soldBtn').textContent = SOLD_LABEL;
-if(!CAN_EDIT){ $('addBtn').remove(); document.querySelector('.foot').appendChild($('soldBtn'));
-  setInterval(loadSold, 60000);                       // 公開版は1分ごとに売り切れを読み直す
-  document.addEventListener('visibilitychange', () => { if(!document.hidden){ loadSold(); loadCloud(); } }); }
+if(!CAN_EDIT){ $('addBtn').textContent = '🔒 お店を新規登録（お店の人用）';
+  const ft = document.querySelector('.foot'); ft.appendChild($('soldBtn')); ft.appendChild($('addBtn')); }
+setInterval(() => { loadSold(); loadCloud(); }, 60000);   // 1分ごとに、ほかの端末で付けた売り切れ・登録を読み直す
+document.addEventListener('visibilitychange', () => { if(!document.hidden){ loadSold(); loadCloud(); } });
 countdown(); chips(); render();
-if(CAN_EDIT && added.pending && storageOK()) pushCloud(true);
+if(added.pending && storageOK()) pushCloud(true);
 if(sold.pending && storageOK()) pushSold(true);
 loadSold();
 loadCloud();
