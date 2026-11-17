@@ -289,7 +289,7 @@
 
   <!-- 追加収支（賞金・馬・にぎり） -->
   <div class="card extras-card">
-    <div class="card-h">💴 追加収支の累計（今までの合計・手入力）</div>
+    <div class="card-h">💴 追加収支の累計（今までの合計・賞金と馬は手入力）</div>
     <div class="extras-row">
       <label>賞金</label>
       <div class="extras-input-wrap"><span class="yen-mark">¥</span><input type="number" id="extra-prize" oninput="recalc()" inputmode="numeric" placeholder="0"></div>
@@ -300,13 +300,14 @@
     </div>
     <div class="extras-row">
       <label>にぎり</label>
-      <div class="extras-input-wrap"><span class="yen-mark">¥</span><input type="number" id="extra-nigiri" oninput="recalc()" inputmode="numeric" placeholder="0"></div>
+      <div class="extras-input-wrap" style="background:#eef6ee;"><span class="yen-mark">¥</span><input type="number" id="extra-nigiri" readonly tabindex="-1" placeholder="0" style="color:#1b5e20;font-weight:700;"><span style="font-size:11px;color:#2e7d32;margin-left:6px;white-space:nowrap;">自動</span></div>
     </div>
+    <div id="nigiriAutoNote" style="font-size:11px;color:#2e7d32;margin-top:4px;"></div>
     <div class="extras-total">
       <span>累計合計</span>
       <span id="extrasTotal">¥0</span>
     </div>
-    <div style="font-size:11px;color:#888;margin-top:6px;">※ 新規試合を作ると前回の累計を引き継ぎます。その日の分を足し引きしてください</div>
+    <div style="font-size:11px;color:#888;margin-top:6px;">※ 賞金・馬は、新規試合を作ると前回の累計を引き継ぎます。その日の分を足し引きしてください。にぎりはスコアから自動で足します</div>
   </div>
 
   <!-- 試合ナビ（gameNavHTML で生成・下段） -->
@@ -887,6 +888,7 @@ function renderPM() {
 
 function renderHistory() {
   const body = document.getElementById('historyBody');
+  syncNigiri();   // にぎりの累計を最新のスコアで
   // 年ごとにグループ化（元のindexを保持）
   const byYear = {};
   app.games.forEach((g, idx) => {
@@ -1059,11 +1061,37 @@ function setText(id, val) {
   if (el) el.textContent = val;
 }
 
+// 追加収支の「にぎり」を自動で出す（2026-11-17）
+// 各試合の extraNigiri ＝ 持ち越し（2025年以前の分）＋ 1試合目からその試合までのにぎり合計（年→月→回の順）
+// 持ち越しは最初の試合の nigiriCarry に入れる。無ければ一度だけ「最初の試合の手入力の値 − その日のにぎり」で決める
+function syncNigiri() {
+  const ord = orderedIdx();
+  if (!ord.length) return;
+  let carryGame = app.games.find(g => g.nigiriCarry != null && g.nigiriCarry !== '');
+  if (!carryGame) {
+    carryGame = app.games[ord[0]];
+    carryGame.nigiriCarry = (+carryGame.extraNigiri || 0) - gameNets(carryGame).net;
+  }
+  let run = +carryGame.nigiriCarry || 0;
+  ord.forEach(i => {
+    const g = app.games[i];
+    run += gameNets(g).net;
+    g.extraNigiri = String(run);
+  });
+  const note = document.getElementById('nigiriAutoNote');
+  if (note) {
+    const c = app.current, carry = +carryGame.nigiriCarry || 0;
+    const sum = (+c.extraNigiri || 0) - carry;
+    note.textContent = `にぎりは自動：持ち越し ¥${carry.toLocaleString()} ＋ 試合のにぎり合計（この試合まで） ${sum >= 0 ? '+' : '-'}¥${Math.abs(sum).toLocaleString()}`;
+  }
+}
+
 function recalcExtras() {
   const c = app.current;
   c.extraPrize = document.getElementById('extra-prize').value;
   c.extraUma = document.getElementById('extra-uma').value;
-  c.extraNigiri = document.getElementById('extra-nigiri').value;
+  syncNigiri();
+  document.getElementById('extra-nigiri').value = c.extraNigiri || '';
   const total = (+c.extraPrize || 0) + (+c.extraUma || 0) + (+c.extraNigiri || 0);
   document.getElementById('extrasTotal').textContent = '¥' + total.toLocaleString();
   save();
