@@ -27,7 +27,7 @@ header.hero{display:flex;gap:14px;align-items:center;margin:4px 0 14px}
 .kai{display:block;font-size:14px;color:var(--gold);font-weight:800;letter-spacing:.08em}
 .hero .date{font-size:14px;color:var(--sub)}
 .count{display:inline-block;margin-top:4px;background:var(--gold-soft);color:var(--ink);border-radius:999px;padding:2px 10px;font-size:13px;font-weight:700}
-.stats{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin:0 0 12px}
+.stats{display:grid;grid-template-columns:repeat(2,1fr);gap:8px;margin:0 0 12px}
 .stat{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:8px 10px;text-align:center;box-shadow:var(--shadow)}
 .stat b{display:block;font-size:22px}
 .stat span{font-size:12px;color:var(--sub)}
@@ -54,7 +54,6 @@ header.hero{display:flex;gap:14px;align-items:center;margin:4px 0 14px}
 .mine-badge{display:inline-block;background:var(--red);color:#fff;border-radius:6px;font-size:11px;padding:1px 6px;margin-left:6px;vertical-align:2px}
 .btns{display:flex;gap:6px;flex:none}
 .ib{border:1px solid var(--line);background:var(--bg);color:var(--sub);border-radius:10px;min-width:44px;height:40px;font-size:13px;font-weight:700;cursor:pointer;padding:0 8px}
-.ib.on.star{background:var(--gold);border-color:var(--gold);color:#2a1d00}
 .ib.on.check{background:var(--green);border-color:var(--green);color:#fff}
 .items{list-style:none;margin:8px 0 6px;padding:0;display:grid;gap:4px}
 .items li{display:flex;flex-wrap:wrap;align-items:baseline;gap:6px;font-size:15px}
@@ -151,16 +150,14 @@ dialog#dlg::backdrop{background:rgba(0,0,0,.45)}
 
   <div class="stats">
     <div class="stat"><b id="sAll">24</b><span>参加店</span></div>
-    <div class="stat"><b id="sStar">0</b><span>★ 行きたい</span></div>
     <div class="stat"><b id="sDone">0</b><span>✓ 行った</span></div>
   </div>
 
   <div class="foot">
     <button class="fb add" id="addBtn">＋お店を新規登録</button>
     <button class="fb soldmode" id="soldBtn">売り切れを付ける</button>
-    <button class="fb" id="copy">★行きたい店をコピー</button>
     <button class="fb" onclick="window.print()">一覧を印刷（A4）</button>
-    <button class="fb" id="reset">★と✓を全部消す</button>
+    <button class="fb" id="reset">✓を全部消す</button>
   </div>
 
   <div class="soldhint" id="soldHint" hidden>売り切れ入力中：売り切れた商品の「押すと売り切れ」を押してください。赤い「売り切れ」が付いたものだけが売り切れです。</div>
@@ -168,7 +165,6 @@ dialog#dlg::backdrop{background:rgba(0,0,0,.45)}
 
   <div class="tabs" role="tablist">
     <button class="tab" role="tab" data-tab="all" aria-selected="true">ぜんぶ</button>
-    <button class="tab" role="tab" data-tab="star" aria-selected="false">★ 行きたい</button>
     <button class="tab" role="tab" data-tab="away" aria-selected="false">店の外で出店</button>
   </div>
 
@@ -281,7 +277,6 @@ function allSold(s){ return s.items.length > 0 && s.items.every((_, i) => sold.s
 
 function render(){
   let list = SHOPS.slice();
-  if(tab==='star') list = list.filter(s => st.star[s.no]);
   if(tab==='away') list = list.filter(s => s.place);
   if(cat) list = list.filter(s => s.cats.includes(cat));
   if(query){
@@ -300,7 +295,6 @@ function render(){
           ${s.rep?`<div class="rep">${esc(s.rep)}</div>`:''}
         </div>
         <div class="btns">
-          <button class="ib star${st.star[s.no]?' on':''}" data-act="star" data-no="${s.no}" aria-label="行きたい">★</button>
           <button class="ib check${st.done[s.no]?' on':''}" data-act="done" data-no="${s.no}" aria-label="行った">✓</button>
           ${CAN_EDIT && s.added ? `<button class="ib edit" data-act="edit" data-no="${s.no}">直す</button>` : ''}
         </div>
@@ -311,7 +305,7 @@ function render(){
         ${s.cats.map(c=>`<span class="cat">${ICON[c]} ${c}</span>`).join('')}
       </div>
     </article>`).join('')
-    : `<div class="empty">${tab==='star'?'★を押した店がここに出ます':'見つかりませんでした'}</div>`;
+    : `<div class="empty">見つかりませんでした</div>`;
 
   const nSold = Object.values(sold.s).filter(Boolean).length;
   if(nSold){ const t = new Date(sold.savedAt); $('soldInfo').hidden = false;
@@ -320,9 +314,8 @@ function render(){
   $('dCount').textContent = SHOPS.length; $('sAll').textContent = SHOPS.length;
   document.body.classList.toggle('many', SHOPS.length > 24 && SHOPS.length <= 28);
   document.body.classList.toggle('many2', SHOPS.length > 28);
-  const nStar = Object.values(st.star).filter(Boolean).length;
   const nDone = Object.values(st.done).filter(Boolean).length;
-  $('sStar').textContent = nStar; $('sDone').textContent = nDone;
+  $('sDone').textContent = nDone;
   $('note').textContent = `${list.length}店を表示中` + (tab==='away'?'（自分の店ではない場所で出店する店）':'') + '　赤い「早めに」は50個以下＝売り切れ注意';
 }
 
@@ -337,14 +330,6 @@ document.addEventListener('click', e => {
 $('q').addEventListener('input', e => { query = e.target.value.trim(); render(); });
 
 function toast(m){ const t=$('toast'); t.textContent=m; t.classList.add('show'); setTimeout(()=>t.classList.remove('show'),1800); }
-$('copy').onclick = async () => {
-  const sel = SHOPS.filter(s => st.star[s.no]);
-  if(!sel.length) return toast('まだ★がありません');
-  const txt = '【第34回 ワンコイン商店街 11/28 行きたい店】\n' + sel.map(s =>
-    `${s.no}. ${s.name}（${s.place||'自店'}）\n   ` + s.items.map(i=>i.t+(i.p?' '+i.p:'')).join(' / ')).join('\n');
-  try{ await navigator.clipboard.writeText(txt); toast('コピーしました（LINEに貼れます）'); }
-  catch(e){ prompt('このままコピーしてください', txt); }
-};
 
 // ===== 合言葉と署名（クラウドの中身は誰でも書けるので、合言葉を知る人の署名つきだけを表示する） =====
 const PUB_JWK = {"kty": "EC", "crv": "P-256", "x": "iTCdhreZ13LiloNbxe3qGBRgO4t1aWgBcCzSM__GYDk", "y": "kuxrJovMPr1PZ5Vg4HRfOJTFxA0hedNZUAtkFbCtzQM"};
@@ -474,7 +459,7 @@ if(CAN_EDIT) $('delBtn').onclick = () => {
   const s = added.shops.find(x => x.no === editNo); if(!s) return;
   if(!confirm(`${s.no}番「${s.name}」を一覧から消しますか？`)) return;
   added.shops = added.shops.filter(x => x.no !== editNo);
-  delete st.star[editNo]; delete st.done[editNo]; save();
+  delete st.done[editNo]; save();
   added.savedAt = Date.now(); saveAddedLocal(); rebuild(); render(); $('dlg').close();
   toast('消しました'); pushCloud();
 };
@@ -517,7 +502,7 @@ $('soldBtn').onclick = async () => {
   $('soldBtn').textContent = soldMode ? '売り切れ入力を終わる' : SOLD_LABEL;
   $('soldHint').hidden = !soldMode; render();
 };
-$('reset').onclick = () => { if(confirm('★と✓を全部消しますか？\n（売り切れの印は消えません）')){ st={star:{},done:{}}; save(); render(); } };
+$('reset').onclick = () => { if(confirm('✓を全部消しますか？\n（売り切れの印は消えません）')){ st={star:{},done:{}}; save(); render(); } };
 
 const SOLD_LABEL = CAN_EDIT ? '売り切れを付ける' : '🔒 売り切れを付ける（お店の人用）';
 $('soldBtn').textContent = SOLD_LABEL;
