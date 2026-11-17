@@ -70,13 +70,33 @@ header.hero{display:flex;gap:14px;align-items:center;margin:4px 0 14px}
 .empty{text-align:center;color:var(--sub);padding:30px 0}
 .foot{display:flex;flex-wrap:wrap;gap:6px;margin:0 0 12px}.foot .fb{flex:1 1 auto;padding:8px 10px;font-size:13px}
 .fb{border:1px solid var(--line);background:var(--card);color:var(--ink);border-radius:10px;padding:9px 14px;font-size:14px;cursor:pointer}
+.fb.add{background:var(--gold);border-color:var(--gold);color:#2a1d00;font-weight:800}
+.ib.edit{font-size:12px;color:var(--ink)}
+.newb{display:inline-block;background:var(--blue);color:#fff;border-radius:6px;font-size:11px;padding:1px 6px;margin-left:6px;vertical-align:2px}
+dialog#dlg{border:none;border-radius:16px;padding:0;width:min(520px,calc(100vw - 24px));max-height:calc(100vh - 24px);background:var(--card);color:var(--ink);box-shadow:0 10px 40px rgba(0,0,0,.3)}
+dialog#dlg::backdrop{background:rgba(0,0,0,.45)}
+#f{padding:16px;display:grid;gap:10px}
+#f h3{margin:0 0 2px;font-size:19px}
+#f label{display:grid;gap:3px;font-size:13px;color:var(--sub);font-weight:700}
+#f input[type=text],#f input[type=number]{font-size:16px;padding:9px 11px;border-radius:10px;border:1px solid var(--line);background:var(--bg);color:var(--ink);width:100%;font-weight:400}
+#f fieldset{border:1px solid var(--line);border-radius:12px;padding:8px 10px 10px;margin:0;display:grid;gap:6px}
+#f legend{font-size:13px;color:var(--sub);font-weight:700;padding:0 4px}
+#f .row{display:grid;grid-template-columns:1fr 1fr;gap:6px}
+#f .cbs{display:flex;flex-wrap:wrap;gap:6px}
+#f .cbs label{display:flex;align-items:center;gap:4px;border:1px solid var(--line);border-radius:999px;padding:5px 10px;color:var(--ink);font-weight:400;font-size:14px;cursor:pointer}
+#f .dlgbtns{display:flex;gap:8px;align-items:center;margin-top:4px}
+#f .dlgbtns .sp{flex:1}
+#f .dlgbtns button{border:1px solid var(--line);background:var(--bg);color:var(--ink);border-radius:10px;padding:10px 14px;font-size:15px;cursor:pointer}
+#f .dlgbtns .primary{background:var(--gold);border-color:var(--gold);color:#2a1d00;font-weight:800}
+#f .dlgbtns .danger{color:var(--red);border-color:var(--red-soft)}
+#f .hint{font-size:12px;color:var(--sub);margin:0}
 .toast{position:fixed;left:50%;bottom:24px;transform:translateX(-50%);background:var(--ink);color:var(--bg);padding:8px 16px;border-radius:999px;font-size:14px;opacity:0;transition:opacity .2s;pointer-events:none}
 .toast.show{opacity:1}
 @page{size:A4 portrait;margin:7mm}
 @media print{
   :root,:root:not([data-theme="light"]){--bg:#fff;--card:#fff;--ink:#000;--sub:#555;--line:#bbb;--gold:#c99a2e;--gold-soft:#f6e7bf;--red:#c8442f;--red-soft:#fbe5e0;--green:#2f6e47;--green-soft:#e2f2e7;--blue:#2a5a90;--blue-soft:#e3edf8}
   html,body{background:#fff;color:#000;-webkit-print-color-adjust:exact;print-color-adjust:exact}
-  .tabs,.search,.chips,.btns,.foot,.stats,.note,.toast,.count,.cat{display:none!important}
+  .tabs,.search,.chips,.btns,.foot,.stats,.note,.toast,.count,.cat,dialog,.newb{display:none!important}
   .wrap{max-width:none;padding:0}
   header.hero{margin:0 0 2mm;gap:8px}
   .hero h1{font-size:19px;display:inline}.kai{display:inline;font-size:15px;margin-right:6px}.hero .date{display:inline;margin-left:8px;font-size:13px}
@@ -95,6 +115,8 @@ header.hero{display:flex;gap:14px;align-items:center;margin:4px 0 14px}
   .items li{font-size:14.5px;line-height:1.35;gap:4px}.items li{flex-wrap:nowrap}.items li>span:first-child{min-width:0;letter-spacing:-.02em}
   .pill{font-size:12px;padding:0 3px}
   .place{font-size:12px;padding:0 4px}
+  body.many .name h2{font-size:15px}body.many .items li{font-size:12.5px}body.many .pill,body.many .place{font-size:10.5px}
+  body.many2 .name h2{font-size:13px}body.many2 .items li{font-size:11px}body.many2 .pill,body.many2 .place{font-size:9.5px}body.many2 .list{gap:1mm}
 }
 </style>
 
@@ -105,7 +127,7 @@ header.hero{display:flex;gap:14px;align-items:center;margin:4px 0 14px}
     <div class="coin">ワン<br>コイン</div>
     <div>
       <h1><span class="kai">第34回</span>ワンコイン商店街</h1>
-      <div class="date">2026年11月28日（土）・参加店 24店</div>
+      <div class="date">2026年11月28日（土）・参加店 <span id="dCount">24</span>店</div>
       <div class="count" id="count"></div>
     </div>
   </header>
@@ -117,6 +139,7 @@ header.hero{display:flex;gap:14px;align-items:center;margin:4px 0 14px}
   </div>
 
   <div class="foot">
+    <button class="fb add" id="addBtn">＋お店を新規登録</button>
     <button class="fb" id="copy">★行きたい店をコピー</button>
     <button class="fb" onclick="window.print()">一覧を印刷（A4）</button>
     <button class="fb" id="reset">★と✓を全部消す</button>
@@ -137,10 +160,15 @@ header.hero{display:flex;gap:14px;align-items:center;margin:4px 0 14px}
 </div>
 <div class="toast" id="toast"></div>
 
+
 <script>
 const EVENT_DATE = new Date(2026, 10, 28);
 const MY_SHOP = 0;
 const KEY = 'onecoin_20261128';
+const CAN_EDIT = false;   // 公開版では false（見るだけ）
+const ADD_KEY = 'onecoin34_added';          // Mac内の控え（代表者名あり）
+const CLOUD_KEY = 'onecoin34_added';        // クラウド（代表者名なし）
+const SYNC_URL = 'https://script.google.com/macros/s/AKfycbxwL19mAenATUMILRsQYrDL0ThjU2C583Cj729OfzNHEH3drMcZCExYULRp4VGOZ11J/exec';
 const CATS = ['たべもの','おかし','雑貨・もの','くじ・あそび','サービス','マルシェ・イベント'];
 const ICON = {'たべもの':'🍚','おかし':'🍰','雑貨・もの':'🛍','くじ・あそび':'🎯','サービス':'✂️','マルシェ・イベント':'🎪'};
 
@@ -171,6 +199,12 @@ const SHOPS = [
  {no:23, name:'清水ふとん店', rep:'', cats:['雑貨・もの'], place:'内子座駐車場', items:[{t:'小座布団 1枚',p:'500円'},{t:'20枚限定・1人2枚まで',q:20,qs:'限定20枚'}]},
  {no:24, name:'焼肉ありもと', rep:'', cats:['たべもの'], items:[{t:'止まらない焼豚インフレ丼',q:50}]},
 ];
+
+const BASE = SHOPS.slice();
+let added = {savedAt:0, shops:[]};
+try{ const a = JSON.parse(localStorage.getItem(ADD_KEY)||'null'); if(a && Array.isArray(a.shops)) added = a; }catch(e){}
+function rebuild(){ SHOPS.length = 0; SHOPS.push(...BASE, ...added.shops); }
+rebuild();
 
 let st = {star:{}, done:{}};
 try{ const s = JSON.parse(localStorage.getItem(KEY)||'null'); if(s&&s.star) st = s; }catch(e){}
@@ -209,7 +243,7 @@ function render(){
   if(cat) list = list.filter(s => s.cats.includes(cat));
   if(query){
     const q = norm(query);
-    list = list.filter(s => norm([s.name, s.rep, s.place||'', ...s.items.map(i=>i.t), ...s.cats].join(' ')).includes(q));
+    list = list.filter(s => norm([s.name, s.rep||'', s.place||'', ...s.items.map(i=>i.t), ...s.cats].join(' ')).includes(q));
   }
   // うちの店を先頭に
   list.sort((a,b) => (b.no===MY_SHOP) - (a.no===MY_SHOP) || a.no - b.no);
@@ -219,15 +253,16 @@ function render(){
       <div class="top">
         <div class="no">${s.no}</div>
         <div class="name">
-          <h2>${esc(s.name)}${s.no===MY_SHOP?'<span class="mine-badge">うちの店</span>':''}</h2>
+          <h2>${esc(s.name)}${s.no===MY_SHOP?'<span class="mine-badge">うちの店</span>':''}${s.added?'<span class="newb">追加</span>':''}</h2>
           ${s.rep?`<div class="rep">${esc(s.rep)}</div>`:''}
         </div>
         <div class="btns">
           <button class="ib star${st.star[s.no]?' on':''}" data-act="star" data-no="${s.no}" aria-label="行きたい">★</button>
           <button class="ib check${st.done[s.no]?' on':''}" data-act="done" data-no="${s.no}" aria-label="行った">✓</button>
+          ${CAN_EDIT && s.added ? `<button class="ib edit" data-act="edit" data-no="${s.no}">直す</button>` : ''}
         </div>
       </div>
-      <ul class="items">${s.items.map(itemHTML).join('')}</ul>
+      <ul class="items">${s.items.length ? s.items.map(itemHTML).join('') : '<li><span>（内容はまだ）</span></li>'}</ul>
       <div class="meta">
         <span class="place${s.place?' away':''}">📍 ${s.place?esc(s.place):'自店'}</span>
         ${s.cats.map(c=>`<span class="cat">${ICON[c]} ${c}</span>`).join('')}
@@ -235,6 +270,9 @@ function render(){
     </article>`).join('')
     : `<div class="empty">${tab==='star'?'★を押した店がここに出ます':'見つかりませんでした'}</div>`;
 
+  $('dCount').textContent = SHOPS.length; $('sAll').textContent = SHOPS.length;
+  document.body.classList.toggle('many', SHOPS.length > 24 && SHOPS.length <= 28);
+  document.body.classList.toggle('many2', SHOPS.length > 28);
   const nStar = Object.values(st.star).filter(Boolean).length;
   const nDone = Object.values(st.done).filter(Boolean).length;
   $('sStar').textContent = nStar; $('sDone').textContent = nDone;
@@ -245,6 +283,7 @@ document.addEventListener('click', e => {
   const t = e.target.closest('button'); if(!t) return;
   if(t.dataset.tab){ tab = t.dataset.tab; document.querySelectorAll('.tab').forEach(b=>b.setAttribute('aria-selected', b===t)); render(); }
   else if(t.dataset.cat!==undefined){ cat = t.dataset.cat; chips(); render(); }
+  else if(t.dataset.act==='edit'){ openDlg(+t.dataset.no); }
   else if(t.dataset.act){ const no=t.dataset.no, k=t.dataset.act; st[k][no] = !st[k][no]; save(); render(); }
 });
 $('q').addEventListener('input', e => { query = e.target.value.trim(); render(); });
@@ -260,7 +299,89 @@ $('copy').onclick = async () => {
 };
 $('reset').onclick = () => { if(confirm('★と✓を全部消しますか？')){ st={star:{},done:{}}; save(); render(); } };
 
+// ===== 新規登録 =====
+function storageOK(){ try{ localStorage.setItem('__synctest','1'); localStorage.removeItem('__synctest'); return true; }catch(e){ return false; } }
+function saveAddedLocal(){ try{ localStorage.setItem(ADD_KEY, JSON.stringify(added)); return true; }catch(e){ return false; } }
+function publicShops(){ return added.shops.map(({rep, ...r}) => r); }
+
+async function pushCloud(){
+  if(!CAN_EDIT || !storageOK()) return;      // プレビュー等から書かせない
+  try{
+    const res = await fetch(SYNC_URL + '?action=save&key=' + CLOUD_KEY, {method:'POST', body: JSON.stringify({savedAt: added.savedAt, shops: publicShops()})});
+    const j = await res.json();
+    if(!j.success) throw new Error(j.message||'');
+    if(added.pending){ added.pending = false; saveAddedLocal(); }
+    toast('☁ 公開版にも反映しました');
+  }catch(e){
+    added.pending = true; saveAddedLocal();
+    toast('公開版への送信に失敗。次に開いたとき送り直します');
+  }
+}
+async function loadCloud(){
+  try{
+    const res = await fetch(SYNC_URL + '?action=load&key=' + CLOUD_KEY + '&t=' + Date.now());
+    const j = await res.json();
+    let d = j && j.data; if(typeof d === 'string'){ try{ d = JSON.parse(d); }catch(e){ d = null; } }
+    if(!d || !Array.isArray(d.shops)) return;
+    if(!CAN_EDIT){                               // 公開版：クラウドのとおりに出す
+      added = {savedAt: d.savedAt||0, shops: d.shops.map(x => ({...x, added:true}))};
+      saveAddedLocal(); rebuild(); render();
+    }else if(!added.shops.length && d.shops.length && (d.savedAt||0) > 0){   // Macの控えが消えたときの復元
+      added = {savedAt: d.savedAt, shops: d.shops.map(x => ({...x, added:true}))};
+      saveAddedLocal(); rebuild(); render(); toast('クラウドから登録店を戻しました');
+    }
+  }catch(e){}
+}
+
+let editNo = null;
+if($('cbs')) $('cbs').innerHTML = CATS.map(c => `<label><input type="checkbox" name="cat" value="${c}">${ICON[c]} ${c}</label>`).join('');
+function openDlg(no){
+  const f = $('f'); f.reset(); editNo = no || null;
+  const s = no ? added.shops.find(x => x.no === no) : null;
+  $('dlgTitle').textContent = s ? `${s.no}番 ${s.name} を直す` : 'お店を新規登録';
+  $('okBtn').textContent = s ? '直す' : '登録する';
+  $('delBtn').style.display = s ? '' : 'none';
+  if(s){
+    f.shopname.value = s.name; f.rep.value = s.rep||''; f.place.value = s.place||'';
+    [0,1].forEach(k => { const it = s.items[k]; if(it){ f['t'+(k+1)].value = it.t; f['q'+(k+1)].value = it.q||''; f['p'+(k+1)].value = it.p||''; } });
+    f.querySelectorAll('[name=cat]').forEach(cb => cb.checked = s.cats.includes(cb.value));
+  }
+  $('dlg').showModal();
+}
+$('addBtn').onclick = () => openDlg(null);
+if(CAN_EDIT) $('cancelBtn').onclick = () => $('dlg').close();
+if(CAN_EDIT) $('f').addEventListener('submit', e => {
+  e.preventDefault();
+  const f = $('f'); const name = f.shopname.value.trim(); if(!name) return;
+  const items = [1,2].map(k => {
+    const t = f['t'+k].value.trim(); if(!t) return null;
+    const it = {t}; const q = parseInt(f['q'+k].value, 10); if(q > 0) it.q = q;
+    const pz = f['p'+k].value.trim(); if(pz) it.p = pz; return it;
+  }).filter(Boolean);
+  const shop = {name, rep: f.rep.value.trim(), cats: [...f.querySelectorAll('[name=cat]:checked')].map(x => x.value),
+    place: f.place.value.trim() || undefined, items, added: true};
+  if(!shop.place) delete shop.place;
+  if(editNo){ const i = added.shops.findIndex(x => x.no === editNo); shop.no = editNo; added.shops[i] = shop; }
+  else { shop.no = Math.max(...SHOPS.map(x => x.no)) + 1; added.shops.push(shop); }
+  added.savedAt = Date.now();
+  if(!saveAddedLocal()){ alert('保存できませんでした（Safariの保存場所がいっぱいの可能性）'); return; }
+  rebuild(); render(); $('dlg').close();
+  toast(editNo ? '直しました' : `${shop.no}番で登録しました`);
+  pushCloud();
+});
+if(CAN_EDIT) $('delBtn').onclick = () => {
+  const s = added.shops.find(x => x.no === editNo); if(!s) return;
+  if(!confirm(`${s.no}番「${s.name}」を一覧から消しますか？`)) return;
+  added.shops = added.shops.filter(x => x.no !== editNo);
+  delete st.star[editNo]; delete st.done[editNo]; save();
+  added.savedAt = Date.now(); saveAddedLocal(); rebuild(); render(); $('dlg').close();
+  toast('消しました'); pushCloud();
+};
+
+if(!CAN_EDIT) $('addBtn').remove();
 countdown(); chips(); render();
+if(CAN_EDIT && added.pending && storageOK()) pushCloud();
+loadCloud();
 </script>
 </body>
 </html>
