@@ -70,6 +70,14 @@ header.hero{display:flex;gap:14px;align-items:center;margin:4px 0 14px}
 .empty{text-align:center;color:var(--sub);padding:30px 0}
 .foot{display:flex;flex-wrap:wrap;gap:6px;margin:0 0 12px}.foot .fb{flex:1 1 auto;padding:8px 10px;font-size:13px}
 .fb{border:1px solid var(--line);background:var(--card);color:var(--ink);border-radius:10px;padding:9px 14px;font-size:14px;cursor:pointer}
+.items li.sold>span:first-child{text-decoration:line-through;color:var(--sub)}
+.pill.sold{background:var(--red);color:#fff;font-weight:800}
+.card.allsold{background:var(--bg)}
+.kanbai{display:inline-block;background:var(--red);color:#fff;border-radius:6px;font-size:12px;padding:1px 7px;margin-left:6px;vertical-align:2px;font-weight:800}
+.sbtn{border:1px solid var(--red);background:transparent;color:var(--red);border-radius:8px;font-size:12px;font-weight:800;padding:2px 8px;cursor:pointer;margin-left:auto}
+.sbtn.on{background:var(--red);color:#fff}
+.fb.soldmode.on{background:var(--red);border-color:var(--red);color:#fff;font-weight:800}
+.soldinfo{font-size:13px;color:var(--red);font-weight:700;margin:-4px 0 10px}
 .fb.add{background:var(--gold);border-color:var(--gold);color:#2a1d00;font-weight:800}
 .ib.edit{font-size:12px;color:var(--ink)}
 .newb{display:inline-block;background:var(--blue);color:#fff;border-radius:6px;font-size:11px;padding:1px 6px;margin-left:6px;vertical-align:2px}
@@ -96,7 +104,7 @@ dialog#dlg::backdrop{background:rgba(0,0,0,.45)}
 @media print{
   :root,:root:not([data-theme="light"]){--bg:#fff;--card:#fff;--ink:#000;--sub:#555;--line:#bbb;--gold:#c99a2e;--gold-soft:#f6e7bf;--red:#c8442f;--red-soft:#fbe5e0;--green:#2f6e47;--green-soft:#e2f2e7;--blue:#2a5a90;--blue-soft:#e3edf8}
   html,body{background:#fff;color:#000;-webkit-print-color-adjust:exact;print-color-adjust:exact}
-  .tabs,.search,.chips,.btns,.foot,.stats,.note,.toast,.count,.cat,dialog,.newb{display:none!important}
+  .tabs,.search,.chips,.btns,.foot,.stats,.note,.toast,.count,.cat,dialog,.newb,.sbtn,.soldinfo{display:none!important}
   .wrap{max-width:none;padding:0}
   header.hero{margin:0 0 2mm;gap:8px}
   .hero h1{font-size:19px;display:inline}.kai{display:inline;font-size:15px;margin-right:6px}.hero .date{display:inline;margin-left:8px;font-size:13px}
@@ -140,10 +148,13 @@ dialog#dlg::backdrop{background:rgba(0,0,0,.45)}
 
   <div class="foot">
     <button class="fb add" id="addBtn">＋お店を新規登録</button>
+    <button class="fb soldmode" id="soldBtn">売り切れを付ける</button>
     <button class="fb" id="copy">★行きたい店をコピー</button>
     <button class="fb" onclick="window.print()">一覧を印刷（A4）</button>
     <button class="fb" id="reset">★と✓を全部消す</button>
   </div>
+
+  <div class="soldinfo" id="soldInfo" hidden></div>
 
   <div class="tabs" role="tablist">
     <button class="tab" role="tab" data-tab="all" aria-selected="true">ぜんぶ</button>
@@ -206,6 +217,11 @@ try{ const a = JSON.parse(localStorage.getItem(ADD_KEY)||'null'); if(a && Array.
 function rebuild(){ SHOPS.length = 0; SHOPS.push(...BASE, ...added.shops); }
 rebuild();
 
+const SOLD_KEY = 'onecoin34_soldout';      // Mac内の控え／クラウドも同じ名前
+let sold = {savedAt:0, s:{}};
+try{ const a = JSON.parse(localStorage.getItem(SOLD_KEY)||'null'); if(a && a.s) sold = a; }catch(e){}
+let soldMode = false;
+
 let st = {star:{}, done:{}};
 try{ const s = JSON.parse(localStorage.getItem(KEY)||'null'); if(s&&s.star) st = s; }catch(e){}
 function save(){ try{ localStorage.setItem(KEY, JSON.stringify(st)); }catch(e){} }
@@ -226,15 +242,23 @@ function chips(){
     `<button class="chip" data-cat="${c}" aria-pressed="${c===cat}">${c ? ICON[c]+' '+c : 'すべて'}</button>`).join('');
 }
 
-function itemHTML(it){
+function itemHTML(it, s, i){
+  const k = s.no + '-' + i, isSold = !!sold.s[k];
   let h = `<span>${esc(it.t)}</span>`;
+  if(isSold){
+    h += `<span class="pill sold">売り切れ</span>`;
+    if(soldMode) h += `<button class="sbtn on" data-sold="${k}">戻す</button>`;
+    return `<li class="sold">${h}</li>`;
+  }
   if(it.p) h += `<span class="pill p">${esc(it.p)}</span>`;
   if(it.q){
     const few = it.q <= 50;
     h += `<span class="pill ${few?'few':'q'}">${esc(it.qs || it.q+'個')}${few?'・早めに':''}</span>`;
   }
+  if(soldMode) h += `<button class="sbtn" data-sold="${k}">売切</button>`;
   return `<li>${h}</li>`;
 }
+function allSold(s){ return s.items.length > 0 && s.items.every((_, i) => sold.s[s.no + '-' + i]); }
 
 function render(){
   let list = SHOPS.slice();
@@ -249,11 +273,11 @@ function render(){
   list.sort((a,b) => (b.no===MY_SHOP) - (a.no===MY_SHOP) || a.no - b.no);
 
   $('list').innerHTML = list.length ? list.map(s => `
-    <article class="card${s.no===MY_SHOP?' mine':''}${st.done[s.no]?' done':''}">
+    <article class="card${s.no===MY_SHOP?' mine':''}${st.done[s.no]?' done':''}${allSold(s)?' allsold':''}">
       <div class="top">
         <div class="no">${s.no}</div>
         <div class="name">
-          <h2>${esc(s.name)}${s.no===MY_SHOP?'<span class="mine-badge">うちの店</span>':''}${s.added?'<span class="newb">追加</span>':''}</h2>
+          <h2>${esc(s.name)}${s.no===MY_SHOP?'<span class="mine-badge">うちの店</span>':''}${s.added?'<span class="newb">追加</span>':''}${allSold(s)?'<span class="kanbai">完売</span>':''}</h2>
           ${s.rep?`<div class="rep">${esc(s.rep)}</div>`:''}
         </div>
         <div class="btns">
@@ -262,7 +286,7 @@ function render(){
           ${CAN_EDIT && s.added ? `<button class="ib edit" data-act="edit" data-no="${s.no}">直す</button>` : ''}
         </div>
       </div>
-      <ul class="items">${s.items.length ? s.items.map(itemHTML).join('') : '<li><span>（内容はまだ）</span></li>'}</ul>
+      <ul class="items">${s.items.length ? s.items.map((it, i) => itemHTML(it, s, i)).join('') : '<li><span>（内容はまだ）</span></li>'}</ul>
       <div class="meta">
         <span class="place${s.place?' away':''}">📍 ${s.place?esc(s.place):'自店'}</span>
         ${s.cats.map(c=>`<span class="cat">${ICON[c]} ${c}</span>`).join('')}
@@ -270,6 +294,10 @@ function render(){
     </article>`).join('')
     : `<div class="empty">${tab==='star'?'★を押した店がここに出ます':'見つかりませんでした'}</div>`;
 
+  const nSold = Object.values(sold.s).filter(Boolean).length;
+  if(nSold){ const t = new Date(sold.savedAt); $('soldInfo').hidden = false;
+    $('soldInfo').textContent = `売り切れ ${nSold}品（${t.getHours()}:${String(t.getMinutes()).padStart(2,'0')} 更新）`; }
+  else $('soldInfo').hidden = true;
   $('dCount').textContent = SHOPS.length; $('sAll').textContent = SHOPS.length;
   document.body.classList.toggle('many', SHOPS.length > 24 && SHOPS.length <= 28);
   document.body.classList.toggle('many2', SHOPS.length > 28);
@@ -283,6 +311,7 @@ document.addEventListener('click', e => {
   const t = e.target.closest('button'); if(!t) return;
   if(t.dataset.tab){ tab = t.dataset.tab; document.querySelectorAll('.tab').forEach(b=>b.setAttribute('aria-selected', b===t)); render(); }
   else if(t.dataset.cat!==undefined){ cat = t.dataset.cat; chips(); render(); }
+  else if(t.dataset.sold){ toggleSold(t.dataset.sold); }
   else if(t.dataset.act==='edit'){ openDlg(+t.dataset.no); }
   else if(t.dataset.act){ const no=t.dataset.no, k=t.dataset.act; st[k][no] = !st[k][no]; save(); render(); }
 });
@@ -297,7 +326,6 @@ $('copy').onclick = async () => {
   try{ await navigator.clipboard.writeText(txt); toast('コピーしました（LINEに貼れます）'); }
   catch(e){ prompt('このままコピーしてください', txt); }
 };
-$('reset').onclick = () => { if(confirm('★と✓を全部消しますか？')){ st={star:{},done:{}}; save(); render(); } };
 
 // ===== 新規登録 =====
 function storageOK(){ try{ localStorage.setItem('__synctest','1'); localStorage.removeItem('__synctest'); return true; }catch(e){ return false; } }
@@ -378,9 +406,47 @@ if(CAN_EDIT) $('delBtn').onclick = () => {
   toast('消しました'); pushCloud();
 };
 
-if(!CAN_EDIT) $('addBtn').remove();
+// ===== 売り切れ =====
+function saveSoldLocal(){ try{ localStorage.setItem(SOLD_KEY, JSON.stringify(sold)); return true; }catch(e){ return false; } }
+async function pushSold(){
+  if(!CAN_EDIT || !storageOK()) return;
+  try{
+    const res = await fetch(SYNC_URL + '?action=save&key=' + SOLD_KEY, {method:'POST', body: JSON.stringify({savedAt: sold.savedAt, s: sold.s})});
+    const j = await res.json(); if(!j.success) throw new Error(j.message||'');
+    if(sold.pending){ sold.pending = false; saveSoldLocal(); }
+    toast('☁ 公開版にも出しました');
+  }catch(e){ sold.pending = true; saveSoldLocal(); toast('公開版への送信に失敗。次に開いたとき送り直します'); }
+}
+async function loadSold(){
+  try{
+    const res = await fetch(SYNC_URL + '?action=load&key=' + SOLD_KEY + '&t=' + Date.now());
+    const j = await res.json();
+    let d = j && j.data; if(typeof d === 'string'){ try{ d = JSON.parse(d); }catch(e){ d = null; } }
+    if(!d || typeof d.s !== 'object') return;
+    if(!CAN_EDIT){ if((d.savedAt||0) !== sold.savedAt){ sold = {savedAt: d.savedAt||0, s: d.s}; saveSoldLocal(); render(); } }
+    else if(!Object.keys(sold.s).length && Object.keys(d.s).length && (d.savedAt||0) > 0){ sold = {savedAt: d.savedAt, s: d.s}; saveSoldLocal(); render(); }
+  }catch(e){}
+}
+function toggleSold(k){
+  if(sold.s[k]) delete sold.s[k]; else sold.s[k] = true;
+  sold.savedAt = Date.now();
+  if(!saveSoldLocal()){ alert('保存できませんでした（Safariの保存場所がいっぱいの可能性）'); return; }
+  render(); pushSold();
+}
+$('soldBtn').onclick = () => {
+  soldMode = !soldMode; $('soldBtn').classList.toggle('on', soldMode);
+  $('soldBtn').textContent = soldMode ? '売り切れ入力を終わる' : '売り切れを付ける';
+  if(soldMode) toast('商品の右の「売切」を押してください'); render();
+};
+$('reset').onclick = () => { if(confirm('★と✓を全部消しますか？\n（売り切れの印は消えません）')){ st={star:{},done:{}}; save(); render(); } };
+
+if(!CAN_EDIT){ $('addBtn').remove(); $('soldBtn').remove();
+  setInterval(loadSold, 60000);                       // 公開版は1分ごとに売り切れを読み直す
+  document.addEventListener('visibilitychange', () => { if(!document.hidden){ loadSold(); loadCloud(); } }); }
 countdown(); chips(); render();
 if(CAN_EDIT && added.pending && storageOK()) pushCloud();
+if(CAN_EDIT && sold.pending && storageOK()) pushSold();
+loadSold();
 loadCloud();
 </script>
 </body>
