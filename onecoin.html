@@ -111,8 +111,9 @@ dialog#dlg::backdrop{background:rgba(0,0,0,.45)}
 @media print{
   :root,:root:not([data-theme="light"]){--bg:#fff;--card:#fff;--ink:#000;--sub:#555;--line:#bbb;--gold:#c99a2e;--gold-soft:#f6e7bf;--red:#c8442f;--red-soft:#fbe5e0;--green:#2f6e47;--green-soft:#e2f2e7;--blue:#2a5a90;--blue-soft:#e3edf8}
   html,body{background:#fff;color:#000;-webkit-print-color-adjust:exact;print-color-adjust:exact}
-  .tabs,.search,.chips,.btns,.foot,.stats,.note,.toast,.count,.cat,dialog,.newb,.sbtn,.soldinfo,.soldhint{display:none!important}
-  .wrap{max-width:none;padding:0}
+  .tabs,.search,.chips,.btns,.foot,.stats,.note,.toast,.count,.cat,dialog,.newb,.sbtn,.soldinfo,.soldhint,#list{display:none!important}
+  #plist{display:grid!important}
+  .wrap{max-width:none;padding:0;zoom:var(--pz,1);width:calc(196mm / var(--pz,1))}
   header.hero{margin:0 0 2mm;gap:8px}
   .hero h1{font-size:19px;display:inline}.kai{display:inline;font-size:15px;margin-right:6px}.hero .date{display:inline;margin-left:8px;font-size:13px}
   .coin{width:26px;height:26px;font-size:7px;box-shadow:none}
@@ -129,9 +130,37 @@ dialog#dlg::backdrop{background:rgba(0,0,0,.45)}
   .items li{font-size:14.5px;line-height:1.35;gap:4px}.items li{flex-wrap:nowrap}.items li>span:first-child{min-width:0;letter-spacing:-.02em}
   .pill{font-size:12px;padding:0 3px}
   .place{font-size:12px;padding:0 4px}
-  body.many .name h2{font-size:15px}body.many .items li{font-size:12.5px}body.many .pill,body.many .place{font-size:10.5px}
-  body.many2 .name h2{font-size:13px}body.many2 .items li{font-size:11px}body.many2 .pill,body.many2 .place{font-size:9.5px}body.many2 .list{gap:1mm}
 }
+/* 印刷の見た目を画面で一瞬だけ再現して高さを測る用（印刷用の設定と同じ中身） */
+body.pm .wrap{width:196mm;max-width:none;padding:0}
+body.pm .tabs,body.pm .search,body.pm .chips,body.pm .btns,body.pm .foot,body.pm .stats,body.pm .note,body.pm .toast,body.pm .count,body.pm .cat,body.pm dialog,body.pm .newb,body.pm .sbtn,body.pm .soldinfo,body.pm .soldhint,body.pm #list{display:none!important}
+body.pm #plist{display:grid!important}
+body.pm .wrap{max-width:none;padding:0}
+body.pm header.hero{margin:0 0 2mm;gap:8px}
+body.pm .hero h1{font-size:19px;display:inline}
+body.pm .kai{display:inline;font-size:15px;margin-right:6px}
+body.pm .hero .date{display:inline;margin-left:8px;font-size:13px}
+body.pm .coin{width:26px;height:26px;font-size:7px;box-shadow:none}
+body.pm .list{grid-template-columns:1fr 1fr!important;gap:1.6mm}
+body.pm .card{box-shadow:none;break-inside:avoid;page-break-inside:avoid;padding:1mm 2mm 1.2mm;border-radius:4px;display:grid;grid-template-columns:minmax(0,1fr) auto;column-gap:4px;align-content:start}
+body.pm .card .top{grid-column:1;grid-row:1}
+body.pm .card .meta{grid-column:2;grid-row:1;align-self:center}
+body.pm .card .items{grid-column:1/-1}
+body.pm .card.mine{border-width:1.5px}
+body.pm .top{gap:5px;align-items:center}
+body.pm .no{width:23px;height:23px;font-size:12.5px}
+body.pm .name{display:flex;align-items:baseline;gap:6px;flex-wrap:wrap}
+body.pm .name h2{font-size:17.5px}
+body.pm .name .rep{font-size:11px}
+body.pm .mine-badge{font-size:9.5px;padding:0 4px;vertical-align:1px}
+body.pm .items{margin:.4mm 0 0 28px;gap:0}
+body.pm .items li{font-size:14.5px;line-height:1.35;gap:4px}
+body.pm .items li{flex-wrap:nowrap}
+body.pm .items li>span:first-child{min-width:0;letter-spacing:-.02em}
+body.pm .pill{font-size:12px;padding:0 3px}
+body.pm .place{font-size:12px;padding:0 4px}
+#plist{display:none}
+
 </style>
 
 </head>
@@ -166,6 +195,7 @@ dialog#dlg::backdrop{background:rgba(0,0,0,.45)}
   <div class="note" id="note"></div>
 
   <div class="list" id="list"></div>
+  <div class="list" id="plist" aria-hidden="true"></div>
 
 </div>
 <div class="toast" id="toast"></div>
@@ -207,7 +237,7 @@ dialog#dlg::backdrop{background:rgba(0,0,0,.45)}
 <script>
 const EVENT_DATE = new Date(2026, 10, 28);
 // ===== 最新版チェック（公開版を開いた人も自動で最新に。版は公開するたびに道具が書き換える）=====
-const APP_VERSION = '20261117-224902';
+const APP_VERSION = '20261117-225737';
 function checkLatest(){
   if(location.protocol !== 'https:') return;
   fetch(location.pathname + '?v=' + Date.now(), {cache:'no-store'})
@@ -306,18 +336,7 @@ function itemHTML(it, s, i){
 }
 function allSold(s){ return s.items.length > 0 && s.items.every((_, i) => sold.s[s.no + '-' + i]); }
 
-function render(){
-  let list = SHOPS.slice();
-  if(tab==='away') list = list.filter(s => s.place);
-  if(cat) list = list.filter(s => s.cats.includes(cat));
-  if(query){
-    const q = norm(query);
-    list = list.filter(s => norm([s.name, s.rep||'', s.place||'', ...s.items.map(i=>i.t), ...s.cats].join(' ')).includes(q));
-  }
-  // うちの店を先頭に
-  list.sort((a,b) => (b.no===MY_SHOP) - (a.no===MY_SHOP) || a.no - b.no);
-
-  $('list').innerHTML = list.length ? list.map(s => `
+function cardHTML(s){ return `
     <article class="card${s.no===MY_SHOP?' mine':''}${allSold(s)?' allsold':''}">
       <div class="top">
         <div class="no">${s.no}</div>
@@ -334,7 +353,20 @@ function render(){
         <span class="place${s.place?' away':''}">📍 ${s.place?esc(s.place):'自店'}</span>
         ${s.cats.map(c=>`<span class="cat">${ICON[c]} ${c}</span>`).join('')}
       </div>
-    </article>`).join('')
+    </article>`; }
+
+function render(){
+  let list = SHOPS.slice();
+  if(tab==='away') list = list.filter(s => s.place);
+  if(cat) list = list.filter(s => s.cats.includes(cat));
+  if(query){
+    const q = norm(query);
+    list = list.filter(s => norm([s.name, s.rep||'', s.place||'', ...s.items.map(i=>i.t), ...s.cats].join(' ')).includes(q));
+  }
+  // うちの店を先頭に
+  list.sort((a,b) => (b.no===MY_SHOP) - (a.no===MY_SHOP) || a.no - b.no);
+
+  $('list').innerHTML = list.length ? list.map(cardHTML).join('')
     : `<div class="empty">見つかりませんでした</div>`;
 
   const nSold = Object.values(sold.s).filter(Boolean).length;
@@ -342,8 +374,11 @@ function render(){
     $('soldInfo').textContent = `売り切れ ${nSold}品（${t.getHours()}:${String(t.getMinutes()).padStart(2,'0')} 更新）`; }
   else $('soldInfo').hidden = true;
   $('dCount').textContent = SHOPS.length;
-  document.body.classList.toggle('many', SHOPS.length > 24 && SHOPS.length <= 28);
-  document.body.classList.toggle('many2', SHOPS.length > 28);
+  // 印刷用：絞り込み・検索に関係なく全店を番号順で（どの印刷方法でも同じ一覧）
+  const sm = soldMode; soldMode = false;
+  $('plist').innerHTML = SHOPS.slice().sort((a,b) => a.no - b.no).map(cardHTML).join('');
+  soldMode = sm;
+  fitPrint();
   $('note').textContent = `${list.length}店を表示中` + (tab==='away'?'（自分の店ではない場所で出店する店）':'') + '　赤い「早めに」は50個以下＝売り切れ注意';
 }
 
@@ -356,6 +391,15 @@ document.addEventListener('click', e => {
 });
 $('q').addEventListener('input', e => { query = e.target.value.trim(); render(); });
 
+// 印刷がA4一枚に収まるよう、高さを測って縮める（店が増えても1枚）
+function fitPrint(){
+  const b = document.body; b.classList.add('pm');
+  const h = document.querySelector('.wrap').scrollHeight;
+  b.classList.remove('pm');
+  const avail = 283 * 96 / 25.4 * 0.97;               // A4縦の印刷できる高さ（余白7mm）
+  document.documentElement.style.setProperty('--pz', h > avail ? (avail / h).toFixed(3) : '1');
+}
+window.addEventListener('beforeprint', fitPrint);
 function toast(m){ const t=$('toast'); t.textContent=m; t.classList.add('show'); setTimeout(()=>t.classList.remove('show'),1800); }
 
 // ===== 合言葉と署名（クラウドの中身は誰でも書けるので、合言葉を知る人の署名つきだけを表示する） =====
