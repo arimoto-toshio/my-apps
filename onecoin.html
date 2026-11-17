@@ -1,0 +1,250 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>ワンコイン商店街</title>
+<style>
+:root{
+  --bg:#faf6ee; --card:#ffffff; --ink:#2a2420; --sub:#7a6e64; --line:#ece3d4;
+  --gold:#c99a2e; --gold-soft:#fbf0d4; --red:#c8442f; --red-soft:#fbe5e0;
+  --green:#3d8a5a; --green-soft:#e2f2e7; --blue:#3a6ea5; --blue-soft:#e3edf8;
+  --shadow:0 1px 2px rgba(60,40,10,.06),0 4px 14px rgba(60,40,10,.06);
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+  --bg:#1c1915; --card:#27231e; --ink:#f1ebe2; --sub:#a99d90; --line:#3a342c;
+  --gold:#e0b350; --gold-soft:#3a3020; --red:#ec7a64; --red-soft:#3d2520;
+  --green:#6cc08a; --green-soft:#1f3326; --blue:#7fb0e6; --blue-soft:#1f2c3b;
+  --shadow:none;
+}}
+*{box-sizing:border-box}
+html,body{margin:0}
+body{background:var(--bg);color:var(--ink);font-family:-apple-system,"Hiragino Sans","Hiragino Kaku Gothic ProN","Yu Gothic",sans-serif;line-height:1.5;-webkit-text-size-adjust:100%}
+.wrap{max-width:860px;margin:0 auto;padding:16px 16px 80px}
+header.hero{display:flex;gap:14px;align-items:center;margin:4px 0 14px}
+.coin{flex:none;width:64px;height:64px;border-radius:50%;background:radial-gradient(circle at 35% 30%,#ffe9a8,#d9a93a 60%,#a97a1c);display:grid;place-items:center;color:#5a3e05;font-weight:800;font-size:15px;box-shadow:inset 0 0 0 4px rgba(255,255,255,.35),0 2px 6px rgba(120,80,10,.3);text-align:center;line-height:1.1}
+.hero h1{margin:0;font-size:24px;letter-spacing:.02em}
+.hero .date{font-size:14px;color:var(--sub)}
+.count{display:inline-block;margin-top:4px;background:var(--gold-soft);color:var(--ink);border-radius:999px;padding:2px 10px;font-size:13px;font-weight:700}
+.stats{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin:0 0 12px}
+.stat{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:8px 10px;text-align:center;box-shadow:var(--shadow)}
+.stat b{display:block;font-size:22px}
+.stat span{font-size:12px;color:var(--sub)}
+.tabs{display:flex;gap:6px;margin-bottom:10px}
+.tab{flex:1;border:1px solid var(--line);background:var(--card);color:var(--ink);border-radius:10px;padding:10px 4px;font-size:15px;font-weight:700;cursor:pointer}
+.tab[aria-selected="true"]{background:var(--ink);color:var(--bg);border-color:var(--ink)}
+.search{width:100%;font-size:16px;padding:11px 14px;border-radius:12px;border:1px solid var(--line);background:var(--card);color:var(--ink);margin-bottom:8px}
+.chips{display:flex;gap:6px;overflow-x:auto;padding-bottom:6px;margin-bottom:6px;scrollbar-width:none}
+.chips::-webkit-scrollbar{display:none}
+.chip{flex:none;border:1px solid var(--line);background:var(--card);color:var(--ink);border-radius:999px;padding:6px 12px;font-size:14px;cursor:pointer;white-space:nowrap}
+.chip[aria-pressed="true"]{background:var(--gold);border-color:var(--gold);color:#2a1d00;font-weight:700}
+.note{font-size:13px;color:var(--sub);margin:2px 0 10px}
+.list{display:grid;gap:10px;grid-template-columns:minmax(0,1fr)}
+@media (min-width:720px){.list{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media (max-width:360px){.ib{min-width:36px;height:36px}.name h2{font-size:16px}.wrap{padding-left:12px;padding-right:12px}}
+.card{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:12px 12px 10px;box-shadow:var(--shadow);position:relative}
+.card.mine{border:2px solid var(--red)}
+.card.done{opacity:.55}
+.top{display:flex;align-items:flex-start;gap:10px}
+.no{flex:none;width:30px;height:30px;border-radius:50%;background:var(--gold-soft);display:grid;place-items:center;font-weight:800;font-size:14px}
+.name{flex:1;min-width:0}
+.name h2{margin:0;font-size:18px;line-height:1.3}
+.name .rep{font-size:12px;color:var(--sub)}
+.mine-badge{display:inline-block;background:var(--red);color:#fff;border-radius:6px;font-size:11px;padding:1px 6px;margin-left:6px;vertical-align:2px}
+.btns{display:flex;gap:6px;flex:none}
+.ib{border:1px solid var(--line);background:var(--bg);color:var(--sub);border-radius:10px;min-width:44px;height:40px;font-size:13px;font-weight:700;cursor:pointer;padding:0 8px}
+.ib.on.star{background:var(--gold);border-color:var(--gold);color:#2a1d00}
+.ib.on.check{background:var(--green);border-color:var(--green);color:#fff}
+.items{list-style:none;margin:8px 0 6px;padding:0;display:grid;gap:4px}
+.items li{display:flex;flex-wrap:wrap;align-items:baseline;gap:6px;font-size:15px}
+.items li::before{content:"・";color:var(--gold)}
+.pill{font-size:12px;border-radius:6px;padding:0 6px;white-space:nowrap}
+.pill.q{background:var(--blue-soft);color:var(--blue)}
+.pill.few{background:var(--red-soft);color:var(--red);font-weight:700}
+.pill.p{background:var(--gold-soft);color:var(--ink)}
+.meta{display:flex;flex-wrap:wrap;gap:6px;align-items:center}
+.place{font-size:12px;border-radius:6px;padding:1px 7px;background:var(--green-soft);color:var(--green)}
+.place.away{background:var(--red-soft);color:var(--red);font-weight:700}
+.cat{font-size:12px;color:var(--sub);border:1px solid var(--line);border-radius:6px;padding:0 6px}
+.empty{text-align:center;color:var(--sub);padding:30px 0}
+.foot{display:flex;flex-wrap:wrap;gap:8px;margin-top:18px}
+.fb{border:1px solid var(--line);background:var(--card);color:var(--ink);border-radius:10px;padding:9px 14px;font-size:14px;cursor:pointer}
+.toast{position:fixed;left:50%;bottom:24px;transform:translateX(-50%);background:var(--ink);color:var(--bg);padding:8px 16px;border-radius:999px;font-size:14px;opacity:0;transition:opacity .2s;pointer-events:none}
+.toast.show{opacity:1}
+@media print{
+  body{background:#fff;color:#000}
+  .tabs,.search,.chips,.btns,.foot,.stats,.note,.toast{display:none!important}
+  .wrap{max-width:none;padding:0}
+  .list{grid-template-columns:1fr 1fr;gap:6px}
+  .card{box-shadow:none;break-inside:avoid;padding:6px 8px;border-radius:6px}
+  .card.done{opacity:1}
+  .name h2{font-size:14px}.items li{font-size:12px}
+  .coin{width:44px;height:44px;font-size:11px}
+}
+</style>
+
+</head>
+<body>
+<div class="wrap">
+  <header class="hero">
+    <div class="coin">ワン<br>コイン</div>
+    <div>
+      <h1>ワンコイン商店街</h1>
+      <div class="date">2026年11月28日（土）・参加店 24店</div>
+      <div class="count" id="count"></div>
+    </div>
+  </header>
+
+  <div class="stats">
+    <div class="stat"><b id="sAll">24</b><span>参加店</span></div>
+    <div class="stat"><b id="sStar">0</b><span>★ 行きたい</span></div>
+    <div class="stat"><b id="sDone">0</b><span>✓ 行った</span></div>
+  </div>
+
+  <div class="tabs" role="tablist">
+    <button class="tab" role="tab" data-tab="all" aria-selected="true">ぜんぶ</button>
+    <button class="tab" role="tab" data-tab="star" aria-selected="false">★ 行きたい</button>
+    <button class="tab" role="tab" data-tab="away" aria-selected="false">店の外で出店</button>
+  </div>
+
+  <input class="search" id="q" type="search" placeholder="店名・商品でさがす（例：カレー、くじ）">
+  <div class="chips" id="chips"></div>
+  <div class="note" id="note"></div>
+
+  <div class="list" id="list"></div>
+
+  <div class="foot">
+    <button class="fb" id="copy">★行きたい店をコピー</button>
+    <button class="fb" onclick="window.print()">一覧を印刷（A4）</button>
+    <button class="fb" id="reset">★と✓を全部消す</button>
+  </div>
+</div>
+<div class="toast" id="toast"></div>
+
+<script>
+const EVENT_DATE = new Date(2026, 10, 28);
+const MY_SHOP = 0;
+const KEY = 'onecoin_20261128';
+const CATS = ['たべもの','おかし','雑貨・もの','くじ・あそび','サービス','マルシェ・イベント'];
+const ICON = {'たべもの':'🍚','おかし':'🍰','雑貨・もの':'🛍','くじ・あそび':'🎯','サービス':'✂️','マルシェ・イベント':'🎪'};
+
+// q=数量 / p=値段・条件
+const SHOPS = [
+ {no:1, name:'井上商店', rep:'', cats:['おかし','雑貨・もの'], items:[{t:'クッキー',q:250},{t:'ニット帽子・かご',q:5,qs:'各5個'}]},
+ {no:2, name:'かつ盛', rep:'', cats:['たべもの'], items:[{t:'たいさつま汁',q:50},{t:'タイのあら炊き 他',q:50}]},
+ {no:3, name:'かっとハウス ホワイト', rep:'', cats:['くじ・あそび'], items:[{t:'くじびき',q:300}]},
+ {no:4, name:'坂見輝月堂', rep:'', cats:['おかし'], items:[{t:'シュークリーム',q:100},{t:'ボーロ（5個入り）',q:50}]},
+ {no:5, name:'菓子と器の宮栄', rep:'', cats:['くじ・あそび'], items:[{t:'クジ引き芋すくい',q:300}]},
+ {no:6, name:'タニオ', rep:'', cats:['雑貨・もの'], place:'本川邸駐車場', items:[{t:'おもちゃ'}]},
+ {no:7, name:'洋食マザー', rep:'', cats:['おかし','たべもの'], items:[{t:'紅はるかのカヌレ 2個',p:'500円'},{t:'明太グラハムパン 1個',p:'100円'}]},
+ {no:8, name:'ジェイジェイ旅行センター', rep:'', cats:['雑貨・もの','くじ・あそび'], items:[{t:'雑貨・ぬいぐるみ',q:100},{t:'クジ引き',q:50}]},
+ {no:9, name:'みやせ', rep:'', cats:['雑貨・もの'], items:[{t:'安心安全ローソク',q:100},{t:'お香 2束',q:100}]},
+ {no:10, name:'みやせスポーツ', rep:'', cats:['雑貨・もの'], items:[{t:'超お買い得 有名ブランド商品多数！'},{t:'今回より商品リニューアル'}]},
+ {no:11, name:'ひさこ美容院', rep:'', cats:['サービス'], items:[{t:'子供カット',p:'1コイン'},{t:'大人カット',p:'2コイン'}]},
+ {no:12, name:'キドフーズ', rep:'', cats:['たべもの'], items:[{t:'トリカラ 1パック',p:'300円'}]},
+ {no:13, name:'やきとり春吉', rep:'', cats:['雑貨・もの'], items:[{t:'手作りポーチ',q:30,qs:'20〜30'},{t:'手作り小物入れ',q:30,qs:'20〜30'}]},
+ {no:14, name:'MORITEI', rep:'', cats:['マルシェ・イベント','たべもの'], items:[{t:'MORITEIマルシェ開催'},{t:'ケイジャンチキン丼・ソーセージ・ジビエ串 他'}]},
+ {no:15, name:'百栗', rep:'', cats:['マルシェ・イベント'], items:[{t:'グランドオープンイベント開催'}]},
+ {no:16, name:'徳千', rep:'', cats:['たべもの'], items:[{t:'ミニ天丼',q:100},{t:'天むす',q:100}]},
+ {no:17, name:'久保昭和堂', rep:'', cats:['雑貨・もの'], items:[{t:'掘り出し物'},{t:'ふろく市'}]},
+ {no:18, name:'ほっこりマルシェ', rep:'', cats:['マルシェ・イベント','雑貨・もの','たべもの'], place:'Nanze', items:[{t:'ほっこりマルシェ開催'},{t:'手作りの小物やアクセサリー・キッチンカー'}]},
+ {no:19, name:'金木犀', rep:'', cats:['たべもの'], items:[{t:'牛すじカレー（テイクアウトのみ）',p:'600円'},{t:'各種ドリンクも'}]},
+ {no:20, name:'フローリストやまおか', rep:'', cats:['たべもの'], items:[{t:'フライドポテト 他'}]},
+ {no:21, name:'あさひ堂薬局', rep:'', cats:['サービス'], items:[{t:'老化物質（AGEs）測定（おまけつき）'}]},
+ {no:22, name:'洋菓子 金の羽', rep:'', cats:['おかし'], items:[{t:'チョコチップマフィン',q:30},{t:'内子産梨のパイ',q:30}]},
+ {no:23, name:'清水ふとん店', rep:'', cats:['雑貨・もの'], place:'内子座駐車場', items:[{t:'小座布団 1枚',p:'500円'},{t:'20枚限定・1人2枚まで',q:20,qs:'限定20枚'}]},
+ {no:24, name:'焼肉ありもと', rep:'', cats:['たべもの'], items:[{t:'止まらない焼豚インフレ丼',q:50}]},
+];
+
+let st = {star:{}, done:{}};
+try{ const s = JSON.parse(localStorage.getItem(KEY)||'null'); if(s&&s.star) st = s; }catch(e){}
+function save(){ try{ localStorage.setItem(KEY, JSON.stringify(st)); }catch(e){} }
+
+let tab='all', cat='', query='';
+const $ = id => document.getElementById(id);
+const esc = s => String(s).replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const norm = s => s.normalize('NFKC').toLowerCase().replace(/[ァ-ン]/g, c => String.fromCharCode(c.charCodeAt(0)-0x60)).replace(/\s/g,'');
+
+function countdown(){
+  const t = new Date(); t.setHours(0,0,0,0);
+  const d = Math.round((EVENT_DATE - t)/86400000);
+  $('count').textContent = d > 0 ? `あと ${d} 日` : d === 0 ? '今日が本番！' : 'おつかれさまでした';
+}
+
+function chips(){
+  $('chips').innerHTML = ['',...CATS].map(c =>
+    `<button class="chip" data-cat="${c}" aria-pressed="${c===cat}">${c ? ICON[c]+' '+c : 'すべて'}</button>`).join('');
+}
+
+function itemHTML(it){
+  let h = `<span>${esc(it.t)}</span>`;
+  if(it.p) h += `<span class="pill p">${esc(it.p)}</span>`;
+  if(it.q){
+    const few = it.q <= 50;
+    h += `<span class="pill ${few?'few':'q'}">${esc(it.qs || it.q+'個')}${few?'・早めに':''}</span>`;
+  }
+  return `<li>${h}</li>`;
+}
+
+function render(){
+  let list = SHOPS.slice();
+  if(tab==='star') list = list.filter(s => st.star[s.no]);
+  if(tab==='away') list = list.filter(s => s.place);
+  if(cat) list = list.filter(s => s.cats.includes(cat));
+  if(query){
+    const q = norm(query);
+    list = list.filter(s => norm([s.name, s.rep, s.place||'', ...s.items.map(i=>i.t), ...s.cats].join(' ')).includes(q));
+  }
+  // うちの店を先頭に
+  list.sort((a,b) => (b.no===MY_SHOP) - (a.no===MY_SHOP) || a.no - b.no);
+
+  $('list').innerHTML = list.length ? list.map(s => `
+    <article class="card${s.no===MY_SHOP?' mine':''}${st.done[s.no]?' done':''}">
+      <div class="top">
+        <div class="no">${s.no}</div>
+        <div class="name">
+          <h2>${esc(s.name)}${s.no===MY_SHOP?'<span class="mine-badge">うちの店</span>':''}</h2>
+          ${s.rep?`<div class="rep">${esc(s.rep)}</div>`:''}
+        </div>
+        <div class="btns">
+          <button class="ib star${st.star[s.no]?' on':''}" data-act="star" data-no="${s.no}" aria-label="行きたい">★</button>
+          <button class="ib check${st.done[s.no]?' on':''}" data-act="done" data-no="${s.no}" aria-label="行った">✓</button>
+        </div>
+      </div>
+      <ul class="items">${s.items.map(itemHTML).join('')}</ul>
+      <div class="meta">
+        <span class="place${s.place?' away':''}">📍 ${s.place?esc(s.place):'自店'}</span>
+        ${s.cats.map(c=>`<span class="cat">${ICON[c]} ${c}</span>`).join('')}
+      </div>
+    </article>`).join('')
+    : `<div class="empty">${tab==='star'?'★を押した店がここに出ます':'見つかりませんでした'}</div>`;
+
+  const nStar = Object.values(st.star).filter(Boolean).length;
+  const nDone = Object.values(st.done).filter(Boolean).length;
+  $('sStar').textContent = nStar; $('sDone').textContent = nDone;
+  $('note').textContent = `${list.length}店を表示中` + (tab==='away'?'（自分の店ではない場所で出店する店）':'') + '　赤い「早めに」は50個以下＝売り切れ注意';
+}
+
+document.addEventListener('click', e => {
+  const t = e.target.closest('button'); if(!t) return;
+  if(t.dataset.tab){ tab = t.dataset.tab; document.querySelectorAll('.tab').forEach(b=>b.setAttribute('aria-selected', b===t)); render(); }
+  else if(t.dataset.cat!==undefined){ cat = t.dataset.cat; chips(); render(); }
+  else if(t.dataset.act){ const no=t.dataset.no, k=t.dataset.act; st[k][no] = !st[k][no]; save(); render(); }
+});
+$('q').addEventListener('input', e => { query = e.target.value.trim(); render(); });
+
+function toast(m){ const t=$('toast'); t.textContent=m; t.classList.add('show'); setTimeout(()=>t.classList.remove('show'),1800); }
+$('copy').onclick = async () => {
+  const sel = SHOPS.filter(s => st.star[s.no]);
+  if(!sel.length) return toast('まだ★がありません');
+  const txt = '【ワンコイン商店街 11/28 行きたい店】\n' + sel.map(s =>
+    `${s.no}. ${s.name}（${s.place||'自店'}）\n   ` + s.items.map(i=>i.t+(i.p?' '+i.p:'')).join(' / ')).join('\n');
+  try{ await navigator.clipboard.writeText(txt); toast('コピーしました（LINEに貼れます）'); }
+  catch(e){ prompt('このままコピーしてください', txt); }
+};
+$('reset').onclick = () => { if(confirm('★と✓を全部消しますか？')){ st={star:{},done:{}}; save(); render(); } };
+
+countdown(); chips(); render();
+</script>
+</body>
+</html>
