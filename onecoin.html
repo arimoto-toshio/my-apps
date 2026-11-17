@@ -45,7 +45,6 @@ header.hero{display:flex;gap:14px;align-items:center;margin:4px 0 14px}
 @media (max-width:360px){.ib{min-width:36px;height:36px}.name h2{font-size:16px}.wrap{padding-left:12px;padding-right:12px}}
 .card{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:12px 12px 10px;box-shadow:var(--shadow);position:relative}
 .card.mine{border:2px solid var(--red)}
-.card.done{opacity:.55}
 .top{display:flex;align-items:flex-start;gap:10px}
 .no{flex:none;width:30px;height:30px;border-radius:50%;background:var(--gold-soft);display:grid;place-items:center;font-weight:800;font-size:14px}
 .name{flex:1;min-width:0}
@@ -121,7 +120,6 @@ dialog#dlg::backdrop{background:rgba(0,0,0,.45)}
   .card{box-shadow:none;break-inside:avoid;page-break-inside:avoid;padding:1mm 2mm 1.2mm;border-radius:4px;display:grid;grid-template-columns:minmax(0,1fr) auto;column-gap:4px;align-content:start}
   .card .top{grid-column:1;grid-row:1}.card .meta{grid-column:2;grid-row:1;align-self:center}.card .items{grid-column:1/-1}
   .card.mine{border-width:1.5px}
-  .card.done{opacity:1}
   .top{gap:5px;align-items:center}
   .no{width:23px;height:23px;font-size:12.5px}
   .name{display:flex;align-items:baseline;gap:6px;flex-wrap:wrap}
@@ -148,16 +146,11 @@ dialog#dlg::backdrop{background:rgba(0,0,0,.45)}
     </div>
   </header>
 
-  <div class="stats">
-    <div class="stat"><b id="sAll">24</b><span>参加店</span></div>
-    <div class="stat"><b id="sDone">0</b><span>✓ 行った</span></div>
-  </div>
 
   <div class="foot">
     <button class="fb add" id="addBtn">＋お店を新規登録</button>
     <button class="fb soldmode" id="soldBtn">売り切れを付ける</button>
     <button class="fb" onclick="window.print()">一覧を印刷（A4）</button>
-    <button class="fb" id="reset">✓を全部消す</button>
   </div>
 
   <div class="soldhint" id="soldHint" hidden>売り切れ入力中：売り切れた商品の「押すと売り切れ」を押してください。赤い「売り切れ」が付いたものだけが売り切れです。</div>
@@ -237,9 +230,6 @@ let sold = {savedAt:0, s:{}};
 try{ const a = JSON.parse(localStorage.getItem(SOLD_KEY)||'null'); if(a && a.s) sold = a; }catch(e){}
 let soldMode = false;
 
-let st = {star:{}, done:{}};
-try{ const s = JSON.parse(localStorage.getItem(KEY)||'null'); if(s&&s.star) st = s; }catch(e){}
-function save(){ try{ localStorage.setItem(KEY, JSON.stringify(st)); }catch(e){} }
 
 let tab='all', cat='', query='';
 const $ = id => document.getElementById(id);
@@ -287,7 +277,7 @@ function render(){
   list.sort((a,b) => (b.no===MY_SHOP) - (a.no===MY_SHOP) || a.no - b.no);
 
   $('list').innerHTML = list.length ? list.map(s => `
-    <article class="card${s.no===MY_SHOP?' mine':''}${st.done[s.no]?' done':''}${allSold(s)?' allsold':''}">
+    <article class="card${s.no===MY_SHOP?' mine':''}${allSold(s)?' allsold':''}">
       <div class="top">
         <div class="no">${s.no}</div>
         <div class="name">
@@ -295,7 +285,6 @@ function render(){
           ${s.rep?`<div class="rep">${esc(s.rep)}</div>`:''}
         </div>
         <div class="btns">
-          <button class="ib check${st.done[s.no]?' on':''}" data-act="done" data-no="${s.no}" aria-label="行った">✓</button>
           ${CAN_EDIT && s.added ? `<button class="ib edit" data-act="edit" data-no="${s.no}">直す</button>` : ''}
         </div>
       </div>
@@ -311,11 +300,9 @@ function render(){
   if(nSold){ const t = new Date(sold.savedAt); $('soldInfo').hidden = false;
     $('soldInfo').textContent = `売り切れ ${nSold}品（${t.getHours()}:${String(t.getMinutes()).padStart(2,'0')} 更新）`; }
   else $('soldInfo').hidden = true;
-  $('dCount').textContent = SHOPS.length; $('sAll').textContent = SHOPS.length;
+  $('dCount').textContent = SHOPS.length;
   document.body.classList.toggle('many', SHOPS.length > 24 && SHOPS.length <= 28);
   document.body.classList.toggle('many2', SHOPS.length > 28);
-  const nDone = Object.values(st.done).filter(Boolean).length;
-  $('sDone').textContent = nDone;
   $('note').textContent = `${list.length}店を表示中` + (tab==='away'?'（自分の店ではない場所で出店する店）':'') + '　赤い「早めに」は50個以下＝売り切れ注意';
 }
 
@@ -325,7 +312,6 @@ document.addEventListener('click', e => {
   else if(t.dataset.cat!==undefined){ cat = t.dataset.cat; chips(); render(); }
   else if(t.dataset.sold){ toggleSold(t.dataset.sold); }
   else if(t.dataset.act==='edit'){ openDlg(+t.dataset.no); }
-  else if(t.dataset.act){ const no=t.dataset.no, k=t.dataset.act; st[k][no] = !st[k][no]; save(); render(); }
 });
 $('q').addEventListener('input', e => { query = e.target.value.trim(); render(); });
 
@@ -459,7 +445,6 @@ if(CAN_EDIT) $('delBtn').onclick = () => {
   const s = added.shops.find(x => x.no === editNo); if(!s) return;
   if(!confirm(`${s.no}番「${s.name}」を一覧から消しますか？`)) return;
   added.shops = added.shops.filter(x => x.no !== editNo);
-  delete st.done[editNo]; save();
   added.savedAt = Date.now(); saveAddedLocal(); rebuild(); render(); $('dlg').close();
   toast('消しました'); pushCloud();
 };
@@ -502,7 +487,6 @@ $('soldBtn').onclick = async () => {
   $('soldBtn').textContent = soldMode ? '売り切れ入力を終わる' : SOLD_LABEL;
   $('soldHint').hidden = !soldMode; render();
 };
-$('reset').onclick = () => { if(confirm('✓を全部消しますか？\n（売り切れの印は消えません）')){ st={star:{},done:{}}; save(); render(); } };
 
 const SOLD_LABEL = CAN_EDIT ? '売り切れを付ける' : '🔒 売り切れを付ける（お店の人用）';
 $('soldBtn').textContent = SOLD_LABEL;
