@@ -81,7 +81,8 @@ header.hero{display:flex;gap:14px;align-items:center;margin:4px 0 14px}
   .hero h1{font-size:16px;display:inline}.hero .date{display:inline;margin-left:8px;font-size:11px}
   .coin{width:26px;height:26px;font-size:7px;box-shadow:none}
   .list{grid-template-columns:1fr 1fr!important;gap:1.6mm}
-  .card{box-shadow:none;break-inside:avoid;page-break-inside:avoid;padding:1.4mm 2mm;border-radius:4px;height:20.6mm;overflow:hidden}
+  .card{box-shadow:none;break-inside:avoid;page-break-inside:avoid;padding:1mm 2mm 1.2mm;border-radius:4px;display:grid;grid-template-columns:minmax(0,1fr) auto;column-gap:4px;align-content:start}
+  .card .top{grid-column:1;grid-row:1}.card .meta{grid-column:2;grid-row:1;align-self:center}.card .items{grid-column:1/-1}
   .card.mine{border-width:1.5px}
   .card.done{opacity:1}
   .top{gap:5px;align-items:center}
@@ -89,7 +90,7 @@ header.hero{display:flex;gap:14px;align-items:center;margin:4px 0 14px}
   .name{display:flex;align-items:baseline;gap:6px;flex-wrap:wrap}
   .name h2{font-size:14px}.name .rep{font-size:9px}
   .mine-badge{font-size:8px;padding:0 4px;vertical-align:1px}
-  .items{margin:1mm 0 .6mm;gap:0}
+  .items{margin:.4mm 0 0 23px;gap:0}
   .items li{font-size:11.5px;line-height:1.35;gap:4px}
   .pill{font-size:9.5px;padding:0 3px}
   .place{font-size:9.5px;padding:0 4px}
