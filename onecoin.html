@@ -78,6 +78,13 @@ header.hero{display:flex;gap:14px;align-items:center;margin:4px 0 14px}
 .sbtn.on{background:var(--red);color:#fff}
 .fb.soldmode.on{background:var(--red);border-color:var(--red);color:#fff;font-weight:800}
 .soldinfo{font-size:13px;color:var(--red);font-weight:700;margin:-4px 0 10px}
+#passDlg{border:none;border-radius:16px;padding:0;width:min(420px,calc(100vw - 24px));background:var(--card);color:var(--ink);box-shadow:0 10px 40px rgba(0,0,0,.3)}
+#passDlg::backdrop{background:rgba(0,0,0,.45)}
+#pf{padding:16px;display:grid;gap:10px}#pf h3{margin:0;font-size:19px}#pf p{margin:0;font-size:13px;color:var(--sub)}
+#pf input{font-size:16px;padding:10px 12px;border-radius:10px;border:1px solid var(--line);background:var(--bg);color:var(--ink)}
+#pf .r{display:flex;gap:8px;justify-content:flex-end}
+#pf button{border:1px solid var(--line);background:var(--bg);color:var(--ink);border-radius:10px;padding:10px 14px;font-size:15px;cursor:pointer}
+#pf .primary{background:var(--gold);border-color:var(--gold);color:#2a1d00;font-weight:800}
 .fb.add{background:var(--gold);border-color:var(--gold);color:#2a1d00;font-weight:800}
 .ib.edit{font-size:12px;color:var(--ink)}
 .newb{display:inline-block;background:var(--blue);color:#fff;border-radius:6px;font-size:11px;padding:1px 6px;margin-left:6px;vertical-align:2px}
@@ -170,6 +177,15 @@ dialog#dlg::backdrop{background:rgba(0,0,0,.45)}
 
 </div>
 <div class="toast" id="toast"></div>
+
+<dialog id="passDlg">
+  <form id="pf" method="dialog">
+    <h3>🔒 お店の人用</h3>
+    <p>売り切れを付けるには、<b>全アプリ共通の合言葉</b>を入れてください。この端末では次から入れなくてOKです。</p>
+    <input type="password" id="passIn" autocomplete="current-password" placeholder="合言葉">
+    <div class="r"><button type="button" id="passCancel">やめる</button><button type="submit" class="primary">開く</button></div>
+  </form>
+</dialog>
 
 
 <script>
@@ -327,31 +343,85 @@ $('copy').onclick = async () => {
   catch(e){ prompt('このままコピーしてください', txt); }
 };
 
+// ===== 合言葉と署名（クラウドの中身は誰でも書けるので、合言葉を知る人の署名つきだけを表示する） =====
+const PUB_JWK = {"kty": "EC", "crv": "P-256", "x": "iTCdhreZ13LiloNbxe3qGBRgO4t1aWgBcCzSM__GYDk", "y": "kuxrJovMPr1PZ5Vg4HRfOJTFxA0hedNZUAtkFbCtzQM"};
+const PASS_KEY = 'arimoto_cloud_pass', SIGNKEY_KEY = 'onecoin34_signkey';
+const te = new TextEncoder(), td = new TextDecoder();
+const ub64 = x => Uint8Array.from(atob(x), c => c.charCodeAt(0));
+const tb64 = b => { let r = ''; new Uint8Array(b).forEach(c => r += String.fromCharCode(c)); return btoa(r); };
+let signer = null, verifier = null;
+async function rawLoad(key){
+  const r = await fetch(SYNC_URL + '?action=load&key=' + key + '&t=' + Date.now());
+  const j = await r.json(); let d = j && j.data;
+  if(typeof d === 'string'){ try{ d = JSON.parse(d); }catch(e){ d = null; } }
+  return d;
+}
+async function makeSigner(pass){
+  const e = await rawLoad(SIGNKEY_KEY); if(!e || !e.ct) throw new Error('nokey');
+  const base = await crypto.subtle.importKey('raw', te.encode(pass), 'PBKDF2', false, ['deriveKey']);
+  const k = await crypto.subtle.deriveKey({name:'PBKDF2', salt:ub64(e.salt), iterations:200000, hash:'SHA-256'}, base, {name:'AES-GCM', length:256}, false, ['decrypt']);
+  const jwk = JSON.parse(td.decode(await crypto.subtle.decrypt({name:'AES-GCM', iv:ub64(e.iv)}, k, ub64(e.ct))));
+  return crypto.subtle.importKey('jwk', {kty:jwk.kty, crv:jwk.crv, x:jwk.x, y:jwk.y, d:jwk.d}, {name:'ECDSA', namedCurve:'P-256'}, false, ['sign']);
+}
+function askPass(){
+  return new Promise(res => {
+    const d = $('passDlg'); $('passIn').value = ''; let done = false;
+    const fin = v => { if(done) return; done = true; d.close(); res(v); };
+    $('pf').onsubmit = e => { e.preventDefault(); fin($('passIn').value.trim() || null); };
+    $('passCancel').onclick = () => fin(null);
+    d.onclose = () => fin(null);
+    d.showModal(); setTimeout(() => $('passIn').focus(), 50);
+  });
+}
+async function ensureSigner(noAsk){
+  if(signer) return true;
+  let pass = null; try{ pass = localStorage.getItem(PASS_KEY); }catch(e){}
+  if(pass){
+    try{ signer = await makeSigner(pass); return true; }
+    catch(e){ if(e.name !== 'OperationError'){ if(!noAsk) toast('確認できませんでした（電波を確認してください）'); return false; } }
+  }
+  if(noAsk) return false;
+  pass = await askPass(); if(!pass) return false;
+  try{ signer = await makeSigner(pass); try{ localStorage.setItem(PASS_KEY, pass); }catch(e){} toast('🔓 合言葉OK'); return true; }
+  catch(e){ alert(e.name === 'OperationError' ? '合言葉が違います' : '確認できませんでした（電波を確認してください）'); return false; }
+}
+async function signedSave(key, obj){
+  const body = JSON.stringify(obj);
+  const sig = tb64(await crypto.subtle.sign({name:'ECDSA', hash:'SHA-256'}, signer, te.encode(body)));
+  const r = await fetch(SYNC_URL + '?action=save&key=' + key, {method:'POST', body: JSON.stringify({body, sig})});
+  const j = await r.json(); if(!j.success) throw new Error(j.message || '');
+}
+async function verifiedLoad(key){
+  const d = await rawLoad(key);
+  if(!d || typeof d.body !== 'string' || typeof d.sig !== 'string') return null;
+  verifier = verifier || await crypto.subtle.importKey('jwk', PUB_JWK, {name:'ECDSA', namedCurve:'P-256'}, false, ['verify']);
+  const ok = await crypto.subtle.verify({name:'ECDSA', hash:'SHA-256'}, verifier, ub64(d.sig), te.encode(d.body));
+  return ok ? JSON.parse(d.body) : null;
+}
+
 // ===== 新規登録 =====
 function storageOK(){ try{ localStorage.setItem('__synctest','1'); localStorage.removeItem('__synctest'); return true; }catch(e){ return false; } }
 function saveAddedLocal(){ try{ localStorage.setItem(ADD_KEY, JSON.stringify(added)); return true; }catch(e){ return false; } }
 function publicShops(){ return added.shops.map(({rep, ...r}) => r); }
 
-async function pushCloud(){
+async function pushCloud(noAsk){
   if(!CAN_EDIT || !storageOK()) return;      // プレビュー等から書かせない
   try{
-    const res = await fetch(SYNC_URL + '?action=save&key=' + CLOUD_KEY, {method:'POST', body: JSON.stringify({savedAt: added.savedAt, shops: publicShops()})});
-    const j = await res.json();
-    if(!j.success) throw new Error(j.message||'');
+    if(!await ensureSigner(noAsk)) throw new Error('nosign');
+    await signedSave(CLOUD_KEY, {savedAt: added.savedAt, shops: publicShops()});
     if(added.pending){ added.pending = false; saveAddedLocal(); }
     toast('☁ 公開版にも反映しました');
   }catch(e){
     added.pending = true; saveAddedLocal();
-    toast('公開版への送信に失敗。次に開いたとき送り直します');
+    if(!noAsk) toast('公開版への送信に失敗。次に開いたとき送り直します');
   }
 }
 async function loadCloud(){
   try{
-    const res = await fetch(SYNC_URL + '?action=load&key=' + CLOUD_KEY + '&t=' + Date.now());
-    const j = await res.json();
-    let d = j && j.data; if(typeof d === 'string'){ try{ d = JSON.parse(d); }catch(e){ d = null; } }
+    const d = await verifiedLoad(CLOUD_KEY);
     if(!d || !Array.isArray(d.shops)) return;
     if(!CAN_EDIT){                               // 公開版：クラウドのとおりに出す
+      if((d.savedAt||0) === added.savedAt) return;
       added = {savedAt: d.savedAt||0, shops: d.shops.map(x => ({...x, added:true}))};
       saveAddedLocal(); rebuild(); render();
     }else if(!added.shops.length && d.shops.length && (d.savedAt||0) > 0){   // Macの控えが消えたときの復元
@@ -408,44 +478,52 @@ if(CAN_EDIT) $('delBtn').onclick = () => {
 
 // ===== 売り切れ =====
 function saveSoldLocal(){ try{ localStorage.setItem(SOLD_KEY, JSON.stringify(sold)); return true; }catch(e){ return false; } }
-async function pushSold(){
-  if(!CAN_EDIT || !storageOK()) return;
-  try{
-    const res = await fetch(SYNC_URL + '?action=save&key=' + SOLD_KEY, {method:'POST', body: JSON.stringify({savedAt: sold.savedAt, s: sold.s})});
-    const j = await res.json(); if(!j.success) throw new Error(j.message||'');
-    if(sold.pending){ sold.pending = false; saveSoldLocal(); }
-    toast('☁ 公開版にも出しました');
-  }catch(e){ sold.pending = true; saveSoldLocal(); toast('公開版への送信に失敗。次に開いたとき送り直します'); }
-}
 async function loadSold(){
   try{
-    const res = await fetch(SYNC_URL + '?action=load&key=' + SOLD_KEY + '&t=' + Date.now());
-    const j = await res.json();
-    let d = j && j.data; if(typeof d === 'string'){ try{ d = JSON.parse(d); }catch(e){ d = null; } }
+    const d = await verifiedLoad(SOLD_KEY);
     if(!d || typeof d.s !== 'object') return;
     if(!CAN_EDIT){ if((d.savedAt||0) !== sold.savedAt){ sold = {savedAt: d.savedAt||0, s: d.s}; saveSoldLocal(); render(); } }
     else if(!Object.keys(sold.s).length && Object.keys(d.s).length && (d.savedAt||0) > 0){ sold = {savedAt: d.savedAt, s: d.s}; saveSoldLocal(); render(); }
   }catch(e){}
 }
-function toggleSold(k){
-  if(sold.s[k]) delete sold.s[k]; else sold.s[k] = true;
-  sold.savedAt = Date.now();
-  if(!saveSoldLocal()){ alert('保存できませんでした（Safariの保存場所がいっぱいの可能性）'); return; }
-  render(); pushSold();
+async function pushSold(noAsk){
+  if(!storageOK()) return;
+  try{
+    if(!await ensureSigner(noAsk)) throw new Error('nosign');
+    await signedSave(SOLD_KEY, {savedAt: sold.savedAt, s: sold.s});
+    if(sold.pending){ sold.pending = false; saveSoldLocal(); }
+    if(!noAsk) toast('☁ 公開版にも出しました');
+  }catch(e){ sold.pending = true; saveSoldLocal(); if(!noAsk) toast('送信に失敗。次に開いたとき送り直します'); }
 }
-$('soldBtn').onclick = () => {
+let soldBusy = false;
+async function toggleSold(k){
+  if(soldBusy) return; soldBusy = true;
+  try{
+    if(!await ensureSigner()) return;
+    let base = sold.s;                               // ほかの端末で付けた分を消さないよう、最新を読んでから足す
+    try{ const d = await verifiedLoad(SOLD_KEY); if(d && d.s && (d.savedAt||0) >= sold.savedAt) base = d.s; }catch(e){}
+    const s2 = {...base}; if(s2[k]) delete s2[k]; else s2[k] = true;
+    sold = {savedAt: Date.now(), s: s2};
+    if(!saveSoldLocal() && CAN_EDIT){ alert('保存できませんでした（Safariの保存場所がいっぱいの可能性）'); return; }
+    render(); await pushSold();
+  }finally{ soldBusy = false; }
+}
+$('soldBtn').onclick = async () => {
+  if(!soldMode && !await ensureSigner()) return;
   soldMode = !soldMode; $('soldBtn').classList.toggle('on', soldMode);
-  $('soldBtn').textContent = soldMode ? '売り切れ入力を終わる' : '売り切れを付ける';
+  $('soldBtn').textContent = soldMode ? '売り切れ入力を終わる' : SOLD_LABEL;
   if(soldMode) toast('商品の右の「売切」を押してください'); render();
 };
 $('reset').onclick = () => { if(confirm('★と✓を全部消しますか？\n（売り切れの印は消えません）')){ st={star:{},done:{}}; save(); render(); } };
 
-if(!CAN_EDIT){ $('addBtn').remove(); $('soldBtn').remove();
+const SOLD_LABEL = CAN_EDIT ? '売り切れを付ける' : '🔒 売り切れを付ける（お店の人用）';
+$('soldBtn').textContent = SOLD_LABEL;
+if(!CAN_EDIT){ $('addBtn').remove(); document.querySelector('.foot').appendChild($('soldBtn'));
   setInterval(loadSold, 60000);                       // 公開版は1分ごとに売り切れを読み直す
   document.addEventListener('visibilitychange', () => { if(!document.hidden){ loadSold(); loadCloud(); } }); }
 countdown(); chips(); render();
-if(CAN_EDIT && added.pending && storageOK()) pushCloud();
-if(CAN_EDIT && sold.pending && storageOK()) pushSold();
+if(CAN_EDIT && added.pending && storageOK()) pushCloud(true);
+if(sold.pending && storageOK()) pushSold(true);
 loadSold();
 loadCloud();
 </script>
