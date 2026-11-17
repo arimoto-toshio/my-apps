@@ -179,7 +179,7 @@ body.pm .place{font-size:12px;padding:0 4px}
   <div class="foot">
     <button class="fb add" id="addBtn">＋お店を新規登録</button>
     <button class="fb soldmode" id="soldBtn">売り切れを付ける</button>
-    <button class="fb" onclick="window.print()">一覧を印刷（A4）</button>
+    <button class="fb" id="printBtn">一覧を印刷（A4）</button>
   </div>
 
   <div class="soldhint" id="soldHint" hidden>売り切れ入力中：売り切れた商品の「押すと売り切れ」を押してください。赤い「売り切れ」が付いたものだけが売り切れです。</div>
@@ -237,7 +237,7 @@ body.pm .place{font-size:12px;padding:0 4px}
 <script>
 const EVENT_DATE = new Date(2026, 10, 28);
 // ===== 最新版チェック（公開版を開いた人も自動で最新に。版は公開するたびに道具が書き換える）=====
-const APP_VERSION = '20261117-225737';
+const APP_VERSION = '20261117-233742';
 function checkLatest(){
   if(location.protocol !== 'https:') return;
   fetch(location.pathname + '?v=' + Date.now(), {cache:'no-store'})
@@ -400,6 +400,20 @@ function fitPrint(){
   document.documentElement.style.setProperty('--pz', h > avail ? (avail / h).toFixed(3) : '1');
 }
 window.addEventListener('beforeprint', fitPrint);
+// LINEなどアプリの中の画面は印刷できないので、Safari等で開き直してもらう
+const INAPP = /\bLine\/|FBAN|FBAV|Instagram|MicroMessenger/i.test(navigator.userAgent);
+$('printBtn').onclick = () => {
+  if(INAPP){
+    if(/\bLine\//i.test(navigator.userAgent)){
+      if(confirm('LINEの中の画面からは印刷できません。\nSafariで開き直します。開いたら、もう一度「一覧を印刷（A4）」を押してください。')){
+        const u = new URL(location.href); u.searchParams.set('openExternalBrowser', '1'); location.href = u.toString();
+      }
+    }else alert('アプリの中の画面からは印刷できません。右上の「…」から「ブラウザで開く」を選んで、もう一度押してください。');
+    return;
+  }
+  fitPrint();
+  try{ window.print(); }catch(e){ alert('この画面からは印刷できません。Safariで開いてください。'); }
+};
 function toast(m){ const t=$('toast'); t.textContent=m; t.classList.add('show'); setTimeout(()=>t.classList.remove('show'),1800); }
 
 // ===== 合言葉と署名（クラウドの中身は誰でも書けるので、合言葉を知る人の署名つきだけを表示する） =====
