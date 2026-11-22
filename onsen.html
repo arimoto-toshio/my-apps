@@ -536,6 +536,21 @@ function savePH(){try{localStorage.setItem(LS_PHOTO,JSON.stringify(PH));}catch(e
   const ks=Object.keys(PH);ks.slice(0,Math.ceil(ks.length/2)).forEach(k=>delete PH[k]);try{localStorage.setItem(LS_PHOTO,JSON.stringify(PH));}catch(e2){}
 }}
 const live=()=>S.recs.filter(r=>!r.deleted);
+/* 2026-11-22 この端末に置く写真の控えを小さくする（ユーザー「小さくして」）。
+   Safariの保存場所（デスクトップのアプリ全部で約5MB）を写真だけで723KB使っていたため。
+   クラウドには元の大きさのまま残すので、証拠写真の画質は変わらない。送り終わっていない写真（onsen_photo_q・送信中）は小さくしない */
+const PH_M=640, PH_Q=0.6, PH_BIG=60000, PH_SENDING=new Set();
+function shrinkImg(d){return new Promise(ok=>{try{const img=new Image();
+  img.onload=()=>{const k=Math.min(1,PH_M/Math.max(img.width,img.height));const w=Math.round(img.width*k),h=Math.round(img.height*k);
+    const c=document.createElement('canvas');c.width=w;c.height=h;c.getContext('2d').drawImage(img,0,0,w,h);
+    let o=null;try{o=c.toDataURL('image/jpeg',PH_Q);}catch(e){}ok(o&&o.length<d.length?o:d);};
+  img.onerror=()=>ok(d);img.src=d;}catch(e){ok(d);}});}
+async function compactPH(only){let q=[];try{q=JSON.parse(localStorage.getItem('onsen_photo_q')||'[]');}catch(e){}
+  let ch=false;for(const id of (only?[only]:Object.keys(PH))){const d=PH[id];
+    if(!d||d.length<PH_BIG||q.includes(id)||PH_SENDING.has(id))continue;
+    const s2=await shrinkImg(d);if(s2!==d&&PH[id]===d){PH[id]=s2;ch=true;}}
+  if(ch)savePH();}
+setTimeout(()=>compactPH(),8000);
 
 // ===== 木曜チェック =====
 const START_DATE='2026-10-08';   // これより前の木曜は「記録なし」扱いしない
@@ -855,9 +870,9 @@ async function showPhoto(box,id){box.innerHTML='';if(!id)return;
   try{const r=await fetch(SYNC_URL+'?action=load&key='+PHOTO_KEY+id,{cache:'no-store'});const j=await r.json();
     const d=j&&j.success&&j.data&&j.data.img;if(d){PH[id]=d;savePH();box.innerHTML='<img src="'+d+'">';}else box.innerHTML='<div class="muted">写真はまだ届いていません</div>';}
   catch(e){box.innerHTML='<div class="muted">写真を読めませんでした（電波を確認）</div>';}}
-async function pushPhoto(id,img){if(!lsOK())return;
-  try{await fetch(SYNC_URL+'?action=save&key='+PHOTO_KEY+id,{method:'POST',body:JSON.stringify({img,savedAt:Date.now()})});}
-  catch(e){const q=JSON.parse(localStorage.getItem('onsen_photo_q')||'[]');if(!q.includes(id))q.push(id);localStorage.setItem('onsen_photo_q',JSON.stringify(q));}}
+async function pushPhoto(id,img){if(!lsOK())return;PH_SENDING.add(id);
+  try{await fetch(SYNC_URL+'?action=save&key='+PHOTO_KEY+id,{method:'POST',body:JSON.stringify({img,savedAt:Date.now()})});PH_SENDING.delete(id);setTimeout(()=>compactPH(id),1000);}
+  catch(e){PH_SENDING.delete(id);const q=JSON.parse(localStorage.getItem('onsen_photo_q')||'[]');if(!q.includes(id))q.push(id);localStorage.setItem('onsen_photo_q',JSON.stringify(q));}}
 async function retryPhotos(){if(!lsOK())return;let q=[];try{q=JSON.parse(localStorage.getItem('onsen_photo_q')||'[]');}catch(e){}
   if(!q.length)return;localStorage.setItem('onsen_photo_q','[]');for(const id of q){if(PH[id])await pushPhoto(id,PH[id]);}}
 
