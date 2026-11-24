@@ -63,6 +63,12 @@
   body.selmode{ -webkit-user-select:none; user-select:none; }
   #copyFab{position:fixed;right:16px;bottom:16px;z-index:1100;background:#2f6fb0;color:#fff;border:none;border-radius:26px;padding:13px 20px;font-size:15px;font-weight:700;box-shadow:0 3px 10px rgba(0,0,0,.3);cursor:pointer;display:none;}
   #copyFab.show{display:block;}
+  .btn:disabled{opacity:.35;cursor:default;}
+  #undoFab{position:fixed;left:16px;bottom:16px;z-index:1100;display:none;gap:8px;}
+  #undoFab.show{display:flex;}
+  #undoFab button{background:#5a4632;color:#fff;border:none;border-radius:26px;padding:12px 18px;font-size:15px;font-weight:700;box-shadow:0 3px 10px rgba(0,0,0,.3);cursor:pointer;}
+  #undoFab button:disabled{opacity:.35;}
+  #undoFab button:active{transform:scale(.97);}
   #copyFab:active{transform:scale(.97);}
   tfoot td{background:#f6efe0;font-weight:700;padding:8px 4px;font-variant-numeric:tabular-nums;}
   tfoot .lbl{text-align:right;padding-right:8px;color:var(--head);}
@@ -110,7 +116,7 @@
     header h1{font-size:15px;}
   }
   @media (pointer:coarse){ .delbtn{padding:9px 0;} .btn{padding:9px 13px;} }
-  @media print{ header .tools,.tab.add,.meta .del,.col-del,.addrow,.hint,#copyFab,.filterbar,.modal,#tabsBottom{display:none !important;} td.cell-sel{background:transparent !important;} body{background:#fff;} header{background:#fff;color:#000;box-shadow:none;} .tabs,.meta,.card{box-shadow:none;} table{min-width:0;font-size:10px;} td,th{padding:2px 4px;} }
+  @media print{ header .tools,.tab.add,.meta .del,.col-del,.addrow,.hint,#copyFab,#undoFab,.filterbar,.modal,#tabsBottom{display:none !important;} td.cell-sel{background:transparent !important;} body{background:#fff;} header{background:#fff;color:#000;box-shadow:none;} .tabs,.meta,.card{box-shadow:none;} table{min-width:0;font-size:10px;} td,th{padding:2px 4px;} }
   /* 月別集計だけを印刷するモード */
   @media print{
     body.print-sum header, body.print-sum .wrap, body.print-sum #histModal{display:none !important;}
@@ -285,6 +291,7 @@
 <body>
 <div id="toast"></div>
 <button id="copyFab" title="選択した範囲をコピー">📋 選択範囲をコピー</button>
+<div id="undoFab"><button id="undoFabU" onclick="undoDo()" title="ひとつ前に戻す（⌘Z）">↶ 戻す</button><button id="undoFabR" onclick="redoDo()" title="戻したのをやり直す（⌘⇧Z）">↷ やり直す</button></div>
 <div class="modal" id="sumModal" onclick="if(event.target===this)this.classList.remove('show')">
   <div class="box">
     <h2>📅 月別集計 <small style="font-weight:500;font-size:12px;color:#887;">焼肉ありもと 仕入帳</small></h2>
@@ -329,6 +336,8 @@
 <header>
   <h1>🐮 焼肉ありもと <small>仕入帳（買掛帳）</small> <small style="opacity:.7;font-size:11px;">v7・月別集計/検索/履歴</small></h1>
   <div class="tools">
+    <button class="btn" id="undoBtn" onclick="undoDo()" title="ひとつ前に戻す（⌘Z）" disabled>↶ 元に戻す</button>
+    <button class="btn" id="redoBtn" onclick="redoDo()" title="戻したのをやり直す（⌘⇧Z）" disabled>↷ やり直す</button>
     <button class="btn" onclick="openSummary()">📅 月別集計</button>
     <button class="btn" style="background:#b8862e;" onclick="openKessan()">🧾 決算用</button>
     <button class="btn" onclick="openHistory()">🕘 履歴</button>
@@ -408,7 +417,55 @@ function normalizeData(d){ // 年月日の全角数字を半角に直す（過�
   return d;
 }
 function load(){ try{ const s=localStorage.getItem(STORAGE_KEY); if(s) return normalizeData(JSON.parse(s)); }catch(e){} return defData(); }
-function save(){ localStorage.setItem(STORAGE_KEY, JSON.stringify(data)); snapshot(); cloudAutoSave(); }
+function save(){ undoMark(); localStorage.setItem(STORAGE_KEY, JSON.stringify(data)); snapshot(); cloudAutoSave(); }
+
+// ============ 元に戻す／やり直す（エクセルの ⌘Z と同じ） ============ 2026-11-24
+// 保存のたびに「直前の中身」を覚えておく（最大60回分。開き直すと消える＝長い期間は🕘履歴で）。
+// 同じマスに続けて打った文字は1回分にまとめる。タブを切り替えただけでは記録しない。
+// クラウドから自動で読み込んだときは、戻すと他の端末の入力を消してしまうので、記録をリセットする。
+let undoStack=[], redoStack=[], undoLastS=null, undoLastFp=null, undoCell=null, undoCellT=0, undoTypingCell=null;
+function undoInit(){ undoStack=[]; redoStack=[]; undoLastS=JSON.stringify(data); undoLastFp=fpOf(data); undoCell=null; undoBtns(); }
+function undoMark(){
+  const f=fpOf(data), s=JSON.stringify(data), now=Date.now();
+  const cell=undoTypingCell; undoTypingCell=null;
+  if(f===undoLastFp){ undoLastS=s; return; }
+  const merge = cell && cell===undoCell && now-undoCellT<3000 && undoStack.length;
+  if(!merge && undoLastS!=null){ undoStack.push(undoLastS); if(undoStack.length>60) undoStack.shift(); }
+  undoCell=cell; undoCellT=now;
+  redoStack=[]; undoLastS=s; undoLastFp=f; undoBtns();
+}
+function undoBtns(){
+  const u=document.getElementById('undoBtn'), r=document.getElementById('redoBtn');
+  if(u) u.disabled=!undoStack.length; if(r) r.disabled=!redoStack.length;
+  const fu=document.getElementById('undoFabU'), fr=document.getElementById('undoFabR'), fab=document.getElementById('undoFab');
+  if(fu) fu.disabled=!undoStack.length; if(fr) fr.disabled=!redoStack.length;
+  if(fab) fab.classList.toggle('show', !!(undoStack.length||redoStack.length));
+}
+function undoApply(from, to, msg){
+  if(!from.length){ toast(msg==='undo'?'これ以上は戻せません':'やり直せるものがありません'); return; }
+  const ae=document.activeElement, tr=ae&&ae.closest&&ae.closest('#tbody tr'), td=ae&&ae.closest&&ae.closest('#tbody td');
+  const focusAt = tr&&td ? {i:tr.dataset.i, c:td.dataset.c} : null;
+  if(ae&&ae.blur) ae.blur();
+  to.push(undoLastS);
+  const s=from.pop();
+  data=normalizeData(JSON.parse(s));
+  undoLastS=JSON.stringify(data); undoLastFp=fpOf(data); undoCell=null;
+  localStorage.setItem(STORAGE_KEY, undoLastS); snapshot(); cloudAutoSave();
+  render(); undoBtns();
+  if(focusAt){ const inp=document.querySelector(`#tbody tr[data-i="${focusAt.i}"] td[data-c="${focusAt.c}"] input`); if(inp) inp.focus(); }
+  toast(msg==='undo'?'↶ 元に戻しました':'↷ やり直しました');
+}
+function undoDo(){ undoApply(undoStack, redoStack, 'undo'); }
+function redoDo(){ undoApply(redoStack, undoStack, 'redo'); }
+document.addEventListener('keydown', e=>{
+  if(!(e.metaKey||e.ctrlKey) || e.altKey) return;
+  const k=(e.key||'').toLowerCase();
+  if(k!=='z' && k!=='y') return;
+  if(e.target && e.target.closest && e.target.closest('.clk-ov')) return;  // 合言葉の画面はふつうに
+  if(document.querySelector('.modal.show, .clk-ov')) return;   // 小窓の中はふつうの文字の取り消し
+  e.preventDefault();
+  if(k==='y' || e.shiftKey) redoDo(); else undoDo();
+}, true);
 
 function sup(){ return data.suppliers.find(s=>s.id===data.cur) || data.suppliers[0]; }
 function page(){ if(!data.pages[data.cur]) data.pages[data.cur]={opening:0,rows:[blankRow()]}; const p=data.pages[data.cur]; if(!p.rows||!p.rows.length) p.rows=[blankRow()]; return p; }
@@ -477,9 +534,10 @@ function liveRecalc(){
   document.getElementById('endBal').textContent=fmt(v.endBal);
   renderTabs();   // タブの残高・買掛金の合計も更新
 }
-function upd(i,k,v){ if(k==='y'||k==='m'||k==='d') v=z2h(v).trim(); claimRow(i); page().rows[i][k]=v; if(k==='hinmei'){ const tr=document.querySelector(`#tbody tr[data-i="${i}"]`); if(tr) tr.classList.toggle('pay-row', String(v).trim()==='支払'); } if(k==='qty' && autoShiire(i)) liveRecalc(); save(); }
-function updBal(i,v){ claimRow(i); page().rows[i].bal=(String(v).trim()===''?'':toNum(v)); liveRecalc(); save(); }
+function upd(i,k,v){ undoTypingCell=data.cur+':'+i+':'+k; if(k==='y'||k==='m'||k==='d') v=z2h(v).trim(); claimRow(i); page().rows[i][k]=v; if(k==='hinmei'){ const tr=document.querySelector(`#tbody tr[data-i="${i}"]`); if(tr) tr.classList.toggle('pay-row', String(v).trim()==='支払'); } if(k==='qty' && autoShiire(i)) liveRecalc(); save(); }
+function updBal(i,v){ undoTypingCell=data.cur+':'+i+':bal'; claimRow(i); page().rows[i].bal=(String(v).trim()===''?'':toNum(v)); liveRecalc(); save(); }
 function updN(i,k,v){
+  undoTypingCell=data.cur+':'+i+':'+k;
   claimRow(i);
   const r=page().rows[i];
   r[k]=toNum(v);
@@ -499,8 +557,8 @@ function autoShiire(i){
   return true;
 }
 function refmt(el){ const n=toNum(el.value); el.value=(el.value.trim()==='')?'':fmt(n); }
-function onOpening(el){ if(el.readOnly) return; page().opening=toNum(el.value); liveRecalc(); save(); }
-function onMeta(k,v){ sup()[k]=v; if(k==='name') renderTabs(); save(); }
+function onOpening(el){ if(el.readOnly) return; undoTypingCell=data.cur+':open'; page().opening=toNum(el.value); liveRecalc(); save(); }
+function onMeta(k,v){ undoTypingCell=data.cur+':meta:'+k; sup()[k]=v; if(k==='name') renderTabs(); save(); }
 
 function addRow(){ toLatestForAdd(); const p=page(); const last=p.rows[p.rows.length-1]; const nr=blankRow(); if(last){ nr.y=last.y; nr.m=last.m; } p.rows.push(nr); save(); render(); const trs=document.querySelectorAll('#tbody tr'); const di=trs[trs.length-1]?.querySelector('.col-d input'); if(di) di.focus(); }
 function addRows(n){ toLatestForAdd(); const p=page(); const last=p.rows[p.rows.length-1]; for(let k=0;k<n;k++){ const nr=blankRow(); if(last){ nr.y=last.y; nr.m=last.m; } p.rows.push(nr); } save(); render(); const trs=document.querySelectorAll('#tbody tr'); const di=trs[trs.length-n]?.querySelector('.col-d input'); if(di) di.focus(); }
@@ -556,7 +614,7 @@ function exportCSV(){
   });
   const b=new Blob([csv],{type:'text/csv;charset=utf-8'}); const a=document.createElement('a'); a.href=URL.createObjectURL(b); a.download='仕入帳_税理士提出_'+(viewFy==='all'?'':'令和'+viewFy+'年9月期_')+new Date().toISOString().slice(0,10)+'.csv'; a.click(); toast('📊 Excel(CSV)で書き出しました');
 }
-function importData(e){ const f=e.target.files[0]; if(!f) return; const r=new FileReader(); r.onload=ev=>{ try{ snapshot(true); data=normalizeData(JSON.parse(ev.target.result)); localStorage.setItem(STORAGE_KEY,JSON.stringify(data)); render(); cloudAutoSave(); toast('⬆ 読み込みました'); }catch(err){ toast('❌ 読込エラー'); } }; r.readAsText(f); e.target.value=''; }
+function importData(e){ const f=e.target.files[0]; if(!f) return; const r=new FileReader(); r.onload=ev=>{ try{ snapshot(true); data=normalizeData(JSON.parse(ev.target.result)); undoMark(); localStorage.setItem(STORAGE_KEY,JSON.stringify(data)); render(); cloudAutoSave(); toast('⬆ 読み込みました'); }catch(err){ toast('❌ 読込エラー'); } }; r.readAsText(f); e.target.value=''; }
 function toast(m){ const t=document.getElementById('toast'); t.textContent=m; t.classList.add('show'); clearTimeout(toast._t); toast._t=setTimeout(()=>t.classList.remove('show'),2000); }
 
 // ============ 検索・絞り込み ============
@@ -888,7 +946,7 @@ function restoreHist(i){
   const h=histList(); const e=h[i]; if(!e) return;
   if(!confirm('この時点のデータに戻しますか？\n（今の内容も履歴に残るので、あとで戻せます）')) return;
   snapshot(true);
-  data=JSON.parse(e.d);
+  data=JSON.parse(e.d); undoMark();
   localStorage.setItem(STORAGE_KEY, e.d);
   render();
   document.getElementById('histModal').classList.remove('show');
@@ -920,7 +978,7 @@ function takeCloud(d, msg){
   const cur=data.cur;
   data=d; if(data.suppliers.some(s=>s.id===cur)) data.cur=cur;
   localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
-  setBase(data);
+  setBase(data); undoInit();
   render();
   if(msg) toast(msg);
 }
@@ -955,7 +1013,7 @@ async function syncNow(){
 }
 async function pushCloud(silent){ if(!silent) toast('☁️ アップロード中...'); try{ const sent=JSON.stringify(data); const res=await fetch(SYNC_URL+'?action=save&key='+SYNC_KEY,{method:'POST',body:sent}); const j=await res.json(); if(j.success){ setBase(JSON.parse(sent)); if(!silent) toast('☁️ クラウドに保存しました'); return true;} if(!silent) toast('エラー: '+(j.message||'')); }catch(e){ if(!silent) toast('通信エラー: '+e.message);} return false; }
 async function cloudUpload(){ await pushCloud(false); }
-function applyCloud(j){ if(!j||!j.success||!j.data) return false; let d=j.data; if(typeof d==='string'){ try{ d=JSON.parse(d);}catch(e){ return false; } } if(!d||!d.suppliers) return false; snapshot(true); data=normalizeData(d); localStorage.setItem(STORAGE_KEY,JSON.stringify(data)); setBase(data); render(); return true; }
+function applyCloud(j){ if(!j||!j.success||!j.data) return false; let d=j.data; if(typeof d==='string'){ try{ d=JSON.parse(d);}catch(e){ return false; } } if(!d||!d.suppliers) return false; snapshot(true); data=normalizeData(d); localStorage.setItem(STORAGE_KEY,JSON.stringify(data)); setBase(data); undoInit(); render(); return true; }
 // 画面に戻ってきたときにも同期（スマホで入れた分をすぐ反映）
 document.addEventListener('visibilitychange',()=>{
   if(document.visibilityState==='hidden'){ if(autoCloudTimer) syncNow(); return; }   // 送る前の編集があれば送っておく
@@ -996,7 +1054,7 @@ function scrollToLatest(){
     if(last) last.scrollIntoView({block:'center'}); else window.scrollTo(0, document.body.scrollHeight);
   }));
 }
-data=load(); render(); scrollToLatest();
+data=load(); undoInit(); render(); scrollToLatest();
 if(migrated){ migrated=false; save(); } // 全角→半角の修復があれば手元に保存（クラウドへは下の同期で送る）
 // 開いたらクラウドと突き合わせる（新しい方にそろえる）
 syncNow().then(()=>scrollToLatest());
