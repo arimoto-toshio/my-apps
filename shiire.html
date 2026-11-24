@@ -381,6 +381,8 @@
     </div>
     <div class="addrow"><button onclick="addRows(5)">＋ 5行追加</button> <button onclick="addBreakdown()">＋ 10%・8%内訳</button> <button onclick="openPay()" style="border-color:#e0a89c;background:#fff4f1;color:var(--shiharai);">💴 支払を記録</button></div>
     <div class="hint">差引残高 = 前残高 ＋ 仕入金額 − 支払金額（自動計算）／入力すると自動でクラウド保存</div>
+    <!-- 下側にも期の切り替え（下まで見た後に上へ戻らず切り替えられる） -->
+    <div class="fybar" style="padding:10px 6px 2px;">📅 <select id="fySel2" onchange="setViewFy(this.value)"></select><span id="fyInfo2"></span></div>
   </div>
   <!-- 下側にも仕入先タブ（下まで入力した後に上へ戻らず切り替えられる） -->
   <div class="tabs" id="tabsBottom"></div>
@@ -779,9 +781,11 @@ function renderFyBar(){
   const sel=document.getElementById('fySel'); if(!sel) return;
   const list=fyList(), nf=nowFy();
   if(viewFy!=='all' && !list.includes(viewFy)) viewFy=nf;
-  sel.innerHTML=list.map(fy=>`<option value="${fy}"${fy===viewFy?' selected':''}>${fyLabel(fy)}${fy===nf?' ← 今の期':''}</option>`).join('')
+  const opts=list.map(fy=>`<option value="${fy}"${fy===viewFy?' selected':''}>${fyLabel(fy)}${fy===nf?' ← 今の期':''}</option>`).join('')
     + `<option value="all"${viewFy==='all'?' selected':''}>すべての期をまとめて表示</option>`;
-  document.getElementById('fyInfo').textContent = viewFy==='all' ? '' : (viewFy===nf ? '残高は前の期から自動で続きます' : '過去の期（新しい行は今の期へ）');
+  const info = viewFy==='all' ? '' : (viewFy===nf ? '残高は前の期から自動で続きます' : '過去の期（新しい行は今の期へ）');
+  sel.innerHTML=opts; document.getElementById('fyInfo').textContent=info;
+  const sel2=document.getElementById('fySel2'); if(sel2){ sel2.innerHTML=opts; document.getElementById('fyInfo2').textContent=info; }   // 下側にも同じもの
   document.getElementById('fyCap').textContent = viewFy==='all' ? '' : '令和'+viewFy+'年9月期';
 }
 function setViewFy(v, quiet){
