@@ -562,10 +562,10 @@ function refmt(el){ const n=toNum(el.value); el.value=(el.value.trim()==='')?'':
 function onOpening(el){ if(el.readOnly) return; undoTypingCell=data.cur+':open'; page().opening=toNum(el.value); liveRecalc(); save(); }
 function onMeta(k,v){ undoTypingCell=data.cur+':meta:'+k; sup()[k]=v; if(k==='name') renderTabs(); save(); }
 
-function addRow(){ toLatestForAdd(); const p=page(); const last=p.rows[p.rows.length-1]; const nr=blankRow(); if(last){ nr.y=last.y; nr.m=last.m; } p.rows.push(nr); save(); render(); const trs=document.querySelectorAll('#tbody tr'); const di=trs[trs.length-1]?.querySelector('.col-d input'); if(di) di.focus(); }
-function addRows(n){ toLatestForAdd(); const p=page(); const last=p.rows[p.rows.length-1]; for(let k=0;k<n;k++){ const nr=blankRow(); if(last){ nr.y=last.y; nr.m=last.m; } p.rows.push(nr); } save(); render(); const trs=document.querySelectorAll('#tbody tr'); const di=trs[trs.length-n]?.querySelector('.col-d input'); if(di) di.focus(); }
+function addRow(){ toLatestForAdd(); claimTrail(); const p=page(); const last=p.rows[p.rows.length-1]; const nr=blankRow(); if(last){ nr.y=last.y; nr.m=last.m; } p.rows.push(nr); save(); render(); const trs=document.querySelectorAll('#tbody tr'); const di=trs[trs.length-1]?.querySelector('.col-d input'); if(di) di.focus(); }
+function addRows(n){ toLatestForAdd(); claimTrail(); const p=page(); const last=p.rows[p.rows.length-1]; for(let k=0;k<n;k++){ const nr=blankRow(); if(last){ nr.y=last.y; nr.m=last.m; } p.rows.push(nr); } save(); render(); const trs=document.querySelectorAll('#tbody tr'); const di=trs[trs.length-n]?.querySelector('.col-d input'); if(di) di.focus(); }
 function delRow(i){ const p=page(); if(p.rows.length<=1) p.rows[0]=blankRow(); else p.rows.splice(i,1); save(); render(); }
-function addBreakdown(){ toLatestForAdd(); const p=page(); const last=p.rows[p.rows.length-1]; const y=last?last.y:8, m=last?last.m:''; p.rows.push({y,m,d:'',hinmei:'10%',qty:'',price:'',shiire:'',shiharai:'',bal:'',memo:true}); p.rows.push({y,m,d:'',hinmei:'8%',qty:'',price:'',shiire:'',shiharai:'',bal:'',memo:true}); save(); render(); const trs=document.querySelectorAll('#tbody tr'); const si=trs[trs.length-2]?.querySelector('.col-si input'); if(si){ si.focus(); si.select&&si.select(); } toast('内訳行(10%/8%)を追加'); }
+function addBreakdown(){ toLatestForAdd(); claimTrail(); const p=page(); const last=p.rows[p.rows.length-1]; const y=last?last.y:8, m=last?last.m:''; p.rows.push({y,m,d:'',hinmei:'10%',qty:'',price:'',shiire:'',shiharai:'',bal:'',memo:true}); p.rows.push({y,m,d:'',hinmei:'8%',qty:'',price:'',shiire:'',shiharai:'',bal:'',memo:true}); save(); render(); const trs=document.querySelectorAll('#tbody tr'); const si=trs[trs.length-2]?.querySelector('.col-si input'); if(si){ si.focus(); si.select&&si.select(); } toast('内訳行(10%/8%)を追加'); }
 // ============ 支払を記録 ============
 function isBlankRow(r){ return !String(r.hinmei||'').trim() && !toNum(r.shiire) && !toNum(r.shiharai) && !String(r.d||'').trim(); }
 function openPay(){
@@ -754,6 +754,13 @@ function claimRow(i){
   const p=page(), ts=trailStart(p); if(i<ts) return;
   const ov=rowOverride(p,i,rowYMs(p),ts); if(!ov) return;
   p.rows[i].y=ov.y; p.rows[i].m=ov.m;
+}
+// 2026-11-24 行を足す・貼り付ける前に、末尾の空行をぜんぶ「見ている期」の年月にしておく。
+// （前は空行が前の期の年月(例 R8/9)のままで、そのあとに内訳行などを足すと、空行も新しい行も前の期に入っていた）
+function claimTrail(){
+  if(viewFy==='all') return;
+  const p=page(), ts=trailStart(p), ym=rowYMs(p);
+  for(let i=ts;i<p.rows.length;i++){ const ov=rowOverride(p,i,ym,ts); if(ov){ p.rows[i].y=ov.y; p.rows[i].m=ov.m; } }
 }
 // 表の数字：残高は全部の行で通して計算、合計はこの期の行だけ
 function calcView(p){
@@ -1140,6 +1147,7 @@ syncNow().then(()=>scrollToLatest());
     if(!start || text==null) return;
     const matrix = text.replace(/\r/g,'').replace(/\n$/,'').split('\n').map(line=>line.split('\t'));
     if(!matrix.length) return;
+    claimTrail();
     const p=page();
     for(let dr=0; dr<matrix.length; dr++){
       const tr=start.r+dr;
