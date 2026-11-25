@@ -747,7 +747,12 @@ function viewMask(p){
 function blankYM(fy){ const n=new Date(), y=n.getFullYear()-2018, m=n.getMonth()+1; return fyOfYM(y,m)===fy ? {y, m:String(m)} : {y:fy-1, m:'10'}; }
 function rowOverride(p,i,ym,ts){
   if(viewFy==='all' || i<ts) return null;
-  const {y,m}=ym[i]; if(m && fyOfYM(y,m)===viewFy) return null;
+  const {y,m}=ym[i];
+  // 2026-11-25 末尾の空行が、最後に入れた行より前の月（例：11月の行のあとに 8/10 のまま）なら、最後に入れた行の年月にする。
+  // （前は空行が足した時の月のままで、11月に入れた行が10月になっていた）
+  const ref = ts>0 ? ym[ts-1] : null;
+  if(ref && ref.m && fyOfYM(ref.y,ref.m)===viewFy && (y*12+m) < (ref.y*12+ref.m)) return {y:ref.y, m:String(ref.m)};
+  if(m && fyOfYM(y,m)===viewFy) return null;
   return blankYM(viewFy);
 }
 function claimRow(i){
