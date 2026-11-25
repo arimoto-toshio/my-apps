@@ -317,7 +317,7 @@
 <div class="modal" id="histModal" onclick="if(event.target===this)this.classList.remove('show')">
   <div class="box">
     <h2>🕘 保存履歴（バックアップ）</h2>
-    <div style="font-size:12px;color:#887;margin-bottom:6px;">入力のたびに自動で履歴が残ります（最大15世代）。間違って消したときはここから復元できます。</div>
+    <div style="font-size:12px;color:#887;margin-bottom:6px;">入力のたびに自動で履歴が残ります（最大3世代）。間違って消したときはここから復元できます。</div>
     <div id="histBody"></div>
     <div style="text-align:right;margin-top:8px;"><button class="close-x" onclick="document.getElementById('histModal').classList.remove('show')">閉じる</button></div>
   </div>
@@ -931,12 +931,15 @@ function exportKessanCSV(){
 // ============ 保存履歴（バックアップ世代） ============
 const HIST_KEY='yakiniku_shiire_hist_v1';
 function histList(){ try{ return JSON.parse(localStorage.getItem(HIST_KEY))||[]; }catch(e){ return []; } }
+// 2026-11-25 Safariの保存場所（全アプリで約5MBを共用）がいっぱいに近く、この履歴だけで約1.5MB使っていた → 3回分に減らす。
+// 開いたときにも古い分を捨てる（いったん消してから書く＝いっぱいでも書ける）。長い期間の控えはクラウドの自動バックアップ（10分ごと）にある。
+(function(){ try{ const k=HIST_KEY, h=JSON.parse(localStorage.getItem(k)||'[]'); if(Array.isArray(h)&&h.length>3){ h.length=3; const t=JSON.stringify(h); localStorage.removeItem(k); localStorage.setItem(k,t); } }catch(e){} })();
 function snapshot(force){
   try{
     const h=histList(), now=Date.now(), s=JSON.stringify(data);
     if(h.length && h[0].d===s) return;
     if(!force && h.length && now-h[0].t < 10*60*1000) return; // 10分間隔で世代を残す
-    h.unshift({t:now,d:s}); if(h.length>15) h.length=15;
+    h.unshift({t:now,d:s}); if(h.length>3) h.length=3;
     localStorage.setItem(HIST_KEY, JSON.stringify(h));
   }catch(e){}
 }
