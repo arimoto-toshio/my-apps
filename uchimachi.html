@@ -335,6 +335,35 @@
   }
   .notice-item.important { border-left-color: var(--red); }
   .notice-item.info { border-left-color: var(--blue); }
+  /* ===== 火災保険の見積り（2026-11-25） ===== */
+  .ks { margin-top:10px; }
+  .ks-vs { display:grid; grid-template-columns:1fr auto 1fr; gap:8px; align-items:stretch; margin-bottom:10px; }
+  .ks-card { border-radius:12px; padding:10px 12px; border:1px solid var(--border); background:#fff; }
+  .ks-card.now { background:#f6f1ea; }
+  .ks-card.new { border:2px solid #2a5a8c; background:#f2f7fc; }
+  .ks-card .h { font-size:.75rem; font-weight:800; color:var(--text2); margin-bottom:4px; }
+  .ks-card.new .h { color:#2a5a8c; }
+  .ks-card .k { font-size:.7rem; color:var(--text2); margin-top:6px; }
+  .ks-card .v { font-size:1.35rem; font-weight:800; line-height:1.2; color:var(--text); }
+  .ks-card .v small { font-size:.75rem; font-weight:700; }
+  .ks-card .sub { font-size:.72rem; color:var(--text2); }
+  .ks-arrow { display:flex; align-items:center; font-size:1.4rem; color:#2a5a8c; font-weight:800; }
+  .ks-diff { display:flex; flex-wrap:wrap; gap:8px; margin-bottom:12px; }
+  .ks-pill { flex:1 1 180px; border-radius:12px; padding:9px 12px; font-weight:800; font-size:.9rem; }
+  .ks-pill small { display:block; font-size:.7rem; font-weight:700; opacity:.85; }
+  .ks-pill.good { background:#dff0e3; color:#2f6b40; } .ks-pill.warn { background:#fbe3e0; color:#a12a1f; }
+  .ks-tbl { border:1px solid var(--border); border-radius:12px; overflow:hidden; background:#fff; margin-bottom:10px; }
+  .ks-tr { display:grid; grid-template-columns:7.5em 1fr; border-top:1px solid #f0e4d2; }
+  .ks-tr:first-child { border-top:none; }
+  .ks-tr > div { padding:8px 12px; font-size:.86rem; }
+  .ks-tr > div:first-child { background:#fbf3e8; color:var(--text2); font-weight:700; font-size:.78rem; }
+  .ks-tr b { font-weight:800; }
+  .ks-tr a { color:#2a5a8c; font-weight:800; text-decoration:none; }
+  .ks-due { display:inline-block; margin-left:6px; font-size:.7rem; font-weight:800; border-radius:999px; padding:1px 8px; background:#fff1d6; color:#8a5a00; }
+  .ks-warn { border-radius:12px; background:#fff7e6; border:1px solid #f0d9a8; padding:9px 12px; font-size:.8rem; color:#6b4a10; }
+  .ks-warn b { display:block; margin-bottom:3px; }
+  .ks-warn ul { margin:0; padding-left:1.2em; }
+  @media (max-width:520px){ .ks-vs { grid-template-columns:1fr 1fr; } .ks-arrow { display:none; } .ks-card .v { font-size:1.1rem; } .ks-tr { grid-template-columns:6.2em 1fr; } }
   /* ===== 補助金申請一覧（2026-11-25） ===== */
   .hj { margin-top:10px; }
   .hj-sum { display:grid; grid-template-columns:repeat(3,1fr); gap:8px; margin-bottom:12px; }
@@ -1488,7 +1517,7 @@
 
 <script>
 // ===== 最新版チェック（公開版を開いた人も自動で最新に）=====
-const APP_VERSION = '2026-11-25b';
+const APP_VERSION = '2026-11-25c';
 (function checkLatest() {
   if (location.protocol !== 'https:') return;
   fetch(location.pathname + '?v=' + Date.now(), { cache: 'no-store' })
@@ -2254,6 +2283,42 @@ function hojoHtml(n){
   h+='<details class="hj-text"><summary>文字で見る（コピー用）</summary><div class="notice-body" style="margin-top:6px">'+escHtml(n.body)+'</div></details>';
   return h+'</div>';
 }
+// ===== 火災保険の見積り（seed 'kasai20261028'）の見やすい表示（2026-11-25） =====
+function kasaiHtml(n){
+  const now={hosho:3000, nen:200000}, ja={hosho:1800, tsuki:10330}; ja.nen=ja.tsuki*12;
+  const save=now.nen-ja.nen, lim=new Date(2027,2,31), days=Math.ceil((lim-new Date())/86400000);
+  const due = days>=0 ? '<span class="ks-due">あと'+days+'日</span>' : '<span class="ks-due">期限切れ</span>';
+  let h='<div class="ks">';
+  h+='<div class="ks-vs">'
+    +'<div class="ks-card now"><div class="h">いまの保険</div><div class="k">建物の保障</div><div class="v">'+now.hosho.toLocaleString('ja-JP')+'<small>万円</small></div>'
+    +'<div class="k">掛金</div><div class="v">20<small>万円/年</small></div></div>'
+    +'<div class="ks-arrow">→</div>'
+    +'<div class="ks-card new"><div class="h">JAの見積り（むてきプラス）</div><div class="k">建物の保障（火災）</div><div class="v">'+ja.hosho.toLocaleString('ja-JP')+'<small>万円</small></div>'
+    +'<div class="k">掛金（当初10年）</div><div class="v">'+ja.tsuki.toLocaleString('ja-JP')+'<small>円/月</small></div><div class="sub">年 '+ja.nen.toLocaleString('ja-JP')+'円（約12.4万円）</div></div>'
+    +'</div>';
+  h+='<div class="ks-diff">'
+    +'<div class="ks-pill good">掛金は 年 約'+(save/10000).toFixed(1)+'万円 安くなる<small>20万円 → 約12.4万円（月1万円程度の目標どおり）</small></div>'
+    +'<div class="ks-pill warn">保障は '+(now.hosho-ja.hosho).toLocaleString('ja-JP')+'万円 少なくなる<small>3,000万円 → 1,800万円</small></div>'
+    +'</div>';
+  const row=(k,v)=>'<div class="ks-tr"><div>'+k+'</div><div>'+v+'</div></div>';
+  h+='<div class="ks-tbl">'
+    +row('窓口','JA愛媛たいき 内子支所　<a href="tel:0893444111">📞 0893-44-4111</a>')
+    +row('商品','建物更生共済「むてきプラス」<br><span style="font-size:.78rem;color:var(--text2)">実損てん補（実際の損害分を払う）</span>')
+    +row('保障の対象','建物')
+    +row('満期のお金','<b>60万円</b>（30年の満期に受け取る）')
+    +row('期間','<b>30年間</b>（掛金 月10,330円は当初10年の額）')
+    +row('見積りの期限','<b>令和9年3月31日</b>まで'+due+'<br><span style="font-size:.78rem;color:var(--text2)">作成日 令和8年10月28日</span>')
+    +row('きっかけ','10/26理事会「月1万円程度・年12万円の見積りで再確認」')
+    +'</div>';
+  h+='<div class="ks-warn"><b>⚠️ 決める前に確認</b><ul>'
+    +'<li>地震などは保障の外</li>'
+    +'<li>家財・営業用什器備品・賠償責任は入っていない</li>'
+    +'<li>金利などで、期限内でも掛金が変わることがある</li>'
+    +'<li>11年目からの掛金はいくらか（JAに確認）</li>'
+    +'</ul></div>';
+  h+='<details class="hj-text"><summary>文字で見る（コピー用）</summary><div class="notice-body" style="margin-top:6px">'+escHtml(n.body)+'</div></details>';
+  return h+'</div>';
+}
 function renderNotices() {
   const notices = STORE.get('notices');
   const el = document.getElementById('notice-list');
@@ -2268,7 +2333,7 @@ function renderNotices() {
         <span class="notice-title-text">${escHtml(n.title)}</span>
       </div>
       <div class="notice-meta">📅 ${n.date} &nbsp; ✍️ ${escHtml(n.author)}</div>
-      ${n.seed === 'hojo2027' ? hojoHtml(n) : `<div class="notice-body" style="margin-top:8px">${escHtml(n.body)}</div>`}
+      ${n.seed === 'hojo2027' ? hojoHtml(n) : n.seed === 'kasai20261028' ? kasaiHtml(n) : `<div class="notice-body" style="margin-top:8px">${escHtml(n.body)}</div>`}
     </div>
   `).join('');
 }
@@ -2588,7 +2653,7 @@ function renderHomeLatest() {
         </span>
         <span style="font-size:0.9rem;font-weight:700">${escHtml(n.title)}</span>
       </div>
-      <div style="font-size:0.8rem;color:var(--text2)">${n.seed === 'hojo2027' ? 'R9年度予算 536万円（R8より195万円減）・町への補助申請 316万円（14事業）' : escHtml(n.body.slice(0, 80)) + (n.body.length > 80 ? '...' : '')}</div>
+      <div style="font-size:0.8rem;color:var(--text2)">${n.seed === 'hojo2027' ? 'R9年度予算 536万円（R8より195万円減）・町への補助申請 316万円（14事業）' : n.seed === 'kasai20261028' ? 'JAの見積り：保障1,800万円・月10,330円（年 約12.4万円）。いまは3,000万円で年20万円。期限 令和9年3月31日' : escHtml(n.body.slice(0, 80)) + (n.body.length > 80 ? '...' : '')}</div>
     </div>
   `).join('');
 }
