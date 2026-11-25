@@ -335,6 +335,39 @@
   }
   .notice-item.important { border-left-color: var(--red); }
   .notice-item.info { border-left-color: var(--blue); }
+  /* ===== 補助金申請一覧（2026-11-25） ===== */
+  .hj { margin-top:10px; }
+  .hj-sum { display:grid; grid-template-columns:repeat(3,1fr); gap:8px; margin-bottom:12px; }
+  .hj-tile { background:#fff; border:1px solid var(--border); border-radius:12px; padding:10px 12px; }
+  .hj-tile .l { font-size:.72rem; color:var(--text2); font-weight:700; }
+  .hj-tile .v { font-size:1.45rem; font-weight:800; line-height:1.25; color:var(--text); }
+  .hj-tile .v small { font-size:.8rem; font-weight:700; margin-left:1px; }
+  .hj-tile .s { font-size:.72rem; color:var(--text2); margin-top:2px; }
+  .hj-tile.ap .v { color:var(--accent); }
+  .hj-tile .down { color:var(--red); font-weight:700; }
+  .hj-legend { display:flex; flex-wrap:wrap; gap:6px; font-size:.72rem; color:var(--text2); margin:0 0 10px; align-items:center; }
+  .hj-sec { border-radius:12px; overflow:hidden; border:1px solid var(--border); margin-bottom:12px; background:#fff; }
+  .hj-sh { display:flex; justify-content:space-between; align-items:center; gap:8px; padding:9px 12px; color:#fff; font-weight:800; font-size:.95rem; }
+  .hj-sh span { font-size:.75rem; font-weight:700; opacity:.95; white-space:nowrap; }
+  .hj-sec.c1 .hj-sh { background:#b5652e; } .hj-sec.c2 .hj-sh { background:#4a7c59; } .hj-sec.c3 .hj-sh { background:#2a5a8c; }
+  .hj-sub { padding:7px 12px; font-size:.78rem; font-weight:700; color:var(--text2); background:#fbf3e8; border-top:1px solid var(--border); }
+  .hj-row { display:grid; grid-template-columns:1fr auto; gap:4px 12px; padding:10px 12px; border-top:1px solid #f0e4d2; }
+  .hj-row:nth-child(even) { background:#fffcf8; }
+  .hj-name { font-weight:800; font-size:.95rem; color:var(--text); }
+  .hj-what { font-size:.78rem; color:var(--text2); margin-top:1px; }
+  .hj-note { font-size:.74rem; color:#8a7560; margin-top:4px; }
+  .hj-amt { text-align:right; white-space:nowrap; }
+  .hj-r9 { font-size:1.15rem; font-weight:800; color:var(--text); }
+  .hj-r9 small, .hj-ap small { font-size:.72rem; font-weight:700; }
+  .hj-ap { font-size:.82rem; font-weight:800; color:var(--accent); }
+  .hj-ap .rate { font-size:.68rem; color:var(--text2); font-weight:700; margin-left:3px; }
+  .hj-chg { display:inline-block; font-size:.68rem; font-weight:800; border-radius:999px; padding:1px 8px; margin-top:3px; }
+  .hj-chg.dn { background:#fbe3e0; color:#a12a1f; } .hj-chg.up { background:#dff0e3; color:#2f6b40; } .hj-chg.eq { background:#f1ece4; color:#8a7560; }
+  .hj-text { margin-top:8px; font-size:.75rem; }
+  .hj-chg-m { display:none; }
+  .hj-text summary { cursor:pointer; color:var(--text2); }
+  @media (max-width:520px){ .hj-tile .v { font-size:1.15rem; } .hj-sum { gap:6px; } .hj-tile { padding:8px; } .hj-sh { flex-direction:column; align-items:flex-start; gap:2px; } .hj-chg-d { display:none; } .hj-chg-m { display:block; margin-top:2px; } .hj-row { gap:2px 8px; } }
+
   .notice-header { display: flex; align-items: center; gap: 8px; margin-bottom: 6px; flex-wrap: wrap; }
   .notice-tag {
     font-size: 0.7rem;
@@ -1455,7 +1488,7 @@
 
 <script>
 // ===== 最新版チェック（公開版を開いた人も自動で最新に）=====
-const APP_VERSION = '2026-11-25a';
+const APP_VERSION = '2026-11-25b';
 (function checkLatest() {
   if (location.protocol !== 'https:') return;
   fetch(location.pathname + '?v=' + Date.now(), { cache: 'no-store' })
@@ -2165,6 +2198,62 @@ function addNotice() {
   renderHomeLatest();
 }
 
+// ===== 補助金申請一覧の見やすい表示（2026-11-25）。掲示板の seed 'hojo2027' のお知らせはこの表で見せる（本文の文字は「文字で見る」に残す） =====
+const HOJO2027 = [
+  { sec:'商店街振興事業', c:'c1', items:[
+    { sub:'空き店舗対策事業 — 商店街や町並み保存地区への出店促進' },
+    { n:'出店、賃貸相談受付', w:'出店希望者との面談、空き店舗家主との交渉等', r8:500000, r9:300000, ap:150000, note:'R9年度相談分（不動産屋との連携協力）、人件費並びに資料作成等渉外費' },
+    { n:'新産業創出事業', w:'新事業計画策定', r8:500000, r9:500000, ap:250000, note:'後継者育成、新規事業企画（MORITEIとのコラボ）' },
+    { n:'イベント企画実施', w:'ワンコイン等', r8:1000000, r9:600000, ap:300000, note:'チラシ・景品・アルバイト費用等' },
+    { n:'商店街PR', w:'ホームページ管理・SNS情報発信等', r8:100000, r9:100000, ap:50000, note:'LINEオフィシャル60千円／年・HP修正費' },
+    { n:'歳末売出等', w:'抽選会', r8:700000, r9:500000, ap:250000, note:'チラシ・景品・アルバイト費用等' },
+    { n:'販売促進事業', w:'UCHICAポイントカード・スタンプ', r8:2000000, r9:700000, ap:350000, note:'会員店舗販売促進' },
+    { n:'研修費', w:'会員向け売上促進研修開催等', r8:100000, r9:100000, ap:50000, note:'講師謝礼、研修旅費等' },
+    { n:'会報費', w:'「うちまち瓦版」発行', r8:50000, r9:50000, ap:25000, note:'年3〜5回発行' } ]},
+  { sec:'地域振興事業', c:'c2', items:[
+    { sub:'地域伝統行事事業 — お祭り等' },
+    { n:'夜市ほか', w:'各区運営支援', r8:200000, r9:250000, ap:125000, note:'各区イベント支援・商店街放送経費等' },
+    { n:'内子町イベント参加経費', w:'ドイツフェスタ・子どもフェスティバル等', r8:300000, r9:300000, ap:150000, note:'出店経費' },
+    { n:'移住促進事業費', w:'えひめ暮らしネットワーク連携', r8:200000, r9:100000, ap:50000, note:'ナンヨサイン会費、出店促進イベント・PR等' } ]},
+  { sec:'運営管理費', c:'c3', items:[
+    { n:'Nanze管理費', w:'駐車場・芝生・施設管理等', r8:500000, r9:700000, ap:350000, note:'施設修繕費、掃除具・消耗品等' },
+    { n:'事務人件費', w:'事務処理・会計補助・イベント参加', r8:960000, r9:960000, ap:960000, note:'事務引継ぎ等' },
+    { n:'会計事務所委託費', w:'', r8:200000, r9:200000, ap:100000, note:'矢野会計事務所' } ]}
+];
+function hjMan(v){ const m=v/10000; return (Number.isInteger(m)? m.toLocaleString('ja-JP') : m.toFixed(1)) + '<small>万円</small>'; }
+function hjChg(r8,r9){
+  if (r9===r8) return '<span class="hj-chg eq">R8と同じ</span>';
+  const d=r9-r8, t=(Math.abs(d)/10000).toLocaleString('ja-JP',{maximumFractionDigits:1})+'万';
+  return d<0 ? '<span class="hj-chg dn">▼ '+t+' 減（R8 '+(r8/10000).toLocaleString('ja-JP')+'万）</span>'
+             : '<span class="hj-chg up">▲ '+t+' 増（R8 '+(r8/10000).toLocaleString('ja-JP')+'万）</span>';
+}
+function hojoHtml(n){
+  let t8=0,t9=0,ta=0; HOJO2027.forEach(g=>g.items.forEach(it=>{ if(it.n){ t8+=it.r8; t9+=it.r9; ta+=it.ap; } }));
+  let h='<div class="hj">';
+  h+='<div class="hj-sum">'
+    +'<div class="hj-tile"><div class="l">R9年度 予算</div><div class="v">'+hjMan(t9)+'</div><div class="s">R8 '+(t8/10000).toLocaleString('ja-JP')+'万円 → <span class="down">'+((t8-t9)/10000).toLocaleString('ja-JP')+'万円 減</span></div></div>'
+    +'<div class="hj-tile ap"><div class="l">町への補助申請額</div><div class="v">'+hjMan(ta)+'</div><div class="s">14事業の合計</div></div>'
+    +'<div class="hj-tile"><div class="l">補助率</div><div class="v">50<small>%</small></div><div class="s">事務人件費だけ 100%</div></div>'
+    +'</div>';
+  h+='<div class="hj-legend">見方：大きい数字＝R9年度予算／<span style="color:var(--accent);font-weight:800">オレンジ＝補助申請額</span>　<span class="hj-chg dn">▼ 減</span><span class="hj-chg up">▲ 増</span><span class="hj-chg eq">R8と同じ</span></div>';
+  HOJO2027.forEach(g=>{
+    let s9=0,sa=0; g.items.forEach(it=>{ if(it.n){ s9+=it.r9; sa+=it.ap; } });
+    h+='<div class="hj-sec '+g.c+'"><div class="hj-sh">'+escHtml(g.sec)+'<span>予算 '+(s9/10000).toLocaleString('ja-JP')+'万円 ／ 申請 '+(sa/10000).toLocaleString('ja-JP',{maximumFractionDigits:1})+'万円</span></div>';
+    g.items.forEach(it=>{
+      if (it.sub){ h+='<div class="hj-sub">'+escHtml(it.sub)+'</div>'; return; }
+      const rate=Math.round(it.ap/it.r9*100);
+      h+='<div class="hj-row"><div><div class="hj-name">'+escHtml(it.n)+'</div>'
+        +(it.w?'<div class="hj-what">'+escHtml(it.w)+'</div>':'')
+        +'<div class="hj-note">📝 '+escHtml(it.note)+'</div><div class="hj-chg-m">'+hjChg(it.r8,it.r9)+'</div></div>'
+        +'<div class="hj-amt"><div class="hj-r9">'+hjMan(it.r9)+'</div>'
+        +'<div class="hj-ap">申請 '+hjMan(it.ap)+'<span class="rate">'+rate+'%</span></div>'
+        +'<div class="hj-chg-d">'+hjChg(it.r8,it.r9)+'</div></div></div>';
+    });
+    h+='</div>';
+  });
+  h+='<details class="hj-text"><summary>文字で見る（コピー用）</summary><div class="notice-body" style="margin-top:6px">'+escHtml(n.body)+'</div></details>';
+  return h+'</div>';
+}
 function renderNotices() {
   const notices = STORE.get('notices');
   const el = document.getElementById('notice-list');
@@ -2179,7 +2268,7 @@ function renderNotices() {
         <span class="notice-title-text">${escHtml(n.title)}</span>
       </div>
       <div class="notice-meta">📅 ${n.date} &nbsp; ✍️ ${escHtml(n.author)}</div>
-      <div class="notice-body" style="margin-top:8px">${escHtml(n.body)}</div>
+      ${n.seed === 'hojo2027' ? hojoHtml(n) : `<div class="notice-body" style="margin-top:8px">${escHtml(n.body)}</div>`}
     </div>
   `).join('');
 }
@@ -2499,7 +2588,7 @@ function renderHomeLatest() {
         </span>
         <span style="font-size:0.9rem;font-weight:700">${escHtml(n.title)}</span>
       </div>
-      <div style="font-size:0.8rem;color:var(--text2)">${escHtml(n.body.slice(0, 80))}${n.body.length > 80 ? '...' : ''}</div>
+      <div style="font-size:0.8rem;color:var(--text2)">${n.seed === 'hojo2027' ? 'R9年度予算 536万円（R8より195万円減）・町への補助申請 316万円（14事業）' : escHtml(n.body.slice(0, 80)) + (n.body.length > 80 ? '...' : '')}</div>
     </div>
   `).join('');
 }
